@@ -52,10 +52,7 @@ def canonicalize_tiingo_rows(
 
     ingestion_timestamp = _as_utc_timestamp(ingested_at, field_name="ingested_at")
     timestamps = pd.DatetimeIndex(
-        [
-            _as_utc_timestamp(value, field_name="source timestamps")
-            for value in source["date"]
-        ]
+        [_as_utc_timestamp(value, field_name="source timestamps") for value in source["date"]]
     )
 
     bars = pd.DataFrame(
