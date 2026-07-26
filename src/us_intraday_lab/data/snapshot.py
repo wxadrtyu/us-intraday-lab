@@ -11,7 +11,7 @@ from datetime import UTC, date, datetime
 from importlib.metadata import PackageNotFoundError, version
 from itertools import pairwise
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import exchange_calendars  # type: ignore[import-untyped]
 import pandas as pd
@@ -41,6 +41,28 @@ _TIINGO_MINUTE_COLUMNS = frozenset({"ticker", "date", "open", "high", "low", "cl
 _CANONICAL_SYMBOL = re.compile(r"^[A-Z][A-Z0-9]*(?:[.-][A-Z0-9]+)*$")
 _XNYS = exchange_calendars.get_calendar("XNYS")
 _NEW_YORK = "America/New_York"
+
+DerivedBarSize = Literal["5min", "15min"]
+
+
+@dataclass(frozen=True, slots=True)
+class DerivedSnapshotLineage:
+    """Immutable provenance attached to every derived intraday bar."""
+
+    parent_snapshot_id: str
+    bar_size: DerivedBarSize
+    source_bar_size: Literal["1min"] = "1min"
+
+    def __post_init__(self) -> None:
+        if not self.parent_snapshot_id.strip():
+            raise ValueError("parent_snapshot_id must not be blank")
+
+    def metadata(self) -> dict[str, str]:
+        return {
+            "parent_snapshot_id": self.parent_snapshot_id,
+            "source_bar_size": self.source_bar_size,
+            "bar_size": self.bar_size,
+        }
 
 
 def _validate_symbol(symbol: str) -> str:
