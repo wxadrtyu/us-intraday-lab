@@ -17,10 +17,13 @@ venv/
 # Data and generated artifacts
 data/raw/
 data/cache/
+data/lake/
 artifacts/
 reports/generated/
 *.db
 *.duckdb
+*.sqlite
+*.sqlite3
 *.parquet
 
 # IDE and OS
@@ -28,3 +31,7 @@ reports/generated/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local brainstorming companion
+.superpowers/
+.brainstorm-server-*.log
