@@ -50,6 +50,8 @@ class RuntimeState:
     last_signal_at: datetime | None = None
 
     def __post_init__(self) -> None:
+        if type(self.phase) is not RuntimePhase:
+            raise TypeError("runtime state invariant: phase must be exact RuntimePhase")
         if self.entries < 0:
             raise ValueError("runtime state invariant: entries must not be negative")
         for timestamp in (self.opened_at, self.cooldown_until, self.last_signal_at):
@@ -89,6 +91,10 @@ class RuntimeAuditEvent:
     to_phase: RuntimePhase
     reason: str
 
+    def __post_init__(self) -> None:
+        if type(self.from_phase) is not RuntimePhase or type(self.to_phase) is not RuntimePhase:
+            raise TypeError("audit phase must be exact RuntimePhase")
+
 
 class RuntimeTransitionError(RuntimeError):
     """Typed failure raised when the engine requests an illegal transition."""
@@ -100,6 +106,8 @@ class RuntimeTransitionError(RuntimeError):
         from_phase: RuntimePhase,
         to_phase: RuntimePhase,
     ) -> None:
+        if type(from_phase) is not RuntimePhase or type(to_phase) is not RuntimePhase:
+            raise TypeError("transition error phase must be exact RuntimePhase")
         super().__init__(
             f"illegal state transition for {key.strategy_id}/{key.symbol}/"
             f"{key.session_date}: {from_phase} -> {to_phase}"
@@ -198,6 +206,20 @@ class StrategyRuntime:
     ) -> tuple[RuntimeState, datetime]:
         timestamp = _utc_event_time(event_time, key=key)
         state = self.state_for(key)
+        if type(to_phase) is not RuntimePhase:
+            self._audit_transition(
+                key=key,
+                event_time=timestamp,
+                outcome="rejected",
+                from_phase=state.phase,
+                to_phase=state.phase,
+                reason="invalid_target_phase",
+            )
+            raise RuntimeTransitionError(
+                key=key,
+                from_phase=state.phase,
+                to_phase=state.phase,
+            )
         if to_phase not in allowed_transitions.get(state.phase, frozenset()):
             self._audit_transition(
                 key=key,

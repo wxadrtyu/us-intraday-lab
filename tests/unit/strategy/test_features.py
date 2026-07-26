@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
+from enum import StrEnum
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,7 @@ from us_intraday_lab.strategy.features import (
     visible_feature_frame,
 )
 from us_intraday_lab.strategy.runtime import (
+    RuntimeAuditEvent,
     RuntimeKey,
     RuntimePhase,
     RuntimeState,
@@ -20,6 +22,11 @@ from us_intraday_lab.strategy.runtime import (
 )
 
 SESSION_DATE = date(2026, 7, 2)
+
+
+class ForeignPhase(StrEnum):
+    LONG = "LONG"
+    COOLDOWN = "COOLDOWN"
 
 
 def _derived_bars(count: int = 4) -> pd.DataFrame:
@@ -373,6 +380,87 @@ def test_runtime_snapshots_cannot_represent_incomplete_phase_bookkeeping(
 ) -> None:
     with pytest.raises(ValueError, match="runtime state invariant"):
         RuntimeState(**invalid)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "invalid_phase",
+    [
+        "COOLDOWN",
+        "not-a-phase",
+        ForeignPhase.LONG,
+        object(),
+    ],
+)
+def test_runtime_snapshot_requires_exact_runtime_phase(invalid_phase: object) -> None:
+    with pytest.raises(TypeError, match="phase must be exact RuntimePhase"):
+        RuntimeState(phase=invalid_phase)  # type: ignore[arg-type]
+
+
+def _runtime_waiting_for_exit_fill() -> tuple[StrategyRuntime, RuntimeKey]:
+    runtime = StrategyRuntime()
+    key = RuntimeKey("momentum", "SPY", SESSION_DATE)
+    runtime.transition(key, RuntimePhase.ENTRY_PENDING, event_time=_time(13, 45))
+    runtime.mark_entry_filled(key, event_time=_time(13, 46))
+    runtime.transition(key, RuntimePhase.EXIT_PENDING, event_time=_time(14, 0))
+    return runtime, key
+
+
+@pytest.mark.parametrize("raw_phase", ["LONG", "COOLDOWN"])
+def test_transition_rejects_raw_phase_without_mutation_and_audits_typed_phases(
+    raw_phase: str,
+) -> None:
+    runtime, key = _runtime_waiting_for_exit_fill()
+    before = runtime.state_for(key)
+    audit_count = len(runtime.audit_events)
+
+    with pytest.raises(RuntimeTransitionError) as exc_info:
+        runtime.transition(  # type: ignore[arg-type]
+            key,
+            raw_phase,
+            event_time=_time(14, 1),
+        )
+
+    assert runtime.state_for(key) == before
+    assert len(runtime.audit_events) == audit_count + 1
+    event = runtime.audit_events[-1]
+    assert event.outcome == "rejected"
+    assert type(event.from_phase) is RuntimePhase
+    assert type(event.to_phase) is RuntimePhase
+    assert event.from_phase is RuntimePhase.EXIT_PENDING
+    assert event.to_phase is RuntimePhase.EXIT_PENDING
+    assert type(exc_info.value.from_phase) is RuntimePhase
+    assert type(exc_info.value.to_phase) is RuntimePhase
+
+
+def test_transition_rejects_foreign_enum_phase_with_typed_audit() -> None:
+    runtime, key = _runtime_waiting_for_exit_fill()
+    before = runtime.state_for(key)
+
+    with pytest.raises(RuntimeTransitionError):
+        runtime.transition(  # type: ignore[arg-type]
+            key,
+            ForeignPhase.LONG,
+            event_time=_time(14, 1),
+        )
+
+    assert runtime.state_for(key) == before
+    assert type(runtime.audit_events[-1].from_phase) is RuntimePhase
+    assert type(runtime.audit_events[-1].to_phase) is RuntimePhase
+
+
+def test_audit_event_requires_exact_runtime_phase_fields() -> None:
+    key = RuntimeKey("momentum", "SPY", SESSION_DATE)
+
+    with pytest.raises(TypeError, match="audit phase must be exact RuntimePhase"):
+        RuntimeAuditEvent(
+            event_type="state_transition",
+            key=key,
+            event_time=_time(13, 45),
+            outcome="rejected",
+            from_phase="FLAT",  # type: ignore[arg-type]
+            to_phase=RuntimePhase.ENTRY_PENDING,
+            reason="invalid_target_phase",
+        )
 
 
 @pytest.mark.parametrize(
