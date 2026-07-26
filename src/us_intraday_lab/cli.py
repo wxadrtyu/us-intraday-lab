@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 
 from us_intraday_lab.data.archive import inspect_archive
+from us_intraday_lab.data.catalog import accept_dataset, build_catalog
 from us_intraday_lab.data.snapshot import (
     ArchiveSourceDeclaration,
     import_snapshot,
@@ -70,3 +71,25 @@ def verify_snapshot_command(
 ) -> None:
     manifest = verify_snapshot(dataset_id, root=root)
     typer.echo(manifest.dataset_id)
+
+
+@data_app.command("build-catalog")
+def build_catalog_command(
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    typer.echo(build_catalog(dataset_id, root=root))
+
+
+@data_app.command("accept")
+def accept_dataset_command(
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    summary = accept_dataset(dataset_id, root=root)
+    typer.echo(f"dataset_id: {summary.dataset_id}")
+    typer.echo(f"quality_passed: {str(summary.quality_passed).lower()}")
+    typer.echo(f"production_symbols: {','.join(summary.production_symbols)}")
+    typer.echo(f"bars_1m: {summary.bar_counts['1min']}")
+    typer.echo(f"bars_5m: {summary.bar_counts['5min']}")
+    typer.echo(f"bars_15m: {summary.bar_counts['15min']}")

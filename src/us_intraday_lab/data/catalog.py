@@ -1,0 +1,449 @@
+"""Read-only DuckDB catalog over one immutable accepted snapshot."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import shutil
+import tempfile
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, cast
+
+import duckdb
+import pandas as pd
+
+from us_intraday_lab.contracts.datasets import DatasetManifest
+from us_intraday_lab.data.quality import PRODUCTION_SYMBOLS, assess_minute_bars
+from us_intraday_lab.data.resample import resample_minute_bars
+from us_intraday_lab.data.snapshot import DerivedBarSize, verify_snapshot
+from us_intraday_lab.settings import LabPaths
+
+_MANIFEST_SCHEMA_VERSION = "1.0.0"
+_IMPORT_EVIDENCE_SCHEMA_VERSION = "1.0.0"
+_DERIVED_LINEAGE_SCHEMA_VERSION = "1.0.0"
+_DERIVED_BAR_SIZES: tuple[DerivedBarSize, ...] = ("5min", "15min")
+
+
+class CatalogAcceptanceError(ValueError):
+    """Raised when a snapshot or its read-only catalog fails acceptance."""
+
+
+@dataclass(frozen=True, slots=True)
+class AcceptanceSummary:
+    dataset_id: str
+    quality_passed: bool
+    production_symbols: tuple[str, ...]
+    bar_counts: dict[str, int]
+
+
+def _derived_root(paths: LabPaths, dataset_id: str) -> Path:
+    root = paths.canonical.parent / "derived" / dataset_id
+    if root.resolve().parent != (paths.canonical.parent / "derived").resolve():
+        raise CatalogAcceptanceError("dataset_id must identify one derived snapshot")
+    return root
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _snapshot_parquet_files(paths: LabPaths, dataset_id: str) -> tuple[Path, ...]:
+    files = tuple(
+        sorted(
+            (paths.canonical / dataset_id).rglob("*.parquet"),
+            key=lambda path: path.as_posix(),
+        )
+    )
+    if not files:
+        raise CatalogAcceptanceError("accepted snapshot contains no minute-bar Parquet files")
+    return files
+
+
+def _read_minute_bars(files: tuple[Path, ...]) -> pd.DataFrame:
+    frames = [pd.read_parquet(path) for path in files]
+    return pd.concat(frames, ignore_index=True).sort_values(
+        ["symbol", "timestamp"],
+        kind="stable",
+        ignore_index=True,
+    )
+
+
+def _manifest_frame(manifest: DatasetManifest) -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "dataset_id": manifest.dataset_id,
+                "schema_version": manifest.schema_version,
+                "source_uri": manifest.source_uri,
+                "source_sha256": manifest.source_sha256,
+                "content_sha256": manifest.content_sha256,
+                "code_revision": manifest.code_revision,
+                "calendar_name": manifest.calendar_name,
+                "calendar_version": manifest.calendar_version,
+                "created_at": manifest.created_at,
+                "provider": manifest.provider,
+                "feed": manifest.feed,
+                "bar_size": manifest.bar_size,
+                "row_count": manifest.row_count,
+                "symbols": list(manifest.symbols),
+                "min_timestamp": manifest.min_timestamp,
+                "max_timestamp": manifest.max_timestamp,
+                "quality_passed": manifest.quality.passed,
+            }
+        ]
+    )
+
+
+def _quality_frame(bars: pd.DataFrame) -> pd.DataFrame:
+    quality = assess_minute_bars(bars, production_symbols=PRODUCTION_SYMBOLS)
+    return pd.DataFrame(
+        [
+            {
+                **asdict(group),
+                "structural_passed": group.structural_passed,
+                "passed": group.passed,
+                "requires_quarantine": group.requires_quarantine,
+            }
+            for group in quality.groups
+        ]
+    )
+
+
+def _write_derived_artifacts(
+    target: Path,
+    *,
+    manifest: DatasetManifest,
+    bars: pd.DataFrame,
+) -> None:
+    artifacts: dict[str, dict[str, object]] = {}
+    for bar_size in _DERIVED_BAR_SIZES:
+        derived = resample_minute_bars(
+            bars,
+            bar_size=bar_size,
+            parent_snapshot_id=manifest.dataset_id,
+        )
+        output = target / f"bar_size={bar_size}" / "part-00000.parquet"
+        output.parent.mkdir(parents=True)
+        derived.to_parquet(output, index=False)
+        artifacts[f"bars_{bar_size}"] = {
+            "relative_path": output.relative_to(target).as_posix(),
+            "sha256": _sha256_file(output),
+            "row_count": len(derived),
+            "bar_size": bar_size,
+            "source_bar_size": "1min",
+            "parent_snapshot_id": manifest.dataset_id,
+        }
+
+    metadata = {
+        "dataset_manifests": _manifest_frame(manifest),
+        "symbol_session_quality": _quality_frame(bars),
+    }
+    for name, frame in metadata.items():
+        output = target / "metadata" / f"{name}.parquet"
+        output.parent.mkdir(parents=True, exist_ok=True)
+        frame.to_parquet(output, index=False)
+        artifacts[name] = {
+            "relative_path": output.relative_to(target).as_posix(),
+            "sha256": _sha256_file(output),
+            "row_count": len(frame),
+        }
+
+    lineage = {
+        "schema_version": _DERIVED_LINEAGE_SCHEMA_VERSION,
+        "parent_snapshot_id": manifest.dataset_id,
+        "parent_content_sha256": manifest.content_sha256,
+        "artifacts": artifacts,
+    }
+    (target / "lineage.json").write_text(
+        json.dumps(lineage, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _load_lineage(derived_root: Path) -> dict[str, Any]:
+    lineage_path = derived_root / "lineage.json"
+    if not lineage_path.is_file():
+        raise CatalogAcceptanceError("derived lineage manifest does not exist")
+    try:
+        return cast(
+            dict[str, Any],
+            json.loads(lineage_path.read_text(encoding="utf-8")),
+        )
+    except (json.JSONDecodeError, OSError) as error:
+        raise CatalogAcceptanceError("derived lineage manifest is unreadable") from error
+
+
+def _verified_artifact_paths(
+    derived_root: Path,
+    *,
+    manifest: DatasetManifest,
+) -> dict[str, Path]:
+    lineage = _load_lineage(derived_root)
+    if lineage.get("schema_version") != _DERIVED_LINEAGE_SCHEMA_VERSION:
+        raise CatalogAcceptanceError("unsupported derived lineage schema version")
+    if lineage.get("parent_snapshot_id") != manifest.dataset_id:
+        raise CatalogAcceptanceError("derived lineage parent snapshot does not match")
+    if lineage.get("parent_content_sha256") != manifest.content_sha256:
+        raise CatalogAcceptanceError("derived lineage parent content hash does not match")
+    raw_artifacts = lineage.get("artifacts")
+    if not isinstance(raw_artifacts, dict):
+        raise CatalogAcceptanceError("derived lineage artifacts are missing")
+
+    required = {
+        "bars_5min",
+        "bars_15min",
+        "dataset_manifests",
+        "symbol_session_quality",
+    }
+    if set(raw_artifacts) != required:
+        raise CatalogAcceptanceError("derived lineage artifacts do not match the required set")
+
+    paths: dict[str, Path] = {}
+    for name in sorted(required):
+        record = raw_artifacts[name]
+        if not isinstance(record, dict):
+            raise CatalogAcceptanceError(f"derived artifact record is invalid: {name}")
+        relative_path = record.get("relative_path")
+        if not isinstance(relative_path, str):
+            raise CatalogAcceptanceError(f"derived artifact path is invalid: {name}")
+        path = (derived_root / relative_path).resolve()
+        if not path.is_relative_to(derived_root.resolve()) or not path.is_file():
+            raise CatalogAcceptanceError(f"derived artifact is missing: {name}")
+        if _sha256_file(path) != record.get("sha256"):
+            raise CatalogAcceptanceError(f"derived artifact hash mismatch: {name}")
+        paths[name] = path
+    return paths
+
+
+def _publish_derived_snapshot(
+    paths: LabPaths,
+    *,
+    manifest: DatasetManifest,
+    bars: pd.DataFrame,
+) -> dict[str, Path]:
+    final_root = _derived_root(paths, manifest.dataset_id)
+    if final_root.exists():
+        return _verified_artifact_paths(final_root, manifest=manifest)
+
+    parent = final_root.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=".derived-", dir=parent)).resolve()
+    try:
+        _write_derived_artifacts(temporary, manifest=manifest, bars=bars)
+        temporary.rename(final_root)
+    except BaseException:
+        if temporary.exists() and temporary.parent == parent.resolve():
+            shutil.rmtree(temporary)
+        raise
+    return _verified_artifact_paths(final_root, manifest=manifest)
+
+
+def _sql_string(path: Path) -> str:
+    return "'" + path.resolve().as_posix().replace("'", "''") + "'"
+
+
+def _parquet_source(files: tuple[Path, ...]) -> str:
+    explicit_paths = ", ".join(_sql_string(path) for path in files)
+    return f"read_parquet([{explicit_paths}], hive_partitioning = false, union_by_name = true)"
+
+
+def _create_catalog(
+    catalog_path: Path,
+    *,
+    minute_files: tuple[Path, ...],
+    artifacts: dict[str, Path],
+) -> None:
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = catalog_path.parent / f".{catalog_path.name}.{os.getpid()}.tmp"
+    if temporary.exists():
+        temporary.unlink()
+    try:
+        with duckdb.connect(str(temporary)) as connection:
+            sources = {
+                "bars_1m": _parquet_source(minute_files),
+                "bars_5m": _parquet_source((artifacts["bars_5min"],)),
+                "bars_15m": _parquet_source((artifacts["bars_15min"],)),
+                "dataset_manifests": _parquet_source((artifacts["dataset_manifests"],)),
+                "symbol_session_quality": _parquet_source((artifacts["symbol_session_quality"],)),
+            }
+            for view_name, source in sources.items():
+                connection.execute(f"CREATE VIEW {view_name} AS SELECT * FROM {source}")
+        os.replace(temporary, catalog_path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _require_supported_snapshot_schema(paths: LabPaths, manifest: DatasetManifest) -> None:
+    if manifest.schema_version != _MANIFEST_SCHEMA_VERSION:
+        raise CatalogAcceptanceError(
+            f"unsupported snapshot manifest schema version: {manifest.schema_version}"
+        )
+    evidence_path = paths.canonical / manifest.dataset_id / "import-evidence.json"
+    try:
+        evidence = cast(
+            dict[str, object],
+            json.loads(evidence_path.read_text(encoding="utf-8")),
+        )
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as error:
+        raise CatalogAcceptanceError("snapshot import evidence is unreadable") from error
+    if evidence.get("schema_version") != _IMPORT_EVIDENCE_SCHEMA_VERSION:
+        raise CatalogAcceptanceError("unsupported import evidence schema version")
+
+
+def _verify_derived_content(
+    artifacts: dict[str, Path],
+    *,
+    minute_bars: pd.DataFrame,
+    dataset_id: str,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for bar_size in _DERIVED_BAR_SIZES:
+        frame = pd.read_parquet(artifacts[f"bars_{bar_size}"])
+        if frame.empty:
+            raise CatalogAcceptanceError(f"derived {bar_size} bars are empty")
+        if set(frame["parent_snapshot_id"].astype(str)) != {dataset_id}:
+            raise CatalogAcceptanceError(f"derived {bar_size} parent lineage does not match")
+        if set(frame["source_bar_size"].astype(str)) != {"1min"}:
+            raise CatalogAcceptanceError(f"derived {bar_size} source lineage does not match")
+        if set(frame["bar_size"].astype(str)) != {bar_size}:
+            raise CatalogAcceptanceError(f"derived {bar_size} bar-size lineage does not match")
+        expected = resample_minute_bars(
+            minute_bars,
+            bar_size=bar_size,
+            parent_snapshot_id=dataset_id,
+        )
+        try:
+            pd.testing.assert_frame_equal(
+                frame.reset_index(drop=True),
+                expected.reset_index(drop=True),
+                check_exact=True,
+            )
+        except AssertionError as error:
+            raise CatalogAcceptanceError(
+                f"derived {bar_size} content is not reproducible from parent snapshot"
+            ) from error
+        counts[bar_size] = len(expected)
+    return counts
+
+
+def build_catalog(dataset_id: str, *, root: Path) -> Path:
+    """Build a DuckDB file containing views only, bound to explicit Parquet paths."""
+    paths = LabPaths.from_root(root)
+    manifest = verify_snapshot(dataset_id, root=paths.root)
+    _require_supported_snapshot_schema(paths, manifest)
+    minute_files = _snapshot_parquet_files(paths, dataset_id)
+    bars = _read_minute_bars(minute_files)
+    artifacts = _publish_derived_snapshot(paths, manifest=manifest, bars=bars)
+    _verify_derived_content(
+        artifacts,
+        minute_bars=bars,
+        dataset_id=dataset_id,
+    )
+    _create_catalog(
+        paths.catalog,
+        minute_files=minute_files,
+        artifacts=artifacts,
+    )
+    return paths.catalog
+
+
+def connect_catalog(*, root: Path) -> duckdb.DuckDBPyConnection:
+    """Open the application catalog with DuckDB's enforced read-only mode."""
+    catalog_path = LabPaths.from_root(root).catalog
+    if not catalog_path.is_file():
+        raise FileNotFoundError(f"catalog does not exist: {catalog_path}")
+    return duckdb.connect(str(catalog_path), read_only=True)
+
+
+def _catalog_bar_counts(connection: duckdb.DuckDBPyConnection) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for bar_size, view in {
+        "1min": "bars_1m",
+        "5min": "bars_5m",
+        "15min": "bars_15m",
+    }.items():
+        row = connection.execute(f"SELECT count(*) FROM {view}").fetchone()
+        if row is None:
+            raise CatalogAcceptanceError(f"catalog count query returned no row: {view}")
+        counts[bar_size] = cast(int, row[0])
+    return counts
+
+
+def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
+    """Verify immutable inputs, derived lineage, coverage, and read-only queries."""
+    paths = LabPaths.from_root(root)
+    try:
+        manifest = verify_snapshot(dataset_id, root=paths.root)
+    except (ValueError, OSError) as error:
+        raise CatalogAcceptanceError(f"snapshot verification failed: {error}") from error
+    _require_supported_snapshot_schema(paths, manifest)
+    artifacts = _verified_artifact_paths(
+        _derived_root(paths, dataset_id),
+        manifest=manifest,
+    )
+    required_production = tuple(sorted(PRODUCTION_SYMBOLS))
+    missing = sorted(set(required_production).difference(manifest.symbols))
+    if missing:
+        raise CatalogAcceptanceError(
+            "production-symbol coverage requires IWM,QQQ,SPY; missing " + ",".join(missing)
+        )
+
+    minute_bars = _read_minute_bars(_snapshot_parquet_files(paths, dataset_id))
+    expected_counts = {"1min": manifest.row_count}
+    expected_counts.update(
+        _verify_derived_content(
+            artifacts,
+            minute_bars=minute_bars,
+            dataset_id=dataset_id,
+        )
+    )
+
+    try:
+        with connect_catalog(root=paths.root) as connection:
+            access_mode = connection.execute(
+                "SELECT lower(current_setting('access_mode'))"
+            ).fetchone()
+            if access_mode != ("read_only",):
+                raise CatalogAcceptanceError("application catalog connection is not read-only")
+            selected_dataset = connection.execute(
+                "SELECT dataset_id, quality_passed FROM dataset_manifests"
+            ).fetchall()
+            if selected_dataset != [(dataset_id, True)]:
+                raise CatalogAcceptanceError(
+                    "catalog manifest view does not match accepted dataset"
+                )
+            passed_production = {
+                row[0]
+                for row in connection.execute(
+                    """
+                    SELECT symbol
+                    FROM symbol_session_quality
+                    WHERE production AND passed
+                    """
+                ).fetchall()
+            }
+            if passed_production != set(required_production):
+                raise CatalogAcceptanceError(
+                    "catalog production symbol/session quality does not pass"
+                )
+            bar_counts = _catalog_bar_counts(connection)
+    except CatalogAcceptanceError:
+        raise
+    except (duckdb.Error, OSError) as error:
+        raise CatalogAcceptanceError(f"read-only catalog query failed: {error}") from error
+
+    if bar_counts != expected_counts:
+        raise CatalogAcceptanceError("catalog bar counts do not match immutable artifacts")
+    return AcceptanceSummary(
+        dataset_id=dataset_id,
+        quality_passed=manifest.quality.passed,
+        production_symbols=required_production,
+        bar_counts=bar_counts,
+    )
