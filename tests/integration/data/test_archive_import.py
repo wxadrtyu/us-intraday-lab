@@ -103,6 +103,16 @@ def _archive_with_unrelated_csv(tmp_path: Path) -> Path:
     return archive_path
 
 
+def _archive_with_members(tmp_path: Path, members: dict[str, bytes]) -> Path:
+    archive_path = tmp_path / "multiple-members.tar.gz"
+    with tarfile.open(archive_path, "w:gz") as archive:
+        for name, payload in members.items():
+            member = tarfile.TarInfo(name)
+            member.size = len(payload)
+            archive.addfile(member, io.BytesIO(payload))
+    return archive_path
+
+
 def test_imports_synthetic_archive_as_partitioned_immutable_snapshot(tmp_path: Path) -> None:
     archive_path = _complete_archive_fixture(tmp_path, "AAPL", "MSFT")
 
@@ -354,6 +364,48 @@ def test_import_rejects_declared_member_with_wrong_cadence(tmp_path: Path) -> No
         )
 
 
+def test_import_rejects_one_wrong_cadence_member_in_mixed_selection(
+    tmp_path: Path,
+) -> None:
+    archive_path = _archive_with_members(
+        tmp_path,
+        {
+            "one-minute.csv": _minute_rows("AAPL"),
+            "five-minute.csv": _minute_rows("MSFT", cadence_minutes=5),
+        },
+    )
+
+    with pytest.raises(ValueError, match="five-minute.csv.*one-minute cadence"):
+        import_snapshot(
+            archive_path,
+            root=tmp_path / "repo",
+            source=_source_declaration(member_names=("one-minute.csv", "five-minute.csv")),
+        )
+
+
+def test_import_records_cadence_for_every_valid_declared_member(tmp_path: Path) -> None:
+    archive_path = _archive_with_members(
+        tmp_path,
+        {
+            "aapl-minute.csv": _minute_rows("AAPL"),
+            "msft-minute.csv": _minute_rows("MSFT"),
+        },
+    )
+
+    manifest, output = import_snapshot(
+        archive_path,
+        root=tmp_path / "repo",
+        source=_source_declaration(member_names=("msft-minute.csv", "aapl-minute.csv")),
+    )
+
+    assert manifest.row_count == 780
+    evidence = json.loads((output.parents[3] / "import-evidence.json").read_text())
+    assert evidence["member_cadence"] == [
+        {"bar_size": "1min", "name": "aapl-minute.csv", "validated": True},
+        {"bar_size": "1min", "name": "msft-minute.csv", "validated": True},
+    ]
+
+
 def test_import_rejects_undeclared_member_identity(tmp_path: Path) -> None:
     archive_path = _complete_archive_fixture(tmp_path, "AAPL")
 
@@ -390,13 +442,74 @@ def test_import_records_explicit_source_and_cadence_evidence(tmp_path: Path) -> 
     }
 
 
+def test_dataset_id_is_stable_and_declaration_aware(tmp_path: Path) -> None:
+    archive_path = _archive_with_members(
+        tmp_path,
+        {
+            "aapl-minute.csv": _minute_rows("AAPL"),
+            "msft-minute.csv": _minute_rows("MSFT"),
+        },
+    )
+    aapl_source = _source_declaration(member_names=("aapl-minute.csv",))
+    msft_source = _source_declaration(member_names=("msft-minute.csv",))
+    both_forward = _source_declaration(member_names=("aapl-minute.csv", "msft-minute.csv"))
+    both_reverse = _source_declaration(member_names=("msft-minute.csv", "aapl-minute.csv"))
+
+    aapl_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "aapl-root",
+        source=aapl_source,
+    )
+    same_aapl_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "same-aapl-root",
+        source=aapl_source,
+    )
+    msft_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "msft-root",
+        source=msft_source,
+    )
+    forward_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "forward-root",
+        source=both_forward,
+    )
+    reverse_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "reverse-root",
+        source=both_reverse,
+    )
+
+    assert aapl_manifest.dataset_id == same_aapl_manifest.dataset_id
+    assert aapl_manifest.dataset_id != msft_manifest.dataset_id
+    assert forward_manifest.dataset_id == reverse_manifest.dataset_id
+
+    local_root = tmp_path / "local-root"
+    first_local, first_output = import_snapshot(
+        archive_path,
+        root=local_root,
+        source=aapl_source,
+    )
+    second_local, _ = import_snapshot(
+        archive_path,
+        root=local_root,
+        source=msft_source,
+    )
+    original = first_output.read_bytes()
+    with pytest.raises(FileExistsError, match=first_local.dataset_id):
+        import_snapshot(archive_path, root=local_root, source=aapl_source)
+    assert first_local.dataset_id != second_local.dataset_id
+    assert first_output.read_bytes() == original
+
+
 def test_import_detects_source_drift_before_publication(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     archive_path = _complete_archive_fixture(tmp_path, "AAPL")
     root = tmp_path / "repo"
-    original_iter = snapshot_module.iter_archive_frames
+    original_iter = snapshot_module.iter_archive_member_frames
 
     def drifting_frames(
         path: Path,
@@ -407,7 +520,11 @@ def test_import_detects_source_drift_before_publication(
         with path.open("ab") as archive:
             archive.write(b"source-drift")
 
-    monkeypatch.setattr(snapshot_module, "iter_archive_frames", drifting_frames)
+    monkeypatch.setattr(
+        snapshot_module,
+        "iter_archive_member_frames",
+        drifting_frames,
+    )
 
     with pytest.raises(SnapshotVerificationError, match="source archive changed"):
         import_snapshot(

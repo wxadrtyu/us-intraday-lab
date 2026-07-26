@@ -21,7 +21,7 @@ from us_intraday_lab.contracts.datasets import DatasetManifest
 from us_intraday_lab.data.archive import (
     ArchiveInspection,
     inspect_archive,
-    iter_archive_frames,
+    iter_archive_member_frames,
     sha256_file,
 )
 from us_intraday_lab.data.canonicalize import canonicalize_tiingo_rows
@@ -258,11 +258,20 @@ def _source_declaration_record(source: ArchiveSourceDeclaration) -> dict[str, ob
         "provider": source.provider,
         "feed": source.feed,
         "bar_size": source.bar_size,
-        "member_names": list(source.member_names),
-        "production_symbols": list(source.production_symbols),
+        "member_names": sorted(source.member_names),
+        "production_symbols": sorted(source.production_symbols),
         "expected_start_date": source.expected_start_date.isoformat(),
         "expected_end_date": source.expected_end_date.isoformat(),
     }
+
+
+def _source_recipe_sha256(source: ArchiveSourceDeclaration) -> str:
+    canonical_recipe = json.dumps(
+        _source_declaration_record(source),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical_recipe.encode("utf-8")).hexdigest()
 
 
 def _optional_timestamp_iso(timestamp: pd.Timestamp | None) -> str | None:
@@ -274,6 +283,7 @@ def _build_import_evidence(
     source: ArchiveSourceDeclaration,
     inspection: ArchiveInspection,
     observed_cadence: dict[str, object],
+    member_cadence: list[dict[str, object]],
     expected_groups: set[ExpectedGroup],
     effective_production_symbols: tuple[str, ...],
     source_quality: MinuteBarsQualityAssessment,
@@ -284,6 +294,7 @@ def _build_import_evidence(
         "schema_version": _EVIDENCE_SCHEMA_VERSION,
         "source_declaration": _source_declaration_record(source),
         "source_sha256": inspection.source_sha256,
+        "source_recipe_sha256": _source_recipe_sha256(source),
         "selected_members": [
             {
                 "name": name,
@@ -294,9 +305,10 @@ def _build_import_evidence(
                 "max_timestamp": _optional_timestamp_iso(selected[name].max_timestamp),
                 "symbol_count": len(selected[name].symbols),
             }
-            for name in source.member_names
+            for name in sorted(source.member_names)
         ],
         "observed_cadence": observed_cadence,
+        "member_cadence": member_cadence,
         "effective_production_symbols": list(effective_production_symbols),
         "expected_production_groups": [
             {"symbol": symbol, "session_date": session_date.isoformat()}
@@ -339,11 +351,31 @@ def import_snapshot(
         )
 
     imported_at = datetime.now(UTC)
-    source_frames = list(iter_archive_frames(archive_path, member_names=source.member_names))
-    if not source_frames:
+    frames_by_member: dict[str, list[pd.DataFrame]] = {name: [] for name in source.member_names}
+    for member_name, frame in iter_archive_member_frames(
+        archive_path,
+        member_names=source.member_names,
+    ):
+        frames_by_member[member_name].append(frame)
+    if not any(frames_by_member.values()):
         raise ValueError("archive contains no tabular rows")
-    source_rows = pd.concat(source_frames, ignore_index=True)
-    source_non_monotonic, cadence_evidence = _source_order_and_cadence(source_rows)
+    source_non_monotonic: set[ExpectedGroup] = set()
+    member_cadence: list[dict[str, object]] = []
+    selected_source_rows: list[pd.DataFrame] = []
+    for member_name in sorted(source.member_names):
+        member_frames = frames_by_member[member_name]
+        if not member_frames:
+            raise ValueError(f"declared source member contains no tabular rows: {member_name}")
+        member_rows = pd.concat(member_frames, ignore_index=True)
+        try:
+            member_non_monotonic, cadence = _source_order_and_cadence(member_rows)
+        except ValueError as error:
+            raise ValueError(f"{member_name}: {error}") from error
+        source_non_monotonic.update(member_non_monotonic)
+        member_cadence.append({"name": member_name, **cadence})
+        selected_source_rows.append(member_rows)
+    source_rows = pd.concat(selected_source_rows, ignore_index=True)
+    cadence_evidence = {"validated": True, "bar_size": _BAR_SIZE}
     bars = canonicalize_tiingo_rows(source_rows, ingested_at=imported_at)
     if bars.empty:
         raise ValueError("archive contains no minute bars")
@@ -390,7 +422,8 @@ def import_snapshot(
         raise SnapshotQualityError("published bars do not pass the declared quality scope")
 
     paths = LabPaths.from_root(root)
-    dataset_id = f"tiingo-iex-1min-{inspection.source_sha256[:16]}"
+    recipe_hash = _source_recipe_sha256(source)
+    dataset_id = f"tiingo-iex-1min-{inspection.source_sha256[:16]}-{recipe_hash[:16]}"
     final_root = paths.canonical / dataset_id
     paths.canonical.mkdir(parents=True, exist_ok=True)
     if final_root.exists():
@@ -403,6 +436,7 @@ def import_snapshot(
             source=source,
             inspection=inspection,
             observed_cadence=cadence_evidence,
+            member_cadence=member_cadence,
             expected_groups=expected_groups,
             effective_production_symbols=effective_production,
             source_quality=source_quality,

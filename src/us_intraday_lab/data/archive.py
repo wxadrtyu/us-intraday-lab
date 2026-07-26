@@ -200,7 +200,20 @@ def iter_archive_frames(
     *,
     member_names: Collection[str] | None = None,
 ) -> Iterator[pd.DataFrame]:
-    """Yield frames only after every archive member has passed safety validation."""
+    """Yield selected frames after every archive member has passed safety validation."""
+    for _, frame in iter_archive_member_frames(
+        archive_path,
+        member_names=member_names,
+    ):
+        yield frame
+
+
+def iter_archive_member_frames(
+    archive_path: Path,
+    *,
+    member_names: Collection[str] | None = None,
+) -> Iterator[tuple[str, pd.DataFrame]]:
+    """Yield selected member identities and frames after full safety validation."""
     resolved = archive_path.resolve(strict=True)
     with tarfile.open(resolved, mode="r:*") as archive:
         approved = _approved_members(archive)
@@ -211,4 +224,5 @@ def iter_archive_frames(
             raise ValueError(f"requested archive members are not approved: {missing}")
         for member in approved:
             if requested is None or member.name in requested:
-                yield from _member_frames(archive, member)
+                for frame in _member_frames(archive, member):
+                    yield member.name, frame
