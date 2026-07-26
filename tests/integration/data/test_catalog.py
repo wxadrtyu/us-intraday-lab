@@ -82,6 +82,20 @@ def _catalog_module() -> object:
     return importlib.import_module("us_intraday_lab.data.catalog")
 
 
+def _artifact_path(root: Path, dataset_id: str, name: str) -> Path:
+    lineage_path = root / "data" / "lake" / "derived" / dataset_id / "lineage.json"
+    lineage = json.loads(lineage_path.read_text(encoding="utf-8"))
+    return lineage_path.parent / lineage["artifacts"][name]["relative_path"]
+
+
+def _rehash_artifact(root: Path, dataset_id: str, name: str) -> None:
+    lineage_path = root / "data" / "lake" / "derived" / dataset_id / "lineage.json"
+    lineage = json.loads(lineage_path.read_text(encoding="utf-8"))
+    artifact = lineage_path.parent / lineage["artifacts"][name]["relative_path"]
+    lineage["artifacts"][name]["sha256"] = hashlib.sha256(artifact.read_bytes()).hexdigest()
+    lineage_path.write_text(json.dumps(lineage), encoding="utf-8")
+
+
 def test_catalog_exposes_snapshot_and_derived_bars_as_read_only_views(
     tmp_path: Path,
 ) -> None:
@@ -123,6 +137,40 @@ def test_catalog_exposes_snapshot_and_derived_bars_as_read_only_views(
             connection.execute("CREATE TABLE forbidden_insert (value INTEGER)")
         with pytest.raises(duckdb.Error):
             connection.execute("INSERT INTO dataset_manifests SELECT * FROM dataset_manifests")
+
+
+def test_catalog_definitions_are_exactly_five_explicit_parquet_views(tmp_path: Path) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog.build_catalog(dataset_id, root=root)
+    canonical_files = sorted((root / "data" / "lake" / "canonical" / dataset_id).rglob("*.parquet"))
+    expected_paths = {
+        "bars_1m": canonical_files,
+        "bars_5m": [_artifact_path(root, dataset_id, "bars_5min")],
+        "bars_15m": [_artifact_path(root, dataset_id, "bars_15min")],
+        "dataset_manifests": [_artifact_path(root, dataset_id, "dataset_manifests")],
+        "symbol_session_quality": [_artifact_path(root, dataset_id, "symbol_session_quality")],
+    }
+
+    with catalog.connect_catalog(root=root) as connection:
+        definitions = dict(
+            connection.execute(
+                """
+                SELECT view_name, sql
+                FROM duckdb_views()
+                WHERE database_name = current_database()
+                  AND schema_name = 'main'
+                ORDER BY view_name
+                """
+            ).fetchall()
+        )
+
+    assert set(definitions) == set(expected_paths)
+    for view_name, paths in expected_paths.items():
+        assert "read_parquet" in definitions[view_name]
+        assert definitions[view_name].count(".parquet") == len(paths)
+        for path in paths:
+            assert path.resolve().as_posix() in definitions[view_name]
 
 
 def test_accept_verifies_hashes_schema_coverage_lineage_and_catalog_queries(
@@ -175,6 +223,63 @@ def test_accept_rejects_rehashed_derived_values_not_reproducible_from_parent(
     with pytest.raises(catalog.CatalogAcceptanceError, match="derived 5min content"):
         catalog.build_catalog(dataset_id, root=root)
     with pytest.raises(catalog.CatalogAcceptanceError, match="derived 5min content"):
+        catalog.accept_dataset(dataset_id, root=root)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "replacement"),
+    [
+        ("schema_version", "999.0.0"),
+        ("source_sha256", "0" * 64),
+        ("content_sha256", "f" * 64),
+        ("row_count", 9_999),
+    ],
+)
+def test_rehashed_manifest_metadata_tampering_is_refused(
+    tmp_path: Path,
+    field_name: str,
+    replacement: object,
+) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog.build_catalog(dataset_id, root=root)
+    artifact = _artifact_path(root, dataset_id, "dataset_manifests")
+    metadata = pd.read_parquet(artifact)
+    metadata.loc[0, field_name] = replacement
+    metadata.to_parquet(artifact, index=False)
+    _rehash_artifact(root, dataset_id, "dataset_manifests")
+
+    with pytest.raises(catalog.CatalogAcceptanceError, match="dataset_manifests metadata"):
+        catalog.build_catalog(dataset_id, root=root)
+    with pytest.raises(catalog.CatalogAcceptanceError, match="dataset_manifests metadata"):
+        catalog.accept_dataset(dataset_id, root=root)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["counter", "remove_row", "change_row"],
+)
+def test_rehashed_symbol_session_quality_tampering_is_refused(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog.build_catalog(dataset_id, root=root)
+    artifact = _artifact_path(root, dataset_id, "symbol_session_quality")
+    metadata = pd.read_parquet(artifact)
+    if mutation == "counter":
+        metadata.loc[0, "missing_expected_bars"] = 1
+    elif mutation == "remove_row":
+        metadata = metadata.iloc[:-1].reset_index(drop=True)
+    else:
+        metadata.loc[0, "symbol"] = "AAPL"
+    metadata.to_parquet(artifact, index=False)
+    _rehash_artifact(root, dataset_id, "symbol_session_quality")
+
+    with pytest.raises(catalog.CatalogAcceptanceError, match="symbol_session_quality metadata"):
+        catalog.build_catalog(dataset_id, root=root)
+    with pytest.raises(catalog.CatalogAcceptanceError, match="symbol_session_quality metadata"):
         catalog.accept_dataset(dataset_id, root=root)
 
 

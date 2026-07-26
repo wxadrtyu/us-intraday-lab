@@ -8,14 +8,21 @@ import os
 import shutil
 import tempfile
 from dataclasses import asdict, dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, cast
 
 import duckdb
 import pandas as pd
+import pyarrow as pa  # type: ignore[import-untyped]
+import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
 from us_intraday_lab.contracts.datasets import DatasetManifest
-from us_intraday_lab.data.quality import PRODUCTION_SYMBOLS, assess_minute_bars
+from us_intraday_lab.data.quality import (
+    PRODUCTION_SYMBOLS,
+    ExpectedGroup,
+    assess_minute_bars,
+)
 from us_intraday_lab.data.resample import resample_minute_bars
 from us_intraday_lab.data.snapshot import DerivedBarSize, verify_snapshot
 from us_intraday_lab.settings import LabPaths
@@ -74,7 +81,11 @@ def _read_minute_bars(files: tuple[Path, ...]) -> pd.DataFrame:
     )
 
 
-def _manifest_frame(manifest: DatasetManifest) -> pd.DataFrame:
+def _manifest_frame(
+    manifest: DatasetManifest,
+    evidence: dict[str, Any],
+) -> pd.DataFrame:
+    source_declaration = cast(dict[str, Any], evidence["source_declaration"])
     return pd.DataFrame(
         [
             {
@@ -95,13 +106,70 @@ def _manifest_frame(manifest: DatasetManifest) -> pd.DataFrame:
                 "min_timestamp": manifest.min_timestamp,
                 "max_timestamp": manifest.max_timestamp,
                 "quality_passed": manifest.quality.passed,
+                "duplicate_rows": manifest.quality.duplicate_rows,
+                "missing_expected_bars": manifest.quality.missing_expected_bars,
+                "invalid_ohlc_rows": manifest.quality.invalid_ohlc_rows,
+                "invalid_volume_rows": manifest.quality.invalid_volume_rows,
+                "outside_session_rows": manifest.quality.outside_session_rows,
+                "non_monotonic_groups": manifest.quality.non_monotonic_groups,
+                "import_evidence_schema_version": evidence["schema_version"],
+                "source_recipe_sha256": evidence["source_recipe_sha256"],
+                "declared_production_symbols": source_declaration["production_symbols"],
+                "effective_production_symbols": evidence["effective_production_symbols"],
+                "expected_start_date": date.fromisoformat(
+                    str(source_declaration["expected_start_date"])
+                ),
+                "expected_end_date": date.fromisoformat(
+                    str(source_declaration["expected_end_date"])
+                ),
             }
         ]
     )
 
 
-def _quality_frame(bars: pd.DataFrame) -> pd.DataFrame:
-    quality = assess_minute_bars(bars, production_symbols=PRODUCTION_SYMBOLS)
+def _quality_scope(evidence: dict[str, Any]) -> tuple[set[ExpectedGroup], tuple[str, ...]]:
+    raw_production = evidence["effective_production_symbols"]
+    if not isinstance(raw_production, list) or not all(
+        isinstance(symbol, str) for symbol in raw_production
+    ):
+        raise CatalogAcceptanceError("import evidence production universe is invalid")
+    production_symbols = tuple(cast(list[str], raw_production))
+    if tuple(sorted(set(production_symbols))) != production_symbols:
+        raise CatalogAcceptanceError("import evidence production universe is not canonical")
+
+    raw_expected = evidence["expected_production_groups"]
+    if not isinstance(raw_expected, list):
+        raise CatalogAcceptanceError("import evidence expected production groups are invalid")
+    expected_groups: set[ExpectedGroup] = set()
+    for raw_group in raw_expected:
+        if not isinstance(raw_group, dict):
+            raise CatalogAcceptanceError("import evidence expected production group is invalid")
+        try:
+            group = (
+                str(raw_group["symbol"]),
+                date.fromisoformat(str(raw_group["session_date"])),
+            )
+        except (KeyError, ValueError) as error:
+            raise CatalogAcceptanceError(
+                "import evidence expected production group is invalid"
+            ) from error
+        expected_groups.add(group)
+    if len(expected_groups) != len(raw_expected):
+        raise CatalogAcceptanceError("import evidence expected production groups are duplicated")
+    if {symbol for symbol, _ in expected_groups}.difference(production_symbols):
+        raise CatalogAcceptanceError(
+            "import evidence expected groups exceed the production universe"
+        )
+    return expected_groups, production_symbols
+
+
+def _quality_frame(bars: pd.DataFrame, evidence: dict[str, Any]) -> pd.DataFrame:
+    expected_groups, production_symbols = _quality_scope(evidence)
+    quality = assess_minute_bars(
+        bars,
+        expected_groups=expected_groups,
+        production_symbols=production_symbols,
+    )
     return pd.DataFrame(
         [
             {
@@ -120,6 +188,7 @@ def _write_derived_artifacts(
     *,
     manifest: DatasetManifest,
     bars: pd.DataFrame,
+    evidence: dict[str, Any],
 ) -> None:
     artifacts: dict[str, dict[str, object]] = {}
     for bar_size in _DERIVED_BAR_SIZES:
@@ -141,8 +210,8 @@ def _write_derived_artifacts(
         }
 
     metadata = {
-        "dataset_manifests": _manifest_frame(manifest),
-        "symbol_session_quality": _quality_frame(bars),
+        "dataset_manifests": _manifest_frame(manifest, evidence),
+        "symbol_session_quality": _quality_frame(bars, evidence),
     }
     for name, frame in metadata.items():
         output = target / "metadata" / f"{name}.parquet"
@@ -185,6 +254,13 @@ def _verified_artifact_paths(
     manifest: DatasetManifest,
 ) -> dict[str, Path]:
     lineage = _load_lineage(derived_root)
+    if set(lineage) != {
+        "schema_version",
+        "parent_snapshot_id",
+        "parent_content_sha256",
+        "artifacts",
+    }:
+        raise CatalogAcceptanceError("derived lineage fields do not match the required schema")
     if lineage.get("schema_version") != _DERIVED_LINEAGE_SCHEMA_VERSION:
         raise CatalogAcceptanceError("unsupported derived lineage schema version")
     if lineage.get("parent_snapshot_id") != manifest.dataset_id:
@@ -204,14 +280,58 @@ def _verified_artifact_paths(
     if set(raw_artifacts) != required:
         raise CatalogAcceptanceError("derived lineage artifacts do not match the required set")
 
+    expected_records: dict[str, tuple[str, dict[str, object]]] = {
+        "bars_5min": (
+            "bar_size=5min/part-00000.parquet",
+            {
+                "bar_size": "5min",
+                "source_bar_size": "1min",
+                "parent_snapshot_id": manifest.dataset_id,
+            },
+        ),
+        "bars_15min": (
+            "bar_size=15min/part-00000.parquet",
+            {
+                "bar_size": "15min",
+                "source_bar_size": "1min",
+                "parent_snapshot_id": manifest.dataset_id,
+            },
+        ),
+        "dataset_manifests": (
+            "metadata/dataset_manifests.parquet",
+            {},
+        ),
+        "symbol_session_quality": (
+            "metadata/symbol_session_quality.parquet",
+            {},
+        ),
+    }
     paths: dict[str, Path] = {}
     for name in sorted(required):
         record = raw_artifacts[name]
         if not isinstance(record, dict):
             raise CatalogAcceptanceError(f"derived artifact record is invalid: {name}")
+        expected_path, expected_metadata = expected_records[name]
+        expected_fields = {"relative_path", "sha256", "row_count", *expected_metadata}
+        if set(record) != expected_fields:
+            raise CatalogAcceptanceError(f"derived artifact lineage fields are invalid: {name}")
         relative_path = record.get("relative_path")
-        if not isinstance(relative_path, str):
+        if relative_path != expected_path:
             raise CatalogAcceptanceError(f"derived artifact path is invalid: {name}")
+        for field_name, expected_value in expected_metadata.items():
+            if record.get(field_name) != expected_value:
+                raise CatalogAcceptanceError(
+                    f"derived artifact lineage {field_name} is invalid: {name}"
+                )
+        if type(record.get("row_count")) is not int or record["row_count"] < 0:
+            raise CatalogAcceptanceError(f"derived artifact row count is invalid: {name}")
+        recorded_sha = record.get("sha256")
+        if (
+            not isinstance(recorded_sha, str)
+            or len(recorded_sha) != 64
+            or any(character not in "0123456789abcdef" for character in recorded_sha)
+        ):
+            raise CatalogAcceptanceError(f"derived artifact hash is invalid: {name}")
         path = (derived_root / relative_path).resolve()
         if not path.is_relative_to(derived_root.resolve()) or not path.is_file():
             raise CatalogAcceptanceError(f"derived artifact is missing: {name}")
@@ -226,6 +346,7 @@ def _publish_derived_snapshot(
     *,
     manifest: DatasetManifest,
     bars: pd.DataFrame,
+    evidence: dict[str, Any],
 ) -> dict[str, Path]:
     final_root = _derived_root(paths, manifest.dataset_id)
     if final_root.exists():
@@ -235,7 +356,12 @@ def _publish_derived_snapshot(
     parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=".derived-", dir=parent)).resolve()
     try:
-        _write_derived_artifacts(temporary, manifest=manifest, bars=bars)
+        _write_derived_artifacts(
+            temporary,
+            manifest=manifest,
+            bars=bars,
+            evidence=evidence,
+        )
         temporary.rename(final_root)
     except BaseException:
         if temporary.exists() and temporary.parent == parent.resolve():
@@ -280,7 +406,10 @@ def _create_catalog(
             temporary.unlink()
 
 
-def _require_supported_snapshot_schema(paths: LabPaths, manifest: DatasetManifest) -> None:
+def _verified_import_evidence(
+    paths: LabPaths,
+    manifest: DatasetManifest,
+) -> dict[str, Any]:
     if manifest.schema_version != _MANIFEST_SCHEMA_VERSION:
         raise CatalogAcceptanceError(
             f"unsupported snapshot manifest schema version: {manifest.schema_version}"
@@ -288,13 +417,58 @@ def _require_supported_snapshot_schema(paths: LabPaths, manifest: DatasetManifes
     evidence_path = paths.canonical / manifest.dataset_id / "import-evidence.json"
     try:
         evidence = cast(
-            dict[str, object],
+            dict[str, Any],
             json.loads(evidence_path.read_text(encoding="utf-8")),
         )
     except (FileNotFoundError, json.JSONDecodeError, OSError) as error:
         raise CatalogAcceptanceError("snapshot import evidence is unreadable") from error
     if evidence.get("schema_version") != _IMPORT_EVIDENCE_SCHEMA_VERSION:
         raise CatalogAcceptanceError("unsupported import evidence schema version")
+    if evidence.get("source_sha256") != manifest.source_sha256:
+        raise CatalogAcceptanceError("import evidence source hash does not match manifest")
+    _quality_scope(evidence)
+    return evidence
+
+
+def _verify_metadata_content(
+    artifacts: dict[str, Path],
+    *,
+    manifest: DatasetManifest,
+    minute_bars: pd.DataFrame,
+    evidence: dict[str, Any],
+) -> dict[str, int]:
+    expected_frames = {
+        "dataset_manifests": _manifest_frame(manifest, evidence),
+        "symbol_session_quality": _quality_frame(minute_bars, evidence),
+    }
+    counts: dict[str, int] = {}
+    for name, expected_frame in expected_frames.items():
+        expected_sink = pa.BufferOutputStream()
+        pq.write_table(
+            pa.Table.from_pandas(expected_frame, preserve_index=False),
+            expected_sink,
+        )
+        expected = pq.ParquetFile(pa.BufferReader(expected_sink.getvalue())).read()
+        actual = pq.ParquetFile(artifacts[name]).read()
+        if not actual.schema.equals(expected.schema, check_metadata=True) or not actual.equals(
+            expected
+        ):
+            raise CatalogAcceptanceError(
+                f"{name} metadata is not reproducible from the canonical snapshot"
+            )
+        counts[name] = len(expected_frame)
+    return counts
+
+
+def _verify_lineage_row_counts(
+    derived_root: Path,
+    expected_counts: dict[str, int],
+) -> None:
+    artifacts = cast(dict[str, Any], _load_lineage(derived_root)["artifacts"])
+    for name, expected_count in expected_counts.items():
+        record = cast(dict[str, Any], artifacts[name])
+        if record["row_count"] != expected_count:
+            raise CatalogAcceptanceError(f"derived artifact lineage row count is invalid: {name}")
 
 
 def _verify_derived_content(
@@ -337,14 +511,29 @@ def build_catalog(dataset_id: str, *, root: Path) -> Path:
     """Build a DuckDB file containing views only, bound to explicit Parquet paths."""
     paths = LabPaths.from_root(root)
     manifest = verify_snapshot(dataset_id, root=paths.root)
-    _require_supported_snapshot_schema(paths, manifest)
+    evidence = _verified_import_evidence(paths, manifest)
     minute_files = _snapshot_parquet_files(paths, dataset_id)
     bars = _read_minute_bars(minute_files)
-    artifacts = _publish_derived_snapshot(paths, manifest=manifest, bars=bars)
-    _verify_derived_content(
+    artifacts = _publish_derived_snapshot(
+        paths,
+        manifest=manifest,
+        bars=bars,
+        evidence=evidence,
+    )
+    derived_counts = _verify_derived_content(
         artifacts,
         minute_bars=bars,
         dataset_id=dataset_id,
+    )
+    metadata_counts = _verify_metadata_content(
+        artifacts,
+        manifest=manifest,
+        minute_bars=bars,
+        evidence=evidence,
+    )
+    _verify_lineage_row_counts(
+        _derived_root(paths, dataset_id),
+        {**{f"bars_{key}": value for key, value in derived_counts.items()}, **metadata_counts},
     )
     _create_catalog(
         paths.catalog,
@@ -383,7 +572,7 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
         manifest = verify_snapshot(dataset_id, root=paths.root)
     except (ValueError, OSError) as error:
         raise CatalogAcceptanceError(f"snapshot verification failed: {error}") from error
-    _require_supported_snapshot_schema(paths, manifest)
+    evidence = _verified_import_evidence(paths, manifest)
     artifacts = _verified_artifact_paths(
         _derived_root(paths, dataset_id),
         manifest=manifest,
@@ -397,13 +586,22 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
 
     minute_bars = _read_minute_bars(_snapshot_parquet_files(paths, dataset_id))
     expected_counts = {"1min": manifest.row_count}
-    expected_counts.update(
-        _verify_derived_content(
-            artifacts,
-            minute_bars=minute_bars,
-            dataset_id=dataset_id,
-        )
+    derived_counts = _verify_derived_content(
+        artifacts,
+        minute_bars=minute_bars,
+        dataset_id=dataset_id,
     )
+    metadata_counts = _verify_metadata_content(
+        artifacts,
+        manifest=manifest,
+        minute_bars=minute_bars,
+        evidence=evidence,
+    )
+    _verify_lineage_row_counts(
+        _derived_root(paths, dataset_id),
+        {**{f"bars_{key}": value for key, value in derived_counts.items()}, **metadata_counts},
+    )
+    expected_counts.update(derived_counts)
 
     try:
         with connect_catalog(root=paths.root) as connection:
