@@ -255,6 +255,28 @@ def _backtest_job() -> BacktestJob:
     )
 
 
+def _successful_backtest_result(
+    metrics: dict[str, dict[str, float]] | None = None,
+) -> BacktestResult:
+    if metrics is None:
+        metrics = {
+            "optimistic": {"net_return": 0.03},
+            "base": {"net_return": 0.02},
+            "stress": {"net_return": 0.01},
+        }
+    return BacktestResult(
+        schema_version="1.0.0",
+        run_id="run-001",
+        job_id="job-001",
+        status="succeeded",
+        failure=None,
+        metrics_by_cost_scenario=metrics,
+        trades_uri="file:///artifacts/run-001/trades.parquet",
+        events_uri="file:///artifacts/run-001/events.jsonl",
+        content_sha256="a" * 64,
+    )
+
+
 def test_backtest_job_json_round_trip_is_frozen_and_versioned() -> None:
     job = _backtest_job()
 
@@ -266,27 +288,65 @@ def test_backtest_job_json_round_trip_is_frozen_and_versioned() -> None:
 
 
 def test_backtest_result_json_round_trip_has_typed_cost_scenarios() -> None:
-    result = BacktestResult(
-        schema_version="1.0.0",
-        run_id="run-001",
-        job_id="job-001",
-        status="succeeded",
-        failure=None,
-        metrics_by_cost_scenario={
-            "optimistic": {"net_return": 0.03},
-            "base": {"net_return": 0.02},
-            "stress": {"net_return": 0.01},
-        },
-        trades_uri="file:///artifacts/run-001/trades.parquet",
-        events_uri="file:///artifacts/run-001/events.jsonl",
-        content_sha256="a" * 64,
-    )
+    result = _successful_backtest_result()
 
     restored = BacktestResult.model_validate_json(result.model_dump_json())
 
     assert restored == result
     with pytest.raises(ValidationError):
         result.status = "failed"
+
+
+def test_backtest_result_rejects_outer_metric_mutation_add_and_remove() -> None:
+    result = _successful_backtest_result()
+
+    with pytest.raises(TypeError):
+        result.metrics_by_cost_scenario["base"] = {"net_return": 0.99}
+    with pytest.raises(TypeError):
+        result.metrics_by_cost_scenario["diagnostic"] = {"net_return": 1.0}
+    with pytest.raises(TypeError):
+        del result.metrics_by_cost_scenario["stress"]
+
+
+def test_backtest_result_rejects_inner_metric_mutation() -> None:
+    result = _successful_backtest_result()
+
+    with pytest.raises(TypeError):
+        result.metrics_by_cost_scenario["base"]["net_return"] = 0.99
+
+
+def test_backtest_result_copies_source_metrics_before_freezing() -> None:
+    source = {
+        "optimistic": {"net_return": 0.03},
+        "base": {"net_return": 0.02},
+        "stress": {"net_return": 0.01},
+    }
+    result = _successful_backtest_result(source)
+
+    source["base"]["net_return"] = 0.99
+    source["optimistic"]["new_metric"] = 1.0
+    del source["stress"]
+
+    assert result.metrics_by_cost_scenario["base"]["net_return"] == 0.02
+    assert "new_metric" not in result.metrics_by_cost_scenario["optimistic"]
+    assert "stress" in result.metrics_by_cost_scenario
+
+
+def test_backtest_result_json_orders_scenarios_and_metrics_deterministically() -> None:
+    result = _successful_backtest_result(
+        {
+            "stress": {"z_metric": 3.0, "a_metric": 1.0},
+            "optimistic": {"z_metric": 3.0, "a_metric": 1.0},
+            "base": {"z_metric": 3.0, "a_metric": 1.0},
+        }
+    )
+
+    encoded = result.model_dump_json()
+    restored = BacktestResult.model_validate_json(encoded)
+
+    assert restored == result
+    assert encoded.index('"optimistic"') < encoded.index('"base"') < encoded.index('"stress"')
+    assert encoded.index('"a_metric"') < encoded.index('"z_metric"')
 
 
 def test_successful_backtest_result_requires_all_three_cost_scenarios() -> None:

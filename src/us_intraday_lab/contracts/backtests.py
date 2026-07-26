@@ -1,6 +1,15 @@
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 CostScenario = Literal["optimistic", "base", "stress"]
 BacktestStatus = Literal["succeeded", "failed"]
@@ -12,6 +21,7 @@ BacktestFailureType = Literal[
     "artifact_write",
     "internal",
 ]
+_COST_SCENARIO_ORDER: tuple[CostScenario, ...] = ("optimistic", "base", "stress")
 
 
 class _ClosedModel(BaseModel):
@@ -45,10 +55,31 @@ class BacktestResult(_ClosedModel):
     job_id: str = Field(min_length=1)
     status: BacktestStatus
     failure: BacktestFailure | None
-    metrics_by_cost_scenario: dict[CostScenario, dict[str, float]]
+    metrics_by_cost_scenario: Mapping[CostScenario, Mapping[str, float]]
     trades_uri: str = Field(min_length=1)
     events_uri: str = Field(min_length=1)
     content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @field_validator("metrics_by_cost_scenario", mode="after")
+    @classmethod
+    def freeze_metrics(
+        cls,
+        value: Mapping[CostScenario, Mapping[str, float]],
+    ) -> Mapping[CostScenario, Mapping[str, float]]:
+        return MappingProxyType(
+            {
+                scenario: MappingProxyType(dict(sorted(value[scenario].items())))
+                for scenario in _COST_SCENARIO_ORDER
+                if scenario in value
+            }
+        )
+
+    @field_serializer("metrics_by_cost_scenario")
+    def serialize_metrics(
+        self,
+        value: Mapping[CostScenario, Mapping[str, float]],
+    ) -> dict[CostScenario, dict[str, float]]:
+        return {scenario: dict(metrics) for scenario, metrics in value.items()}
 
     @model_validator(mode="after")
     def validate_status_and_failure(self) -> Self:
