@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DatasetQuality(BaseModel):
@@ -19,22 +19,29 @@ class DatasetManifest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     dataset_id: str = Field(min_length=1)
-    schema_version: str
+    schema_version: str = Field(min_length=1)
     source_uri: str
     source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    code_revision: str
-    calendar_name: str
-    calendar_version: str
+    code_revision: str = Field(min_length=1)
+    calendar_name: str = Field(min_length=1)
+    calendar_version: str = Field(min_length=1)
     created_at: datetime
-    provider: str
-    feed: str
-    bar_size: str
+    provider: str = Field(min_length=1)
+    feed: str = Field(min_length=1)
+    bar_size: str = Field(min_length=1)
     row_count: int = Field(ge=0)
     symbols: tuple[str, ...]
     min_timestamp: datetime
     max_timestamp: datetime
     quality: DatasetQuality
+
+    @field_validator("created_at", "min_timestamp", "max_timestamp")
+    @classmethod
+    def validate_utc_timestamp(cls, value: datetime) -> datetime:
+        if value.utcoffset() != timedelta(0):
+            raise ValueError("timestamp must be timezone-aware UTC")
+        return value.astimezone(UTC)
 
     @model_validator(mode="after")
     def validate_range(self) -> "DatasetManifest":
