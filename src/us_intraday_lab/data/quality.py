@@ -7,6 +7,7 @@ from exchange_calendars.errors import NotSessionError  # type: ignore[import-unt
 
 from us_intraday_lab.contracts.datasets import DatasetQuality
 from us_intraday_lab.data.calendar import expected_minute_index
+from us_intraday_lab.data.canonicalize import require_finite_canonical_numeric_columns
 
 PRODUCTION_SYMBOLS = frozenset({"SPY", "QQQ", "IWM"})
 ExpectedGroup = tuple[str, date]
@@ -272,6 +273,7 @@ def assess_minute_bars(
     _validate_columns(bars)
     frame = bars.reset_index(drop=True)
     _validate_provenance(frame)
+    require_finite_canonical_numeric_columns(frame)
     timestamps = _utc_series(frame, "timestamp")
     symbols = frame["symbol"].astype("string").str.strip().str.upper()
     if symbols.isna().any() or symbols.eq("").any():
@@ -282,14 +284,14 @@ def assess_minute_bars(
         ["symbol", "timestamp"],
         keep="first",
     )
-    prices = frame.loc[:, list(_PRICE_COLUMNS)].apply(pd.to_numeric, errors="coerce")
+    prices = frame.loc[:, list(_PRICE_COLUMNS)]
     invalid_ohlc_mask = (
         prices.isna().any(axis=1)
         | prices.le(0).any(axis=1)
         | prices["high"].lt(prices[["open", "low", "close"]].max(axis=1))
         | prices["low"].gt(prices[["open", "high", "close"]].min(axis=1))
     )
-    volume = pd.to_numeric(frame["volume"], errors="coerce")
+    volume = frame["volume"]
     invalid_volume_mask = volume.isna() | volume.lt(0)
 
     all_groups = _observed_groups(symbols, session_dates)

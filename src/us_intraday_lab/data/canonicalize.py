@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import cast
 
+import numpy as np
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 
 CANONICAL_COLUMNS = (
     "symbol",
@@ -20,6 +22,7 @@ CANONICAL_COLUMNS = (
 )
 _TIINGO_COLUMNS = ("ticker", "date", "open", "high", "low", "close", "volume")
 _NEW_YORK = "America/New_York"
+NUMERIC_CANONICAL_COLUMNS = ("open", "high", "low", "close", "volume")
 
 
 def _as_utc_timestamp(value: object, *, field_name: str) -> pd.Timestamp:
@@ -34,6 +37,34 @@ def _as_utc_timestamp(value: object, *, field_name: str) -> pd.Timestamp:
 
 def _duplicate_columns(columns: pd.Index[str]) -> list[str]:
     return columns[columns.duplicated()].unique().tolist()
+
+
+def _numeric_source_column(source: pd.DataFrame, column: str) -> pd.Series:
+    values = source[column]
+    contains_boolean = (
+        is_bool_dtype(values.dtype)
+        or values.map(lambda value: isinstance(value, (bool, np.bool_))).any()
+    )
+    if contains_boolean:
+        raise ValueError(f"{column} must contain finite numeric values, not booleans")
+    numeric = pd.to_numeric(values, errors="coerce")
+    if numeric.isna().any() or not np.isfinite(numeric.to_numpy(dtype="float64")).all():
+        raise ValueError(f"{column} must contain finite numeric values")
+    return numeric.astype("float64")
+
+
+def require_finite_canonical_numeric_columns(
+    bars: pd.DataFrame,
+    *,
+    columns: tuple[str, ...] = NUMERIC_CANONICAL_COLUMNS,
+) -> None:
+    """Reject values that do not already satisfy the canonical numeric contract."""
+    for column in columns:
+        values = bars[column]
+        if is_bool_dtype(values.dtype) or not is_numeric_dtype(values.dtype):
+            raise TypeError(f"{column} must use a numeric dtype in canonical bars")
+        if values.isna().any() or not np.isfinite(values.to_numpy(dtype="float64")).all():
+            raise ValueError(f"{column} must contain finite values in canonical bars")
 
 
 def canonicalize_tiingo_rows(
@@ -54,16 +85,19 @@ def canonicalize_tiingo_rows(
     timestamps = pd.DatetimeIndex(
         [_as_utc_timestamp(value, field_name="source timestamps") for value in source["date"]]
     )
+    numeric = {
+        column: _numeric_source_column(source, column) for column in NUMERIC_CANONICAL_COLUMNS
+    }
 
     bars = pd.DataFrame(
         {
             "symbol": source["ticker"].astype("string").str.strip().str.upper().to_numpy(),
             "timestamp": timestamps,
-            "open": source["open"].to_numpy(copy=True),
-            "high": source["high"].to_numpy(copy=True),
-            "low": source["low"].to_numpy(copy=True),
-            "close": source["close"].to_numpy(copy=True),
-            "volume": source["volume"].to_numpy(copy=True),
+            "open": numeric["open"].to_numpy(copy=True),
+            "high": numeric["high"].to_numpy(copy=True),
+            "low": numeric["low"].to_numpy(copy=True),
+            "close": numeric["close"].to_numpy(copy=True),
+            "volume": numeric["volume"].to_numpy(copy=True),
             "provider": "tiingo",
             "feed": "iex",
             "session_date": timestamps.tz_convert(_NEW_YORK).date,
@@ -71,4 +105,5 @@ def canonicalize_tiingo_rows(
         },
         columns=CANONICAL_COLUMNS,
     )
+    require_finite_canonical_numeric_columns(bars)
     return bars.sort_values(["symbol", "timestamp"], kind="stable").reset_index(drop=True)

@@ -5,9 +5,10 @@ import json
 import re
 import shutil
 import subprocess
+import tarfile
 import tempfile
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from importlib.metadata import PackageNotFoundError, version
 from itertools import pairwise
 from pathlib import Path
@@ -19,7 +20,9 @@ import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
 from us_intraday_lab.contracts.datasets import DatasetManifest
 from us_intraday_lab.data.archive import (
+    DEFAULT_ARCHIVE_READ_LIMITS,
     ArchiveInspection,
+    ArchiveReadLimits,
     inspect_archive,
     iter_archive_member_frames,
     sha256_file,
@@ -87,6 +90,7 @@ class ArchiveSourceDeclaration:
     production_symbols: tuple[str, ...]
     expected_start_date: date
     expected_end_date: date
+    expected_robustness_groups: tuple[ExpectedGroup, ...] = ()
 
     def __post_init__(self) -> None:
         if (self.provider, self.feed, self.bar_size) != ("tiingo", "iex", "1min"):
@@ -100,6 +104,26 @@ class ArchiveSourceDeclaration:
         )
         if normalized_production != tuple(sorted(self.production_symbols)):
             raise ValueError("production_symbols must be unique canonical tickers")
+        normalized_robustness = tuple(
+            sorted(
+                {
+                    (_validate_symbol(symbol), session_date)
+                    for symbol, session_date in self.expected_robustness_groups
+                }
+            )
+        )
+        if len(normalized_robustness) != len(self.expected_robustness_groups):
+            raise ValueError("expected_robustness_groups must be unique")
+        production = set(normalized_production).union(PRODUCTION_SYMBOLS)
+        for symbol, session_date in normalized_robustness:
+            if symbol in production:
+                raise ValueError("expected robustness groups must not contain production symbols")
+            if type(session_date) is not date:
+                raise TypeError("expected robustness group session_date must be a date")
+            if not self.expected_start_date <= session_date <= self.expected_end_date:
+                raise ValueError(
+                    "expected robustness groups must fall within the declared date range"
+                )
 
 
 class SnapshotQualityError(ValueError):
@@ -118,6 +142,8 @@ def _package_version(distribution: str) -> str:
 
 
 def _code_revision(root: Path) -> str:
+    if not root.is_dir():
+        return "unknown"
     result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=root,
@@ -195,6 +221,15 @@ def _expected_production_groups(
         pd.Timestamp(source.expected_end_date),
     )
     return {(symbol, session.date()) for symbol in production_symbols for session in sessions}
+
+
+def _expected_source_groups(
+    source: ArchiveSourceDeclaration,
+    production_symbols: tuple[str, ...],
+) -> set[ExpectedGroup]:
+    return _expected_production_groups(source, production_symbols).union(
+        source.expected_robustness_groups
+    )
 
 
 def _source_order_and_cadence(
@@ -275,6 +310,30 @@ def _quarantine_record(group: SymbolSessionQuality) -> dict[str, object]:
     }
 
 
+def _source_group_quality_record(
+    group: SymbolSessionQuality,
+    *,
+    publication_state: Literal["published", "quarantined"],
+) -> dict[str, object]:
+    return {
+        "symbol": group.symbol,
+        "session_date": group.session_date.isoformat(),
+        "production": group.production,
+        "expected_bars": group.expected_bars,
+        "observed_bars": group.observed_bars,
+        "missing_expected_bars": group.missing_expected_bars,
+        "duplicate_rows": group.duplicate_rows,
+        "invalid_ohlc_rows": group.invalid_ohlc_rows,
+        "invalid_volume_rows": group.invalid_volume_rows,
+        "outside_session_rows": group.outside_session_rows,
+        "non_monotonic": group.non_monotonic,
+        "structural_passed": group.structural_passed,
+        "passed": group.passed,
+        "requires_quarantine": group.requires_quarantine,
+        "publication_state": publication_state,
+    }
+
+
 def _source_declaration_record(source: ArchiveSourceDeclaration) -> dict[str, object]:
     return {
         "provider": source.provider,
@@ -284,6 +343,10 @@ def _source_declaration_record(source: ArchiveSourceDeclaration) -> dict[str, ob
         "production_symbols": sorted(source.production_symbols),
         "expected_start_date": source.expected_start_date.isoformat(),
         "expected_end_date": source.expected_end_date.isoformat(),
+        "expected_robustness_groups": [
+            {"symbol": symbol, "session_date": session_date.isoformat()}
+            for symbol, session_date in sorted(source.expected_robustness_groups)
+        ],
     }
 
 
@@ -294,6 +357,35 @@ def _source_recipe_sha256(source: ArchiveSourceDeclaration) -> str:
         separators=(",", ":"),
     )
     return hashlib.sha256(canonical_recipe.encode("utf-8")).hexdigest()
+
+
+def _stable_import_timestamp(source_sha256: str, recipe_sha256: str) -> datetime:
+    """Derive stable provenance time from immutable source and declaration identity."""
+    identity = hashlib.sha256(f"{source_sha256}:{recipe_sha256}".encode()).digest()
+    seconds_in_century = 100 * 365 * 24 * 60 * 60
+    seconds = int.from_bytes(identity[:8], "big") % seconds_in_century
+    return datetime(2000, 1, 1, tzinfo=UTC) + timedelta(seconds=seconds)
+
+
+def _dataset_identity_sha256(
+    *,
+    content_sha256: str,
+    source_recipe_sha256: str,
+    schema_version: str,
+    calendar_name: str,
+    calendar_version: str,
+    code_revision: str,
+) -> str:
+    identity = {
+        "calendar_name": calendar_name,
+        "calendar_version": calendar_version,
+        "code_revision": code_revision,
+        "content_sha256": content_sha256,
+        "schema_version": schema_version,
+        "source_recipe_sha256": source_recipe_sha256,
+    }
+    canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def _optional_timestamp_iso(timestamp: pd.Timestamp | None) -> str | None:
@@ -321,6 +413,7 @@ def _build_import_evidence(
             {
                 "name": name,
                 "size": selected[name].size,
+                "sha256": selected[name].sha256,
                 "columns": list(selected[name].columns),
                 "row_estimate": selected[name].row_estimate,
                 "min_timestamp": _optional_timestamp_iso(selected[name].min_timestamp),
@@ -337,6 +430,13 @@ def _build_import_evidence(
             for symbol, session_date in sorted(expected_groups)
         ],
         "source_quality": source_quality.aggregate.model_dump(mode="json"),
+        "source_group_quality": [
+            _source_group_quality_record(
+                group,
+                publication_state=("quarantined" if group.requires_quarantine else "published"),
+            )
+            for group in source_quality.groups
+        ],
         "quarantined_groups": [_quarantine_record(group) for group in quarantined_groups],
     }
 
@@ -352,9 +452,22 @@ def import_snapshot(
     *,
     root: Path,
     source: ArchiveSourceDeclaration,
+    limits: ArchiveReadLimits = DEFAULT_ARCHIVE_READ_LIMITS,
 ) -> tuple[DatasetManifest, Path]:
     """Copy approved legacy bars into a new immutable canonical snapshot."""
-    inspection = inspect_archive(archive_path)
+    try:
+        inspection = inspect_archive(
+            archive_path,
+            member_names=source.member_names,
+            limits=limits,
+        )
+    except ValueError as error:
+        if "requested archive members are not approved" in str(error):
+            raise ValueError(
+                "declared source members are absent or unapproved: "
+                + ",".join(sorted(source.member_names))
+            ) from error
+        raise
     if not inspection.members:
         raise ValueError("archive contains no approved CSV or Parquet members")
 
@@ -372,15 +485,37 @@ def import_snapshot(
             "declared source members lack required Tiingo columns: " + ",".join(invalid_schema)
         )
 
-    imported_at = datetime.now(UTC)
+    recipe_hash = _source_recipe_sha256(source)
+    imported_at = _stable_import_timestamp(inspection.source_sha256, recipe_hash)
     frames_by_member: dict[str, list[pd.DataFrame]] = {name: [] for name in source.member_names}
     for member_name, frame in iter_archive_member_frames(
         archive_path,
         member_names=source.member_names,
+        limits=limits,
     ):
         frames_by_member[member_name].append(frame)
     if not any(frames_by_member.values()):
         raise ValueError("archive contains no tabular rows")
+    try:
+        post_read_inspection = inspect_archive(
+            archive_path,
+            member_names=source.member_names,
+            limits=limits,
+        )
+    except (OSError, tarfile.TarError, ValueError) as error:
+        raise SnapshotVerificationError(
+            "source archive changed after inspection and selected-member read"
+        ) from error
+    if post_read_inspection.source_sha256 != inspection.source_sha256:
+        raise SnapshotVerificationError(
+            "source archive changed after inspection and selected-member read"
+        )
+    initial_member_hashes = {member.name: member.sha256 for member in inspection.members}
+    post_read_member_hashes = {
+        member.name: member.sha256 for member in post_read_inspection.members
+    }
+    if post_read_member_hashes != initial_member_hashes:
+        raise SnapshotVerificationError("selected archive member changed after inspection and read")
     source_non_monotonic: set[ExpectedGroup] = set()
     member_cadence: list[dict[str, object]] = []
     selected_source_rows: list[pd.DataFrame] = []
@@ -404,10 +539,11 @@ def import_snapshot(
     _validate_canonical_symbols(bars)
     _validate_declared_date_range(bars, source)
     effective_production = _effective_production_symbols(bars, source)
-    expected_groups = _expected_production_groups(source, effective_production)
+    expected_production_groups = _expected_production_groups(source, effective_production)
+    expected_source_groups = _expected_source_groups(source, effective_production)
     source_quality = assess_minute_bars(
         bars,
-        expected_groups=expected_groups,
+        expected_groups=expected_source_groups,
         production_symbols=effective_production,
         source_non_monotonic_groups=source_non_monotonic,
     )
@@ -437,21 +573,20 @@ def import_snapshot(
         raise SnapshotQualityError("all observed robustness groups require quarantine")
     published_quality = assess_minute_bars(
         published_bars,
-        expected_groups=expected_groups,
+        expected_groups=expected_production_groups,
         production_symbols=effective_production,
     )
     if not published_quality.passed:
         raise SnapshotQualityError("published bars do not pass the declared quality scope")
 
     paths = LabPaths.from_root(root)
-    recipe_hash = _source_recipe_sha256(source)
-    dataset_id = f"tiingo-iex-1min-{inspection.source_sha256[:16]}-{recipe_hash[:16]}"
-    final_root = paths.canonical / dataset_id
+    calendar_name = "XNYS"
+    calendar_version = _package_version("exchange-calendars")
+    code_revision = _code_revision(paths.root)
     paths.canonical.mkdir(parents=True, exist_ok=True)
-    if final_root.exists():
-        raise FileExistsError(f"immutable snapshot already exists: {final_root}")
 
     temporary_root = Path(tempfile.mkdtemp(prefix=".snapshot-", dir=paths.canonical)).resolve()
+    final_root: Path | None = None
     try:
         temporary_outputs = _write_partitions(published_bars, temporary_root)
         evidence = _build_import_evidence(
@@ -459,7 +594,7 @@ def import_snapshot(
             inspection=inspection,
             observed_cadence=cadence_evidence,
             member_cadence=member_cadence,
-            expected_groups=expected_groups,
+            expected_groups=expected_production_groups,
             effective_production_symbols=effective_production,
             source_quality=source_quality,
             quarantined_groups=quarantined_groups,
@@ -473,15 +608,25 @@ def import_snapshot(
             temporary_root,
             _snapshot_content_files(temporary_root),
         )
+        identity_hash = _dataset_identity_sha256(
+            content_sha256=content_hash,
+            source_recipe_sha256=recipe_hash,
+            schema_version=_SCHEMA_VERSION,
+            calendar_name=calendar_name,
+            calendar_version=calendar_version,
+            code_revision=code_revision,
+        )
+        dataset_id = f"tiingo-iex-1min-{identity_hash[:32]}"
+        final_root = paths.canonical / dataset_id
         manifest = DatasetManifest(
             dataset_id=dataset_id,
             schema_version=_SCHEMA_VERSION,
             source_uri=inspection.archive.as_uri(),
             source_sha256=inspection.source_sha256,
             content_sha256=content_hash,
-            code_revision=_code_revision(paths.root),
-            calendar_name="XNYS",
-            calendar_version=_package_version("exchange-calendars"),
+            code_revision=code_revision,
+            calendar_name=calendar_name,
+            calendar_version=calendar_version,
             created_at=imported_at,
             provider=source.provider,
             feed=source.feed,
@@ -501,12 +646,45 @@ def import_snapshot(
             raise SnapshotVerificationError(
                 "source archive changed after inspection and selected-member read"
             )
-        temporary_root.rename(final_root)
+        if final_root.exists():
+            existing_manifest = verify_snapshot(dataset_id, root=paths.root)
+            if existing_manifest != manifest:
+                raise SnapshotVerificationError(
+                    "dataset identity collision with a different immutable snapshot"
+                )
+            _safe_remove_temporary(temporary_root, paths.canonical)
+            existing_outputs = tuple(
+                sorted(final_root.rglob("*.parquet"), key=lambda path: path.as_posix())
+            )
+            if not existing_outputs:
+                raise SnapshotVerificationError(
+                    "idempotent snapshot contains no Parquet partitions"
+                )
+            return existing_manifest, existing_outputs[0]
+        try:
+            temporary_root.rename(final_root)
+        except FileExistsError:
+            existing_manifest = verify_snapshot(dataset_id, root=paths.root)
+            if existing_manifest != manifest:
+                raise SnapshotVerificationError(
+                    "dataset identity collision with a different immutable snapshot"
+                )
+            _safe_remove_temporary(temporary_root, paths.canonical)
+            existing_outputs = tuple(
+                sorted(final_root.rglob("*.parquet"), key=lambda path: path.as_posix())
+            )
+            if not existing_outputs:
+                raise SnapshotVerificationError(
+                    "idempotent snapshot contains no Parquet partitions"
+                )
+            return existing_manifest, existing_outputs[0]
     except BaseException:
         if temporary_root.exists():
             _safe_remove_temporary(temporary_root, paths.canonical)
         raise
 
+    if final_root is None:
+        raise RuntimeError("snapshot identity was not computed")
     first_output = final_root / temporary_outputs[0].relative_to(temporary_root)
     return manifest, first_output
 
@@ -549,6 +727,10 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         json.loads(evidence_path.read_text(encoding="utf-8")),
     )
     source_record = cast(dict[str, object], evidence["source_declaration"])
+    raw_robustness_groups = cast(
+        list[dict[str, object]],
+        source_record.get("expected_robustness_groups", []),
+    )
     source = ArchiveSourceDeclaration(
         provider=str(source_record["provider"]),
         feed=str(source_record["feed"]),
@@ -557,7 +739,72 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         production_symbols=tuple(cast(list[str], source_record["production_symbols"])),
         expected_start_date=date.fromisoformat(str(source_record["expected_start_date"])),
         expected_end_date=date.fromisoformat(str(source_record["expected_end_date"])),
+        expected_robustness_groups=tuple(
+            (
+                str(raw_group["symbol"]),
+                date.fromisoformat(str(raw_group["session_date"])),
+            )
+            for raw_group in raw_robustness_groups
+        ),
     )
+    recipe_hash = _source_recipe_sha256(source)
+    if evidence.get("source_recipe_sha256") != recipe_hash:
+        raise SnapshotVerificationError("source declaration recipe hash does not match evidence")
+    if evidence.get("source_sha256") != manifest.source_sha256:
+        raise SnapshotVerificationError("source hash evidence does not match manifest")
+    raw_selected_members = evidence.get("selected_members")
+    if not isinstance(raw_selected_members, list):
+        raise SnapshotVerificationError("selected member hash evidence is missing")
+    selected_names: list[str] = []
+    for raw_member in raw_selected_members:
+        if not isinstance(raw_member, dict):
+            raise SnapshotVerificationError("selected member hash evidence is invalid")
+        name = raw_member.get("name")
+        member_hash = raw_member.get("sha256")
+        if (
+            not isinstance(name, str)
+            or not isinstance(member_hash, str)
+            or re.fullmatch(r"[0-9a-f]{64}", member_hash) is None
+        ):
+            raise SnapshotVerificationError("selected member hash evidence is invalid")
+        selected_names.append(name)
+    if selected_names != sorted(source.member_names):
+        raise SnapshotVerificationError(
+            "selected member hash evidence does not match source declaration"
+        )
+    source_group_quality = evidence.get("source_group_quality")
+    if not isinstance(source_group_quality, list):
+        raise SnapshotVerificationError("complete source group-quality evidence is missing")
+    evidenced_groups = {
+        (str(record.get("symbol")), date.fromisoformat(str(record.get("session_date"))))
+        for record in source_group_quality
+        if isinstance(record, dict)
+    }
+    missing_robustness_evidence = set(source.expected_robustness_groups).difference(
+        evidenced_groups
+    )
+    if missing_robustness_evidence:
+        raise SnapshotVerificationError(
+            "source group-quality evidence omits declared robustness groups"
+        )
+    expected_dataset_id = (
+        "tiingo-iex-1min-"
+        + _dataset_identity_sha256(
+            content_sha256=manifest.content_sha256,
+            source_recipe_sha256=recipe_hash,
+            schema_version=manifest.schema_version,
+            calendar_name=manifest.calendar_name,
+            calendar_version=manifest.calendar_version,
+            code_revision=manifest.code_revision,
+        )[:32]
+    )
+    if dataset_id != expected_dataset_id:
+        raise SnapshotVerificationError(
+            "dataset_id does not match canonical content and declared identities"
+        )
+    stable_imported_at = _stable_import_timestamp(manifest.source_sha256, recipe_hash)
+    if manifest.created_at != stable_imported_at:
+        raise SnapshotVerificationError("manifest created_at is not deterministic")
     bars = _read_snapshot_bars(outputs)
     effective_production = _effective_production_symbols(bars, source)
     quality = assess_minute_bars(
@@ -574,6 +821,7 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         "min_timestamp": bars["timestamp"].min().to_pydatetime(),
         "max_timestamp": bars["timestamp"].max().to_pydatetime(),
         "quality": quality.aggregate,
+        "created_at": bars["ingested_at"].iloc[0].to_pydatetime(),
     }
     expected = {
         key: getattr(manifest, key)
@@ -586,6 +834,7 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
             "min_timestamp",
             "max_timestamp",
             "quality",
+            "created_at",
         )
     }
     if observed != expected:

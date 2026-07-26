@@ -21,6 +21,7 @@ from us_intraday_lab.contracts.datasets import DatasetManifest
 from us_intraday_lab.data.quality import (
     PRODUCTION_SYMBOLS,
     ExpectedGroup,
+    SymbolSessionQuality,
     assess_minute_bars,
 )
 from us_intraday_lab.data.resample import resample_minute_bars
@@ -115,6 +116,7 @@ def _manifest_frame(
                 "import_evidence_schema_version": evidence["schema_version"],
                 "source_recipe_sha256": evidence["source_recipe_sha256"],
                 "declared_production_symbols": source_declaration["production_symbols"],
+                "declared_robustness_groups": source_declaration["expected_robustness_groups"],
                 "effective_production_symbols": evidence["effective_production_symbols"],
                 "expected_start_date": date.fromisoformat(
                     str(source_declaration["expected_start_date"])
@@ -165,21 +167,110 @@ def _quality_scope(evidence: dict[str, Any]) -> tuple[set[ExpectedGroup], tuple[
 
 def _quality_frame(bars: pd.DataFrame, evidence: dict[str, Any]) -> pd.DataFrame:
     expected_groups, production_symbols = _quality_scope(evidence)
-    quality = assess_minute_bars(
+    published_quality = assess_minute_bars(
         bars,
         expected_groups=expected_groups,
         production_symbols=production_symbols,
     )
-    return pd.DataFrame(
-        [
+    expected_published = {
+        (group.symbol, group.session_date): group for group in published_quality.groups
+    }
+    raw_records = evidence.get("source_group_quality")
+    if not isinstance(raw_records, list):
+        raise CatalogAcceptanceError("complete source group-quality evidence is missing")
+    expected_fields = {
+        "symbol",
+        "session_date",
+        "production",
+        "expected_bars",
+        "observed_bars",
+        "missing_expected_bars",
+        "duplicate_rows",
+        "invalid_ohlc_rows",
+        "invalid_volume_rows",
+        "outside_session_rows",
+        "non_monotonic",
+        "structural_passed",
+        "passed",
+        "requires_quarantine",
+        "publication_state",
+    }
+    records: list[dict[str, object]] = []
+    seen_groups: set[ExpectedGroup] = set()
+    for raw_record in raw_records:
+        if not isinstance(raw_record, dict) or set(raw_record) != expected_fields:
+            raise CatalogAcceptanceError("source group-quality evidence record is invalid")
+        try:
+            symbol = str(raw_record["symbol"])
+            session_date = date.fromisoformat(str(raw_record["session_date"]))
+            group = SymbolSessionQuality(
+                symbol=symbol,
+                session_date=session_date,
+                production=cast(bool, raw_record["production"]),
+                expected_bars=cast(int, raw_record["expected_bars"]),
+                observed_bars=cast(int, raw_record["observed_bars"]),
+                missing_expected_bars=cast(int, raw_record["missing_expected_bars"]),
+                duplicate_rows=cast(int, raw_record["duplicate_rows"]),
+                invalid_ohlc_rows=cast(int, raw_record["invalid_ohlc_rows"]),
+                invalid_volume_rows=cast(int, raw_record["invalid_volume_rows"]),
+                outside_session_rows=cast(int, raw_record["outside_session_rows"]),
+                non_monotonic=cast(bool, raw_record["non_monotonic"]),
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise CatalogAcceptanceError(
+                "source group-quality evidence record is invalid"
+            ) from error
+        key = (symbol, session_date)
+        if key in seen_groups:
+            raise CatalogAcceptanceError("source group-quality evidence groups are duplicated")
+        seen_groups.add(key)
+        state = raw_record["publication_state"]
+        if state not in {"published", "quarantined"}:
+            raise CatalogAcceptanceError("source group-quality publication state is invalid")
+        if (
+            raw_record["structural_passed"] is not group.structural_passed
+            or raw_record["passed"] is not group.passed
+            or raw_record["requires_quarantine"] is not group.requires_quarantine
+            or (state == "quarantined") is not group.requires_quarantine
+        ):
+            raise CatalogAcceptanceError("source group-quality evidence semantics are invalid")
+        if state == "published":
+            recomputed = expected_published.get(key)
+            if recomputed is None or asdict(recomputed) != asdict(group):
+                raise CatalogAcceptanceError(
+                    "published source group quality is not reproducible from canonical bars"
+                )
+        elif key in expected_published and expected_published[key].observed_bars:
+            raise CatalogAcceptanceError(
+                "quarantined source group unexpectedly exists in canonical bars"
+            )
+        records.append(
             {
                 **asdict(group),
                 "structural_passed": group.structural_passed,
                 "passed": group.passed,
                 "requires_quarantine": group.requires_quarantine,
+                "publication_state": state,
             }
-            for group in quality.groups
-        ]
+        )
+    published_keys = {
+        key
+        for key, group in expected_published.items()
+        if group.observed_bars > 0 or group.production
+    }
+    evidence_published_keys = {
+        (cast(str, record["symbol"]), cast(date, record["session_date"]))
+        for record in records
+        if record["publication_state"] == "published"
+    }
+    if published_keys != evidence_published_keys:
+        raise CatalogAcceptanceError(
+            "source group-quality publication state does not match canonical bars"
+        )
+    return pd.DataFrame(records).sort_values(
+        ["symbol", "session_date"],
+        kind="stable",
+        ignore_index=True,
     )
 
 
@@ -379,6 +470,41 @@ def _parquet_source(files: tuple[Path, ...]) -> str:
     return f"read_parquet([{explicit_paths}], hive_partitioning = false, union_by_name = true)"
 
 
+def _catalog_sources(
+    *,
+    minute_files: tuple[Path, ...],
+    artifacts: dict[str, Path],
+) -> dict[str, str]:
+    return {
+        "bars_1m": _parquet_source(minute_files),
+        "bars_5m": _parquet_source((artifacts["bars_5min"],)),
+        "bars_15m": _parquet_source((artifacts["bars_15min"],)),
+        "dataset_manifests": _parquet_source((artifacts["dataset_manifests"],)),
+        "symbol_session_quality": _parquet_source((artifacts["symbol_session_quality"],)),
+    }
+
+
+def _view_definitions(connection: duckdb.DuckDBPyConnection) -> dict[str, str]:
+    return dict(
+        connection.execute(
+            """
+            SELECT view_name, sql
+            FROM duckdb_views()
+            WHERE database_name = current_database()
+              AND schema_name = 'main'
+            ORDER BY view_name
+            """
+        ).fetchall()
+    )
+
+
+def _expected_view_definitions(sources: dict[str, str]) -> dict[str, str]:
+    with duckdb.connect() as connection:
+        for view_name, source in sources.items():
+            connection.execute(f"CREATE VIEW {view_name} AS SELECT * FROM {source}")
+        return _view_definitions(connection)
+
+
 def _create_catalog(
     catalog_path: Path,
     *,
@@ -391,13 +517,7 @@ def _create_catalog(
         temporary.unlink()
     try:
         with duckdb.connect(str(temporary)) as connection:
-            sources = {
-                "bars_1m": _parquet_source(minute_files),
-                "bars_5m": _parquet_source((artifacts["bars_5min"],)),
-                "bars_15m": _parquet_source((artifacts["bars_15min"],)),
-                "dataset_manifests": _parquet_source((artifacts["dataset_manifests"],)),
-                "symbol_session_quality": _parquet_source((artifacts["symbol_session_quality"],)),
-            }
+            sources = _catalog_sources(minute_files=minute_files, artifacts=artifacts)
             for view_name, source in sources.items():
                 connection.execute(f"CREATE VIEW {view_name} AS SELECT * FROM {source}")
         os.replace(temporary, catalog_path)
@@ -565,6 +685,69 @@ def _catalog_bar_counts(connection: duckdb.DuckDBPyConnection) -> dict[str, int]
     return counts
 
 
+def _verify_catalog_objects_and_bindings(
+    connection: duckdb.DuckDBPyConnection,
+    *,
+    minute_files: tuple[Path, ...],
+    artifacts: dict[str, Path],
+) -> None:
+    sources = _catalog_sources(minute_files=minute_files, artifacts=artifacts)
+    expected_definitions = _expected_view_definitions(sources)
+    actual_definitions = _view_definitions(connection)
+    user_table_row = connection.execute(
+        """
+        SELECT count(*)
+        FROM duckdb_tables()
+        WHERE database_name = current_database()
+          AND schema_name = 'main'
+        """
+    ).fetchone()
+    if user_table_row is None:
+        raise CatalogAcceptanceError("catalog object inspection returned no result")
+    user_table_count = cast(int, user_table_row[0])
+    if set(actual_definitions) != set(sources) or user_table_count != 0:
+        raise CatalogAcceptanceError(
+            "catalog objects must contain exactly five expected views and zero user tables"
+        )
+    if actual_definitions != expected_definitions:
+        raise CatalogAcceptanceError(
+            "catalog view bindings and definitions do not match verified artifacts"
+        )
+
+
+def _verify_catalog_content(
+    connection: duckdb.DuckDBPyConnection,
+    expected_frames: dict[str, pd.DataFrame],
+) -> None:
+    for view_name, expected_frame in expected_frames.items():
+        registered_name = f"_expected_{view_name}"
+        connection.register(
+            registered_name,
+            pa.Table.from_pandas(expected_frame, preserve_index=False),
+        )
+        try:
+            difference = connection.execute(
+                f"""
+                SELECT count(*)
+                FROM (
+                    (SELECT * FROM {view_name}
+                     EXCEPT ALL
+                     SELECT * FROM {registered_name})
+                    UNION ALL
+                    (SELECT * FROM {registered_name}
+                     EXCEPT ALL
+                     SELECT * FROM {view_name})
+                )
+                """
+            ).fetchone()
+        finally:
+            connection.unregister(registered_name)
+        if difference is None or difference[0] != 0:
+            raise CatalogAcceptanceError(
+                f"catalog view content does not exactly match verified artifacts: {view_name}"
+            )
+
+
 def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
     """Verify immutable inputs, derived lineage, coverage, and read-only queries."""
     paths = LabPaths.from_root(root)
@@ -584,7 +767,8 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
             "production-symbol coverage requires IWM,QQQ,SPY; missing " + ",".join(missing)
         )
 
-    minute_bars = _read_minute_bars(_snapshot_parquet_files(paths, dataset_id))
+    minute_files = _snapshot_parquet_files(paths, dataset_id)
+    minute_bars = _read_minute_bars(minute_files)
     expected_counts = {"1min": manifest.row_count}
     derived_counts = _verify_derived_content(
         artifacts,
@@ -602,6 +786,21 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
         {**{f"bars_{key}": value for key, value in derived_counts.items()}, **metadata_counts},
     )
     expected_counts.update(derived_counts)
+    expected_frames = {
+        "bars_1m": minute_bars,
+        "bars_5m": resample_minute_bars(
+            minute_bars,
+            bar_size="5min",
+            parent_snapshot_id=dataset_id,
+        ),
+        "bars_15m": resample_minute_bars(
+            minute_bars,
+            bar_size="15min",
+            parent_snapshot_id=dataset_id,
+        ),
+        "dataset_manifests": _manifest_frame(manifest, evidence),
+        "symbol_session_quality": _quality_frame(minute_bars, evidence),
+    }
 
     try:
         with connect_catalog(root=paths.root) as connection:
@@ -610,6 +809,12 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
             ).fetchone()
             if access_mode != ("read_only",):
                 raise CatalogAcceptanceError("application catalog connection is not read-only")
+            _verify_catalog_objects_and_bindings(
+                connection,
+                minute_files=minute_files,
+                artifacts=artifacts,
+            )
+            _verify_catalog_content(connection, expected_frames)
             selected_dataset = connection.execute(
                 "SELECT dataset_id, quality_passed FROM dataset_manifests"
             ).fetchall()
@@ -630,6 +835,17 @@ def accept_dataset(dataset_id: str, *, root: Path) -> AcceptanceSummary:
             if passed_production != set(required_production):
                 raise CatalogAcceptanceError(
                     "catalog production symbol/session quality does not pass"
+                )
+            failed_production = connection.execute(
+                """
+                SELECT count(*)
+                FROM symbol_session_quality
+                WHERE production AND NOT passed
+                """
+            ).fetchone()
+            if failed_production is None or failed_production[0] != 0:
+                raise CatalogAcceptanceError(
+                    "catalog contains failed production symbol/session quality"
                 )
             bar_counts = _catalog_bar_counts(connection)
     except CatalogAcceptanceError:

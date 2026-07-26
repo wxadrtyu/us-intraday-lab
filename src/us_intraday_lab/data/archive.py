@@ -20,10 +20,42 @@ class UnsafeArchiveError(ValueError):
     """Raised before archive payloads are read when a member is unsafe."""
 
 
+class ArchiveResourceLimitError(ValueError):
+    """Raised when an archive exceeds a configured fail-closed resource ceiling."""
+
+
+@dataclass(frozen=True, slots=True)
+class ArchiveReadLimits:
+    """Conservative import ceilings, sized above the planned 1.4M-row source.
+
+    These are safety limits rather than declarations of expected archive facts.
+    Callers can lower them for constrained environments or focused validation.
+    """
+
+    max_approved_members: int = 128
+    max_selected_uncompressed_bytes: int = 8 * 1024**3
+    max_imported_rows: int = 10_000_000
+    parquet_spool_memory_bytes: int = 64 * 1024**2
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "max_approved_members",
+            "max_selected_uncompressed_bytes",
+            "max_imported_rows",
+            "parquet_spool_memory_bytes",
+        ):
+            if type(getattr(self, field_name)) is not int or getattr(self, field_name) <= 0:
+                raise ValueError(f"{field_name} must be a positive integer")
+
+
+DEFAULT_ARCHIVE_READ_LIMITS = ArchiveReadLimits()
+
+
 @dataclass(frozen=True, slots=True)
 class ArchiveMemberInspection:
     name: str
     size: int
+    sha256: str
     columns: tuple[str, ...]
     row_estimate: int
     min_timestamp: pd.Timestamp | None
@@ -83,8 +115,13 @@ def _validate_member_name(name: str) -> None:
         raise UnsafeArchiveError(f"unsafe archive member path: {name}")
 
 
-def _approved_members(archive: tarfile.TarFile) -> tuple[tarfile.TarInfo, ...]:
+def _approved_members(
+    archive: tarfile.TarFile,
+    *,
+    limits: ArchiveReadLimits,
+) -> tuple[tarfile.TarInfo, ...]:
     approved: list[tarfile.TarInfo] = []
+    approved_names: set[str] = set()
     for member in archive.getmembers():
         _validate_member_name(member.name)
         if member.issym() or member.islnk():
@@ -94,8 +131,37 @@ def _approved_members(archive: tarfile.TarFile) -> tuple[tarfile.TarInfo, ...]:
         if not member.isfile():
             raise UnsafeArchiveError(f"archive special members are not allowed: {member.name}")
         if Path(member.name).suffix.lower() in _APPROVED_SUFFIXES:
+            if member.name in approved_names:
+                raise UnsafeArchiveError(f"duplicate approved archive member name: {member.name}")
+            approved_names.add(member.name)
             approved.append(member)
+            if len(approved) > limits.max_approved_members:
+                raise ArchiveResourceLimitError(
+                    "approved member count exceeds configured ceiling "
+                    f"({limits.max_approved_members})"
+                )
     return tuple(approved)
+
+
+def _selected_members(
+    approved: tuple[tarfile.TarInfo, ...],
+    *,
+    member_names: Collection[str] | None,
+    limits: ArchiveReadLimits,
+) -> tuple[tarfile.TarInfo, ...]:
+    requested = None if member_names is None else set(member_names)
+    approved_names = {member.name for member in approved}
+    if requested is not None and not requested.issubset(approved_names):
+        missing = sorted(requested.difference(approved_names))
+        raise ValueError(f"requested archive members are not approved: {missing}")
+    selected = tuple(member for member in approved if requested is None or member.name in requested)
+    selected_bytes = sum(member.size for member in selected)
+    if selected_bytes > limits.max_selected_uncompressed_bytes:
+        raise ArchiveResourceLimitError(
+            "selected uncompressed bytes exceed configured ceiling "
+            f"({limits.max_selected_uncompressed_bytes})"
+        )
+    return selected
 
 
 def _member_stream(archive: tarfile.TarFile, member: tarfile.TarInfo) -> IO[bytes]:
@@ -109,8 +175,12 @@ def _csv_frames(stream: IO[bytes]) -> Iterator[pd.DataFrame]:
     yield from pd.read_csv(stream, chunksize=_READ_CHUNK_ROWS)
 
 
-def _parquet_frames(stream: IO[bytes]) -> Iterator[pd.DataFrame]:
-    with tempfile.SpooledTemporaryFile(max_size=64 * 1024 * 1024) as spool:
+def _parquet_frames(
+    stream: IO[bytes],
+    *,
+    limits: ArchiveReadLimits,
+) -> Iterator[pd.DataFrame]:
+    with tempfile.SpooledTemporaryFile(max_size=limits.parquet_spool_memory_bytes) as spool:
         shutil.copyfileobj(stream, spool)
         spool.seek(0)
         parquet = pq.ParquetFile(spool)
@@ -118,12 +188,25 @@ def _parquet_frames(stream: IO[bytes]) -> Iterator[pd.DataFrame]:
             yield cast(pd.DataFrame, batch.to_pandas())
 
 
-def _member_frames(archive: tarfile.TarFile, member: tarfile.TarInfo) -> Iterator[pd.DataFrame]:
+def _member_frames(
+    archive: tarfile.TarFile,
+    member: tarfile.TarInfo,
+    *,
+    limits: ArchiveReadLimits,
+) -> Iterator[pd.DataFrame]:
     with _member_stream(archive, member) as stream:
         if Path(member.name).suffix.lower() == ".csv":
             yield from _csv_frames(stream)
         else:
-            yield from _parquet_frames(stream)
+            yield from _parquet_frames(stream, limits=limits)
+
+
+def _member_sha256(archive: tarfile.TarFile, member: tarfile.TarInfo) -> str:
+    digest = hashlib.sha256()
+    with _member_stream(archive, member) as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _timestamp_column(columns: tuple[str, ...]) -> str | None:
@@ -140,13 +223,19 @@ def _symbol_column(columns: tuple[str, ...]) -> str | None:
     return None
 
 
-def _inspect_member(archive: tarfile.TarFile, member: tarfile.TarInfo) -> ArchiveMemberInspection:
+def _inspect_member(
+    archive: tarfile.TarFile,
+    member: tarfile.TarInfo,
+    *,
+    limits: ArchiveReadLimits,
+) -> ArchiveMemberInspection:
     columns: tuple[str, ...] = ()
     row_count = 0
     min_timestamp: pd.Timestamp | None = None
     max_timestamp: pd.Timestamp | None = None
     symbols: set[str] = set()
-    for frame in _member_frames(archive, member):
+    member_sha256 = _member_sha256(archive, member)
+    for frame in _member_frames(archive, member, limits=limits):
         frame_columns = tuple(str(column) for column in frame.columns)
         if not columns:
             columns = frame_columns
@@ -173,6 +262,7 @@ def _inspect_member(archive: tarfile.TarFile, member: tarfile.TarInfo) -> Archiv
     return ArchiveMemberInspection(
         name=member.name,
         size=member.size,
+        sha256=member_sha256,
         columns=columns,
         row_estimate=row_count,
         min_timestamp=min_timestamp,
@@ -181,13 +271,33 @@ def _inspect_member(archive: tarfile.TarFile, member: tarfile.TarInfo) -> Archiv
     )
 
 
-def inspect_archive(archive_path: Path) -> ArchiveInspection:
+def inspect_archive(
+    archive_path: Path,
+    *,
+    member_names: Collection[str] | None = None,
+    limits: ArchiveReadLimits = DEFAULT_ARCHIVE_READ_LIMITS,
+) -> ArchiveInspection:
     """Inspect approved tabular members without extracting or modifying the archive."""
     resolved = archive_path.resolve(strict=True)
     source_hash = sha256_file(resolved)
     with tarfile.open(resolved, mode="r:*") as archive:
-        approved = _approved_members(archive)
-        members = tuple(_inspect_member(archive, member) for member in approved)
+        approved = _approved_members(archive, limits=limits)
+        selected = _selected_members(
+            approved,
+            member_names=member_names,
+            limits=limits,
+        )
+        inspected: list[ArchiveMemberInspection] = []
+        imported_rows = 0
+        for member in selected:
+            inspection = _inspect_member(archive, member, limits=limits)
+            imported_rows += inspection.row_estimate
+            if imported_rows > limits.max_imported_rows:
+                raise ArchiveResourceLimitError(
+                    f"imported row count exceeds configured ceiling ({limits.max_imported_rows})"
+                )
+            inspected.append(inspection)
+        members = tuple(inspected)
     return ArchiveInspection(
         archive=resolved,
         source_sha256=source_hash,
@@ -199,11 +309,13 @@ def iter_archive_frames(
     archive_path: Path,
     *,
     member_names: Collection[str] | None = None,
+    limits: ArchiveReadLimits = DEFAULT_ARCHIVE_READ_LIMITS,
 ) -> Iterator[pd.DataFrame]:
     """Yield selected frames after every archive member has passed safety validation."""
     for _, frame in iter_archive_member_frames(
         archive_path,
         member_names=member_names,
+        limits=limits,
     ):
         yield frame
 
@@ -212,17 +324,24 @@ def iter_archive_member_frames(
     archive_path: Path,
     *,
     member_names: Collection[str] | None = None,
+    limits: ArchiveReadLimits = DEFAULT_ARCHIVE_READ_LIMITS,
 ) -> Iterator[tuple[str, pd.DataFrame]]:
     """Yield selected member identities and frames after full safety validation."""
     resolved = archive_path.resolve(strict=True)
     with tarfile.open(resolved, mode="r:*") as archive:
-        approved = _approved_members(archive)
-        requested = None if member_names is None else set(member_names)
-        approved_names = {member.name for member in approved}
-        if requested is not None and not requested.issubset(approved_names):
-            missing = sorted(requested.difference(approved_names))
-            raise ValueError(f"requested archive members are not approved: {missing}")
-        for member in approved:
-            if requested is None or member.name in requested:
-                for frame in _member_frames(archive, member):
-                    yield member.name, frame
+        approved = _approved_members(archive, limits=limits)
+        selected = _selected_members(
+            approved,
+            member_names=member_names,
+            limits=limits,
+        )
+        imported_rows = 0
+        for member in selected:
+            for frame in _member_frames(archive, member, limits=limits):
+                imported_rows += len(frame)
+                if imported_rows > limits.max_imported_rows:
+                    raise ArchiveResourceLimitError(
+                        "imported row count exceeds configured ceiling "
+                        f"({limits.max_imported_rows})"
+                    )
+                yield member.name, frame

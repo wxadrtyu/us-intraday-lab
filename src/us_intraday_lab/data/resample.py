@@ -8,6 +8,7 @@ from typing import cast
 import pandas as pd
 
 from us_intraday_lab.data.calendar import expected_minute_index
+from us_intraday_lab.data.canonicalize import require_finite_canonical_numeric_columns
 from us_intraday_lab.data.snapshot import DerivedBarSize, DerivedSnapshotLineage
 
 _REQUIRED_COLUMNS = frozenset(
@@ -55,6 +56,7 @@ def resample_minute_bars(
     are deliberately absent rather than filled.
     """
     _require_canonical_minute_columns(bars)
+    require_finite_canonical_numeric_columns(bars)
     if bar_size not in _INTERVAL_MINUTES:
         raise ValueError(f"unsupported derived bar size: {bar_size!r}")
     lineage = DerivedSnapshotLineage(

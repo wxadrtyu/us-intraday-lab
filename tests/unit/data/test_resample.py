@@ -1,6 +1,8 @@
 from datetime import date
 
+import numpy as np
 import pandas as pd
+import pytest
 
 from us_intraday_lab.data.resample import resample_minute_bars
 
@@ -125,3 +127,31 @@ def test_resample_allows_a_complete_interval_to_finish_at_session_close() -> Non
 
     assert len(derived) == 78
     assert derived.loc[77, "available_at"] == pd.Timestamp("2026-07-02T20:00:00Z")
+
+
+@pytest.mark.parametrize(
+    ("column", "value", "message"),
+    [
+        ("volume", "1", "numeric dtype"),
+        ("open", True, "numeric dtype"),
+        ("high", None, "finite"),
+        ("low", np.nan, "finite"),
+        ("close", np.inf, "finite"),
+    ],
+)
+def test_resample_defensively_rejects_noncanonical_numeric_columns(
+    column: str,
+    value: object,
+    message: str,
+) -> None:
+    bars = _minute_bars(count=5)
+    if isinstance(value, (bool, str)):
+        bars[column] = bars[column].astype("object")
+    bars.at[0, column] = value
+
+    with pytest.raises((TypeError, ValueError), match=message):
+        resample_minute_bars(
+            bars,
+            bar_size="5min",
+            parent_snapshot_id="snapshot-1min",
+        )

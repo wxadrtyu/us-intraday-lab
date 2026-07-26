@@ -1,5 +1,7 @@
 from datetime import date
+from io import StringIO
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -98,4 +100,42 @@ def test_canonicalizer_rejects_duplicate_source_columns() -> None:
     )
 
     with pytest.raises(ValueError, match="duplicate source columns"):
+        canonicalize_tiingo_rows(source, ingested_at="2026-07-26T00:00:00Z")
+
+
+def test_canonicalizer_normalizes_string_ohlcv_to_explicit_numeric_dtypes() -> None:
+    source = pd.read_csv(
+        StringIO(
+            "ticker,date,open,high,low,close,volume\nSPY,2026-07-02T13:30:00Z,1.0,1.2,0.9,1.1,100\n"
+        ),
+        dtype="string",
+    )
+
+    bars = canonicalize_tiingo_rows(source, ingested_at="2026-07-26T00:00:00Z")
+
+    assert {str(bars[column].dtype) for column in ("open", "high", "low", "close")} == {"float64"}
+    assert str(bars["volume"].dtype) == "float64"
+    assert bars.loc[0, "volume"] == 100.0
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("open", True),
+        ("high", None),
+        ("low", np.nan),
+        ("close", np.inf),
+        ("volume", -np.inf),
+        ("volume", "not-a-number"),
+    ],
+)
+def test_canonicalizer_rejects_non_numeric_null_boolean_or_nonfinite_ohlcv(
+    column: str,
+    value: object,
+) -> None:
+    source = pd.DataFrame([_source_row()])
+    source[column] = source[column].astype("object")
+    source.at[0, column] = value
+
+    with pytest.raises(ValueError, match=rf"{column} must contain finite numeric values"):
         canonicalize_tiingo_rows(source, ingested_at="2026-07-26T00:00:00Z")

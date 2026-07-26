@@ -2,16 +2,27 @@ import hashlib
 import io
 import json
 import tarfile
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
+import us_intraday_lab.data.archive as archive_module
 import us_intraday_lab.data.snapshot as snapshot_module
 from us_intraday_lab.cli import app
-from us_intraday_lab.data.archive import UnsafeArchiveError, inspect_archive, sha256_file
+from us_intraday_lab.data.archive import (
+    DEFAULT_ARCHIVE_READ_LIMITS,
+    ArchiveReadLimits,
+    ArchiveResourceLimitError,
+    UnsafeArchiveError,
+    inspect_archive,
+    sha256_file,
+)
 from us_intraday_lab.data.calendar import expected_minute_index
+from us_intraday_lab.data.resample import resample_minute_bars
 from us_intraday_lab.data.snapshot import (
     ArchiveSourceDeclaration,
     SnapshotQualityError,
@@ -30,6 +41,7 @@ def _source_declaration(
     *,
     member_names: tuple[str, ...] = (MEMBER_NAME,),
     production_symbols: tuple[str, ...] = (),
+    expected_robustness_groups: tuple[tuple[str, date], ...] = (),
 ) -> ArchiveSourceDeclaration:
     return ArchiveSourceDeclaration(
         provider="tiingo",
@@ -39,6 +51,7 @@ def _source_declaration(
         production_symbols=production_symbols,
         expected_start_date=SESSION_DATE,
         expected_end_date=SESSION_DATE,
+        expected_robustness_groups=expected_robustness_groups,
     )
 
 
@@ -166,6 +179,62 @@ def test_inspection_reports_member_schema_rows_dates_symbols_and_hash(tmp_path: 
     assert inspection.max_timestamp.isoformat() == "2026-07-02T13:39:00+00:00"
     assert inspection.members[0].name == "legacy/minute_bars.csv"
     assert inspection.members[0].size == FIXTURE.stat().st_size
+    assert inspection.members[0].sha256 == hashlib.sha256(FIXTURE.read_bytes()).hexdigest()
+
+
+def test_inspection_rejects_duplicate_approved_names_before_payload_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archive_path = tmp_path / "duplicate-members.tar.gz"
+    payload = _minute_rows("AAPL")
+    with tarfile.open(archive_path, "w:gz") as archive:
+        for _ in range(2):
+            member = tarfile.TarInfo(MEMBER_NAME)
+            member.size = len(payload)
+            archive.addfile(member, io.BytesIO(payload))
+
+    def payload_must_not_be_read(*args: object, **kwargs: object) -> object:
+        raise AssertionError("duplicate names must fail before payload reads")
+
+    monkeypatch.setattr(archive_module, "_member_stream", payload_must_not_be_read)
+
+    with pytest.raises(UnsafeArchiveError, match="duplicate approved archive member"):
+        inspect_archive(archive_path)
+
+
+def test_archive_resource_ceilings_fail_closed(tmp_path: Path) -> None:
+    archive_path = _archive_with_members(
+        tmp_path,
+        {
+            MEMBER_NAME: _minute_rows("AAPL"),
+            "second.csv": _minute_rows("MSFT"),
+        },
+    )
+
+    with pytest.raises(ArchiveResourceLimitError, match="approved member count"):
+        inspect_archive(archive_path, limits=ArchiveReadLimits(max_approved_members=1))
+    with pytest.raises(ArchiveResourceLimitError, match="selected uncompressed bytes"):
+        inspect_archive(
+            archive_path,
+            member_names=(MEMBER_NAME,),
+            limits=ArchiveReadLimits(max_selected_uncompressed_bytes=1),
+        )
+    with pytest.raises(ArchiveResourceLimitError, match="imported row count"):
+        import_snapshot(
+            archive_path,
+            root=tmp_path / "repo",
+            source=_source_declaration(),
+            limits=ArchiveReadLimits(max_imported_rows=100),
+        )
+
+
+def test_archive_resource_defaults_cover_planned_archive_without_encoding_observed_facts() -> None:
+    limits = ArchiveReadLimits()
+
+    assert limits.max_imported_rows > 1_400_000
+    assert limits.max_selected_uncompressed_bytes >= 1024**3
+    assert limits.parquet_spool_memory_bytes > 0
 
 
 def test_inspection_detects_legacy_datetime_column(tmp_path: Path) -> None:
@@ -435,11 +504,46 @@ def test_import_records_explicit_source_and_cadence_evidence(tmp_path: Path) -> 
         "member_names": [MEMBER_NAME],
         "production_symbols": [],
         "provider": "tiingo",
+        "expected_robustness_groups": [],
     }
     assert evidence["observed_cadence"] == {
         "bar_size": "1min",
         "validated": True,
     }
+    assert (
+        evidence["selected_members"][0]["sha256"]
+        == hashlib.sha256(_minute_rows("AAPL")).hexdigest()
+    )
+
+
+def test_import_rejects_selected_member_hash_drift_between_inspection_and_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archive_path = _complete_archive_fixture(tmp_path, "AAPL")
+    initial = inspect_archive(archive_path, member_names=(MEMBER_NAME,))
+    changed_member = replace(initial.members[0], sha256="f" * 64)
+    drifted = replace(initial, members=(changed_member,))
+    calls = 0
+
+    def drifting_inspection(
+        path: Path,
+        *,
+        member_names: tuple[str, ...] | None = None,
+        limits: ArchiveReadLimits = DEFAULT_ARCHIVE_READ_LIMITS,
+    ) -> object:
+        nonlocal calls
+        calls += 1
+        return initial if calls == 1 else drifted
+
+    monkeypatch.setattr(snapshot_module, "inspect_archive", drifting_inspection)
+
+    with pytest.raises(SnapshotVerificationError, match="selected archive member changed"):
+        import_snapshot(
+            archive_path,
+            root=tmp_path / "repo",
+            source=_source_declaration(),
+        )
 
 
 def test_dataset_id_is_stable_and_declaration_aware(tmp_path: Path) -> None:
@@ -482,6 +586,8 @@ def test_dataset_id_is_stable_and_declaration_aware(tmp_path: Path) -> None:
     )
 
     assert aapl_manifest.dataset_id == same_aapl_manifest.dataset_id
+    assert aapl_manifest.content_sha256 == same_aapl_manifest.content_sha256
+    assert aapl_manifest.created_at == same_aapl_manifest.created_at
     assert aapl_manifest.dataset_id != msft_manifest.dataset_id
     assert forward_manifest.dataset_id == reverse_manifest.dataset_id
 
@@ -497,10 +603,89 @@ def test_dataset_id_is_stable_and_declaration_aware(tmp_path: Path) -> None:
         source=msft_source,
     )
     original = first_output.read_bytes()
-    with pytest.raises(FileExistsError, match=first_local.dataset_id):
-        import_snapshot(archive_path, root=local_root, source=aapl_source)
+    repeated_manifest, repeated_output = import_snapshot(
+        archive_path,
+        root=local_root,
+        source=aapl_source,
+    )
     assert first_local.dataset_id != second_local.dataset_id
+    assert repeated_manifest == first_local
+    assert repeated_output == first_output
     assert first_output.read_bytes() == original
+
+
+def test_dataset_identity_includes_schema_calendar_and_code_revision(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archive_path = _complete_archive_fixture(tmp_path, "AAPL")
+    source = _source_declaration()
+    monkeypatch.setattr(snapshot_module, "_code_revision", lambda root: "revision-a")
+    baseline, _ = import_snapshot(archive_path, root=tmp_path / "baseline", source=source)
+
+    monkeypatch.setattr(snapshot_module, "_SCHEMA_VERSION", "2.0.0")
+    schema_changed, _ = import_snapshot(archive_path, root=tmp_path / "schema", source=source)
+    monkeypatch.setattr(snapshot_module, "_SCHEMA_VERSION", "1.0.0")
+
+    original_package_version = snapshot_module._package_version
+    monkeypatch.setattr(snapshot_module, "_package_version", lambda package: "calendar-changed")
+    calendar_changed, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "calendar",
+        source=source,
+    )
+    monkeypatch.setattr(snapshot_module, "_package_version", original_package_version)
+
+    monkeypatch.setattr(snapshot_module, "_code_revision", lambda root: "revision-b")
+    code_changed, _ = import_snapshot(archive_path, root=tmp_path / "code", source=source)
+
+    assert (
+        len(
+            {
+                baseline.dataset_id,
+                schema_changed.dataset_id,
+                calendar_changed.dataset_id,
+                code_changed.dataset_id,
+            }
+        )
+        == 4
+    )
+
+
+def test_parquet_string_ohlcv_imports_as_numeric_and_derives_numeric_volume(
+    tmp_path: Path,
+) -> None:
+    source = pd.read_csv(io.BytesIO(_minute_rows("AAPL")), dtype="string")
+    payload_stream = io.BytesIO()
+    source.to_parquet(payload_stream, index=False)
+    archive_path = _tar_with_member(
+        tmp_path,
+        name="legacy/minute_bars.parquet",
+        payload=payload_stream.getvalue(),
+    )
+
+    manifest, output = import_snapshot(
+        archive_path,
+        root=tmp_path / "repo",
+        source=_source_declaration(member_names=("legacy/minute_bars.parquet",)),
+    )
+    bars = pd.concat(
+        [pd.read_parquet(path) for path in output.parents[3].rglob("*.parquet")],
+        ignore_index=True,
+    )
+    derived = resample_minute_bars(
+        bars,
+        bar_size="5min",
+        parent_snapshot_id=manifest.dataset_id,
+    )
+
+    assert manifest.row_count == 390
+    assert all(
+        pd.api.types.is_float_dtype(bars[column])
+        for column in ("open", "high", "low", "close", "volume")
+    )
+    assert bars["volume"].sum() == pytest.approx(sum(1000 + index for index in range(390)))
+    assert derived.loc[0, "volume"] == pytest.approx(sum(1000 + index for index in range(5)))
 
 
 def test_import_detects_source_drift_before_publication(
@@ -515,8 +700,9 @@ def test_import_detects_source_drift_before_publication(
         path: Path,
         *,
         member_names: tuple[str, ...],
+        limits: ArchiveReadLimits,
     ) -> object:
-        yield from original_iter(path, member_names=member_names)
+        yield from original_iter(path, member_names=member_names, limits=limits)
         with path.open("ab") as archive:
             archive.write(b"source-drift")
 
@@ -547,12 +733,47 @@ def test_import_never_overwrites_an_accepted_snapshot(tmp_path: Path) -> None:
     )
     original = output.read_bytes()
 
-    with pytest.raises(FileExistsError, match="immutable snapshot already exists"):
-        import_snapshot(archive_path, root=root, source=_source_declaration())
+    repeated_manifest, repeated_output = import_snapshot(
+        archive_path,
+        root=root,
+        source=_source_declaration(),
+    )
 
+    assert repeated_manifest == manifest
+    assert repeated_output == output
     assert output.read_bytes() == original
     canonical = root / "data" / "lake" / "canonical"
     assert [path.name for path in canonical.iterdir()] == [manifest.dataset_id]
+
+
+def test_import_records_and_quarantines_wholly_absent_robustness_scope(
+    tmp_path: Path,
+) -> None:
+    archive_path = _complete_archive_fixture(tmp_path, "AAPL")
+
+    manifest, output = import_snapshot(
+        archive_path,
+        root=tmp_path / "repo",
+        source=_source_declaration(
+            expected_robustness_groups=(("MSFT", SESSION_DATE),),
+        ),
+    )
+
+    evidence = json.loads((output.parents[3] / "import-evidence.json").read_text())
+    states = {
+        (record["symbol"], record["session_date"]): record["publication_state"]
+        for record in evidence["source_group_quality"]
+    }
+    missing_msft = next(
+        record for record in evidence["source_group_quality"] if record["symbol"] == "MSFT"
+    )
+    assert manifest.symbols == ("AAPL",)
+    assert states == {
+        ("AAPL", "2026-07-02"): "published",
+        ("MSFT", "2026-07-02"): "quarantined",
+    }
+    assert missing_msft["observed_bars"] == 0
+    assert missing_msft["missing_expected_bars"] == 390
 
 
 def test_failed_production_quality_leaves_no_snapshot_or_temporary_directory(

@@ -59,6 +59,7 @@ def _snapshot(
     *,
     symbols: tuple[str, ...] = PRODUCTION_SYMBOLS,
     production_symbols: tuple[str, ...] = PRODUCTION_SYMBOLS,
+    expected_robustness_groups: tuple[tuple[str, date], ...] = (),
 ) -> tuple[Path, str]:
     root = tmp_path / "repo"
     archive = _synthetic_archive(tmp_path, symbols)
@@ -73,6 +74,7 @@ def _snapshot(
             production_symbols=production_symbols,
             expected_start_date=date(2026, 7, 2),
             expected_end_date=date(2026, 7, 2),
+            expected_robustness_groups=expected_robustness_groups,
         ),
     )
     return root, manifest.dataset_id
@@ -186,6 +188,95 @@ def test_accept_verifies_hashes_schema_coverage_lineage_and_catalog_queries(
     assert summary.quality_passed is True
     assert summary.production_symbols == PRODUCTION_SYMBOLS
     assert summary.bar_counts == {"1min": 1_170, "5min": 234, "15min": 78}
+
+
+def test_catalog_exposes_persisted_quarantine_state_for_wholly_absent_robustness_group(
+    tmp_path: Path,
+) -> None:
+    session_date = date(2026, 7, 2)
+    root, dataset_id = _snapshot(
+        tmp_path,
+        symbols=("AAPL",),
+        production_symbols=(),
+        expected_robustness_groups=(("MSFT", session_date),),
+    )
+    catalog = _catalog_module()
+    catalog.build_catalog(dataset_id, root=root)
+
+    with catalog.connect_catalog(root=root) as connection:
+        rows = connection.execute(
+            """
+            SELECT symbol, observed_bars, missing_expected_bars, publication_state
+            FROM symbol_session_quality
+            ORDER BY symbol
+            """
+        ).fetchall()
+
+    assert rows == [
+        ("AAPL", 390, 0, "published"),
+        ("MSFT", 0, 390, "quarantined"),
+    ]
+
+
+@pytest.mark.parametrize("counterfeit_object", ["extra_view", "user_table"])
+def test_accept_requires_exactly_five_views_and_zero_user_tables(
+    tmp_path: Path,
+    counterfeit_object: str,
+) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog_path = catalog.build_catalog(dataset_id, root=root)
+    with duckdb.connect(str(catalog_path)) as connection:
+        if counterfeit_object == "extra_view":
+            connection.execute("CREATE VIEW counterfeit AS SELECT 1 AS value")
+        else:
+            connection.execute("CREATE TABLE counterfeit (value INTEGER)")
+
+    with pytest.raises(catalog.CatalogAcceptanceError, match="catalog objects"):
+        catalog.accept_dataset(dataset_id, root=root)
+
+
+def test_accept_rejects_counterfeit_same_row_count_parquet_binding(tmp_path: Path) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog_path = catalog.build_catalog(dataset_id, root=root)
+    canonical_files = sorted((root / "data" / "lake" / "canonical" / dataset_id).rglob("*.parquet"))
+    bars = pd.concat([pd.read_parquet(path) for path in canonical_files], ignore_index=True)
+    bars.loc[0, "open"] += 10_000.0
+    counterfeit = tmp_path / "counterfeit.parquet"
+    bars.to_parquet(counterfeit, index=False)
+    escaped_path = counterfeit.resolve().as_posix().replace("'", "''")
+    with duckdb.connect(str(catalog_path)) as connection:
+        connection.execute(
+            "CREATE OR REPLACE VIEW bars_1m AS "
+            f"SELECT * FROM read_parquet('{escaped_path}', hive_partitioning = false)"
+        )
+
+    with pytest.raises(catalog.CatalogAcceptanceError, match="catalog view bindings"):
+        catalog.accept_dataset(dataset_id, root=root)
+
+
+def test_accept_rejects_counterfeit_projection_over_verified_paths(tmp_path: Path) -> None:
+    root, dataset_id = _snapshot(tmp_path)
+    catalog = _catalog_module()
+    catalog_path = catalog.build_catalog(dataset_id, root=root)
+    canonical_files = sorted((root / "data" / "lake" / "canonical" / dataset_id).rglob("*.parquet"))
+    explicit_paths = ", ".join(
+        "'" + path.resolve().as_posix().replace("'", "''") + "'" for path in canonical_files
+    )
+    with duckdb.connect(str(catalog_path)) as connection:
+        connection.execute(
+            "CREATE OR REPLACE VIEW bars_1m AS "
+            "SELECT * REPLACE (open + 1 AS open) "
+            f"FROM read_parquet([{explicit_paths}], "
+            "hive_partitioning = false, union_by_name = true)"
+        )
+
+    with pytest.raises(
+        catalog.CatalogAcceptanceError,
+        match="catalog view (.*definitions|content)",
+    ):
+        catalog.accept_dataset(dataset_id, root=root)
 
 
 def test_accept_rejects_derived_bar_drift(tmp_path: Path) -> None:
@@ -308,7 +399,10 @@ def test_accept_rejects_unsupported_snapshot_manifest_schema(tmp_path: Path) -> 
     manifest["schema_version"] = "999.0.0"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    with pytest.raises(catalog.CatalogAcceptanceError, match="manifest schema version"):
+    with pytest.raises(
+        catalog.CatalogAcceptanceError,
+        match="(manifest schema version|declared identities)",
+    ):
         catalog.accept_dataset(dataset_id, root=root)
 
 
