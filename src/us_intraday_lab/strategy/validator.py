@@ -31,6 +31,8 @@ ALLOWED_COMPARISONS = frozenset({"gt", "gte", "lt", "lte"})
 MAX_CONDITION_DEPTH = 3
 MAX_LEAF_CONDITIONS = 12
 MAX_ENTRIES_PER_SESSION = 3
+MAX_CONDITION_NODES = 128
+MAX_CONDITION_CHILDREN = 64
 MAX_CONTRADICTION_BRANCHES = 16
 MAX_CONTRADICTION_WORK = 96
 
@@ -129,6 +131,7 @@ def _is_limit_offset_field(canonical_field: str) -> bool:
         canonical_field in _LIMIT_OFFSET_FIELDS
         or {"limit", "offset"} <= parts
         or {"price", "offset"} <= parts
+        or {"limit", "price"} <= parts
     )
 
 
@@ -225,8 +228,41 @@ class _ConditionStats:
     structurally_valid: bool
 
 
+def _copy_string_model_data(model: object) -> tuple[dict[str, object], bool]:
+    raw = cast(
+        dict[object, object],
+        object.__getattribute__(model, "__dict__"),
+    )
+    safe: dict[str, object] = {}
+    invalid_key = False
+    for field, value in raw.items():
+        if type(field) is str:
+            safe[field] = value
+        else:
+            invalid_key = True
+    return (safe, invalid_key)
+
+
 def _model_data(model: object) -> dict[str, object]:
-    return cast(dict[str, object], object.__getattribute__(model, "__dict__"))
+    data, _invalid_key = _copy_string_model_data(model)
+    return data
+
+
+def _safe_model_data(
+    model: object,
+    path: str,
+    issues: list[ValidationIssue],
+) -> tuple[dict[str, object], bool]:
+    data, invalid_key = _copy_string_model_data(model)
+    if invalid_key:
+        issues.append(
+            ValidationIssue(
+                code="DSL_UNEXPECTED_FIELD",
+                path=path,
+                message="model storage contains a non-string field name",
+            )
+        )
+    return (data, not invalid_key)
 
 
 def _missing_fields(
@@ -280,6 +316,125 @@ def _unexpected_fields(
             )
         )
     return bool(unexpected) or invalid_key
+
+
+@dataclass(frozen=True)
+class _ConditionPreflight:
+    leaves: int
+    structurally_valid: bool
+
+
+def _preflight_condition_trees(
+    entry: object,
+    exit_condition: object,
+    issues: list[ValidationIssue],
+) -> _ConditionPreflight:
+    stack: list[tuple[str, object, int]] = [
+        ("exit", exit_condition, 1),
+        ("entry", entry, 1),
+    ]
+    nodes = 0
+    leaves = 0
+    valid = True
+
+    while stack:
+        path, condition, depth = stack.pop()
+        nodes += 1
+        if nodes > MAX_CONDITION_NODES:
+            issues.append(
+                ValidationIssue(
+                    code="DSL_COMPLEXITY_BUDGET",
+                    path="entry",
+                    message=(
+                        f"entry and exit rules must contain at most "
+                        f"{MAX_CONDITION_NODES} condition nodes in total"
+                    ),
+                )
+            )
+            return _ConditionPreflight(leaves=leaves, structurally_valid=False)
+        if depth > MAX_CONDITION_DEPTH:
+            valid = False
+            issues.append(
+                ValidationIssue(
+                    code="DSL_CONDITION_DEPTH_EXCEEDED",
+                    path=path,
+                    message=f"condition nesting depth must not exceed {MAX_CONDITION_DEPTH}",
+                )
+            )
+            continue
+
+        if type(condition) is ComparisonCondition:
+            data, safe_keys = _safe_model_data(condition, path, issues)
+            closed = not _unexpected_fields(data, ("indicator", "op", "value"), path, issues)
+            complete = not _missing_fields(data, ("indicator", "op", "value"), path, issues)
+            valid = valid and safe_keys and closed and complete
+            leaves += 1
+            continue
+
+        if type(condition) is AllCondition or type(condition) is AnyCondition:
+            data, safe_keys = _safe_model_data(condition, path, issues)
+            field = "all" if type(condition) is AllCondition else "any"
+            closed = not _unexpected_fields(data, (field,), path, issues)
+            complete = not _missing_fields(data, (field,), path, issues)
+            valid = valid and safe_keys and closed and complete
+            if not complete:
+                continue
+            children = data[field]
+            if type(children) is not tuple:
+                valid = False
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_INVALID_CONDITION_CONTAINER",
+                        path=f"{path}.{field}",
+                        message=f"{field} conditions must be stored in an exact tuple",
+                    )
+                )
+                continue
+            child_tuple = cast(tuple[object, ...], children)
+            child_count = len(child_tuple)
+            if child_count == 0:
+                valid = False
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_EMPTY_CONDITION_GROUP",
+                        path=f"{path}.{field}",
+                        message=f"{field} condition groups must not be empty",
+                    )
+                )
+                continue
+            if child_count > MAX_CONDITION_CHILDREN:
+                valid = False
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_COMPLEXITY_BUDGET",
+                        path=f"{path}.{field}",
+                        message=(
+                            f"a condition group must contain at most "
+                            f"{MAX_CONDITION_CHILDREN} children"
+                        ),
+                    )
+                )
+                continue
+            for index in range(child_count - 1, -1, -1):
+                stack.append(
+                    (
+                        f"{path}.{field}[{index}]",
+                        child_tuple[index],
+                        depth + 1,
+                    )
+                )
+            continue
+
+        valid = False
+        issues.append(
+            ValidationIssue(
+                code="DSL_UNKNOWN_CONDITION",
+                path=path,
+                message="condition node is not an allowlisted DSL node",
+            )
+        )
+
+    return _ConditionPreflight(leaves=leaves, structurally_valid=valid)
 
 
 def _visit_condition(
@@ -499,7 +654,7 @@ def _validate_risk(risk: object, issues: list[ValidationIssue]) -> None:
         )
         return
 
-    data = _model_data(risk)
+    data, _safe_keys = _safe_model_data(risk, "risk", issues)
     numeric_fields = (
         "stop_loss_bps",
         "take_profit_bps",
@@ -581,7 +736,7 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
         )
 
     issues: list[ValidationIssue] = []
-    data = _model_data(strategy)
+    data, _safe_keys = _safe_model_data(strategy, "", issues)
     required_fields = (
         "strategy_id",
         "dsl_version",
@@ -675,16 +830,9 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
                 )
             )
 
-    condition_stats: dict[str, _ConditionStats] = {}
-    for path in ("entry", "exit"):
-        if path in data:
-            condition_stats[path] = _visit_condition(data[path], path, 1, issues)
-
-    if "entry" in condition_stats and "exit" in condition_stats:
-        entry_stats = condition_stats["entry"]
-        exit_stats = condition_stats["exit"]
-        total_leaves = entry_stats.leaves + exit_stats.leaves
-        if total_leaves > MAX_LEAF_CONDITIONS:
+    if "entry" in data and "exit" in data:
+        preflight = _preflight_condition_trees(data["entry"], data["exit"], issues)
+        if preflight.leaves > MAX_LEAF_CONDITIONS:
             issues.append(
                 ValidationIssue(
                     code="DSL_CONDITION_LEAF_LIMIT_EXCEEDED",
@@ -695,7 +843,10 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
                     ),
                 )
             )
-        elif entry_stats.structurally_valid and exit_stats.structurally_valid:
-            _check_contradictions(cast(Condition, data["entry"]), "entry", issues)
-            _check_contradictions(cast(Condition, data["exit"]), "exit", issues)
+        elif preflight.structurally_valid:
+            entry_stats = _visit_condition(data["entry"], "entry", 1, issues)
+            exit_stats = _visit_condition(data["exit"], "exit", 1, issues)
+            if entry_stats.structurally_valid and exit_stats.structurally_valid:
+                _check_contradictions(cast(Condition, data["entry"]), "entry", issues)
+                _check_contradictions(cast(Condition, data["exit"]), "exit", issues)
     return _validation(issues)

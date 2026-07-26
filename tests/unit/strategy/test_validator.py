@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, cast
 
 import pytest
 
@@ -13,6 +13,7 @@ from us_intraday_lab.contracts.strategies import (
     RiskDefinition,
     StrategyDefinition,
 )
+from us_intraday_lab.strategy.compiler import StrategyCompileError, compile_strategy
 from us_intraday_lab.strategy.validator import (
     ValidationIssue,
     scan_strategy_payload,
@@ -83,6 +84,24 @@ class Explosive:
 
     def __float__(self) -> float:
         self._explode("__float__")
+
+
+class CollisionKey:
+    def __init__(self, state: dict[str, object], target: str) -> None:
+        self._state = state
+        self._target = target
+
+    def __hash__(self) -> int:
+        if self._state["armed"]:
+            cast(list[str], self._state["calls"]).append("__hash__")
+            raise AssertionError("attacker-controlled __hash__ executed")
+        return hash(self._target)
+
+    def __eq__(self, other: object) -> bool:
+        if self._state["armed"]:
+            cast(list[str], self._state["calls"]).append("__eq__")
+            raise AssertionError("attacker-controlled __eq__ executed")
+        return False
 
 
 @pytest.mark.parametrize(
@@ -248,6 +267,36 @@ def test_raw_scan_canonicalizes_compound_field_variants(
     issues = scan_strategy_payload(payload).issues
 
     assert any(issue.code == expected_code and issue.path == expected_path for issue in issues)
+
+
+@pytest.mark.parametrize(
+    ("variant", "expected_path"),
+    [
+        ("limitPriceBps", "limit_price_bps"),
+        ("limitPriceTicks", "limit_price_ticks"),
+        ("desiredLimitPrice", "desired_limit_price"),
+        ("DESIRED LIMIT PRICE", "desired_limit_price"),
+    ],
+)
+def test_raw_scan_rejects_every_limit_and_price_token_combination(
+    variant: str, expected_path: str
+) -> None:
+    payload = _payload()
+    payload[variant] = 5
+
+    issues = scan_strategy_payload(payload).issues
+
+    assert any(
+        issue.code == "DSL_UNSUPPORTED_LIMIT_OFFSET" and issue.path == expected_path
+        for issue in issues
+    )
+
+
+def test_raw_scan_does_not_overmatch_the_limit_order_type() -> None:
+    payload = _payload()
+    payload["order_type"] = "limit"
+
+    assert scan_strategy_payload(payload).passed
 
 
 @pytest.mark.parametrize("variant", ["targetPosition", "TARGET_POSITION", "target-position"])
@@ -604,3 +653,133 @@ def test_exact_models_reject_unexpected_internal_fields_deterministically() -> N
         ("DSL_UNEXPECTED_FIELD", "risk.url"),
         ("DSL_UNEXPECTED_FIELD", "sql"),
     ]
+
+
+def test_empty_condition_groups_are_structurally_invalid() -> None:
+    strategy = _strategy()
+    invalid = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": AllCondition(all=()),
+            "exit": AnyCondition(any=()),
+        }
+    )
+
+    issues = validate_strategy(invalid).issues
+
+    assert [(issue.code, issue.path) for issue in issues] == [
+        ("DSL_EMPTY_CONDITION_GROUP", "entry.all"),
+        ("DSL_EMPTY_CONDITION_GROUP", "exit.any"),
+    ]
+
+
+def _leaf(index: int) -> ComparisonCondition:
+    return ComparisonCondition(indicator="rsi", op="gt", value=float(index))
+
+
+def test_condition_child_budget_boundary() -> None:
+    strategy = _strategy()
+    child_limit = validator_module.MAX_CONDITION_CHILDREN
+    at_limit = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": AllCondition(all=tuple(_leaf(i) for i in range(child_limit))),
+        }
+    )
+    above_limit = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": AllCondition(all=tuple(_leaf(i) for i in range(child_limit + 1))),
+        }
+    )
+
+    assert not any(
+        issue.code == "DSL_COMPLEXITY_BUDGET" and issue.path == "entry.all"
+        for issue in validate_strategy(at_limit).issues
+    )
+    assert any(
+        issue.code == "DSL_COMPLEXITY_BUDGET" and issue.path == "entry.all"
+        for issue in validate_strategy(above_limit).issues
+    )
+
+
+def _node_budget_tree(above_limit: bool) -> AllCondition:
+    empty = AllCondition(all=())
+    nested = [AllCondition(all=(empty,)) for _ in range(63)]
+    if above_limit:
+        nested[0] = AllCondition(all=(empty, empty))
+    return AllCondition(all=tuple(nested))
+
+
+def test_total_condition_node_budget_boundary() -> None:
+    strategy = _strategy()
+    at_limit = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": _node_budget_tree(False),
+            "exit": _leaf(1_000),
+        }
+    )
+    above_limit = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": _node_budget_tree(True),
+            "exit": _leaf(1_000),
+        }
+    )
+
+    assert "DSL_COMPLEXITY_BUDGET" not in _codes(at_limit)
+    assert "DSL_COMPLEXITY_BUDGET" in _codes(above_limit)
+
+
+def test_thousand_empty_groups_abort_before_semantic_recursion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = _strategy()
+    invalid = StrategyDefinition.model_construct(
+        **{
+            **strategy.__dict__,
+            "entry": AllCondition(all=tuple(AllCondition(all=()) for _ in range(1_001))),
+        }
+    )
+
+    def fail_if_called(*args: object) -> None:
+        raise AssertionError("semantic recursion ran after structural complexity failure")
+
+    monkeypatch.setattr(validator_module, "_visit_condition", fail_if_called)
+
+    issues = validate_strategy(invalid).issues
+
+    assert any(issue.code == "DSL_COMPLEXITY_BUDGET" for issue in issues)
+
+
+def _inject_collision_key(model: object, state: dict[str, object], target: str) -> None:
+    raw = object.__getattribute__(model, "__dict__")
+    model_data = cast(dict[object, object], raw)
+    del model_data[target]
+    model_data[CollisionKey(state, target)] = "untrusted"
+
+
+def test_hash_collision_keys_never_execute_during_validate_or_compile() -> None:
+    strategy = _strategy()
+    state: dict[str, object] = {"armed": False, "calls": []}
+    risk = RiskDefinition.model_construct(**strategy.risk.__dict__)
+    entry = ComparisonCondition(indicator="rsi", op="lt", value=40.0)
+    invalid = StrategyDefinition.model_construct(
+        **{**strategy.__dict__, "entry": entry, "risk": risk}
+    )
+    _inject_collision_key(invalid, state, "strategy_id")
+    _inject_collision_key(risk, state, "stop_loss_bps")
+    _inject_collision_key(entry, state, "indicator")
+    state["armed"] = True
+
+    validation = validate_strategy(invalid)
+    with pytest.raises(StrategyCompileError):
+        compile_strategy(invalid)
+
+    assert [issue.path for issue in validation.issues if issue.code == "DSL_UNEXPECTED_FIELD"] == [
+        "",
+        "entry",
+        "risk",
+    ]
+    assert state["calls"] == []
