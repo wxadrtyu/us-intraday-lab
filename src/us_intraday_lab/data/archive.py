@@ -118,9 +118,7 @@ def _parquet_frames(stream: IO[bytes]) -> Iterator[pd.DataFrame]:
             yield cast(pd.DataFrame, batch.to_pandas())
 
 
-def _member_frames(
-    archive: tarfile.TarFile, member: tarfile.TarInfo
-) -> Iterator[pd.DataFrame]:
+def _member_frames(archive: tarfile.TarFile, member: tarfile.TarInfo) -> Iterator[pd.DataFrame]:
     with _member_stream(archive, member) as stream:
         if Path(member.name).suffix.lower() == ".csv":
             yield from _csv_frames(stream)
@@ -142,9 +140,7 @@ def _symbol_column(columns: tuple[str, ...]) -> str | None:
     return None
 
 
-def _inspect_member(
-    archive: tarfile.TarFile, member: tarfile.TarInfo
-) -> ArchiveMemberInspection:
+def _inspect_member(archive: tarfile.TarFile, member: tarfile.TarInfo) -> ArchiveMemberInspection:
     columns: tuple[str, ...] = ()
     row_count = 0
     min_timestamp: pd.Timestamp | None = None

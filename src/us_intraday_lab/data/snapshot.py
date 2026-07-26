@@ -2,28 +2,82 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tempfile
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from importlib.metadata import PackageNotFoundError, version
+from itertools import pairwise
 from pathlib import Path
 from typing import cast
 
+import exchange_calendars  # type: ignore[import-untyped]
 import pandas as pd
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
 from us_intraday_lab.contracts.datasets import DatasetManifest
-from us_intraday_lab.data.archive import inspect_archive, iter_archive_frames
+from us_intraday_lab.data.archive import (
+    ArchiveInspection,
+    inspect_archive,
+    iter_archive_frames,
+    sha256_file,
+)
 from us_intraday_lab.data.canonicalize import canonicalize_tiingo_rows
-from us_intraday_lab.data.quality import assess_minute_bars
+from us_intraday_lab.data.quality import (
+    PRODUCTION_SYMBOLS,
+    ExpectedGroup,
+    MinuteBarsQualityAssessment,
+    SymbolSessionQuality,
+    assess_minute_bars,
+)
 from us_intraday_lab.settings import LabPaths
 
 _BAR_SIZE = "1min"
 _SCHEMA_VERSION = "1.0.0"
-_TIINGO_MINUTE_COLUMNS = frozenset(
-    {"ticker", "date", "open", "high", "low", "close", "volume"}
-)
+_EVIDENCE_SCHEMA_VERSION = "1.0.0"
+_TIINGO_MINUTE_COLUMNS = frozenset({"ticker", "date", "open", "high", "low", "close", "volume"})
+_CANONICAL_SYMBOL = re.compile(r"^[A-Z][A-Z0-9]*(?:[.-][A-Z0-9]+)*$")
+_XNYS = exchange_calendars.get_calendar("XNYS")
+_NEW_YORK = "America/New_York"
+
+
+def _validate_symbol(symbol: str) -> str:
+    normalized = symbol.strip().upper()
+    if (
+        normalized != symbol
+        or len(normalized) > 16
+        or _CANONICAL_SYMBOL.fullmatch(normalized) is None
+    ):
+        raise ValueError(f"unsafe canonical symbol: {symbol!r}")
+    return normalized
+
+
+@dataclass(frozen=True, slots=True)
+class ArchiveSourceDeclaration:
+    """Explicit identity and expected production scope for one legacy import."""
+
+    provider: str
+    feed: str
+    bar_size: str
+    member_names: tuple[str, ...]
+    production_symbols: tuple[str, ...]
+    expected_start_date: date
+    expected_end_date: date
+
+    def __post_init__(self) -> None:
+        if (self.provider, self.feed, self.bar_size) != ("tiingo", "iex", "1min"):
+            raise ValueError("only declared tiingo/iex/1min sources are supported")
+        if not self.member_names or len(set(self.member_names)) != len(self.member_names):
+            raise ValueError("member_names must contain unique approved member identities")
+        if self.expected_start_date > self.expected_end_date:
+            raise ValueError("expected_start_date must not exceed expected_end_date")
+        normalized_production = tuple(
+            sorted({_validate_symbol(symbol) for symbol in self.production_symbols})
+        )
+        if normalized_production != tuple(sorted(self.production_symbols)):
+            raise ValueError("production_symbols must be unique canonical tickers")
 
 
 class SnapshotQualityError(ValueError):
@@ -66,18 +120,29 @@ def _content_sha256(root: Path, files: tuple[Path, ...]) -> str:
     return digest.hexdigest()
 
 
+def _contained_path(root: Path, *parts: str) -> Path:
+    resolved_root = root.resolve()
+    candidate = resolved_root.joinpath(*parts).resolve()
+    if not candidate.is_relative_to(resolved_root):
+        raise ValueError(f"partition path escapes verified temporary root: {candidate}")
+    return candidate
+
+
 def _write_partitions(bars: pd.DataFrame, snapshot_root: Path) -> tuple[Path, ...]:
     outputs: list[Path] = []
     grouped = bars.groupby(["session_date", "symbol"], sort=True, observed=True)
     for (session_date, symbol), group in grouped:
-        partition = (
-            snapshot_root
-            / f"bar_size={_BAR_SIZE}"
-            / f"session_date={session_date}"
-            / f"symbol={symbol}"
+        canonical_symbol = _validate_symbol(str(symbol))
+        partition = _contained_path(
+            snapshot_root,
+            f"bar_size={_BAR_SIZE}",
+            f"session_date={session_date}",
+            f"symbol={canonical_symbol}",
         )
         partition.mkdir(parents=True)
-        output = partition / "part-00000.parquet"
+        output = _contained_path(
+            snapshot_root, *partition.relative_to(snapshot_root).parts, "part-00000.parquet"
+        )
         group.reset_index(drop=True).to_parquet(output, index=False)
         outputs.append(output)
     return tuple(outputs)
@@ -91,41 +156,238 @@ def _safe_remove_temporary(path: Path, parent: Path) -> None:
     shutil.rmtree(resolved_path)
 
 
-def import_snapshot(archive_path: Path, *, root: Path) -> tuple[DatasetManifest, Path]:
+def _effective_production_symbols(
+    bars: pd.DataFrame,
+    source: ArchiveSourceDeclaration,
+) -> tuple[str, ...]:
+    observed_core = set(bars["symbol"].astype(str).tolist()).intersection(PRODUCTION_SYMBOLS)
+    return tuple(sorted(set(source.production_symbols).union(observed_core)))
+
+
+def _expected_production_groups(
+    source: ArchiveSourceDeclaration,
+    production_symbols: tuple[str, ...],
+) -> set[ExpectedGroup]:
+    sessions = _XNYS.sessions_in_range(
+        pd.Timestamp(source.expected_start_date),
+        pd.Timestamp(source.expected_end_date),
+    )
+    return {(symbol, session.date()) for symbol in production_symbols for session in sessions}
+
+
+def _source_order_and_cadence(
+    source_rows: pd.DataFrame,
+) -> tuple[set[ExpectedGroup], dict[str, object]]:
+    timestamps = pd.DatetimeIndex(pd.to_datetime(source_rows["date"], utc=True, errors="raise"))
+    if any(
+        value != 0
+        for values in (timestamps.second, timestamps.microsecond, timestamps.nanosecond)
+        for value in values
+    ):
+        raise ValueError("declared source does not have one-minute cadence alignment")
+    frame = pd.DataFrame(
+        {
+            "symbol": source_rows["ticker"].astype("string").str.strip().str.upper(),
+            "timestamp": timestamps,
+            "session_date": timestamps.tz_convert(_NEW_YORK).date,
+        }
+    )
+    non_monotonic: set[ExpectedGroup] = set()
+    positive_delta_nanoseconds: list[int] = []
+    for (symbol, session_date), group in frame.groupby(
+        ["symbol", "session_date"],
+        sort=True,
+        observed=True,
+    ):
+        group_timestamps = group["timestamp"]
+        if not group_timestamps.is_monotonic_increasing:
+            non_monotonic.add((str(symbol), cast(date, session_date)))
+        ordered_nanoseconds = sorted(
+            {pd.Timestamp(value).value for value in group_timestamps.tolist()}
+        )
+        positive_delta_nanoseconds.extend(
+            current - previous
+            for previous, current in pairwise(ordered_nanoseconds)
+            if current > previous
+        )
+    if (
+        not positive_delta_nanoseconds
+        or min(positive_delta_nanoseconds) != pd.Timedelta(minutes=1).value
+    ):
+        raise ValueError("declared source does not demonstrate observed one-minute cadence")
+    return non_monotonic, {
+        "validated": True,
+        "bar_size": _BAR_SIZE,
+    }
+
+
+def _validate_canonical_symbols(bars: pd.DataFrame) -> None:
+    for symbol in sorted(set(bars["symbol"].astype(str).tolist())):
+        _validate_symbol(symbol)
+
+
+def _validate_declared_date_range(
+    bars: pd.DataFrame,
+    source: ArchiveSourceDeclaration,
+) -> None:
+    observed_dates = set(bars["session_date"].tolist())
+    outside = sorted(
+        session_date
+        for session_date in observed_dates
+        if not source.expected_start_date <= session_date <= source.expected_end_date
+    )
+    if outside:
+        raise ValueError(f"bars fall outside declared expected date range: {outside}")
+
+
+def _quarantine_record(group: SymbolSessionQuality) -> dict[str, object]:
+    return {
+        "symbol": group.symbol,
+        "session_date": group.session_date.isoformat(),
+        "missing_expected_bars": group.missing_expected_bars,
+        "duplicate_rows": group.duplicate_rows,
+        "invalid_ohlc_rows": group.invalid_ohlc_rows,
+        "invalid_volume_rows": group.invalid_volume_rows,
+        "outside_session_rows": group.outside_session_rows,
+        "non_monotonic": group.non_monotonic,
+    }
+
+
+def _source_declaration_record(source: ArchiveSourceDeclaration) -> dict[str, object]:
+    return {
+        "provider": source.provider,
+        "feed": source.feed,
+        "bar_size": source.bar_size,
+        "member_names": list(source.member_names),
+        "production_symbols": list(source.production_symbols),
+        "expected_start_date": source.expected_start_date.isoformat(),
+        "expected_end_date": source.expected_end_date.isoformat(),
+    }
+
+
+def _optional_timestamp_iso(timestamp: pd.Timestamp | None) -> str | None:
+    return None if timestamp is None else timestamp.isoformat()
+
+
+def _build_import_evidence(
+    *,
+    source: ArchiveSourceDeclaration,
+    inspection: ArchiveInspection,
+    observed_cadence: dict[str, object],
+    expected_groups: set[ExpectedGroup],
+    effective_production_symbols: tuple[str, ...],
+    source_quality: MinuteBarsQualityAssessment,
+    quarantined_groups: tuple[SymbolSessionQuality, ...],
+) -> dict[str, object]:
+    selected = {member.name: member for member in inspection.members}
+    return {
+        "schema_version": _EVIDENCE_SCHEMA_VERSION,
+        "source_declaration": _source_declaration_record(source),
+        "source_sha256": inspection.source_sha256,
+        "selected_members": [
+            {
+                "name": name,
+                "size": selected[name].size,
+                "columns": list(selected[name].columns),
+                "row_estimate": selected[name].row_estimate,
+                "min_timestamp": _optional_timestamp_iso(selected[name].min_timestamp),
+                "max_timestamp": _optional_timestamp_iso(selected[name].max_timestamp),
+                "symbol_count": len(selected[name].symbols),
+            }
+            for name in source.member_names
+        ],
+        "observed_cadence": observed_cadence,
+        "effective_production_symbols": list(effective_production_symbols),
+        "expected_production_groups": [
+            {"symbol": symbol, "session_date": session_date.isoformat()}
+            for symbol, session_date in sorted(expected_groups)
+        ],
+        "source_quality": source_quality.aggregate.model_dump(mode="json"),
+        "quarantined_groups": [_quarantine_record(group) for group in quarantined_groups],
+    }
+
+
+def _snapshot_content_files(snapshot_root: Path) -> tuple[Path, ...]:
+    return tuple(
+        path for path in snapshot_root.rglob("*") if path.is_file() and path.name != "manifest.json"
+    )
+
+
+def import_snapshot(
+    archive_path: Path,
+    *,
+    root: Path,
+    source: ArchiveSourceDeclaration,
+) -> tuple[DatasetManifest, Path]:
     """Copy approved legacy bars into a new immutable canonical snapshot."""
     inspection = inspect_archive(archive_path)
     if not inspection.members:
         raise ValueError("archive contains no approved CSV or Parquet members")
 
-    minute_members = tuple(
-        member.name
-        for member in inspection.members
-        if _TIINGO_MINUTE_COLUMNS.issubset(member.columns)
-    )
-    if not minute_members:
+    inspected_members = {member.name: member for member in inspection.members}
+    undeclared = sorted(set(source.member_names).difference(inspected_members))
+    if undeclared:
+        raise ValueError(f"declared source members are absent or unapproved: {undeclared}")
+    invalid_schema = [
+        name
+        for name in source.member_names
+        if not _TIINGO_MINUTE_COLUMNS.issubset(inspected_members[name].columns)
+    ]
+    if invalid_schema:
         raise ValueError(
-            "archive contains no Tiingo minute-bar member with required columns: "
-            + ",".join(sorted(_TIINGO_MINUTE_COLUMNS))
+            "declared source members lack required Tiingo columns: " + ",".join(invalid_schema)
         )
 
     imported_at = datetime.now(UTC)
-    source_frames = list(iter_archive_frames(archive_path, member_names=minute_members))
+    source_frames = list(iter_archive_frames(archive_path, member_names=source.member_names))
     if not source_frames:
         raise ValueError("archive contains no tabular rows")
-    source = pd.concat(source_frames, ignore_index=True)
-    bars = canonicalize_tiingo_rows(source, ingested_at=imported_at)
+    source_rows = pd.concat(source_frames, ignore_index=True)
+    source_non_monotonic, cadence_evidence = _source_order_and_cadence(source_rows)
+    bars = canonicalize_tiingo_rows(source_rows, ingested_at=imported_at)
     if bars.empty:
         raise ValueError("archive contains no minute bars")
-    quality = assess_minute_bars(bars)
-    if not quality.passed:
-        failing_production = [
-            f"{group.symbol}/{group.session_date}"
-            for group in quality.groups
-            if group.production and not group.passed
-        ]
+    _validate_canonical_symbols(bars)
+    _validate_declared_date_range(bars, source)
+    effective_production = _effective_production_symbols(bars, source)
+    expected_groups = _expected_production_groups(source, effective_production)
+    source_quality = assess_minute_bars(
+        bars,
+        expected_groups=expected_groups,
+        production_symbols=effective_production,
+        source_non_monotonic_groups=source_non_monotonic,
+    )
+    failing_production = tuple(
+        group for group in source_quality.groups if group.production and not group.passed
+    )
+    if failing_production:
         raise SnapshotQualityError(
-            "production quality gate failed: " + ", ".join(failing_production)
+            "production quality gate failed: "
+            + ", ".join(f"{group.symbol}/{group.session_date}" for group in failing_production)
         )
+    quarantined_groups = tuple(
+        group for group in source_quality.groups if group.requires_quarantine
+    )
+    quarantine_keys = {(group.symbol, group.session_date) for group in quarantined_groups}
+    published_bars = bars.loc[
+        [
+            (symbol, session_date) not in quarantine_keys
+            for symbol, session_date in zip(
+                bars["symbol"].tolist(),
+                bars["session_date"].tolist(),
+                strict=True,
+            )
+        ]
+    ].reset_index(drop=True)
+    if published_bars.empty:
+        raise SnapshotQualityError("all observed robustness groups require quarantine")
+    published_quality = assess_minute_bars(
+        published_bars,
+        expected_groups=expected_groups,
+        production_symbols=effective_production,
+    )
+    if not published_quality.passed:
+        raise SnapshotQualityError("published bars do not pass the declared quality scope")
 
     paths = LabPaths.from_root(root)
     dataset_id = f"tiingo-iex-1min-{inspection.source_sha256[:16]}"
@@ -134,12 +396,27 @@ def import_snapshot(archive_path: Path, *, root: Path) -> tuple[DatasetManifest,
     if final_root.exists():
         raise FileExistsError(f"immutable snapshot already exists: {final_root}")
 
-    temporary_root = Path(
-        tempfile.mkdtemp(prefix=".snapshot-", dir=paths.canonical)
-    ).resolve()
+    temporary_root = Path(tempfile.mkdtemp(prefix=".snapshot-", dir=paths.canonical)).resolve()
     try:
-        temporary_outputs = _write_partitions(bars, temporary_root)
-        content_hash = _content_sha256(temporary_root, temporary_outputs)
+        temporary_outputs = _write_partitions(published_bars, temporary_root)
+        evidence = _build_import_evidence(
+            source=source,
+            inspection=inspection,
+            observed_cadence=cadence_evidence,
+            expected_groups=expected_groups,
+            effective_production_symbols=effective_production,
+            source_quality=source_quality,
+            quarantined_groups=quarantined_groups,
+        )
+        evidence_path = _contained_path(temporary_root, "import-evidence.json")
+        evidence_path.write_text(
+            json.dumps(evidence, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        content_hash = _content_sha256(
+            temporary_root,
+            _snapshot_content_files(temporary_root),
+        )
         manifest = DatasetManifest(
             dataset_id=dataset_id,
             schema_version=_SCHEMA_VERSION,
@@ -150,19 +427,24 @@ def import_snapshot(archive_path: Path, *, root: Path) -> tuple[DatasetManifest,
             calendar_name="XNYS",
             calendar_version=_package_version("exchange-calendars"),
             created_at=imported_at,
-            provider="tiingo",
-            feed="iex",
-            bar_size=_BAR_SIZE,
-            row_count=len(bars),
-            symbols=tuple(sorted(bars["symbol"].unique().tolist())),
-            min_timestamp=bars["timestamp"].min().to_pydatetime(),
-            max_timestamp=bars["timestamp"].max().to_pydatetime(),
-            quality=quality.aggregate,
+            provider=source.provider,
+            feed=source.feed,
+            bar_size=source.bar_size,
+            row_count=len(published_bars),
+            symbols=tuple(sorted(published_bars["symbol"].unique().tolist())),
+            min_timestamp=published_bars["timestamp"].min().to_pydatetime(),
+            max_timestamp=published_bars["timestamp"].max().to_pydatetime(),
+            quality=published_quality.aggregate,
         )
-        (temporary_root / "manifest.json").write_text(
+        manifest_path = _contained_path(temporary_root, "manifest.json")
+        manifest_path.write_text(
             manifest.model_dump_json(indent=2),
             encoding="utf-8",
         )
+        if sha256_file(inspection.archive) != inspection.source_sha256:
+            raise SnapshotVerificationError(
+                "source archive changed after inspection and selected-member read"
+            )
         temporary_root.rename(final_root)
     except BaseException:
         if temporary_root.exists():
@@ -174,9 +456,7 @@ def import_snapshot(archive_path: Path, *, root: Path) -> tuple[DatasetManifest,
 
 
 def _read_snapshot_bars(files: tuple[Path, ...]) -> pd.DataFrame:
-    frames = [
-        cast(pd.DataFrame, pq.ParquetFile(path).read().to_pandas()) for path in files
-    ]
+    frames = [cast(pd.DataFrame, pq.ParquetFile(path).read().to_pandas()) for path in files]
     if not frames:
         raise SnapshotVerificationError("snapshot contains no Parquet partitions")
     return pd.concat(frames, ignore_index=True).sort_values(
@@ -198,12 +478,37 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         raise SnapshotVerificationError("manifest dataset_id does not match requested snapshot")
 
     outputs = tuple(snapshot_root.rglob("*.parquet"))
-    content_hash = _content_sha256(snapshot_root, outputs)
+    content_hash = _content_sha256(
+        snapshot_root,
+        _snapshot_content_files(snapshot_root),
+    )
     if content_hash != manifest.content_sha256:
         raise SnapshotVerificationError("snapshot content hash does not match manifest")
 
+    evidence_path = snapshot_root / "import-evidence.json"
+    if not evidence_path.is_file():
+        raise SnapshotVerificationError("snapshot import evidence does not exist")
+    evidence = cast(
+        dict[str, object],
+        json.loads(evidence_path.read_text(encoding="utf-8")),
+    )
+    source_record = cast(dict[str, object], evidence["source_declaration"])
+    source = ArchiveSourceDeclaration(
+        provider=str(source_record["provider"]),
+        feed=str(source_record["feed"]),
+        bar_size=str(source_record["bar_size"]),
+        member_names=tuple(cast(list[str], source_record["member_names"])),
+        production_symbols=tuple(cast(list[str], source_record["production_symbols"])),
+        expected_start_date=date.fromisoformat(str(source_record["expected_start_date"])),
+        expected_end_date=date.fromisoformat(str(source_record["expected_end_date"])),
+    )
     bars = _read_snapshot_bars(outputs)
-    quality = assess_minute_bars(bars)
+    effective_production = _effective_production_symbols(bars, source)
+    quality = assess_minute_bars(
+        bars,
+        expected_groups=_expected_production_groups(source, effective_production),
+        production_symbols=effective_production,
+    )
     observed = {
         "bar_size": _BAR_SIZE,
         "provider": str(bars["provider"].iloc[0]),
@@ -231,11 +536,7 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         raise SnapshotVerificationError(
             "snapshot metadata or quality does not match manifest: "
             + json.dumps(
-                {
-                    key: str(value)
-                    for key, value in observed.items()
-                    if value != expected[key]
-                },
+                {key: str(value) for key, value in observed.items() if value != expected[key]},
                 sort_keys=True,
             )
         )

@@ -59,7 +59,9 @@ class SymbolSessionQuality:
 
     @property
     def requires_quarantine(self) -> bool:
-        return not self.production and self.missing_expected_bars > 0
+        return not self.production and (
+            self.missing_expected_bars > 0 or not self.structural_passed
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,8 +179,10 @@ def _group_results(
     invalid_volume_mask: pd.Series,
     all_groups: Collection[ExpectedGroup],
     production_symbols: Collection[str],
+    source_non_monotonic_groups: Collection[ExpectedGroup],
 ) -> tuple[SymbolSessionQuality, ...]:
     normalized_production = {symbol.strip().upper() for symbol in production_symbols}
+    source_non_monotonic = set(source_non_monotonic_groups)
     results: list[SymbolSessionQuality] = []
     for symbol, session_date in sorted(all_groups):
         group_rows = symbols.eq(symbol) & session_dates.eq(session_date)
@@ -212,7 +216,10 @@ def _group_results(
                 invalid_ohlc_rows=int(invalid_ohlc_mask.loc[group_rows].sum()),
                 invalid_volume_rows=int(invalid_volume_mask.loc[group_rows].sum()),
                 outside_session_rows=outside_session_rows,
-                non_monotonic=not group_timestamps.is_monotonic_increasing,
+                non_monotonic=(
+                    (symbol, session_date) in source_non_monotonic
+                    or not group_timestamps.is_monotonic_increasing
+                ),
             )
         )
     return tuple(results)
@@ -254,6 +261,7 @@ def assess_minute_bars(
     *,
     expected_groups: Collection[ExpectedGroup] | None = None,
     production_symbols: Collection[str] = PRODUCTION_SYMBOLS,
+    source_non_monotonic_groups: Collection[ExpectedGroup] = (),
 ) -> MinuteBarsQualityAssessment:
     """Assess canonical minute bars without mutating or filling them.
 
@@ -295,6 +303,7 @@ def assess_minute_bars(
         invalid_volume_mask=invalid_volume_mask,
         all_groups=all_groups,
         production_symbols=production_symbols,
+        source_non_monotonic_groups=source_non_monotonic_groups,
     )
     return MinuteBarsQualityAssessment(
         aggregate=_aggregate_quality(groups),

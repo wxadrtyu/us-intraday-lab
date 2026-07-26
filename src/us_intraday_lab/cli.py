@@ -1,10 +1,15 @@
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from us_intraday_lab.data.archive import inspect_archive
-from us_intraday_lab.data.snapshot import import_snapshot, verify_snapshot
+from us_intraday_lab.data.snapshot import (
+    ArchiveSourceDeclaration,
+    import_snapshot,
+    verify_snapshot,
+)
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
@@ -13,9 +18,7 @@ app.add_typer(data_app, name="data")
 
 @data_app.command("inspect-archive")
 def inspect_archive_command(
-    archive: Annotated[
-        Path, typer.Option(exists=True, dir_okay=False, readable=True)
-    ],
+    archive: Annotated[Path, typer.Option(exists=True, dir_okay=False, readable=True)],
 ) -> None:
     inspection = inspect_archive(archive)
     typer.echo(f"archive: {inspection.archive}")
@@ -37,12 +40,26 @@ def inspect_archive_command(
 
 @data_app.command("import-archive")
 def import_archive_command(
-    archive: Annotated[
-        Path, typer.Option(exists=True, dir_okay=False, readable=True)
-    ],
+    archive: Annotated[Path, typer.Option(exists=True, dir_okay=False, readable=True)],
     root: Annotated[Path, typer.Option(file_okay=False)],
+    provider: Annotated[str, typer.Option()],
+    feed: Annotated[str, typer.Option()],
+    bar_size: Annotated[str, typer.Option()],
+    member: Annotated[list[str], typer.Option("--member")],
+    production_symbol: Annotated[list[str], typer.Option("--production-symbol")],
+    expected_start_date: Annotated[str, typer.Option()],
+    expected_end_date: Annotated[str, typer.Option()],
 ) -> None:
-    manifest, _ = import_snapshot(archive, root=root)
+    source = ArchiveSourceDeclaration(
+        provider=provider,
+        feed=feed,
+        bar_size=bar_size,
+        member_names=tuple(member),
+        production_symbols=tuple(production_symbol),
+        expected_start_date=date.fromisoformat(expected_start_date),
+        expected_end_date=date.fromisoformat(expected_end_date),
+    )
+    manifest, _ = import_snapshot(archive, root=root, source=source)
     typer.echo(manifest.dataset_id)
 
 
