@@ -35,3 +35,6 @@ Thumbs.db
 # Local brainstorming companion
 .superpowers/
 .brainstorm-server-*.log
+
+# Local Git worktrees
+.worktrees/
