@@ -1,6 +1,8 @@
+import hashlib
+import json
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from pydantic import (
     BaseModel,
@@ -34,14 +36,68 @@ class CostModelIds(_ClosedModel):
     stress: str = Field(min_length=1)
 
 
-class BacktestJob(_ClosedModel):
+class _BacktestJobIdentity(_ClosedModel):
     schema_version: Literal["1.0.0"]
-    job_id: str = Field(min_length=1)
     strategy_id: str = Field(min_length=1)
     dataset_id: str = Field(min_length=1)
     engine_id: str = Field(min_length=1)
     calendar_id: str = Field(min_length=1)
+    initial_cash: float = Field(strict=True, gt=0)
+    closeout_buffer_minutes: int = Field(strict=True, ge=0, le=60)
     cost_model_ids: CostModelIds
+
+
+def _canonical_json(value: Mapping[str, Any]) -> str:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+
+
+def _derived_job_id(identity: _BacktestJobIdentity) -> str:
+    encoded = _canonical_json(identity.model_dump(mode="json")).encode("utf-8")
+    return "job-" + hashlib.sha256(encoded).hexdigest()
+
+
+class BacktestJob(_ClosedModel):
+    schema_version: Literal["1.0.0"]
+    job_id: str = Field(pattern=r"^job-[0-9a-f]{64}$")
+    strategy_id: str = Field(min_length=1)
+    dataset_id: str = Field(min_length=1)
+    engine_id: str = Field(min_length=1)
+    calendar_id: str = Field(min_length=1)
+    initial_cash: float = Field(strict=True, gt=0)
+    closeout_buffer_minutes: int = Field(strict=True, ge=0, le=60)
+    cost_model_ids: CostModelIds
+
+    @model_validator(mode="before")
+    @classmethod
+    def derive_missing_job_id(cls, value: object) -> object:
+        if not isinstance(value, Mapping) or "job_id" in value:
+            return value
+        payload = dict(value)
+        identity = _BacktestJobIdentity.model_validate(payload)
+        payload["job_id"] = _derived_job_id(identity)
+        return payload
+
+    @model_validator(mode="after")
+    def validate_job_id(self) -> Self:
+        identity = _BacktestJobIdentity.model_validate(self.model_dump(exclude={"job_id"}))
+        if self.job_id != _derived_job_id(identity):
+            raise ValueError("job_id does not match canonical BacktestJob identity")
+        return self
+
+    @classmethod
+    def create(cls, **values: object) -> Self:
+        """Validate inputs and derive the content-addressed job identifier."""
+        return cls.model_validate(values)
+
+    def canonical_json(self) -> str:
+        """Return stable JSON used as the complete deterministic run identity."""
+        return _canonical_json(self.model_dump(mode="json"))
 
 
 class BacktestFailure(_ClosedModel):

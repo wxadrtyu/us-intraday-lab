@@ -250,9 +250,15 @@ class StrategyRuntime:
             event_time=event_time,
             reason=reason,
         )
-        next_state = replace(state, phase=to_phase)
         if to_phase in (RuntimePhase.FLAT, RuntimePhase.SESSION_CLOSED):
-            next_state = replace(next_state, opened_at=None, cooldown_until=None)
+            next_state = replace(
+                state,
+                phase=to_phase,
+                opened_at=None,
+                cooldown_until=None,
+            )
+        else:
+            next_state = replace(state, phase=to_phase)
         self._save(key, next_state)
         self._audit_transition(
             key=key,

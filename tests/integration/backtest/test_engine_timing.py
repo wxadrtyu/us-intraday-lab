@@ -1,8 +1,14 @@
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pandas as pd
 
+from us_intraday_lab.backtest.costs import COST_SCENARIOS
+from us_intraday_lab.backtest.engine import BacktestEngine
+from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
+from us_intraday_lab.contracts.strategies import StrategyDefinition
+from us_intraday_lab.data.calendar import expected_minute_index
 from us_intraday_lab.data.resample import resample_minute_bars
+from us_intraday_lab.strategy.compiler import compile_strategy
 from us_intraday_lab.strategy.features import (
     compute_feature_frame,
 )
@@ -69,3 +75,119 @@ def test_0945_feature_vector_is_unchanged_by_inputs_at_or_after_0945() -> None:
     after_future_change = _features_visible_at_signal_time(changed)
 
     pd.testing.assert_frame_equal(baseline, after_future_change)
+
+
+def _golden_strategy() -> StrategyDefinition:
+    return StrategyDefinition.model_validate(
+        {
+            "strategy_id": "golden-entry-v1",
+            "dsl_version": "1.0.0",
+            "symbols": ["SPY"],
+            "signal_bar_size": "15min",
+            "entry": {
+                "indicator": "minutes_from_open",
+                "op": "gte",
+                "value": 15.0,
+            },
+            "exit": {
+                "indicator": "minutes_from_open",
+                "op": "gte",
+                "value": 999.0,
+            },
+            "risk": {
+                "stop_loss_bps": 10_000,
+                "take_profit_bps": 10_000,
+                "max_holding_minutes": 999,
+                "cooldown_minutes": 1,
+                "max_entries_per_session": 1,
+                "sizing_preset": "equal_cash_conservative",
+            },
+            "order_type": "market",
+        }
+    )
+
+
+def _golden_job(strategy: StrategyDefinition) -> BacktestJob:
+    return BacktestJob.create(
+        schema_version="1.0.0",
+        strategy_id=strategy.strategy_id,
+        dataset_id="synthetic-accepted-dataset",
+        engine_id="event-engine-1.0.0",
+        calendar_id="XNYS-4.11",
+        initial_cash=25_000.0,
+        closeout_buffer_minutes=5,
+        cost_model_ids=CostModelIds(
+            optimistic=COST_SCENARIOS["optimistic"].model_id,
+            base=COST_SCENARIOS["base"].model_id,
+            stress=COST_SCENARIOS["stress"].model_id,
+        ),
+    )
+
+
+def _full_session_minute_bars() -> pd.DataFrame:
+    timestamps = expected_minute_index(SESSION_DATE)
+    return pd.DataFrame(
+        {
+            "symbol": "SPY",
+            "timestamp": timestamps,
+            "open": 100.0,
+            "high": 100.2,
+            "low": 99.8,
+            "close": 100.0,
+            "volume": 10_000.0,
+            "session_date": SESSION_DATE,
+        }
+    )
+
+
+def _one_completed_signal_bar() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["SPY"],
+            "available_at": [datetime(2026, 7, 2, 13, 45, tzinfo=UTC)],
+            "open": [100.0],
+            "high": [100.2],
+            "low": [99.8],
+            "close": [100.0],
+            "volume": [150_000.0],
+            "session_date": [SESSION_DATE],
+        }
+    )
+
+
+def test_engine_golden_sequence_obeys_next_minute_and_finishes_flat() -> None:
+    strategy = _golden_strategy()
+    run = BacktestEngine(
+        job=_golden_job(strategy),
+        strategy=compile_strategy(strategy),
+    ).run_scenario(
+        minute_bars=_full_session_minute_bars(),
+        signal_bars=_one_completed_signal_bar(),
+        cost_scenario="base",
+    )
+
+    assert [event.event_type for event in run.events] == [
+        "BAR_CLOSED_15M",
+        "SIGNAL_ENTER_LONG",
+        "ORDER_INTENT_CREATED",
+        "ORDER_ELIGIBLE",
+        "ORDER_FILLED",
+        "POSITION_OPENED",
+        "SIGNAL_EXIT_LONG",
+        "ORDER_INTENT_CREATED",
+        "ORDER_FILLED",
+        "POSITION_CLOSED",
+        "SESSION_FINALIZED",
+    ]
+    opening_intent = run.intents[0]
+    opening_fill = next(
+        event
+        for event in run.events
+        if event.event_type == "ORDER_FILLED" and event.details["side"] == "buy"
+    )
+    assert opening_intent.signal_time < opening_intent.eligible_time
+    assert opening_intent.eligible_time <= opening_fill.event_time
+    assert run.final_positions == ()
+    assert len(run.trades) == 1
+    assert run.trades[0].forced
+    assert run.events[-1].details["position_count"] == 0

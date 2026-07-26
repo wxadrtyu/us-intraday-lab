@@ -1,24 +1,44 @@
+import hashlib
+import json
 from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated
 
 import typer
+from pydantic import ValidationError
 
+from us_intraday_lab.backtest.costs import COST_SCENARIOS
+from us_intraday_lab.backtest.engine import (
+    ENGINE_ID,
+    BacktestEngine,
+    write_backtest_artifacts,
+)
+from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
+from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.archive import (
     DEFAULT_ARCHIVE_READ_LIMITS,
     ArchiveReadLimits,
     inspect_archive,
 )
-from us_intraday_lab.data.catalog import accept_dataset, build_catalog
+from us_intraday_lab.data.catalog import (
+    CatalogAcceptanceError,
+    accept_dataset,
+    build_catalog,
+    connect_catalog,
+)
 from us_intraday_lab.data.snapshot import (
     ArchiveSourceDeclaration,
     import_snapshot,
     verify_snapshot,
 )
+from us_intraday_lab.strategy.compiler import StrategyCompileError, compile_strategy
+from us_intraday_lab.strategy.validator import scan_strategy_payload
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
+backtest_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
+app.add_typer(backtest_app, name="backtest")
 
 
 def _archive_limits(
@@ -171,3 +191,104 @@ def accept_dataset_command(
     typer.echo(f"bars_1m: {summary.bar_counts['1min']}")
     typer.echo(f"bars_5m: {summary.bar_counts['5min']}")
     typer.echo(f"bars_15m: {summary.bar_counts['15min']}")
+
+
+def _load_strategy(path: Path) -> StrategyDefinition:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise typer.BadParameter(f"strategy JSON could not be read: {error}") from error
+    safety = scan_strategy_payload(payload)
+    if not safety.passed:
+        reasons = ",".join(f"{issue.code}:{issue.path}" for issue in safety.issues)
+        raise typer.BadParameter(f"strategy failed static safety validation: {reasons}")
+    try:
+        return StrategyDefinition.model_validate(payload)
+    except ValidationError as error:
+        raise typer.BadParameter(f"strategy contract validation failed: {error}") from error
+
+
+def _strategy_identity(strategy: StrategyDefinition) -> str:
+    canonical = json.dumps(
+        strategy.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return f"{strategy.strategy_id}@sha256:{digest}"
+
+
+@backtest_app.command("run")
+def run_backtest_command(
+    strategy: Annotated[
+        Path,
+        typer.Option(exists=True, dir_okay=False, readable=True),
+    ],
+    dataset_id: Annotated[str, typer.Option()],
+    initial_cash: Annotated[float, typer.Option()],
+    root: Annotated[
+        Path,
+        typer.Option(exists=True, file_okay=False, readable=True),
+    ],
+    closeout_buffer_minutes: Annotated[int, typer.Option()] = 5,
+) -> None:
+    """Run all v1 cost scenarios against one accepted immutable dataset."""
+    try:
+        accept_dataset(dataset_id, root=root)
+        manifest = verify_snapshot(dataset_id, root=root)
+    except (CatalogAcceptanceError, OSError, ValueError) as error:
+        raise typer.BadParameter(
+            f"dataset is not accepted: {error}",
+            param_hint="--dataset-id",
+        ) from error
+    definition = _load_strategy(strategy)
+    try:
+        compiled = compile_strategy(definition)
+    except StrategyCompileError as error:
+        reasons = ",".join(f"{issue.code}:{issue.path}" for issue in error.issues)
+        raise typer.BadParameter(f"strategy compilation failed: {error.code}:{reasons}") from error
+    try:
+        job = BacktestJob.create(
+            schema_version="1.0.0",
+            strategy_id=_strategy_identity(definition),
+            dataset_id=manifest.dataset_id,
+            engine_id=ENGINE_ID,
+            calendar_id=f"{manifest.calendar_name}@{manifest.calendar_version}",
+            initial_cash=initial_cash,
+            closeout_buffer_minutes=closeout_buffer_minutes,
+            cost_model_ids=CostModelIds(
+                optimistic=COST_SCENARIOS["optimistic"].model_id,
+                base=COST_SCENARIOS["base"].model_id,
+                stress=COST_SCENARIOS["stress"].model_id,
+            ),
+        )
+    except ValidationError as error:
+        raise typer.BadParameter(f"backtest job validation failed: {error}") from error
+
+    with connect_catalog(root=root) as connection:
+        minute_bars = connection.execute(
+            """
+            SELECT *
+            FROM bars_1m
+            ORDER BY session_date, timestamp, symbol
+            """
+        ).df()
+        signal_bars = connection.execute(
+            """
+            SELECT *
+            FROM bars_15m
+            ORDER BY session_date, available_at, symbol
+            """
+        ).df()
+    run = BacktestEngine(job=job, strategy=compiled).run(
+        minute_bars=minute_bars,
+        signal_bars=signal_bars,
+    )
+    result_path = write_backtest_artifacts(run, root=root)
+    typer.echo(result_path)
+
+
+if __name__ == "__main__":
+    app()

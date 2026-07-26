@@ -240,13 +240,14 @@ def test_order_event_rejects_filled_quantity_above_requested_quantity() -> None:
 
 
 def _backtest_job() -> BacktestJob:
-    return BacktestJob(
+    return BacktestJob.create(
         schema_version="1.0.0",
-        job_id="job-001",
         strategy_id="mom-pullback-v1",
         dataset_id="tiingo-iex-minute-20260702",
         engine_id="event-engine-1.0.0",
         calendar_id="XNYS-2026a",
+        initial_cash=25_000.0,
+        closeout_buffer_minutes=5,
         cost_model_ids=CostModelIds(
             optimistic="cost-optimistic-1.0.0",
             base="cost-base-1.0.0",
@@ -267,7 +268,7 @@ def _successful_backtest_result(
     return BacktestResult(
         schema_version="1.0.0",
         run_id="run-001",
-        job_id="job-001",
+        job_id=_backtest_job().job_id,
         status="succeeded",
         failure=None,
         metrics_by_cost_scenario=metrics,
@@ -285,6 +286,60 @@ def test_backtest_job_json_round_trip_is_frozen_and_versioned() -> None:
     assert restored == job
     with pytest.raises(ValidationError):
         job.engine_id = "different-engine"
+
+
+def test_backtest_job_identity_covers_explicit_execution_inputs() -> None:
+    baseline = _backtest_job()
+    different_cash = BacktestJob.create(
+        **{
+            **baseline.model_dump(exclude={"job_id"}),
+            "initial_cash": 50_000.0,
+        }
+    )
+    different_closeout = BacktestJob.create(
+        **{
+            **baseline.model_dump(exclude={"job_id"}),
+            "closeout_buffer_minutes": 10,
+        }
+    )
+
+    assert baseline.initial_cash == 25_000.0
+    assert baseline.closeout_buffer_minutes == 5
+    assert baseline.job_id != different_cash.job_id
+    assert baseline.job_id != different_closeout.job_id
+    assert baseline.canonical_json() == baseline.canonical_json()
+
+
+@pytest.mark.parametrize("initial_cash", [0.0, -1.0, float("inf"), float("nan"), True])
+def test_backtest_job_rejects_invalid_initial_cash(initial_cash: object) -> None:
+    with pytest.raises(ValidationError):
+        BacktestJob.create(
+            **{
+                **_backtest_job().model_dump(exclude={"job_id", "initial_cash"}),
+                "initial_cash": initial_cash,
+            }
+        )
+
+
+@pytest.mark.parametrize("buffer", [-1, 61, True, 1.5])
+def test_backtest_job_rejects_invalid_closeout_buffer(buffer: object) -> None:
+    with pytest.raises(ValidationError):
+        BacktestJob.create(
+            **{
+                **_backtest_job().model_dump(exclude={"job_id", "closeout_buffer_minutes"}),
+                "closeout_buffer_minutes": buffer,
+            }
+        )
+
+
+def test_backtest_job_rejects_noncanonical_job_id() -> None:
+    with pytest.raises(ValidationError, match="job_id"):
+        BacktestJob(
+            **{
+                **_backtest_job().model_dump(exclude={"job_id"}),
+                "job_id": "job-arbitrary",
+            }
+        )
 
 
 def test_backtest_result_json_round_trip_has_typed_cost_scenarios() -> None:
