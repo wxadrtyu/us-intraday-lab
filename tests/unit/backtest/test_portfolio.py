@@ -2,7 +2,12 @@ from collections.abc import Callable
 
 import pytest
 
-from us_intraday_lab.backtest.portfolio import Portfolio
+from us_intraday_lab.backtest.portfolio import (
+    Portfolio,
+    PortfolioFill,
+    Position,
+    Reservation,
+)
 
 
 def _assert_invariants(portfolio: Portfolio) -> None:
@@ -207,6 +212,168 @@ def test_cash_integer_quantity_and_three_position_limit_are_enforced() -> None:
     _assert_invariants(portfolio)
 
 
+@pytest.mark.parametrize("value", [True, "100.0", 1j, float("nan"), float("inf")])
+def test_portfolio_rejects_boolean_and_non_real_initial_cash(value: object) -> None:
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        Portfolio(initial_cash=value)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        lambda: Position(
+            symbol="SPY",
+            quantity=1,
+            average_cost=True,  # type: ignore[arg-type]
+            market_price=100.0,
+        ),
+        lambda: Position(
+            symbol="SPY",
+            quantity=1,
+            average_cost=100.0,
+            market_price=True,  # type: ignore[arg-type]
+        ),
+        lambda: Reservation(
+            order_id="order-1",
+            symbol="SPY",
+            side="buy",
+            remaining_quantity=1,
+            reserved_cash=True,  # type: ignore[arg-type]
+        ),
+        lambda: PortfolioFill(
+            order_id="order-1",
+            symbol="SPY",
+            side="buy",
+            quantity=1,
+            price=True,  # type: ignore[arg-type]
+            fees=0.0,
+            exit_reason=None,
+            forced=False,
+        ),
+        lambda: PortfolioFill(
+            order_id="order-1",
+            symbol="SPY",
+            side="buy",
+            quantity=1,
+            price=100.0,
+            fees=True,  # type: ignore[arg-type]
+            exit_reason=None,
+            forced=False,
+        ),
+    ],
+    ids=[
+        "position-average-cost",
+        "position-market-price",
+        "reservation-cash",
+        "fill-price",
+        "fill-fees",
+    ],
+)
+def test_public_portfolio_records_reject_boolean_money(
+    record: Callable[[], object],
+) -> None:
+    with pytest.raises(ValueError, match="exact int or float"):
+        record()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("estimated_price", True),
+        ("estimated_fees", True),
+        ("estimated_price", "100.0"),
+        ("estimated_fees", 1j),
+        ("estimated_price", float("inf")),
+        ("estimated_fees", float("nan")),
+    ],
+)
+def test_reservation_rejects_boolean_and_non_real_money(
+    field: str,
+    value: object,
+) -> None:
+    portfolio = Portfolio(initial_cash=1_000.0)
+    values: dict[str, object] = {
+        "order_id": "buy-SPY",
+        "symbol": "SPY",
+        "side": "buy",
+        "quantity": 1,
+        "estimated_price": 100.0,
+        "estimated_fees": 0.0,
+    }
+    values[field] = value
+
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        portfolio.reserve_order(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("price", True),
+        ("fees", True),
+        ("price", "100.0"),
+        ("fees", 1j),
+        ("price", float("inf")),
+        ("fees", float("nan")),
+    ],
+)
+def test_apply_fill_rejects_boolean_and_non_real_money(
+    field: str,
+    value: object,
+) -> None:
+    portfolio = Portfolio(initial_cash=1_000.0)
+    portfolio.reserve_order(
+        order_id="buy-SPY",
+        symbol="SPY",
+        side="buy",
+        quantity=1,
+        estimated_price=100.0,
+    )
+    values: dict[str, object] = {
+        "order_id": "buy-SPY",
+        "quantity": 1,
+        "price": 100.0,
+        "fees": 0.0,
+    }
+    values[field] = value
+
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        portfolio.apply_fill(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("value", [True, "101.0", 1j, float("nan"), float("inf")])
+def test_mark_to_market_rejects_boolean_and_non_real_price(value: object) -> None:
+    portfolio = Portfolio(initial_cash=1_000.0)
+    _buy(portfolio, quantity=1, fees=0.0)
+
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        portfolio.mark_to_market("SPY", value)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("price", True),
+        ("fees", True),
+        ("price", "101.0"),
+        ("fees", 1j),
+        ("price", float("inf")),
+        ("fees", float("nan")),
+    ],
+)
+def test_force_close_rejects_boolean_and_non_real_money(
+    field: str,
+    value: object,
+) -> None:
+    portfolio = Portfolio(initial_cash=1_000.0)
+    _buy(portfolio, quantity=1, fees=0.0)
+    values: dict[str, object] = {"price": 101.0, "fees": 0.0}
+    values[field] = value
+
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        portfolio.force_close("SPY", **values)  # type: ignore[arg-type]
+
+
 def test_fill_that_would_consume_cash_reserved_for_other_orders_is_atomic() -> None:
     portfolio = Portfolio(initial_cash=1_000.0)
     portfolio.reserve_order(
@@ -235,6 +402,79 @@ def test_fill_that_would_consume_cash_reserved_for_other_orders_is_atomic() -> N
     assert portfolio.cash == 1_000.0
     assert portfolio.reserved_cash == 1_000.0
     assert portfolio.positions == ()
+    _assert_invariants(portfolio)
+
+
+def test_repeated_decimal_fills_normalize_cash_residue_to_exact_zero() -> None:
+    portfolio = Portfolio(initial_cash=0.3)
+    portfolio.reserve_order(
+        order_id="buy-SPY",
+        symbol="SPY",
+        side="buy",
+        quantity=3,
+        estimated_price=0.1,
+    )
+
+    for _ in range(3):
+        portfolio.apply_fill(
+            order_id="buy-SPY",
+            quantity=1,
+            price=0.1,
+        )
+        _assert_invariants(portfolio)
+
+    assert portfolio.cash == 0.0
+    assert portfolio.available_cash == 0.0
+
+
+def test_partial_cancel_and_sell_decimal_sequence_never_exposes_negative_cash() -> None:
+    portfolio = Portfolio(initial_cash=0.3)
+    portfolio.reserve_order(
+        order_id="buy-SPY",
+        symbol="SPY",
+        side="buy",
+        quantity=3,
+        estimated_price=0.1,
+    )
+    portfolio.apply_fill(order_id="buy-SPY", quantity=2, price=0.1)
+    _assert_invariants(portfolio)
+    portfolio.cancel_order("buy-SPY")
+    _assert_invariants(portfolio)
+    portfolio.reserve_order(
+        order_id="sell-SPY",
+        symbol="SPY",
+        side="sell",
+        quantity=2,
+        estimated_price=0.1,
+    )
+    portfolio.apply_fill(order_id="sell-SPY", quantity=2, price=0.1)
+
+    assert portfolio.cash == pytest.approx(0.3)
+    assert portfolio.cash >= 0
+    assert portfolio.available_cash >= 0
+    _assert_invariants(portfolio)
+
+
+def test_money_normalization_does_not_forgive_meaningful_overspend() -> None:
+    portfolio = Portfolio(initial_cash=0.3)
+    portfolio.reserve_order(
+        order_id="buy-SPY",
+        symbol="SPY",
+        side="buy",
+        quantity=3,
+        estimated_price=0.1,
+    )
+
+    with pytest.raises(ValueError, match="available cash"):
+        portfolio.apply_fill(
+            order_id="buy-SPY",
+            quantity=3,
+            price=0.1000001,
+        )
+
+    assert portfolio.cash == 0.3
+    assert portfolio.positions == ()
+    assert portfolio.reservations[0].remaining_quantity == 3
     _assert_invariants(portfolio)
 
 

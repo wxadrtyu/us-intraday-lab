@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 
 from us_intraday_lab.backtest.costs import COST_SCENARIOS, CostModel
-from us_intraday_lab.backtest.fills import FillSimulator, MinuteBar
+from us_intraday_lab.backtest.fills import Fill, FillError, FillSimulator, MinuteBar
 from us_intraday_lab.contracts.orders import OrderIntent
 
 SIGNAL_TIME = datetime(2026, 7, 2, 14, 0, tzinfo=UTC)
@@ -50,6 +50,116 @@ def _bar(
         low=low,
         close=close,
     )
+
+
+class _ForgedString(str):
+    pass
+
+
+def _forged_order(**overrides: object) -> OrderIntent:
+    payload = _order().model_dump()
+    payload.update(overrides)
+    return OrderIntent.model_construct(**payload)
+
+
+@pytest.mark.parametrize(
+    "side",
+    ["hold", "short", "arbitrary", True, _ForgedString("buy")],
+)
+def test_forged_order_side_fails_closed_before_timing_or_fill_logic(side: object) -> None:
+    simulator = FillSimulator(COST_SCENARIOS["base"])
+    forged = _forged_order(side=side)
+
+    with pytest.raises(FillError, match="side"):
+        simulator.try_fill(forged, _bar(SIGNAL_TIME))
+
+
+@pytest.mark.parametrize(
+    "order_type",
+    ["stop", "unknown", True, _ForgedString("market")],
+)
+def test_forged_order_type_fails_closed_before_timing_or_fill_logic(
+    order_type: object,
+) -> None:
+    simulator = FillSimulator(COST_SCENARIOS["base"])
+    forged = _forged_order(order_type=order_type)
+
+    with pytest.raises(FillError, match="order_type"):
+        simulator.try_fill(forged, _bar(SIGNAL_TIME))
+
+
+@pytest.mark.parametrize(
+    ("side", "order_type"),
+    [
+        ("hold", "market"),
+        ("buy", "stop"),
+        (_ForgedString("buy"), "market"),
+        ("buy", _ForgedString("limit")),
+    ],
+)
+def test_public_fill_rejects_invalid_or_forged_literals(
+    side: object,
+    order_type: object,
+) -> None:
+    with pytest.raises(FillError):
+        Fill(
+            order_key="order-1",
+            symbol="SPY",
+            side=side,  # type: ignore[arg-type]
+            order_type=order_type,  # type: ignore[arg-type]
+            quantity=1,
+            price=100.0,
+            fees=0.0,
+            fill_time=ELIGIBLE_TIME,
+        )
+
+
+@pytest.mark.parametrize("value", [True, "100.0", 1j, float("nan"), float("inf")])
+def test_minute_bar_rejects_boolean_and_non_real_prices(value: object) -> None:
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        MinuteBar(
+            symbol="SPY",
+            timestamp=ELIGIBLE_TIME,
+            open=value,  # type: ignore[arg-type]
+            high=value,  # type: ignore[arg-type]
+            low=value,  # type: ignore[arg-type]
+            close=value,  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("quantity", True),
+        ("price", True),
+        ("fees", True),
+        ("price", "100.0"),
+        ("fees", 1j),
+        ("price", float("inf")),
+        ("fees", float("nan")),
+    ],
+)
+def test_public_fill_rejects_boolean_and_non_real_numeric_fields(
+    field: str,
+    value: object,
+) -> None:
+    values: dict[str, object] = {
+        "order_key": "order-1",
+        "symbol": "SPY",
+        "side": "buy",
+        "order_type": "market",
+        "quantity": 1,
+        "price": 100.0,
+        "fees": 0.0,
+        "fill_time": ELIGIBLE_TIME,
+    }
+    values[field] = value
+
+    with pytest.raises(
+        ValueError,
+        match="exact int or float|positive integer|finite",
+    ):
+        Fill(**values)  # type: ignore[arg-type]
 
 
 def test_market_order_cannot_fill_on_signal_bar() -> None:

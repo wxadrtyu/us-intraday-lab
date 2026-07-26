@@ -80,3 +80,43 @@ def test_cost_model_is_frozen_and_rejects_invalid_inputs() -> None:
         )
     with pytest.raises(ValueError, match="positive"):
         scenario.variable_cost(notional_usd=0.0, quantity=1)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["half_spread_bps", "slippage_bps", "commission_per_share_usd"],
+)
+def test_cost_model_rejects_boolean_components(field: str) -> None:
+    values: dict[str, object] = {
+        "model_id": "invalid",
+        "half_spread_bps": 1.0,
+        "slippage_bps": 2.0,
+        "commission_per_share_usd": 0.0,
+    }
+    values[field] = True
+
+    with pytest.raises(ValueError, match="exact int or float"):
+        CostModel(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf")])
+def test_cost_model_rejects_nonfinite_components(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        CostModel(
+            model_id="invalid",
+            half_spread_bps=value,
+            slippage_bps=2.0,
+            commission_per_share_usd=0.0,
+        )
+
+
+@pytest.mark.parametrize("value", [True, "100.0", 1j, float("nan"), float("inf")])
+def test_cost_evaluation_rejects_boolean_and_non_real_notional(value: object) -> None:
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        COST_SCENARIOS["base"].variable_cost(value, quantity=1)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("value", [True, "1.5", 1j, float("nan"), float("inf")])
+def test_cost_scaling_rejects_boolean_and_non_real_multiplier(value: object) -> None:
+    with pytest.raises(ValueError, match="exact int or float|finite"):
+        COST_SCENARIOS["base"].scaled(value)  # type: ignore[arg-type]
