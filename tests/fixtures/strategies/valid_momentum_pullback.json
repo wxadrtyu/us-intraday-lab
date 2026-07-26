@@ -1,0 +1,28 @@
+{
+  "strategy_id": "momentum-pullback-v1",
+  "dsl_version": "1.0.0",
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "signal_bar_size": "15min",
+  "entry": {
+    "all": [
+      {"indicator": "ema_spread", "op": "gt", "value": 0.0},
+      {"indicator": "rsi", "op": "lt", "value": 45.0},
+      {"indicator": "volume_ratio", "op": "gte", "value": 1.1}
+    ]
+  },
+  "exit": {
+    "any": [
+      {"indicator": "rsi", "op": "gt", "value": 65.0},
+      {"indicator": "minutes_from_open", "op": "gte", "value": 360.0}
+    ]
+  },
+  "risk": {
+    "stop_loss_bps": 35,
+    "take_profit_bps": 70,
+    "max_holding_minutes": 90,
+    "cooldown_minutes": 30,
+    "max_entries_per_session": 3,
+    "sizing_preset": "equal_risk_conservative"
+  },
+  "order_type": "limit"
+}
