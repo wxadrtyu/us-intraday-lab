@@ -321,7 +321,7 @@ def test_backtest_job_rejects_invalid_initial_cash(initial_cash: object) -> None
         )
 
 
-@pytest.mark.parametrize("buffer", [-1, 61, True, 1.5])
+@pytest.mark.parametrize("buffer", [0, -1, 61, True, 1.5])
 def test_backtest_job_rejects_invalid_closeout_buffer(buffer: object) -> None:
     with pytest.raises(ValidationError):
         BacktestJob.create(

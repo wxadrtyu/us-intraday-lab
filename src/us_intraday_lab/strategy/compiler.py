@@ -1,3 +1,5 @@
+import hashlib
+import json
 from collections.abc import Mapping
 from types import MappingProxyType
 
@@ -58,6 +60,18 @@ _COMPARISON_DISPATCH: Mapping[str, ComparisonFn] = MappingProxyType(
 COMPARISONS = _COMPARISON_DISPATCH
 
 
+def strategy_definition_fingerprint(strategy: StrategyDefinition) -> str:
+    canonical = json.dumps(
+        strategy.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return f"{strategy.strategy_id}@sha256:{digest}"
+
+
 class StrategyCompileError(ValueError):
     def __init__(
         self,
@@ -106,6 +120,7 @@ def compile_strategy(strategy: StrategyDefinition) -> CompiledStrategy:
 
     return CompiledStrategy(
         strategy_id=strategy.strategy_id,
+        definition_fingerprint=strategy_definition_fingerprint(strategy),
         symbols=strategy.symbols,
         entry=_compile_condition(strategy.entry),
         exit=_compile_condition(strategy.exit),

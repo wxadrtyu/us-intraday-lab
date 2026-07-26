@@ -86,6 +86,7 @@ type RuleOperator = ComparisonOperator | AllOperator | AnyOperator
 @dataclass(frozen=True)
 class CompiledStrategy:
     strategy_id: str
+    definition_fingerprint: str
     symbols: tuple[str, ...]
     entry: RuleOperator
     exit: RuleOperator

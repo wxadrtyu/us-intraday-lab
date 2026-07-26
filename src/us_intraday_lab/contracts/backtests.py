@@ -43,7 +43,7 @@ class _BacktestJobIdentity(_ClosedModel):
     engine_id: str = Field(min_length=1)
     calendar_id: str = Field(min_length=1)
     initial_cash: float = Field(strict=True, gt=0)
-    closeout_buffer_minutes: int = Field(strict=True, ge=0, le=60)
+    closeout_buffer_minutes: int = Field(strict=True, ge=1, le=60)
     cost_model_ids: CostModelIds
 
 
@@ -70,7 +70,7 @@ class BacktestJob(_ClosedModel):
     engine_id: str = Field(min_length=1)
     calendar_id: str = Field(min_length=1)
     initial_cash: float = Field(strict=True, gt=0)
-    closeout_buffer_minutes: int = Field(strict=True, ge=0, le=60)
+    closeout_buffer_minutes: int = Field(strict=True, ge=1, le=60)
     cost_model_ids: CostModelIds
 
     @model_validator(mode="before")

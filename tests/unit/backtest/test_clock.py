@@ -31,7 +31,7 @@ def test_clock_handles_xnys_early_close() -> None:
     assert clock.closeout_time == datetime(2026, 11, 27, 17, 55, tzinfo=UTC)
 
 
-@pytest.mark.parametrize("value", [-1, 61, True, 1.5])
+@pytest.mark.parametrize("value", [0, -1, 61, True, 1.5])
 def test_clock_rejects_invalid_closeout_buffer(value: object) -> None:
     with pytest.raises((TypeError, ValueError), match="closeout_buffer_minutes"):
         BacktestClock(

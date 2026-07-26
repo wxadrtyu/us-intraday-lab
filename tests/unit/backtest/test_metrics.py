@@ -1,3 +1,5 @@
+import os
+import subprocess
 from datetime import UTC, date, datetime
 from math import sqrt
 from pathlib import Path
@@ -5,9 +7,9 @@ from types import MappingProxyType
 
 import pytest
 
-import us_intraday_lab.backtest.engine as engine_module
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
 from us_intraday_lab.backtest.engine import (
+    BacktestArtifactError,
     BacktestEvent,
     EngineRun,
     ScenarioRun,
@@ -119,11 +121,7 @@ def test_metrics_reject_nonpositive_initial_cash() -> None:
         compute_metrics((), (), initial_cash=0.0)
 
 
-def test_artifact_writer_persists_events_and_trades_before_computing_metrics(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    root = tmp_path
+def _empty_run() -> EngineRun:
     job = BacktestJob.create(
         schema_version="1.0.0",
         strategy_id="strategy@sha256:" + "a" * 64,
@@ -180,27 +178,128 @@ def test_artifact_writer_persists_events_and_trades_before_computing_metrics(
         run_id=run_id,
         scenarios=MappingProxyType(scenarios),
     )
-    calls = 0
+    return run
 
-    def assert_durable_before_metrics(
-        trades: tuple[TradeRecord, ...],
-        equity_curve: tuple[EquityPoint, ...],
-        *,
-        initial_cash: float,
-    ) -> dict[str, float]:
-        nonlocal calls
-        calls += 1
-        artifact_root = root / "artifacts" / "backtests" / run_id
-        assert (artifact_root / "events.jsonl").is_file()
-        assert (artifact_root / "trades.jsonl").is_file()
-        return compute_metrics(
-            trades,
-            equity_curve,
-            initial_cash=initial_cash,
-        )
 
-    monkeypatch.setattr(engine_module, "compute_metrics", assert_durable_before_metrics)
+def test_artifact_writer_publishes_only_after_complete_sibling_is_written(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _empty_run()
+    final = tmp_path / "artifacts" / "backtests" / run.run_id
+    original_rename = Path.rename
+    observed = False
 
-    write_backtest_artifacts(run, root=root)
+    def assert_complete_before_publish(source: Path, target: Path) -> Path:
+        nonlocal observed
+        if target == final:
+            observed = True
+            assert source.parent == final.parent
+            assert not final.exists()
+            assert {path.name for path in source.iterdir()} == {
+                "events.jsonl",
+                "job.json",
+                "result.json",
+                "trades.jsonl",
+            }
+        return original_rename(source, target)
 
-    assert calls == 3
+    monkeypatch.setattr(Path, "rename", assert_complete_before_publish)
+
+    result_path = write_backtest_artifacts(run, root=tmp_path)
+
+    assert observed
+    assert result_path == final / "result.json"
+
+
+def test_artifact_writer_cleans_temporary_directory_and_returns_typed_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _empty_run()
+    original_write_text = Path.write_text
+
+    def fail_on_job(path: Path, data: str, *args: object, **kwargs: object) -> int:
+        if path.name == "job.json":
+            raise OSError("simulated disk failure")
+        return original_write_text(path, data, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_on_job)
+
+    with pytest.raises(BacktestArtifactError) as exc_info:
+        write_backtest_artifacts(run, root=tmp_path)
+
+    parent = tmp_path / "artifacts" / "backtests"
+    assert exc_info.value.failure.failure_type == "artifact_write"
+    assert not (parent / run.run_id).exists()
+    assert not list(parent.glob(f".{run.run_id}-*"))
+
+
+def test_artifact_writer_is_idempotent_only_for_identical_complete_content(
+    tmp_path: Path,
+) -> None:
+    run = _empty_run()
+    first = write_backtest_artifacts(run, root=tmp_path)
+
+    assert write_backtest_artifacts(run, root=tmp_path) == first
+    (first.parent / "job.json").write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(BacktestArtifactError, match="different content") as exc_info:
+        write_backtest_artifacts(run, root=tmp_path)
+
+    assert exc_info.value.failure.failure_type == "artifact_write"
+    assert (first.parent / "job.json").read_text(encoding="utf-8") == "{}\n"
+
+
+def test_artifact_writer_rejects_symlink_escape_from_artifact_tree(tmp_path: Path) -> None:
+    run = _empty_run()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    artifacts = tmp_path / "artifacts"
+    try:
+        artifacts.symlink_to(outside, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"directory symlinks unavailable: {error}")
+
+    with pytest.raises(BacktestArtifactError, match="reparse|symlink|escape"):
+        write_backtest_artifacts(run, root=tmp_path)
+
+    assert not (outside / "backtests" / run.run_id).exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junction security case")
+def test_artifact_writer_rejects_junction_escape_from_artifact_tree(tmp_path: Path) -> None:
+    run = _empty_run()
+    outside = tmp_path / "junction-outside"
+    outside.mkdir()
+    artifacts = tmp_path / "artifacts"
+    created = subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(artifacts), str(outside)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if created.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {created.stderr}")
+    try:
+        with pytest.raises(BacktestArtifactError, match="reparse"):
+            write_backtest_artifacts(run, root=tmp_path)
+        assert not (outside / "backtests" / run.run_id).exists()
+    finally:
+        artifacts.rmdir()
+
+
+def test_artifact_writer_rejects_forged_run_id_before_path_construction(
+    tmp_path: Path,
+) -> None:
+    run = _empty_run()
+    forged = EngineRun(
+        job=run.job,
+        run_id="../escape",
+        scenarios=run.scenarios,
+    )
+
+    with pytest.raises(BacktestArtifactError, match="canonical BacktestJob"):
+        write_backtest_artifacts(forged, root=tmp_path)
+
+    assert not (tmp_path / "artifacts").exists()

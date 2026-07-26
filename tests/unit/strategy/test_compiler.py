@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 from types import MappingProxyType
@@ -35,6 +36,15 @@ def test_valid_fixture_compiles_to_typed_allowlisted_operator_nodes() -> None:
     assert all(isinstance(node, ComparisonOperator) for node in compiled.exit.children)
     assert compiled.symbols == ("SPY", "QQQ", "IWM")
     assert compiled.order_type == "limit"
+    canonical = json.dumps(
+        strategy.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+    expected = f"{strategy.strategy_id}@sha256:{hashlib.sha256(canonical.encode()).hexdigest()}"
+    assert compiled.definition_fingerprint == expected
 
 
 def test_indicator_dispatch_is_the_exact_literal_release_one_allowlist() -> None:

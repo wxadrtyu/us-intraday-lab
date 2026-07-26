@@ -55,11 +55,9 @@ def _synthetic_archive(tmp_path: Path) -> Path:
     return archive_path
 
 
-@pytest.fixture
-def accepted_backtest_dataset(tmp_path: Path) -> tuple[Path, str]:
-    root = tmp_path / "synthetic-repo"
+def _accepted_dataset(archive: Path, *, root: Path) -> tuple[Path, str]:
     manifest, _ = import_snapshot(
-        _synthetic_archive(tmp_path),
+        archive,
         root=root,
         source=ArchiveSourceDeclaration(
             provider="tiingo",
@@ -76,3 +74,20 @@ def accepted_backtest_dataset(tmp_path: Path) -> tuple[Path, str]:
     accepted = accept_dataset(manifest.dataset_id, root=root)
     assert accepted.quality_passed
     return root, manifest.dataset_id
+
+
+@pytest.fixture
+def accepted_backtest_dataset(tmp_path: Path) -> tuple[Path, str]:
+    return _accepted_dataset(
+        _synthetic_archive(tmp_path),
+        root=tmp_path / "synthetic-repo",
+    )
+
+
+@pytest.fixture
+def accepted_backtest_dataset_pair(tmp_path: Path) -> tuple[Path, Path, str]:
+    archive = _synthetic_archive(tmp_path)
+    first_root, first_id = _accepted_dataset(archive, root=tmp_path / "clean-root-one")
+    second_root, second_id = _accepted_dataset(archive, root=tmp_path / "clean-root-two")
+    assert first_id == second_id
+    return first_root, second_root, first_id

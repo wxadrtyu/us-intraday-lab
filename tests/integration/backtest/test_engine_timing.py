@@ -1,6 +1,7 @@
 from datetime import UTC, date, datetime
 
 import pandas as pd
+import pytest
 
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
 from us_intraday_lab.backtest.engine import BacktestEngine
@@ -107,15 +108,16 @@ def _golden_strategy() -> StrategyDefinition:
     )
 
 
-def _golden_job(strategy: StrategyDefinition) -> BacktestJob:
+def _golden_job(strategy: StrategyDefinition, *, closeout_buffer_minutes: int = 5) -> BacktestJob:
+    compiled = compile_strategy(strategy)
     return BacktestJob.create(
         schema_version="1.0.0",
-        strategy_id=strategy.strategy_id,
+        strategy_id=compiled.definition_fingerprint,
         dataset_id="synthetic-accepted-dataset",
         engine_id="event-engine-1.0.0",
         calendar_id="XNYS-4.11",
         initial_cash=25_000.0,
-        closeout_buffer_minutes=5,
+        closeout_buffer_minutes=closeout_buffer_minutes,
         cost_model_ids=CostModelIds(
             optimistic=COST_SCENARIOS["optimistic"].model_id,
             base=COST_SCENARIOS["base"].model_id,
@@ -191,3 +193,69 @@ def test_engine_golden_sequence_obeys_next_minute_and_finishes_flat() -> None:
     assert len(run.trades) == 1
     assert run.trades[0].forced
     assert run.events[-1].details["position_count"] == 0
+
+
+def test_engine_rejects_job_strategy_identity_that_does_not_match_definition() -> None:
+    strategy = _golden_strategy()
+    job = BacktestJob.create(
+        **{
+            **_golden_job(strategy).model_dump(exclude={"job_id", "strategy_id"}),
+            "strategy_id": "golden-entry-v1@sha256:" + "0" * 64,
+        }
+    )
+
+    with pytest.raises(ValueError, match="strategy identity"):
+        BacktestEngine(job=job, strategy=compile_strategy(strategy))
+
+
+def test_closeout_processes_boundary_eligible_entry_then_liquidates_on_official_minute() -> None:
+    strategy = StrategyDefinition.model_validate(
+        {**_golden_strategy().model_dump(mode="json"), "order_type": "limit"}
+    )
+    signal_bars = _one_completed_signal_bar().copy()
+    signal_bars["available_at"] = datetime(2026, 7, 2, 19, 45, tzinfo=UTC)
+    signal_bars[["open", "high", "low", "close"]] = [99.0, 99.2, 98.8, 99.0]
+    minute_bars = _full_session_minute_bars()
+    minute_bars.loc[
+        minute_bars["timestamp"] == datetime(2026, 7, 2, 19, 54, tzinfo=UTC),
+        "low",
+    ] = 98.8
+    compiled = compile_strategy(strategy)
+
+    run = BacktestEngine(
+        job=_golden_job(strategy, closeout_buffer_minutes=5),
+        strategy=compiled,
+    ).run_scenario(
+        minute_bars=minute_bars,
+        signal_bars=signal_bars,
+        cost_scenario="base",
+    )
+
+    buy_fill = next(
+        event
+        for event in run.events
+        if event.event_type == "ORDER_FILLED" and event.details["side"] == "buy"
+    )
+    forced_sell = next(trade for trade in run.trades if trade.forced)
+    official_minutes = set(expected_minute_index(SESSION_DATE).to_pydatetime())
+
+    assert buy_fill.event_time == datetime(2026, 7, 2, 19, 54, tzinfo=UTC)
+    assert forced_sell.exit_time == datetime(2026, 7, 2, 19, 55, tzinfo=UTC)
+    assert forced_sell.exit_time < datetime(2026, 7, 2, 20, 0, tzinfo=UTC)
+    assert all(point.event_time in official_minutes for point in run.equity_curve)
+
+
+def test_one_minute_closeout_buffer_fills_on_last_official_minute() -> None:
+    strategy = _golden_strategy()
+    compiled = compile_strategy(strategy)
+    run = BacktestEngine(
+        job=_golden_job(strategy, closeout_buffer_minutes=1),
+        strategy=compiled,
+    ).run_scenario(
+        minute_bars=_full_session_minute_bars(),
+        signal_bars=_one_completed_signal_bar(),
+        cost_scenario="base",
+    )
+
+    assert run.trades[0].exit_time == datetime(2026, 7, 2, 19, 59, tzinfo=UTC)
+    assert run.trades[0].exit_time < datetime(2026, 7, 2, 20, 0, tzinfo=UTC)

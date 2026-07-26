@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+import stat
+import tempfile
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from math import floor, isfinite
@@ -23,6 +26,7 @@ from us_intraday_lab.backtest.metrics import (
 )
 from us_intraday_lab.backtest.portfolio import Portfolio, Position
 from us_intraday_lab.contracts.backtests import (
+    BacktestFailure,
     BacktestJob,
     BacktestResult,
     CostScenario,
@@ -189,29 +193,64 @@ class EngineRun:
     scenarios: MappingProxyType[CostScenario, ScenarioRun]
 
 
-def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
-    """Persist only deterministic inner artifacts and return ``result.json``."""
-    if type(run) is not EngineRun:
-        raise TypeError("run must be an exact EngineRun")
-    artifact_root = root.resolve() / "artifacts" / "backtests" / run.run_id
-    artifact_root.mkdir(parents=True, exist_ok=True)
+class BacktestArtifactError(RuntimeError):
+    """Artifact publication failed closed with a typed public failure."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.failure = BacktestFailure(failure_type="artifact_write", message=message)
+
+
+def _is_reparse_path(path: Path) -> bool:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return False
+    attributes = getattr(metadata, "st_file_attributes", 0)
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    is_junction = getattr(path, "is_junction", lambda: False)
+    return path.is_symlink() or bool(is_junction()) or bool(attributes & reparse_flag)
+
+
+def _artifact_parent(root: Path) -> Path:
+    root_absolute = root.absolute()
+    if not root_absolute.is_dir():
+        raise BacktestArtifactError("artifact root must be an existing directory")
+    if _is_reparse_path(root_absolute):
+        raise BacktestArtifactError("artifact root must not be a symlink or reparse point")
+    resolved_root = root_absolute.resolve(strict=True)
+    artifacts = root_absolute / "artifacts"
+    backtests = artifacts / "backtests"
+    for candidate in (artifacts, backtests):
+        if candidate.exists() and _is_reparse_path(candidate):
+            raise BacktestArtifactError(
+                f"artifact path contains a symlink or reparse point: {candidate.name}"
+            )
+    backtests.mkdir(parents=True, exist_ok=True)
+    resolved_parent = backtests.resolve(strict=True)
+    if not resolved_parent.is_relative_to(resolved_root):
+        raise BacktestArtifactError("artifact path escapes the requested root")
+    return resolved_parent
+
+
+def _identical_complete_directory(directory: Path, expected: dict[str, bytes]) -> bool:
+    if not directory.is_dir() or _is_reparse_path(directory):
+        return False
+    entries = tuple(directory.iterdir())
+    if any(_is_reparse_path(path) for path in entries):
+        return False
+    actual_names = {path.name for path in entries}
+    if actual_names != set(expected):
+        return False
+    return all(
+        (directory / relative).is_file() and (directory / relative).read_bytes() == content
+        for relative, content in expected.items()
+    )
+
+
+def _artifact_contents(run: EngineRun) -> dict[str, bytes]:
     events_content = "".join(run.scenarios[scenario].events_jsonl() for scenario in _SCENARIO_ORDER)
     trades_content = "".join(run.scenarios[scenario].trades_jsonl() for scenario in _SCENARIO_ORDER)
-    (artifact_root / "events.jsonl").write_text(
-        events_content,
-        encoding="utf-8",
-        newline="\n",
-    )
-    (artifact_root / "trades.jsonl").write_text(
-        trades_content,
-        encoding="utf-8",
-        newline="\n",
-    )
-    (artifact_root / "job.json").write_text(
-        run.job.canonical_json() + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
     metrics = {scenario: dict(run.scenarios[scenario].metrics) for scenario in _SCENARIO_ORDER}
     deterministic_identity = {
         "events_sha256": hashlib.sha256(events_content.encode("utf-8")).hexdigest(),
@@ -233,13 +272,66 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
         events_uri=(relative_root / "events.jsonl").as_posix(),
         content_sha256=content_sha256,
     )
-    result_path = artifact_root / "result.json"
-    result_path.write_text(
-        _canonical_json(result.model_dump(mode="json")) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-    return result_path
+    return {
+        "events.jsonl": events_content.encode("utf-8"),
+        "job.json": (run.job.canonical_json() + "\n").encode("utf-8"),
+        "result.json": (_canonical_json(result.model_dump(mode="json")) + "\n").encode("utf-8"),
+        "trades.jsonl": trades_content.encode("utf-8"),
+    }
+
+
+def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
+    """Atomically publish deterministic artifacts and return ``result.json``."""
+    if type(run) is not EngineRun:
+        raise TypeError("run must be an exact EngineRun")
+    if run.run_id != run_id_for_job(run.job):
+        raise BacktestArtifactError("run_id does not match the canonical BacktestJob")
+    temporary: Path | None = None
+    try:
+        expected = _artifact_contents(run)
+        parent = _artifact_parent(root)
+        final = parent / run.run_id
+        if final.exists():
+            if _identical_complete_directory(final, expected):
+                return final / "result.json"
+            raise BacktestArtifactError(
+                f"artifact run directory already exists with different content: {run.run_id}"
+            )
+        temporary = Path(tempfile.mkdtemp(prefix=f".{run.run_id}-", dir=parent)).resolve(
+            strict=True
+        )
+        if temporary.parent != parent or not temporary.name.startswith(f".{run.run_id}-"):
+            raise BacktestArtifactError("temporary artifact directory escaped its parent")
+        for relative, content in expected.items():
+            (temporary / relative).write_text(
+                content.decode("utf-8"),
+                encoding="utf-8",
+                newline="\n",
+            )
+        try:
+            temporary.rename(final)
+            temporary = None
+        except OSError:
+            if final.exists():
+                if _identical_complete_directory(final, expected):
+                    return final / "result.json"
+                raise BacktestArtifactError(
+                    f"artifact run directory already exists with different content: {run.run_id}"
+                ) from None
+            raise
+        return final / "result.json"
+    except BacktestArtifactError:
+        raise
+    except Exception as error:
+        raise BacktestArtifactError(f"failed to publish backtest artifacts: {error}") from error
+    finally:
+        if temporary is not None and temporary.exists():
+            try:
+                shutil.rmtree(temporary)
+            except Exception as error:
+                raise BacktestArtifactError(
+                    f"failed to clean temporary backtest artifacts: {error}"
+                ) from error
 
 
 @dataclass(slots=True)
@@ -286,6 +378,10 @@ class BacktestEngine:
             raise TypeError("strategy must be an exact CompiledStrategy")
         if job.engine_id != ENGINE_ID:
             raise ValueError(f"unsupported engine_id: {job.engine_id}")
+        if job.strategy_id != strategy.definition_fingerprint:
+            raise ValueError(
+                "BacktestJob strategy identity does not match compiled strategy definition"
+            )
         expected_cost_ids = {
             scenario: COST_SCENARIOS[scenario].model_id for scenario in _SCENARIO_ORDER
         }
@@ -385,37 +481,6 @@ class BacktestEngine:
                 bars_now = {
                     symbol: minute_lookup[(symbol, clock_time)] for symbol in self.strategy.symbols
                 }
-                if clock_time == clock.closeout_signal_time:
-                    self._cancel_working_orders(
-                        pending,
-                        runtime=runtime,
-                        runtime_keys=runtime_keys,
-                        event_time=clock_time,
-                        session=session,
-                        portfolio=portfolio,
-                        emit=emit,
-                    )
-                    for position in portfolio.positions:
-                        bar = bars_now[position.symbol]
-                        self._submit_order(
-                            side="sell",
-                            reason_code="session_close",
-                            signal_time=clock_time,
-                            reference_price=bar.open,
-                            quantity=position.quantity,
-                            forced=True,
-                            session=session,
-                            symbol=position.symbol,
-                            runtime=runtime,
-                            runtime_key=runtime_keys[position.symbol],
-                            portfolio=portfolio,
-                            pending=pending,
-                            intents=intents,
-                            intent_keys=intent_keys,
-                            cost_model=COST_SCENARIOS[cost_scenario],
-                            emit=emit,
-                        )
-
                 if clock_time < clock.closeout_signal_time:
                     for feature_row, reference_price in feature_rows.get(
                         (session, clock_time),
@@ -508,6 +573,49 @@ class BacktestEngine:
                     trades=trades,
                     emit=emit,
                 )
+                if clock_time == clock.closeout_signal_time:
+                    self._cancel_working_orders(
+                        pending,
+                        runtime=runtime,
+                        runtime_keys=runtime_keys,
+                        event_time=clock_time,
+                        session=session,
+                        portfolio=portfolio,
+                        emit=emit,
+                        side="buy",
+                        reason="session_closeout_opening",
+                    )
+                    self._cancel_working_orders(
+                        pending,
+                        runtime=runtime,
+                        runtime_keys=runtime_keys,
+                        event_time=clock_time,
+                        session=session,
+                        portfolio=portfolio,
+                        emit=emit,
+                        side="sell",
+                        reason="session_closeout_replaced",
+                    )
+                    for position in portfolio.positions:
+                        bar = bars_now[position.symbol]
+                        self._submit_order(
+                            side="sell",
+                            reason_code="session_close",
+                            signal_time=clock_time,
+                            reference_price=bar.open,
+                            quantity=position.quantity,
+                            forced=True,
+                            session=session,
+                            symbol=position.symbol,
+                            runtime=runtime,
+                            runtime_key=runtime_keys[position.symbol],
+                            portfolio=portfolio,
+                            pending=pending,
+                            intents=intents,
+                            intent_keys=intent_keys,
+                            cost_model=COST_SCENARIOS[cost_scenario],
+                            emit=emit,
+                        )
                 for position in portfolio.positions:
                     portfolio.mark_to_market(
                         position.symbol,
@@ -538,30 +646,21 @@ class BacktestEngine:
                         emit=emit,
                     )
 
-            if pending or portfolio.positions:
-                self._finalize_at_close(
-                    session=session,
-                    clock=clock,
-                    minute_lookup=minute_lookup,
+            if pending:
+                self._cancel_working_orders(
+                    pending,
                     runtime=runtime,
                     runtime_keys=runtime_keys,
-                    portfolio=portfolio,
-                    pending=pending,
-                    simulator=simulator,
-                    open_trades=open_trades,
-                    trades=trades,
-                    emit=emit,
-                )
-            for key in runtime_keys.values():
-                runtime.close_session(key, event_time=clock.session_close)
-            equity_curve.append(
-                EquityPoint(
                     event_time=clock.session_close,
                     session=session,
-                    equity=portfolio.equity,
-                    gross_exposure=0.0,
+                    portfolio=portfolio,
+                    emit=emit,
+                    reason="session_closeout",
                 )
-            )
+            if portfolio.positions:
+                raise RuntimeError("positions remained after deterministic closeout")
+            for key in runtime_keys.values():
+                runtime.close_session(key, event_time=clock.session_close)
             emit(
                 "SESSION_FINALIZED",
                 clock.session_close,
@@ -1051,8 +1150,15 @@ class BacktestEngine:
         session: date,
         portfolio: Portfolio,
         emit: Any,
+        reason: str,
+        side: Literal["buy", "sell"] | None = None,
     ) -> None:
-        for order_id in sorted(pending):
+        selected = (
+            order_id
+            for order_id, order in pending.items()
+            if side is None or order.intent.side == side
+        )
+        for order_id in sorted(selected):
             order = pending.pop(order_id)
             portfolio.cancel_order(order_id)
             runtime.record_order_rejected(
@@ -1065,70 +1171,6 @@ class BacktestEngine:
                 session,
                 symbol=order.intent.symbol,
                 order_id=order_id,
-                reason="session_closeout",
+                reason=reason,
                 side=order.intent.side,
             )
-
-    def _finalize_at_close(
-        self,
-        *,
-        session: date,
-        clock: BacktestClock,
-        minute_lookup: dict[tuple[str, datetime], MinuteBar],
-        runtime: StrategyRuntime,
-        runtime_keys: dict[str, RuntimeKey],
-        portfolio: Portfolio,
-        pending: dict[str, _PendingOrder],
-        simulator: FillSimulator,
-        open_trades: dict[str, _OpenTrade],
-        trades: list[TradeRecord],
-        emit: Any,
-    ) -> None:
-        last_bars = {
-            symbol: minute_lookup[(symbol, clock.minutes[-1])] for symbol in self.strategy.symbols
-        }
-        if pending:
-            forced_pending = {
-                order_id: order
-                for order_id, order in pending.items()
-                if order.forced and order.intent.eligible_time == clock.session_close
-            }
-            for order_id in sorted(forced_pending):
-                order = forced_pending[order_id]
-                last = last_bars[order.intent.symbol]
-                synthetic = MinuteBar(
-                    symbol=last.symbol,
-                    timestamp=clock.session_close,
-                    open=last.close,
-                    high=last.close,
-                    low=last.close,
-                    close=last.close,
-                )
-                fill = simulator.try_fill(order.intent, synthetic)
-                if fill is None:
-                    raise RuntimeError("forced close order was not fillable at session close")
-                self._apply_fill(
-                    order,
-                    fill=fill,
-                    session=session,
-                    runtime=runtime,
-                    runtime_key=runtime_keys[order.intent.symbol],
-                    portfolio=portfolio,
-                    open_trades=open_trades,
-                    trades=trades,
-                    emit=emit,
-                    reference_bar=synthetic,
-                )
-                del pending[order_id]
-        if pending:
-            self._cancel_working_orders(
-                pending,
-                runtime=runtime,
-                runtime_keys=runtime_keys,
-                event_time=clock.session_close,
-                session=session,
-                portfolio=portfolio,
-                emit=emit,
-            )
-        if portfolio.positions:
-            raise RuntimeError("positions remained after deterministic closeout")

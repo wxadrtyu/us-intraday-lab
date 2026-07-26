@@ -1,4 +1,3 @@
-import hashlib
 import json
 from datetime import date, datetime
 from pathlib import Path
@@ -10,10 +9,11 @@ from pydantic import ValidationError
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
 from us_intraday_lab.backtest.engine import (
     ENGINE_ID,
+    BacktestArtifactError,
     BacktestEngine,
     write_backtest_artifacts,
 )
-from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
+from us_intraday_lab.contracts.backtests import BacktestFailure, BacktestJob, CostModelIds
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.archive import (
     DEFAULT_ARCHIVE_READ_LIMITS,
@@ -208,18 +208,6 @@ def _load_strategy(path: Path) -> StrategyDefinition:
         raise typer.BadParameter(f"strategy contract validation failed: {error}") from error
 
 
-def _strategy_identity(strategy: StrategyDefinition) -> str:
-    canonical = json.dumps(
-        strategy.model_dump(mode="json"),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    return f"{strategy.strategy_id}@sha256:{digest}"
-
-
 @backtest_app.command("run")
 def run_backtest_command(
     strategy: Annotated[
@@ -252,7 +240,7 @@ def run_backtest_command(
     try:
         job = BacktestJob.create(
             schema_version="1.0.0",
-            strategy_id=_strategy_identity(definition),
+            strategy_id=compiled.definition_fingerprint,
             dataset_id=manifest.dataset_id,
             engine_id=ENGINE_ID,
             calendar_id=f"{manifest.calendar_name}@{manifest.calendar_version}",
@@ -282,11 +270,20 @@ def run_backtest_command(
             ORDER BY session_date, available_at, symbol
             """
         ).df()
-    run = BacktestEngine(job=job, strategy=compiled).run(
-        minute_bars=minute_bars,
-        signal_bars=signal_bars,
-    )
-    result_path = write_backtest_artifacts(run, root=root)
+    try:
+        run = BacktestEngine(job=job, strategy=compiled).run(
+            minute_bars=minute_bars,
+            signal_bars=signal_bars,
+        )
+    except Exception as error:
+        failure = BacktestFailure(failure_type="execution", message=str(error))
+        typer.echo(failure.model_dump_json(), err=True)
+        raise typer.Exit(code=1) from error
+    try:
+        result_path = write_backtest_artifacts(run, root=root)
+    except BacktestArtifactError as error:
+        typer.echo(error.failure.model_dump_json(), err=True)
+        raise typer.Exit(code=1) from error
     typer.echo(result_path)
 
 

@@ -25,10 +25,10 @@ class BacktestClock:
             raise TypeError("session_date must be an exact date")
         if (
             type(self.closeout_buffer_minutes) is not int
-            or not 0 <= self.closeout_buffer_minutes <= MAX_CLOSEOUT_BUFFER_MINUTES
+            or not 1 <= self.closeout_buffer_minutes <= MAX_CLOSEOUT_BUFFER_MINUTES
         ):
             raise ValueError(
-                "closeout_buffer_minutes must be an integer between 0 and "
+                "closeout_buffer_minutes must be an integer between 1 and "
                 f"{MAX_CLOSEOUT_BUFFER_MINUTES}"
             )
         minutes = tuple(
