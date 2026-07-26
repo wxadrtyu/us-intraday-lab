@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from types import MappingProxyType
+
 from us_intraday_lab.contracts.strategies import (
     AllCondition,
     AnyCondition,
@@ -29,24 +32,30 @@ from us_intraday_lab.strategy.operators import (
 )
 from us_intraday_lab.strategy.validator import ValidationIssue, validate_strategy
 
-INDICATORS: dict[str, IndicatorFn] = {
-    "return_1": feature_return_1,
-    "return_3": feature_return_3,
-    "ema_spread": feature_ema_spread,
-    "rsi": feature_rsi,
-    "atr_bps": feature_atr_bps,
-    "volume_ratio": feature_volume_ratio,
-    "vwap_distance_bps": feature_vwap_distance_bps,
-    "range_position": feature_range_position,
-    "minutes_from_open": feature_minutes_from_open,
-}
+_INDICATOR_DISPATCH: Mapping[str, IndicatorFn] = MappingProxyType(
+    {
+        "return_1": feature_return_1,
+        "return_3": feature_return_3,
+        "ema_spread": feature_ema_spread,
+        "rsi": feature_rsi,
+        "atr_bps": feature_atr_bps,
+        "volume_ratio": feature_volume_ratio,
+        "vwap_distance_bps": feature_vwap_distance_bps,
+        "range_position": feature_range_position,
+        "minutes_from_open": feature_minutes_from_open,
+    }
+)
+INDICATORS = _INDICATOR_DISPATCH
 
-COMPARISONS: dict[str, ComparisonFn] = {
-    "gt": compare_gt,
-    "gte": compare_gte,
-    "lt": compare_lt,
-    "lte": compare_lte,
-}
+_COMPARISON_DISPATCH: Mapping[str, ComparisonFn] = MappingProxyType(
+    {
+        "gt": compare_gt,
+        "gte": compare_gte,
+        "lt": compare_lt,
+        "lte": compare_lte,
+    }
+)
+COMPARISONS = _COMPARISON_DISPATCH
 
 
 class StrategyCompileError(ValueError):
@@ -65,9 +74,9 @@ def _compile_condition(condition: Condition) -> RuleOperator:
     if type(condition) is ComparisonCondition:
         return ComparisonOperator(
             indicator=condition.indicator,
-            indicator_fn=INDICATORS[condition.indicator],
+            indicator_fn=_INDICATOR_DISPATCH[condition.indicator],
             comparison=condition.op,
-            comparison_fn=COMPARISONS[condition.op],
+            comparison_fn=_COMPARISON_DISPATCH[condition.op],
             threshold=condition.value,
         )
     if type(condition) is AllCondition:

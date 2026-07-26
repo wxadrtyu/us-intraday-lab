@@ -1,10 +1,14 @@
 import json
 from pathlib import Path
+from types import MappingProxyType
+from typing import Any
 
 import pytest
 
+import us_intraday_lab.strategy.compiler as compiler_module
 from us_intraday_lab.contracts.strategies import ComparisonCondition, StrategyDefinition
 from us_intraday_lab.strategy.compiler import (
+    COMPARISONS,
     INDICATORS,
     StrategyCompileError,
     compile_strategy,
@@ -45,6 +49,30 @@ def test_indicator_dispatch_is_the_exact_literal_release_one_allowlist() -> None
         "range_position",
         "minutes_from_open",
     )
+
+
+def test_dispatch_tables_are_publicly_inspectable_but_immutable() -> None:
+    assert isinstance(INDICATORS, MappingProxyType)
+    assert isinstance(COMPARISONS, MappingProxyType)
+
+    with pytest.raises(TypeError):
+        INDICATORS["rsi"] = lambda _: 0.0  # type: ignore[index]
+    with pytest.raises(TypeError):
+        COMPARISONS["gt"] = lambda _left, _right: False  # type: ignore[index]
+
+
+def test_public_dispatch_rebinding_cannot_replace_private_compiler_dispatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = StrategyDefinition.model_validate_json(FIXTURE.read_text(encoding="utf-8"))
+    monkeypatch.setattr(compiler_module, "INDICATORS", {})
+    monkeypatch.setattr(compiler_module, "COMPARISONS", {})
+
+    compiled = compile_strategy(strategy)
+
+    assert isinstance(compiled.entry, AllOperator)
+    assert isinstance(compiled.entry.children[0], ComparisonOperator)
+    assert compiled.entry.children[0].indicator_fn is not None
 
 
 class HostilePayload:
@@ -104,3 +132,25 @@ def test_compiler_refuses_typed_but_domain_invalid_strategy() -> None:
 
     assert exc_info.value.code == "DSL_VALIDATION_FAILED"
     assert exc_info.value.issues[0].code == "DSL_UNSUPPORTED_SYMBOL"
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected_path"),
+    [
+        ({"order_type": "short"}, "order_type"),
+        ({"symbols": ["SPY"]}, "symbols"),
+        ({"risk": object()}, "risk"),
+    ],
+)
+def test_compiler_never_propagates_forged_exact_models(
+    overrides: dict[str, Any], expected_path: str
+) -> None:
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    strategy = StrategyDefinition.model_validate(payload)
+    invalid = StrategyDefinition.model_construct(**{**strategy.__dict__, **overrides})
+
+    with pytest.raises(StrategyCompileError) as exc_info:
+        compile_strategy(invalid)
+
+    assert exc_info.value.code == "DSL_VALIDATION_FAILED"
+    assert any(issue.path == expected_path for issue in exc_info.value.issues)
