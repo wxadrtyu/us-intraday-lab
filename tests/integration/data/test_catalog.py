@@ -5,7 +5,7 @@ import importlib
 import io
 import json
 import tarfile
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import duckdb
@@ -75,6 +75,7 @@ def _snapshot(
             expected_start_date=date(2026, 7, 2),
             expected_end_date=date(2026, 7, 2),
             expected_robustness_groups=expected_robustness_groups,
+            ingested_at=datetime(2026, 7, 26, tzinfo=UTC),
         ),
     )
     return root, manifest.dataset_id

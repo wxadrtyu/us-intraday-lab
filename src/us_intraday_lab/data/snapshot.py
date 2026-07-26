@@ -90,6 +90,7 @@ class ArchiveSourceDeclaration:
     production_symbols: tuple[str, ...]
     expected_start_date: date
     expected_end_date: date
+    ingested_at: datetime
     expected_robustness_groups: tuple[ExpectedGroup, ...] = ()
 
     def __post_init__(self) -> None:
@@ -99,6 +100,13 @@ class ArchiveSourceDeclaration:
             raise ValueError("member_names must contain unique approved member identities")
         if self.expected_start_date > self.expected_end_date:
             raise ValueError("expected_start_date must not exceed expected_end_date")
+        if (
+            not isinstance(self.ingested_at, datetime)
+            or self.ingested_at.tzinfo is None
+            or self.ingested_at.utcoffset() != timedelta(0)
+        ):
+            raise ValueError("ingested_at must be timezone-aware UTC")
+        object.__setattr__(self, "ingested_at", self.ingested_at.astimezone(UTC))
         normalized_production = tuple(
             sorted({_validate_symbol(symbol) for symbol in self.production_symbols})
         )
@@ -343,6 +351,7 @@ def _source_declaration_record(source: ArchiveSourceDeclaration) -> dict[str, ob
         "production_symbols": sorted(source.production_symbols),
         "expected_start_date": source.expected_start_date.isoformat(),
         "expected_end_date": source.expected_end_date.isoformat(),
+        "ingested_at": source.ingested_at.isoformat(),
         "expected_robustness_groups": [
             {"symbol": symbol, "session_date": session_date.isoformat()}
             for symbol, session_date in sorted(source.expected_robustness_groups)
@@ -357,14 +366,6 @@ def _source_recipe_sha256(source: ArchiveSourceDeclaration) -> str:
         separators=(",", ":"),
     )
     return hashlib.sha256(canonical_recipe.encode("utf-8")).hexdigest()
-
-
-def _stable_import_timestamp(source_sha256: str, recipe_sha256: str) -> datetime:
-    """Derive stable provenance time from immutable source and declaration identity."""
-    identity = hashlib.sha256(f"{source_sha256}:{recipe_sha256}".encode()).digest()
-    seconds_in_century = 100 * 365 * 24 * 60 * 60
-    seconds = int.from_bytes(identity[:8], "big") % seconds_in_century
-    return datetime(2000, 1, 1, tzinfo=UTC) + timedelta(seconds=seconds)
 
 
 def _dataset_identity_sha256(
@@ -486,7 +487,7 @@ def import_snapshot(
         )
 
     recipe_hash = _source_recipe_sha256(source)
-    imported_at = _stable_import_timestamp(inspection.source_sha256, recipe_hash)
+    imported_at = source.ingested_at
     frames_by_member: dict[str, list[pd.DataFrame]] = {name: [] for name in source.member_names}
     for member_name, frame in iter_archive_member_frames(
         archive_path,
@@ -536,6 +537,9 @@ def import_snapshot(
     bars = canonicalize_tiingo_rows(source_rows, ingested_at=imported_at)
     if bars.empty:
         raise ValueError("archive contains no minute bars")
+    maximum_source_timestamp = bars["timestamp"].max().to_pydatetime()
+    if imported_at < maximum_source_timestamp:
+        raise ValueError("ingested_at must not precede the maximum imported source timestamp")
     _validate_canonical_symbols(bars)
     _validate_declared_date_range(bars, source)
     effective_production = _effective_production_symbols(bars, source)
@@ -739,6 +743,7 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         production_symbols=tuple(cast(list[str], source_record["production_symbols"])),
         expected_start_date=date.fromisoformat(str(source_record["expected_start_date"])),
         expected_end_date=date.fromisoformat(str(source_record["expected_end_date"])),
+        ingested_at=datetime.fromisoformat(str(source_record["ingested_at"])),
         expected_robustness_groups=tuple(
             (
                 str(raw_group["symbol"]),
@@ -802,10 +807,19 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
         raise SnapshotVerificationError(
             "dataset_id does not match canonical content and declared identities"
         )
-    stable_imported_at = _stable_import_timestamp(manifest.source_sha256, recipe_hash)
-    if manifest.created_at != stable_imported_at:
-        raise SnapshotVerificationError("manifest created_at is not deterministic")
+    if manifest.created_at != source.ingested_at:
+        raise SnapshotVerificationError(
+            "manifest created_at does not match the declared ingestion timestamp"
+        )
     bars = _read_snapshot_bars(outputs)
+    if not bars["ingested_at"].eq(pd.Timestamp(source.ingested_at)).all():
+        raise SnapshotVerificationError(
+            "canonical ingested_at does not match the declared ingestion timestamp"
+        )
+    if source.ingested_at < bars["timestamp"].max().to_pydatetime():
+        raise SnapshotVerificationError(
+            "declared ingestion timestamp precedes canonical source bars"
+        )
     effective_production = _effective_production_symbols(bars, source)
     quality = assess_minute_bars(
         bars,

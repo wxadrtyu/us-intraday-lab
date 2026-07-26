@@ -3,7 +3,7 @@ import io
 import json
 import tarfile
 from dataclasses import replace
-from datetime import date
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -35,6 +35,7 @@ FIXTURE = Path(__file__).parents[2] / "fixtures" / "bars" / "minute_bars_valid.c
 RUNNER = CliRunner()
 SESSION_DATE = date(2026, 7, 2)
 MEMBER_NAME = "legacy/minute_bars.csv"
+INGESTED_AT = datetime(2026, 7, 26, tzinfo=UTC)
 
 
 def _source_declaration(
@@ -42,6 +43,7 @@ def _source_declaration(
     member_names: tuple[str, ...] = (MEMBER_NAME,),
     production_symbols: tuple[str, ...] = (),
     expected_robustness_groups: tuple[tuple[str, date], ...] = (),
+    ingested_at: datetime = INGESTED_AT,
 ) -> ArchiveSourceDeclaration:
     return ArchiveSourceDeclaration(
         provider="tiingo",
@@ -52,6 +54,7 @@ def _source_declaration(
         expected_start_date=SESSION_DATE,
         expected_end_date=SESSION_DATE,
         expected_robustness_groups=expected_robustness_groups,
+        ingested_at=ingested_at,
     )
 
 
@@ -149,6 +152,65 @@ def test_imports_synthetic_archive_as_partitioned_immutable_snapshot(tmp_path: P
     assert len(tuple(snapshot_root.rglob("part-00000.parquet"))) == 2
     assert "bar_size=1min" in output.parts
     assert "session_date=2026-07-02" in output.parts
+
+
+def test_declared_ingestion_timestamp_is_preserved_and_not_before_source_bars(
+    tmp_path: Path,
+) -> None:
+    archive_path = _complete_archive_fixture(tmp_path, "AAPL")
+    first, first_output = import_snapshot(
+        archive_path,
+        root=tmp_path / "first-root",
+        source=_source_declaration(),
+    )
+    second, second_output = import_snapshot(
+        archive_path,
+        root=tmp_path / "second-root",
+        source=_source_declaration(),
+    )
+    first_bars = pd.concat(
+        [pd.read_parquet(path) for path in first_output.parents[3].rglob("*.parquet")],
+        ignore_index=True,
+    )
+    second_bars = pd.concat(
+        [pd.read_parquet(path) for path in second_output.parents[3].rglob("*.parquet")],
+        ignore_index=True,
+    )
+
+    assert first.created_at == INGESTED_AT
+    assert second.created_at == INGESTED_AT
+    assert first.dataset_id == second.dataset_id
+    assert first.content_sha256 == second.content_sha256
+    assert first_bars["ingested_at"].eq(pd.Timestamp(INGESTED_AT)).all()
+    assert second_bars["ingested_at"].eq(pd.Timestamp(INGESTED_AT)).all()
+    assert first.created_at >= first.max_timestamp
+
+
+@pytest.mark.parametrize(
+    "ingested_at",
+    [
+        INGESTED_AT.replace(tzinfo=None),
+        datetime(2026, 7, 26, tzinfo=timezone(timedelta(hours=8))),
+    ],
+)
+def test_source_declaration_rejects_naive_or_non_utc_ingestion_time(
+    ingested_at: datetime,
+) -> None:
+    with pytest.raises(ValueError, match="ingested_at must be timezone-aware UTC"):
+        _source_declaration(ingested_at=ingested_at)
+
+
+def test_import_rejects_ingestion_time_before_latest_source_bar(tmp_path: Path) -> None:
+    archive_path = _complete_archive_fixture(tmp_path, "AAPL")
+
+    with pytest.raises(ValueError, match="ingested_at must not precede.*source timestamp"):
+        import_snapshot(
+            archive_path,
+            root=tmp_path / "repo",
+            source=_source_declaration(
+                ingested_at=datetime(2026, 7, 2, 13, 30, tzinfo=UTC),
+            ),
+        )
 
 
 def test_import_streams_only_members_with_the_required_minute_schema(tmp_path: Path) -> None:
@@ -505,6 +567,7 @@ def test_import_records_explicit_source_and_cadence_evidence(tmp_path: Path) -> 
         "production_symbols": [],
         "provider": "tiingo",
         "expected_robustness_groups": [],
+        "ingested_at": "2026-07-26T00:00:00+00:00",
     }
     assert evidence["observed_cadence"] == {
         "bar_size": "1min",
@@ -584,12 +647,19 @@ def test_dataset_id_is_stable_and_declaration_aware(tmp_path: Path) -> None:
         root=tmp_path / "reverse-root",
         source=both_reverse,
     )
+    later_manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "later-root",
+        source=replace(aapl_source, ingested_at=INGESTED_AT + timedelta(seconds=1)),
+    )
 
     assert aapl_manifest.dataset_id == same_aapl_manifest.dataset_id
     assert aapl_manifest.content_sha256 == same_aapl_manifest.content_sha256
     assert aapl_manifest.created_at == same_aapl_manifest.created_at
     assert aapl_manifest.dataset_id != msft_manifest.dataset_id
     assert forward_manifest.dataset_id == reverse_manifest.dataset_id
+    assert later_manifest.dataset_id != aapl_manifest.dataset_id
+    assert later_manifest.content_sha256 != aapl_manifest.content_sha256
 
     local_root = tmp_path / "local-root"
     first_local, first_output = import_snapshot(
@@ -892,6 +962,8 @@ def test_data_cli_import_prints_dataset_id_only_after_success(tmp_path: Path) ->
             "2026-07-02",
             "--expected-end-date",
             "2026-07-02",
+            "--ingested-at",
+            "2026-07-26T00:00:00Z",
         ],
     )
 

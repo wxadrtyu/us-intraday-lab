@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -98,6 +98,7 @@ def import_archive_command(
     production_symbol: Annotated[list[str], typer.Option("--production-symbol")],
     expected_start_date: Annotated[str, typer.Option()],
     expected_end_date: Annotated[str, typer.Option()],
+    ingested_at: Annotated[str, typer.Option()],
     expected_robustness_group: Annotated[
         list[str] | None, typer.Option("--expected-robustness-group")
     ] = None,
@@ -122,6 +123,7 @@ def import_archive_command(
         production_symbols=tuple(production_symbol),
         expected_start_date=date.fromisoformat(expected_start_date),
         expected_end_date=date.fromisoformat(expected_end_date),
+        ingested_at=datetime.fromisoformat(ingested_at),
         expected_robustness_groups=tuple(
             _robustness_group(value) for value in (expected_robustness_group or [])
         ),

@@ -124,6 +124,7 @@ def _manifest_frame(
                 "expected_end_date": date.fromisoformat(
                     str(source_declaration["expected_end_date"])
                 ),
+                "declared_ingested_at": manifest.created_at,
             }
         ]
     )
