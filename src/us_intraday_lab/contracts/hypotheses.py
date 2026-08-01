@@ -30,7 +30,12 @@ ParameterValue = int | float | str
 
 
 class _ClosedModel(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        allow_inf_nan=False,
+        revalidate_instances="always",
+    )
 
 
 class ParameterRange(_ClosedModel):
@@ -116,4 +121,11 @@ class HypothesisProposal(_ClosedModel):
             indicators=self.indicators,
             parameter_ranges=self.parameter_ranges,
         )
+        from us_intraday_lab.factory.feature_catalog import required_variant_budget
+
+        if self.max_variants < required_variant_budget(
+            entry_template=self.entry_template,
+            parameter_ranges=self.parameter_ranges,
+        ):
+            raise ValueError("max_variants must fit distinct baseline and boundary variants")
         return self

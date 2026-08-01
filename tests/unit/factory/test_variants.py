@@ -2,6 +2,9 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from us_intraday_lab.contracts.hypotheses import HypothesisProposal
 from us_intraday_lab.factory.proposal import FixtureProposalProvider
 from us_intraday_lab.factory.variants import (
@@ -96,3 +99,41 @@ def test_duplicate_strategy_definitions_collapse_by_content_hash() -> None:
     variant = generate_strategy_variants(_proposal())[0]
 
     assert deduplicate_variants((variant, variant, variant)) == (variant,)
+
+
+def test_generator_rejects_strict_integer_forgery() -> None:
+    proposal = _proposal()
+    forged = proposal.model_copy(update={"max_variants": True})
+
+    with pytest.raises(ValidationError):
+        generate_strategy_variants(forged)
+
+    forged_range = proposal.parameter_ranges["stop_loss_bps"].model_copy(
+        update={"values": (True, 35, 45)}
+    )
+    forged_ranges = dict(proposal.parameter_ranges)
+    forged_ranges["stop_loss_bps"] = forged_range
+    with pytest.raises(ValidationError):
+        generate_strategy_variants(proposal.model_copy(update={"parameter_ranges": forged_ranges}))
+
+
+def test_space_filling_has_bounded_distance_work(monkeypatch: pytest.MonkeyPatch) -> None:
+    import us_intraday_lab.factory.variants as variants_module
+
+    proposal = _proposal()
+    proposal = HypothesisProposal.model_validate(
+        {**proposal.model_dump(mode="python"), "max_variants": 200}
+    )
+    calls = 0
+    original = variants_module._distance
+
+    def counted_distance(*args: object, **kwargs: object) -> float:
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(variants_module, "_distance", counted_distance)
+    generated = generate_strategy_variants(proposal)
+
+    assert len(generated) == proposal.max_variants
+    assert calls <= 400_000

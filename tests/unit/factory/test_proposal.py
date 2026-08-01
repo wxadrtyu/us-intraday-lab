@@ -1,10 +1,11 @@
 from datetime import UTC, date, datetime
+from pathlib import Path
 from types import MappingProxyType
 
 import pytest
 from pydantic import ValidationError
 
-from us_intraday_lab.contracts.hypotheses import HypothesisProposal
+from us_intraday_lab.contracts.hypotheses import HypothesisProposal, ProposalProvenance
 from us_intraday_lab.contracts.registry import RegistryEvent
 from us_intraday_lab.contracts.validation import (
     ChronologicalSplit,
@@ -14,6 +15,11 @@ from us_intraday_lab.contracts.validation import (
     WalkForwardWindowResult,
 )
 from us_intraday_lab.factory.feature_catalog import FEATURE_TEMPLATE_CATALOG
+from us_intraday_lab.factory.proposal import (
+    MAX_FIXTURE_BYTES,
+    FixtureProposalProvider,
+    proposal_hash,
+)
 
 
 def _proposal_payload() -> dict[str, object]:
@@ -205,3 +211,53 @@ def test_ai_proposal_requires_provider_model_and_prompt_lineage() -> None:
     }
     proposal = HypothesisProposal.model_validate(payload)
     assert proposal.provenance.model == "future-model"
+
+
+@pytest.mark.parametrize("max_variants", [1, 2])
+def test_proposal_budget_must_fit_distinct_baseline_and_boundaries(
+    max_variants: int,
+) -> None:
+    payload = _proposal_payload()
+    payload["max_variants"] = max_variants
+
+    with pytest.raises(ValidationError, match="baseline and boundary"):
+        HypothesisProposal.model_validate(payload)
+
+
+def test_singleton_search_space_allows_one_variant() -> None:
+    payload = _proposal_payload()
+    payload["parameter_ranges"] = {
+        "rsi_entry": {"values": [40.0]},
+        "stop_loss_bps": {"values": [35]},
+    }
+    payload["max_variants"] = 1
+
+    assert HypothesisProposal.model_validate(payload).max_variants == 1
+
+
+def test_proposal_hash_rejects_model_copy_forgery() -> None:
+    proposal = HypothesisProposal.model_validate(_proposal_payload())
+    forged_provenance = ProposalProvenance().model_copy(
+        update={"source_type": "ai", "provider": "fixture"}
+    )
+
+    with pytest.raises(ValidationError):
+        proposal_hash(proposal.model_copy(update={"provenance": forged_provenance}))
+    with pytest.raises(ValidationError):
+        proposal_hash(proposal.model_copy(update={"max_variants": True}))
+
+    forged_range = proposal.parameter_ranges["stop_loss_bps"].model_copy(
+        update={"values": (True, 35, 45)}
+    )
+    forged_ranges = dict(proposal.parameter_ranges)
+    forged_ranges["stop_loss_bps"] = forged_range
+    with pytest.raises(ValidationError):
+        proposal_hash(proposal.model_copy(update={"parameter_ranges": forged_ranges}))
+
+
+def test_fixture_provider_enforces_read_bound_on_open_handle(tmp_path: Path) -> None:
+    oversized = tmp_path / "oversized.json"
+    oversized.write_bytes(b" " * (MAX_FIXTURE_BYTES + 1))
+
+    with pytest.raises(ValueError, match="bounded read size"):
+        FixtureProposalProvider(oversized).load()

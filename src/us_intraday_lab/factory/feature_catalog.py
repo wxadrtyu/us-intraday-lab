@@ -3,7 +3,11 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Literal, cast
 
-from us_intraday_lab.contracts.hypotheses import ParameterName, ParameterRange
+from us_intraday_lab.contracts.hypotheses import (
+    ParameterName,
+    ParameterRange,
+    ParameterValue,
+)
 
 ParameterOwner = Literal["entry", "exit", "risk", "sizing"]
 ParameterType = Literal["float", "int", "enum"]
@@ -133,3 +137,23 @@ def validate_parameter_ranges(
         if spec is None:
             raise ValueError(f"proposal references unknown parameter: {name}")
         spec.validate(parameter_range)
+
+
+def _value_key(value: ParameterValue) -> tuple[int, float | str]:
+    if type(value) in {int, float}:
+        return (0, float(value))
+    return (1, cast(str, value))
+
+
+def required_variant_budget(
+    *,
+    entry_template: str,
+    parameter_ranges: Mapping[ParameterName, ParameterRange],
+) -> int:
+    """Return slots needed for distinct baseline, all-low, and all-high variants."""
+    template = FEATURE_TEMPLATE_CATALOG.entry_templates[entry_template]
+    names = tuple(parameter_ranges)
+    baseline = tuple(template.parameters[name].baseline for name in names)
+    lower = tuple(min(parameter_ranges[name].values, key=_value_key) for name in names)
+    upper = tuple(max(parameter_ranges[name].values, key=_value_key) for name in names)
+    return len(dict.fromkeys((baseline, lower, upper)))

@@ -79,14 +79,15 @@ def _distance(
     right: tuple[ParameterValue, ...],
     names: tuple[ParameterName, ...],
     values: dict[ParameterName, tuple[ParameterValue, ...]],
+    positions: dict[ParameterName, dict[ParameterValue, int]],
 ) -> float:
     total = 0.0
     for index, name in enumerate(names):
         options = values[name]
         if len(options) == 1:
             continue
-        left_index = options.index(left[index])
-        right_index = options.index(right[index])
+        left_index = positions[name][left[index]]
+        right_index = positions[name][right[index]]
         total += abs(left_index - right_index) / (len(options) - 1)
     return total / max(1, len(names))
 
@@ -123,27 +124,35 @@ def _selected_parameter_tuples(
             )
         )
 
-    selected = forced[: proposal.max_variants]
+    selected = forced.copy()
     selected_values = [candidate for candidate, _reason in selected]
     if len(selected) == proposal.max_variants:
         return tuple(selected)
 
     rng = random.Random(proposal.seed)
-    pool_size = min(total, max(256, proposal.max_variants * 32))
+    pool_size = min(total, max(256, proposal.max_variants * 8))
     ranks = rng.sample(range(total), pool_size)
     pool = [_tuple_from_rank(rank, names, values) for rank in ranks]
     pool = list(dict.fromkeys(candidate for candidate in pool if candidate not in selected_values))
     rng.shuffle(pool)
-    while pool and len(selected) < proposal.max_variants:
-        best = max(
-            pool,
-            key=lambda candidate: min(
-                _distance(candidate, existing, names, values) for existing in selected_values
-            ),
+    positions = {name: {value: index for index, value in enumerate(values[name])} for name in names}
+    min_distances = [
+        min(
+            _distance(candidate, existing, names, values, positions) for existing in selected_values
         )
+        for candidate in pool
+    ]
+    while pool and len(selected) < proposal.max_variants:
+        best_index = max(range(len(pool)), key=min_distances.__getitem__)
+        best = pool.pop(best_index)
+        min_distances.pop(best_index)
         selected.append((best, "space_filling"))
         selected_values.append(best)
-        pool.remove(best)
+        for index, candidate in enumerate(pool):
+            min_distances[index] = min(
+                min_distances[index],
+                _distance(candidate, best, names, values, positions),
+            )
     return tuple(selected)
 
 
@@ -221,7 +230,7 @@ def generate_strategy_variants(
 ) -> tuple[GeneratedVariant, ...]:
     if type(proposal) is not HypothesisProposal:
         raise TypeError("proposal must be an exact HypothesisProposal")
-    reparsed = HypothesisProposal.model_validate(proposal.model_dump(mode="json"))
+    reparsed = HypothesisProposal.model_validate(proposal)
     names = tuple(reparsed.parameter_ranges)
     selected = _selected_parameter_tuples(reparsed)
     variants = tuple(_variant(values, names, reason) for values, reason in selected)

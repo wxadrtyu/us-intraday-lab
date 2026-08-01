@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import stat
 from pathlib import Path
 from typing import Protocol
 
@@ -23,9 +25,13 @@ class FixtureProposalProvider:
     def load(self) -> HypothesisProposal:
         if not self._path.is_file() or self._path.is_symlink():
             raise ValueError("proposal fixture must be a regular non-symlink file")
-        if self._path.stat().st_size > MAX_FIXTURE_BYTES:
+        with self._path.open("rb") as fixture:
+            if not stat.S_ISREG(os.fstat(fixture.fileno()).st_mode):
+                raise ValueError("proposal fixture must be a regular non-symlink file")
+            raw = fixture.read(MAX_FIXTURE_BYTES + 1)
+        if len(raw) > MAX_FIXTURE_BYTES:
             raise ValueError("proposal fixture exceeds the bounded read size")
-        payload = json.loads(self._path.read_text(encoding="utf-8"))
+        payload = json.loads(raw.decode("utf-8"))
         if type(payload) is not dict:
             raise ValueError("proposal fixture root must be a JSON object")
         return HypothesisProposal.model_validate(payload)
@@ -34,8 +40,9 @@ class FixtureProposalProvider:
 def proposal_hash(proposal: HypothesisProposal) -> str:
     if type(proposal) is not HypothesisProposal:
         raise TypeError("proposal must be an exact HypothesisProposal")
+    reparsed = HypothesisProposal.model_validate(proposal)
     canonical = json.dumps(
-        proposal.model_dump(mode="json"),
+        reparsed.model_dump(mode="json"),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,

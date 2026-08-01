@@ -82,7 +82,11 @@ class ExperimentManifest(BaseModel):
 
     @model_validator(mode="after")
     def validate_identity(self) -> Self:
-        identity = _ExperimentIdentity.model_validate(self.model_dump(exclude={"experiment_id"}))
+        payload = self.model_dump(mode="python", exclude={"experiment_id"})
+        payload["cost_model_versions"] = CostModelIds.model_validate(
+            self.cost_model_versions.model_dump(mode="python")
+        )
+        identity = _ExperimentIdentity.model_validate(payload)
         if self.experiment_id != _experiment_id(identity):
             raise ValueError("experiment_id does not match immutable lineage")
         return self

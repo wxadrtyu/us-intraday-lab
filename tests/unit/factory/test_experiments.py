@@ -79,3 +79,32 @@ def test_fixture_provider_validates_file_content_at_boundary(tmp_path: Path) -> 
 
     with pytest.raises(ValidationError):
         FixtureProposalProvider(unsafe).load()
+
+
+def test_manifest_rejects_forged_proposal_and_nested_cost_ids() -> None:
+    proposal = FixtureProposalProvider(FIXTURE).load()
+    forged = proposal.model_copy(update={"hypothesis_id": "INVALID ID"})
+
+    with pytest.raises(ValidationError):
+        create_experiment_manifest(
+            proposal=forged,
+            dataset_id="dataset-accepted-1",
+            calendar_version="XNYS@4.13.2",
+            split_definition=_split(),
+            code_revision="abc1234",
+            created_at=datetime(2026, 7, 26, tzinfo=UTC),
+        )
+
+    manifest = create_experiment_manifest(
+        proposal=proposal,
+        dataset_id="dataset-accepted-1",
+        calendar_version="XNYS@4.13.2",
+        split_definition=_split(),
+        code_revision="abc1234",
+        created_at=datetime(2026, 7, 26, tzinfo=UTC),
+    )
+    forged_costs = manifest.cost_model_versions.model_copy(update={"base": ""})
+    payload = manifest.model_dump(mode="python")
+    payload["cost_model_versions"] = forged_costs
+    with pytest.raises(ValidationError):
+        ExperimentManifest.model_validate(payload)
