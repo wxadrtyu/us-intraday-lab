@@ -240,13 +240,13 @@ def _exit_with_backtest_failure(
 def run_backtest_command(
     strategy: Annotated[
         Path,
-        typer.Option(exists=True, dir_okay=False, readable=True),
+        typer.Option(),
     ],
     dataset_id: Annotated[str, typer.Option()],
     initial_cash: Annotated[float, typer.Option()],
     root: Annotated[
         Path,
-        typer.Option(exists=True, file_okay=False, readable=True),
+        typer.Option(),
     ],
     closeout_buffer_minutes: Annotated[int, typer.Option()] = 5,
 ) -> None:

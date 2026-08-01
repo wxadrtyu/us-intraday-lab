@@ -433,8 +433,8 @@ def test_backtest_result_requires_typed_failure_when_failed() -> None:
         "status": "failed",
         "failure": None,
         "metrics_by_cost_scenario": {},
-        "trades_uri": "file:///artifacts/run-002/trades.parquet",
-        "events_uri": "file:///artifacts/run-002/events.jsonl",
+        "trades_uri": None,
+        "events_uri": None,
         "content_sha256": "b" * 64,
     }
 
@@ -465,8 +465,8 @@ def test_failed_backtest_result_rejects_partial_metrics() -> None:
             "message": "fill simulation failed",
         },
         "metrics_by_cost_scenario": {"base": {"net_return": 0.01}},
-        "trades_uri": "file:///artifacts/run-002/trades.parquet",
-        "events_uri": "file:///artifacts/run-002/events.jsonl",
+        "trades_uri": None,
+        "events_uri": None,
         "content_sha256": "b" * 64,
     }
 
@@ -491,3 +491,18 @@ def test_failed_backtest_result_is_complete_deterministic_and_handles_empty_mess
     assert first.failure is not None
     assert first.failure.message == "unspecified failure"
     assert first.metrics_by_cost_scenario == {}
+    assert first.trades_uri is None
+    assert first.events_uri is None
+
+
+def test_failed_backtest_result_rejects_untrusted_run_id_and_claims_no_artifacts() -> None:
+    result = failed_backtest_result(
+        failure_type="artifact_write",
+        message="invalid run",
+        run_id="../escape",
+    )
+
+    assert result.run_id.startswith("run-failed-")
+    assert ".." not in result.run_id
+    assert result.trades_uri is None
+    assert result.events_uri is None

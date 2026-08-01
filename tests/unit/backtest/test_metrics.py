@@ -323,7 +323,41 @@ def test_artifact_writer_rejects_forged_run_id_before_path_construction(
         scenarios=run.scenarios,
     )
 
-    with pytest.raises(BacktestArtifactError, match="canonical BacktestJob"):
+    with pytest.raises(BacktestArtifactError, match="canonical BacktestJob") as exc_info:
         write_backtest_artifacts(forged, root=tmp_path)
 
+    assert exc_info.value.result.run_id == run.run_id
+    assert exc_info.value.result.events_uri is None
+    assert exc_info.value.result.trades_uri is None
     assert not (tmp_path / "artifacts").exists()
+
+
+def test_cleanup_failure_preserves_primary_error_and_canonical_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _empty_run()
+    original_write_text = Path.write_text
+    original_rmtree = engine_module.shutil.rmtree
+
+    def fail_on_job(path: Path, data: str, *args: object, **kwargs: object) -> int:
+        if path.name == "job.json":
+            raise OSError("primary write failure")
+        return original_write_text(path, data, *args, **kwargs)
+
+    def fail_cleanup(path: Path, *args: object, **kwargs: object) -> None:
+        raise OSError("cleanup failure")
+
+    monkeypatch.setattr(Path, "write_text", fail_on_job)
+    monkeypatch.setattr(engine_module.shutil, "rmtree", fail_cleanup)
+
+    with pytest.raises(BacktestArtifactError, match="primary write failure") as exc_info:
+        write_backtest_artifacts(run, root=tmp_path)
+
+    assert exc_info.value.result.job_id == run.job.job_id
+    assert exc_info.value.result.run_id == run.run_id
+    assert any("cleanup failure" in note for note in exc_info.value.__notes__)
+
+    monkeypatch.setattr(engine_module.shutil, "rmtree", original_rmtree)
+    for temporary in (tmp_path / "artifacts" / "backtests").glob(f".{run.run_id}-*"):
+        original_rmtree(temporary)

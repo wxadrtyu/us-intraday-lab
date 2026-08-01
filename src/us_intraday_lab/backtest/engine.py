@@ -6,6 +6,7 @@ import hashlib
 import json
 import shutil
 import stat
+import sys
 import tempfile
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -313,11 +314,12 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
     """Atomically publish deterministic artifacts and return ``result.json``."""
     if type(run) is not EngineRun:
         raise TypeError("run must be an exact EngineRun")
-    if run.run_id != run_id_for_job(run.job):
+    canonical_run_id = run_id_for_job(run.job)
+    if run.run_id != canonical_run_id:
         raise BacktestArtifactError(
             "run_id does not match the canonical BacktestJob",
             job_id=run.job.job_id,
-            run_id=run.run_id,
+            run_id=canonical_run_id,
         )
     temporary: Path | None = None
     try:
@@ -355,28 +357,35 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
             raise
         return final / "result.json"
     except BacktestArtifactError as error:
-        if error.result.run_id == run.run_id:
+        if error.result.run_id == canonical_run_id:
             raise
         raise BacktestArtifactError(
             str(error),
             job_id=run.job.job_id,
-            run_id=run.run_id,
+            run_id=canonical_run_id,
         ) from error
     except Exception as error:
         message = str(error).strip() or type(error).__name__
         raise BacktestArtifactError(
             f"failed to publish backtest artifacts: {message}",
             job_id=run.job.job_id,
-            run_id=run.run_id,
+            run_id=canonical_run_id,
         ) from error
     finally:
+        pending_error = sys.exception()
         if temporary is not None and temporary.exists():
             try:
                 shutil.rmtree(temporary)
             except Exception as error:
-                raise BacktestArtifactError(
-                    f"failed to clean temporary backtest artifacts: {error}"
-                ) from error
+                message = f"failed to clean temporary backtest artifacts: {error}"
+                if pending_error is not None:
+                    pending_error.add_note(message)
+                else:
+                    raise BacktestArtifactError(
+                        message,
+                        job_id=run.job.job_id,
+                        run_id=canonical_run_id,
+                    ) from error
 
 
 @dataclass(slots=True)

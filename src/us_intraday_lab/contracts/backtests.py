@@ -1,7 +1,7 @@
 import hashlib
 import json
+import re
 from collections.abc import Mapping
-from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, Self
 
@@ -113,8 +113,8 @@ class BacktestResult(_ClosedModel):
     status: BacktestStatus
     failure: BacktestFailure | None
     metrics_by_cost_scenario: Mapping[CostScenario, Mapping[str, float]]
-    trades_uri: str = Field(min_length=1)
-    events_uri: str = Field(min_length=1)
+    trades_uri: str | None = Field(default=None, min_length=1)
+    events_uri: str | None = Field(default=None, min_length=1)
     content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @field_validator("metrics_by_cost_scenario", mode="after")
@@ -144,8 +144,12 @@ class BacktestResult(_ClosedModel):
             raise ValueError("failed result requires a failure")
         if self.status == "failed" and self.metrics_by_cost_scenario:
             raise ValueError("failed result must not include partial metrics")
+        if self.status == "failed" and (self.trades_uri is not None or self.events_uri is not None):
+            raise ValueError("failed result must not claim unpublished artifact URIs")
         if self.status == "succeeded" and self.failure is not None:
             raise ValueError("succeeded result must not include a failure")
+        if self.status == "succeeded" and (self.trades_uri is None or self.events_uri is None):
+            raise ValueError("succeeded result requires artifact URIs")
         required_scenarios = {"optimistic", "base", "stress"}
         if (
             self.status == "succeeded"
@@ -172,8 +176,11 @@ def failed_backtest_result(
     }
     digest = hashlib.sha256(_canonical_json(identity).encode("utf-8")).hexdigest()
     effective_job_id = job_id or f"job-failed-{digest}"
-    effective_run_id = run_id or f"run-failed-{digest}"
-    relative_root = Path("artifacts") / "backtests" / effective_run_id
+    effective_run_id = (
+        run_id
+        if run_id is not None and re.fullmatch(r"run-[0-9a-f]{64}", run_id)
+        else f"run-failed-{digest}"
+    )
     content_sha256 = hashlib.sha256(
         _canonical_json(
             {
@@ -193,7 +200,7 @@ def failed_backtest_result(
             message=normalized_message,
         ),
         metrics_by_cost_scenario={},
-        trades_uri=(relative_root / "trades.jsonl").as_posix(),
-        events_uri=(relative_root / "events.jsonl").as_posix(),
+        trades_uri=None,
+        events_uri=None,
         content_sha256=content_sha256,
     )

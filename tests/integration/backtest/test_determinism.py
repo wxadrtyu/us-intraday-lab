@@ -12,8 +12,13 @@ def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def _backtest_command(*, root: Path, dataset_id: str) -> list[str]:
-    strategy = (
+def _backtest_command(
+    *,
+    root: Path,
+    dataset_id: str,
+    strategy: Path | None = None,
+) -> list[str]:
+    strategy = strategy or (
         Path(__file__).parents[2] / "fixtures" / "strategies" / "valid_momentum_pullback.json"
     )
     return [
@@ -121,3 +126,46 @@ def test_cli_fails_nonzero_with_typed_failure_on_artifact_collision(
     assert '"status":"failed"' in completed.stderr
     assert '"failure_type":"artifact_write"' in completed.stderr
     assert "different content" in completed.stderr
+
+
+def test_cli_missing_strategy_returns_typed_failed_result(
+    accepted_backtest_dataset: tuple[Path, str],
+) -> None:
+    root, dataset_id = accepted_backtest_dataset
+    completed = subprocess.run(
+        _backtest_command(
+            root=root,
+            dataset_id=dataset_id,
+            strategy=root / "missing-strategy.json",
+        ),
+        cwd=Path(__file__).parents[3],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 1
+    result = json.loads(completed.stderr.strip().splitlines()[-1])
+    assert result["status"] == "failed"
+    assert result["failure"]["failure_type"] == "strategy_validation"
+    assert result["events_uri"] is None
+    assert result["trades_uri"] is None
+
+
+def test_cli_unaccepted_dataset_returns_typed_failed_result(tmp_path: Path) -> None:
+    root = tmp_path / "empty-root"
+    root.mkdir()
+    completed = subprocess.run(
+        _backtest_command(root=root, dataset_id="missing-dataset"),
+        cwd=Path(__file__).parents[3],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 1
+    result = json.loads(completed.stderr.strip().splitlines()[-1])
+    assert result["status"] == "failed"
+    assert result["failure"]["failure_type"] == "dataset_validation"
+    assert result["events_uri"] is None
+    assert result["trades_uri"] is None
