@@ -129,6 +129,7 @@ def _empty_run() -> EngineRun:
         dataset_id="accepted-dataset",
         engine_id="event-engine-1.0.0",
         calendar_id="XNYS@4.11",
+        input_data_sha256="a" * 64,
         initial_cash=25_000.0,
         closeout_buffer_minutes=5,
         cost_model_ids=CostModelIds(
@@ -199,6 +200,7 @@ def test_artifact_writer_publishes_only_after_complete_sibling_is_written(
             assert not final.exists()
             assert {path.name for path in source.iterdir()} == {
                 "events.jsonl",
+                "intents.jsonl",
                 "job.json",
                 "result.json",
                 "trades.jsonl",
@@ -226,6 +228,7 @@ def test_artifact_writer_persists_events_and_trades_before_metrics(
         observed_calls += 1
         temporary = next((tmp_path / "artifacts" / "backtests").glob(f".{run.run_id}-*"))
         assert (temporary / "events.jsonl").is_file()
+        assert (temporary / "intents.jsonl").is_file()
         assert (temporary / "trades.jsonl").is_file()
         return original_compute(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -328,6 +331,7 @@ def test_artifact_writer_rejects_forged_run_id_before_path_construction(
 
     assert exc_info.value.result.run_id == run.run_id
     assert exc_info.value.result.events_uri is None
+    assert exc_info.value.result.intents_uri is None
     assert exc_info.value.result.trades_uri is None
     assert not (tmp_path / "artifacts").exists()
 

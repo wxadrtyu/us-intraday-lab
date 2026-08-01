@@ -11,6 +11,7 @@ from us_intraday_lab.backtest.engine import (
     ENGINE_ID,
     BacktestArtifactError,
     BacktestEngine,
+    input_data_sha256,
     run_id_for_job,
     write_backtest_artifacts,
 )
@@ -279,29 +280,6 @@ def run_backtest_command(
             strategy_path=strategy,
         )
     try:
-        job = BacktestJob.create(
-            schema_version="1.0.0",
-            strategy_id=compiled.definition_fingerprint,
-            dataset_id=manifest.dataset_id,
-            engine_id=ENGINE_ID,
-            calendar_id=f"{manifest.calendar_name}@{manifest.calendar_version}",
-            initial_cash=initial_cash,
-            closeout_buffer_minutes=closeout_buffer_minutes,
-            cost_model_ids=CostModelIds(
-                optimistic=COST_SCENARIOS["optimistic"].model_id,
-                base=COST_SCENARIOS["base"].model_id,
-                stress=COST_SCENARIOS["stress"].model_id,
-            ),
-        )
-    except ValidationError as error:
-        _exit_with_backtest_failure(
-            failure_type="execution",
-            error=error,
-            dataset_id=dataset_id,
-            strategy_path=strategy,
-        )
-
-    try:
         with connect_catalog(root=root) as connection:
             minute_bars = connection.execute(
                 """
@@ -317,6 +295,38 @@ def run_backtest_command(
                 ORDER BY session_date, available_at, symbol
                 """
             ).df()
+    except Exception as error:  # noqa: BLE001 - catalog boundary returns typed failure
+        _exit_with_backtest_failure(
+            failure_type="dataset_validation",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+        )
+    try:
+        job = BacktestJob.create(
+            schema_version="1.0.0",
+            strategy_id=compiled.definition_fingerprint,
+            dataset_id=manifest.dataset_id,
+            engine_id=ENGINE_ID,
+            calendar_id=f"{manifest.calendar_name}@{manifest.calendar_version}",
+            input_data_sha256=input_data_sha256(minute_bars, signal_bars),
+            initial_cash=initial_cash,
+            closeout_buffer_minutes=closeout_buffer_minutes,
+            cost_model_ids=CostModelIds(
+                optimistic=COST_SCENARIOS["optimistic"].model_id,
+                base=COST_SCENARIOS["base"].model_id,
+                stress=COST_SCENARIOS["stress"].model_id,
+            ),
+        )
+    except (ValidationError, ValueError, TypeError) as error:
+        _exit_with_backtest_failure(
+            failure_type="execution",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+        )
+
+    try:
         run = BacktestEngine(job=job, strategy=compiled).run(
             minute_bars=minute_bars,
             signal_bars=signal_bars,

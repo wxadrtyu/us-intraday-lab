@@ -164,6 +164,28 @@ def test_typed_validator_rejects_non_positive_risk_controls(field: str, value: i
 
 
 @pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("stop_loss_bps", 10_001),
+        ("take_profit_bps", 10**400),
+        ("max_holding_minutes", 1_441),
+        ("cooldown_minutes", 10**400),
+    ],
+)
+def test_typed_validator_rejects_unbounded_risk_controls(field: str, value: int) -> None:
+    strategy = _strategy()
+    risk = RiskDefinition.model_construct(**{**strategy.risk.__dict__, field: value})
+    invalid = StrategyDefinition.model_construct(**{**strategy.__dict__, "risk": risk})
+
+    issues = validate_strategy(invalid).issues
+
+    assert any(
+        issue.code == "DSL_RISK_CONTROL_EXCEEDED" and issue.path == f"risk.{field}"
+        for issue in issues
+    )
+
+
+@pytest.mark.parametrize(
     ("field", "value", "expected_code"),
     [
         ("limit_offset", 10, "DSL_UNSUPPORTED_LIMIT_OFFSET"),
@@ -187,6 +209,24 @@ def test_raw_scan_rejects_non_dsl_strategy_controls(
     payload[field] = value
 
     assert expected_code in {issue.code for issue in scan_strategy_payload(payload).issues}
+
+
+def test_raw_scan_rejects_extreme_depth_without_python_recursion() -> None:
+    payload: object = "leaf"
+    for _ in range(1_500):
+        payload = {"nested": payload}
+
+    result = scan_strategy_payload(payload)
+
+    assert "DSL_RAW_PAYLOAD_DEPTH_EXCEEDED" in {issue.code for issue in result.issues}
+
+
+def test_raw_scan_rejects_excessive_node_count_with_stable_issue() -> None:
+    payload = {f"field_{index}": index for index in range(1_100)}
+
+    result = scan_strategy_payload(payload)
+
+    assert "DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED" in {issue.code for issue in result.issues}
 
 
 @pytest.mark.parametrize(

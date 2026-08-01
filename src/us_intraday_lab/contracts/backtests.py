@@ -43,6 +43,7 @@ class _BacktestJobIdentity(_ClosedModel):
     dataset_id: str = Field(min_length=1)
     engine_id: str = Field(min_length=1)
     calendar_id: str = Field(min_length=1)
+    input_data_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     initial_cash: float = Field(strict=True, gt=0)
     closeout_buffer_minutes: int = Field(strict=True, ge=1, le=60)
     cost_model_ids: CostModelIds
@@ -70,6 +71,7 @@ class BacktestJob(_ClosedModel):
     dataset_id: str = Field(min_length=1)
     engine_id: str = Field(min_length=1)
     calendar_id: str = Field(min_length=1)
+    input_data_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     initial_cash: float = Field(strict=True, gt=0)
     closeout_buffer_minutes: int = Field(strict=True, ge=1, le=60)
     cost_model_ids: CostModelIds
@@ -115,6 +117,7 @@ class BacktestResult(_ClosedModel):
     metrics_by_cost_scenario: Mapping[CostScenario, Mapping[str, float]]
     trades_uri: str | None = Field(default=None, min_length=1)
     events_uri: str | None = Field(default=None, min_length=1)
+    intents_uri: str | None = Field(default=None, min_length=1)
     content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @field_validator("metrics_by_cost_scenario", mode="after")
@@ -144,11 +147,15 @@ class BacktestResult(_ClosedModel):
             raise ValueError("failed result requires a failure")
         if self.status == "failed" and self.metrics_by_cost_scenario:
             raise ValueError("failed result must not include partial metrics")
-        if self.status == "failed" and (self.trades_uri is not None or self.events_uri is not None):
+        if self.status == "failed" and any(
+            uri is not None for uri in (self.trades_uri, self.events_uri, self.intents_uri)
+        ):
             raise ValueError("failed result must not claim unpublished artifact URIs")
         if self.status == "succeeded" and self.failure is not None:
             raise ValueError("succeeded result must not include a failure")
-        if self.status == "succeeded" and (self.trades_uri is None or self.events_uri is None):
+        if self.status == "succeeded" and any(
+            uri is None for uri in (self.trades_uri, self.events_uri, self.intents_uri)
+        ):
             raise ValueError("succeeded result requires artifact URIs")
         required_scenarios = {"optimistic", "base", "stress"}
         if (
@@ -202,5 +209,6 @@ def failed_backtest_result(
         metrics_by_cost_scenario={},
         trades_uri=None,
         events_uri=None,
+        intents_uri=None,
         content_sha256=content_sha256,
     )

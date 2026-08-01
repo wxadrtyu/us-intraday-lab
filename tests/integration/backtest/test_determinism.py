@@ -98,6 +98,18 @@ def test_two_clean_processes_produce_identical_deterministic_artifacts(
     assert all(metrics[scenario]["trade_count"] > 0 for scenario in metrics)
     assert all(metrics[scenario]["cost_paid"] > 0 for scenario in metrics)
     events = [json.loads(line) for line in first_contents["events.jsonl"].decode().splitlines()]
+    intents = [json.loads(line) for line in first_contents["intents.jsonl"].decode().splitlines()]
+    assert intents
+    assert {
+        "eligible_time",
+        "idempotency_key",
+        "limit_price",
+        "order_type",
+        "quantity",
+        "reason_code",
+        "scenario",
+        "side",
+    } <= intents[0].keys()
     finalized = [event for event in events if event["event_type"] == "SESSION_FINALIZED"]
     assert len(finalized) == 3
     assert all(event["details"]["position_count"] == 0 for event in finalized)
@@ -149,6 +161,7 @@ def test_cli_missing_strategy_returns_typed_failed_result(
     assert result["status"] == "failed"
     assert result["failure"]["failure_type"] == "strategy_validation"
     assert result["events_uri"] is None
+    assert result["intents_uri"] is None
     assert result["trades_uri"] is None
 
 
@@ -168,4 +181,5 @@ def test_cli_unaccepted_dataset_returns_typed_failed_result(tmp_path: Path) -> N
     assert result["status"] == "failed"
     assert result["failure"]["failure_type"] == "dataset_validation"
     assert result["events_uri"] is None
+    assert result["intents_uri"] is None
     assert result["trades_uri"] is None

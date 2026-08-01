@@ -10,6 +10,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from importlib.metadata import version
 from math import floor, isfinite
 from pathlib import Path
 from types import MappingProxyType
@@ -50,6 +51,7 @@ from us_intraday_lab.strategy.runtime import (
 )
 
 ENGINE_ID = "event-engine-1.0.0"
+CALENDAR_ID = f"XNYS@{version('exchange-calendars')}"
 MAX_POSITIONS = 3
 RISK_BUDGET_FRACTION = 0.005
 _SCENARIO_ORDER: tuple[CostScenario, ...] = ("optimistic", "base", "stress")
@@ -96,6 +98,67 @@ def _sha256_json(value: object) -> str:
 def run_id_for_job(job: BacktestJob) -> str:
     """Return a stable identifier from the complete canonical job JSON."""
     return "run-" + hashlib.sha256(job.canonical_json().encode("utf-8")).hexdigest()
+
+
+def _canonical_input_rows(
+    frame: pd.DataFrame,
+    *,
+    timestamp_column: str,
+    numeric_columns: tuple[str, ...],
+    optional_timestamp_columns: tuple[str, ...] = (),
+) -> list[dict[str, object]]:
+    required = {"symbol", "session_date", timestamp_column, *numeric_columns}
+    missing = sorted(required.difference(frame.columns))
+    if missing:
+        raise ValueError("input data lacks required columns: " + ",".join(missing))
+    rows: list[dict[str, object]] = []
+    selected = required | {
+        column for column in optional_timestamp_columns if column in frame.columns
+    }
+    for values in frame.loc[:, sorted(selected)].to_dict(orient="records"):
+        symbol = values["symbol"]
+        if type(symbol) is not str or not symbol:
+            raise ValueError("input symbol must be a non-empty string")
+        row: dict[str, object] = {
+            "session_date": _session_date(values["session_date"]).isoformat(),
+            "symbol": symbol,
+            timestamp_column: _iso_utc(
+                _utc_datetime(values[timestamp_column], name=timestamp_column)
+            ),
+        }
+        for column in numeric_columns:
+            row[column] = _as_float(values[column], name=column)
+        for column in optional_timestamp_columns:
+            if column in values:
+                row[column] = _iso_utc(_utc_datetime(values[column], name=column))
+        rows.append(row)
+    return sorted(
+        rows,
+        key=lambda row: (
+            cast(str, row["session_date"]),
+            cast(str, row[timestamp_column]),
+            cast(str, row["symbol"]),
+        ),
+    )
+
+
+def input_data_sha256(minute_bars: pd.DataFrame, signal_bars: pd.DataFrame) -> str:
+    """Hash exactly the normalized columns that can affect engine output."""
+    payload = {
+        "minute_bars": _canonical_input_rows(
+            minute_bars,
+            timestamp_column="timestamp",
+            numeric_columns=("open", "high", "low", "close"),
+        ),
+        "signal_bars": _canonical_input_rows(
+            signal_bars,
+            timestamp_column="available_at",
+            numeric_columns=("open", "high", "low", "close", "volume"),
+            optional_timestamp_columns=("bar_start",),
+        ),
+        "signal_bar_start_present": "bar_start" in signal_bars.columns,
+    }
+    return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
 
 
 def _session_date(value: object) -> date:
@@ -187,6 +250,14 @@ class ScenarioRun:
             )
         return "".join(_canonical_json(row) + "\n" for row in rows)
 
+    def intents_jsonl(self) -> str:
+        rows = []
+        for intent in self.intents:
+            row = intent.model_dump(mode="json")
+            row["scenario"] = self.cost_scenario
+            rows.append(row)
+        return "".join(_canonical_json(row) + "\n" for row in rows)
+
 
 @dataclass(frozen=True, slots=True)
 class EngineRun:
@@ -263,11 +334,15 @@ def _identical_complete_directory(directory: Path, expected: dict[str, bytes]) -
     )
 
 
-def _event_trade_contents(run: EngineRun) -> dict[str, bytes]:
+def _primary_artifact_contents(run: EngineRun) -> dict[str, bytes]:
     events_content = "".join(run.scenarios[scenario].events_jsonl() for scenario in _SCENARIO_ORDER)
     trades_content = "".join(run.scenarios[scenario].trades_jsonl() for scenario in _SCENARIO_ORDER)
+    intents_content = "".join(
+        run.scenarios[scenario].intents_jsonl() for scenario in _SCENARIO_ORDER
+    )
     return {
         "events.jsonl": events_content.encode("utf-8"),
+        "intents.jsonl": intents_content.encode("utf-8"),
         "trades.jsonl": trades_content.encode("utf-8"),
     }
 
@@ -277,10 +352,12 @@ def _complete_artifact_contents(
     persisted: dict[str, bytes],
 ) -> dict[str, bytes]:
     events_content = persisted["events.jsonl"]
+    intents_content = persisted["intents.jsonl"]
     trades_content = persisted["trades.jsonl"]
     metrics = {scenario: dict(run.scenarios[scenario].metrics) for scenario in _SCENARIO_ORDER}
     deterministic_identity = {
         "events_sha256": hashlib.sha256(events_content).hexdigest(),
+        "intents_sha256": hashlib.sha256(intents_content).hexdigest(),
         "job": run.job.model_dump(mode="json"),
         "metrics_by_cost_scenario": metrics,
         "run_id": run.run_id,
@@ -297,6 +374,7 @@ def _complete_artifact_contents(
         metrics_by_cost_scenario=metrics,
         trades_uri=(relative_root / "trades.jsonl").as_posix(),
         events_uri=(relative_root / "events.jsonl").as_posix(),
+        intents_uri=(relative_root / "intents.jsonl").as_posix(),
         content_sha256=content_sha256,
     )
     return {
@@ -326,7 +404,7 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
         parent = _artifact_parent(root)
         final = parent / run.run_id
         if final.exists():
-            persisted = _event_trade_contents(run)
+            persisted = _primary_artifact_contents(run)
             expected = _complete_artifact_contents(run, persisted)
             if _identical_complete_directory(final, expected):
                 return final / "result.json"
@@ -338,8 +416,8 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
         )
         if temporary.parent != parent or not temporary.name.startswith(f".{run.run_id}-"):
             raise BacktestArtifactError("temporary artifact directory escaped its parent")
-        persisted = _event_trade_contents(run)
-        for relative in ("events.jsonl", "trades.jsonl"):
+        persisted = _primary_artifact_contents(run)
+        for relative in ("events.jsonl", "intents.jsonl", "trades.jsonl"):
             _write_bytes(temporary / relative, persisted[relative])
         expected = _complete_artifact_contents(run, persisted)
         for relative in ("job.json", "result.json"):
@@ -438,6 +516,8 @@ class BacktestEngine:
             raise ValueError("compiled strategy content does not match its definition")
         if job.engine_id != ENGINE_ID:
             raise ValueError(f"unsupported engine_id: {job.engine_id}")
+        if job.calendar_id != CALENDAR_ID:
+            raise ValueError(f"unsupported calendar_id: {job.calendar_id}")
         if job.strategy_id != strategy.definition_fingerprint:
             raise ValueError(
                 "BacktestJob strategy identity does not match compiled strategy definition"
@@ -480,6 +560,9 @@ class BacktestEngine:
     ) -> ScenarioRun:
         if cost_scenario not in _SCENARIO_ORDER:
             raise ValueError(f"unsupported cost scenario: {cost_scenario!r}")
+        actual_input_sha256 = input_data_sha256(minute_bars, signal_bars)
+        if actual_input_sha256 != self.job.input_data_sha256:
+            raise ValueError("backtest input data does not match BacktestJob identity")
         minute_frame = self._normalize_minute_bars(minute_bars)
         signal_frame = self._normalize_signal_bars(signal_bars)
         features = compute_feature_frame(signal_frame)
@@ -568,7 +651,12 @@ class BacktestEngine:
                             state = runtime.state_for(key)
                         if (
                             state.phase is RuntimePhase.FLAT
-                            and state.entries < self.strategy.risk.max_entries_per_session
+                            and self._session_entry_slots_used(
+                                runtime=runtime,
+                                runtime_keys=runtime_keys,
+                                pending=pending,
+                            )
+                            < self.strategy.risk.max_entries_per_session
                             and _rule_matches(self.strategy.entry, feature_row)
                         ):
                             quantity = self._entry_quantity(
@@ -633,6 +721,7 @@ class BacktestEngine:
                     trades=trades,
                     emit=emit,
                 )
+
                 for position in portfolio.positions:
                     portfolio.mark_to_market(
                         position.symbol,
@@ -743,6 +832,17 @@ class BacktestEngine:
             final_cash=portfolio.cash,
             final_positions=portfolio.positions,
         )
+
+    @staticmethod
+    def _session_entry_slots_used(
+        *,
+        runtime: StrategyRuntime,
+        runtime_keys: dict[str, RuntimeKey],
+        pending: dict[str, _PendingOrder],
+    ) -> int:
+        filled_entries = sum(runtime.state_for(key).entries for key in runtime_keys.values())
+        pending_entries = sum(1 for order in pending.values() if order.intent.side == "buy")
+        return filled_entries + pending_entries
 
     def _normalize_minute_bars(self, bars: pd.DataFrame) -> pd.DataFrame:
         missing = sorted(_REQUIRED_MINUTE_COLUMNS.difference(bars.columns))

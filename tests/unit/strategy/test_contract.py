@@ -247,6 +247,7 @@ def _backtest_job() -> BacktestJob:
         dataset_id="tiingo-iex-minute-20260702",
         engine_id="event-engine-1.0.0",
         calendar_id="XNYS-2026a",
+        input_data_sha256="d" * 64,
         initial_cash=25_000.0,
         closeout_buffer_minutes=5,
         cost_model_ids=CostModelIds(
@@ -275,6 +276,7 @@ def _successful_backtest_result(
         metrics_by_cost_scenario=metrics,
         trades_uri="file:///artifacts/run-001/trades.parquet",
         events_uri="file:///artifacts/run-001/events.jsonl",
+        intents_uri="file:///artifacts/run-001/intents.jsonl",
         content_sha256="a" * 64,
     )
 
@@ -303,11 +305,18 @@ def test_backtest_job_identity_covers_explicit_execution_inputs() -> None:
             "closeout_buffer_minutes": 10,
         }
     )
+    different_input = BacktestJob.create(
+        **{
+            **baseline.model_dump(exclude={"job_id"}),
+            "input_data_sha256": "e" * 64,
+        }
+    )
 
     assert baseline.initial_cash == 25_000.0
     assert baseline.closeout_buffer_minutes == 5
     assert baseline.job_id != different_cash.job_id
     assert baseline.job_id != different_closeout.job_id
+    assert baseline.job_id != different_input.job_id
     assert baseline.canonical_json() == baseline.canonical_json()
 
 
@@ -418,6 +427,7 @@ def test_successful_backtest_result_requires_all_three_cost_scenarios() -> None:
         },
         "trades_uri": "file:///artifacts/run-001/trades.parquet",
         "events_uri": "file:///artifacts/run-001/events.jsonl",
+        "intents_uri": "file:///artifacts/run-001/intents.jsonl",
         "content_sha256": "a" * 64,
     }
 
@@ -435,6 +445,7 @@ def test_backtest_result_requires_typed_failure_when_failed() -> None:
         "metrics_by_cost_scenario": {},
         "trades_uri": None,
         "events_uri": None,
+        "intents_uri": None,
         "content_sha256": "b" * 64,
     }
 
@@ -467,6 +478,7 @@ def test_failed_backtest_result_rejects_partial_metrics() -> None:
         "metrics_by_cost_scenario": {"base": {"net_return": 0.01}},
         "trades_uri": None,
         "events_uri": None,
+        "intents_uri": None,
         "content_sha256": "b" * 64,
     }
 
@@ -493,6 +505,7 @@ def test_failed_backtest_result_is_complete_deterministic_and_handles_empty_mess
     assert first.metrics_by_cost_scenario == {}
     assert first.trades_uri is None
     assert first.events_uri is None
+    assert first.intents_uri is None
 
 
 def test_failed_backtest_result_rejects_untrusted_run_id_and_claims_no_artifacts() -> None:
@@ -506,3 +519,4 @@ def test_failed_backtest_result_rejects_untrusted_run_id_and_claims_no_artifacts
     assert ".." not in result.run_id
     assert result.trades_uri is None
     assert result.events_uri is None
+    assert result.intents_uri is None

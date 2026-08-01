@@ -5,7 +5,11 @@ import pandas as pd
 import pytest
 
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
-from us_intraday_lab.backtest.engine import BacktestEngine
+from us_intraday_lab.backtest.engine import (
+    CALENDAR_ID,
+    BacktestEngine,
+    input_data_sha256,
+)
 from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.calendar import expected_minute_index
@@ -109,14 +113,23 @@ def _golden_strategy() -> StrategyDefinition:
     )
 
 
-def _golden_job(strategy: StrategyDefinition, *, closeout_buffer_minutes: int = 5) -> BacktestJob:
+def _golden_job(
+    strategy: StrategyDefinition,
+    *,
+    closeout_buffer_minutes: int = 5,
+    minute_bars: pd.DataFrame | None = None,
+    signal_bars: pd.DataFrame | None = None,
+) -> BacktestJob:
     compiled = compile_strategy(strategy)
+    minute_bars = _full_session_minute_bars() if minute_bars is None else minute_bars
+    signal_bars = _one_completed_signal_bar() if signal_bars is None else signal_bars
     return BacktestJob.create(
         schema_version="1.0.0",
         strategy_id=compiled.definition_fingerprint,
         dataset_id="synthetic-accepted-dataset",
         engine_id="event-engine-1.0.0",
-        calendar_id="XNYS-4.11",
+        calendar_id=CALENDAR_ID,
+        input_data_sha256=input_data_sha256(minute_bars, signal_bars),
         initial_cash=25_000.0,
         closeout_buffer_minutes=closeout_buffer_minutes,
         cost_model_ids=CostModelIds(
@@ -218,6 +231,22 @@ def test_engine_rejects_compiled_rules_replaced_under_original_fingerprint() -> 
         BacktestEngine(job=_golden_job(definition), strategy=forged)
 
 
+def test_engine_rejects_input_frames_that_do_not_match_job_identity() -> None:
+    strategy = _golden_strategy()
+    changed_minutes = _full_session_minute_bars()
+    changed_minutes.loc[1, "open"] = 777.0
+
+    with pytest.raises(ValueError, match="input data"):
+        BacktestEngine(
+            job=_golden_job(strategy),
+            strategy=compile_strategy(strategy),
+        ).run_scenario(
+            minute_bars=changed_minutes,
+            signal_bars=_one_completed_signal_bar(),
+            cost_scenario="base",
+        )
+
+
 def test_closeout_processes_boundary_eligible_entry_then_liquidates_on_official_minute() -> None:
     strategy = StrategyDefinition.model_validate(
         {**_golden_strategy().model_dump(mode="json"), "order_type": "limit"}
@@ -233,7 +262,12 @@ def test_closeout_processes_boundary_eligible_entry_then_liquidates_on_official_
     compiled = compile_strategy(strategy)
 
     run = BacktestEngine(
-        job=_golden_job(strategy, closeout_buffer_minutes=5),
+        job=_golden_job(
+            strategy,
+            closeout_buffer_minutes=5,
+            minute_bars=minute_bars,
+            signal_bars=signal_bars,
+        ),
         strategy=compiled,
     ).run_scenario(
         minute_bars=minute_bars,
@@ -269,3 +303,34 @@ def test_one_minute_closeout_buffer_fills_on_last_official_minute() -> None:
 
     assert run.trades[0].exit_time == datetime(2026, 7, 2, 19, 59, tzinfo=UTC)
     assert run.trades[0].exit_time < datetime(2026, 7, 2, 20, 0, tzinfo=UTC)
+
+
+def test_max_entries_per_session_is_global_across_strategy_symbols() -> None:
+    base = _golden_strategy().model_dump(mode="json")
+    base["symbols"] = ["SPY", "QQQ", "IWM"]
+    base["risk"]["max_entries_per_session"] = 1
+    strategy = StrategyDefinition.model_validate(base)
+    minute_bars = pd.concat(
+        [_full_session_minute_bars().assign(symbol=symbol) for symbol in strategy.symbols],
+        ignore_index=True,
+    )
+    signal_bars = pd.concat(
+        [_one_completed_signal_bar().assign(symbol=symbol) for symbol in strategy.symbols],
+        ignore_index=True,
+    )
+
+    run = BacktestEngine(
+        job=_golden_job(strategy, minute_bars=minute_bars, signal_bars=signal_bars),
+        strategy=compile_strategy(strategy),
+    ).run_scenario(
+        minute_bars=minute_bars,
+        signal_bars=signal_bars,
+        cost_scenario="base",
+    )
+
+    buy_fills = [
+        event
+        for event in run.events
+        if event.event_type == "ORDER_FILLED" and event.details["side"] == "buy"
+    ]
+    assert len(buy_fills) == 1

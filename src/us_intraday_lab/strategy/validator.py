@@ -31,10 +31,14 @@ ALLOWED_COMPARISONS = frozenset({"gt", "gte", "lt", "lte"})
 MAX_CONDITION_DEPTH = 3
 MAX_LEAF_CONDITIONS = 12
 MAX_ENTRIES_PER_SESSION = 3
+MAX_RISK_BPS = 10_000
+MAX_RISK_MINUTES = 1_440
 MAX_CONDITION_NODES = 128
 MAX_CONDITION_CHILDREN = 64
 MAX_CONTRADICTION_BRANCHES = 16
 MAX_CONTRADICTION_WORK = 96
+MAX_RAW_PAYLOAD_DEPTH = 16
+MAX_RAW_PAYLOAD_NODES = 1_024
 
 _LIMIT_OFFSET_FIELDS = frozenset(
     {
@@ -148,7 +152,29 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
 
     issues: list[ValidationIssue] = []
 
-    def walk(value: object, path: str, inside_exit: bool) -> None:
+    stack: list[tuple[object, str, bool, int]] = [(payload, "", False, 0)]
+    visited = 0
+    while stack:
+        value, path, inside_exit, depth = stack.pop()
+        visited += 1
+        if visited > MAX_RAW_PAYLOAD_NODES:
+            issues.append(
+                ValidationIssue(
+                    code="DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED",
+                    path=path,
+                    message=(f"strategy payload must not exceed {MAX_RAW_PAYLOAD_NODES} nodes"),
+                )
+            )
+            break
+        if depth > MAX_RAW_PAYLOAD_DEPTH:
+            issues.append(
+                ValidationIssue(
+                    code="DSL_RAW_PAYLOAD_DEPTH_EXCEEDED",
+                    path=path,
+                    message=(f"strategy payload depth must not exceed {MAX_RAW_PAYLOAD_DEPTH}"),
+                )
+            )
+            continue
         if callable(value):
             issues.append(
                 ValidationIssue(
@@ -157,7 +183,7 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
                     message="callable values are not permitted in strategy payloads",
                 )
             )
-            return
+            continue
         if type(value) is dict:
             mapping = value
             string_keys = sorted(key for key in mapping if type(key) is str)
@@ -169,6 +195,7 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
                         message="strategy object keys must be strings",
                     )
                 )
+            children: list[tuple[object, str, bool, int]] = []
             for field in string_keys:
                 canonical_field = _canonical_field(field)
                 child = _child_path(path, canonical_field)
@@ -201,15 +228,18 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
                             ),
                         )
                     )
-                walk(mapping[field], child, child_inside_exit)
-            return
+                children.append((mapping[field], child, child_inside_exit, depth + 1))
+            stack.extend(reversed(children))
+            continue
         if type(value) is list:
             sequence = cast(list[object], value)
-            for index, item in enumerate(sequence):
-                walk(item, f"{path}[{index}]", inside_exit)
-            return
+            stack.extend(
+                (item, f"{path}[{index}]", inside_exit, depth + 1)
+                for index, item in reversed(tuple(enumerate(sequence)))
+            )
+            continue
         if value is None or type(value) in {str, int, float, bool}:
-            return
+            continue
         issues.append(
             ValidationIssue(
                 code="DSL_UNSAFE_PAYLOAD_TYPE",
@@ -218,7 +248,6 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
             )
         )
 
-    walk(payload, "", False)
     return _validation(issues)
 
 
@@ -697,14 +726,27 @@ def _validate_risk(risk: object, issues: list[ValidationIssue]) -> None:
                         ),
                     )
                 )
-        elif numeric_value <= 0:
-            issues.append(
-                ValidationIssue(
-                    code="DSL_NON_POSITIVE_RISK_CONTROL",
-                    path=f"risk.{field}",
-                    message=f"{field} must be greater than zero",
+        else:
+            if numeric_value <= 0:
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_NON_POSITIVE_RISK_CONTROL",
+                        path=f"risk.{field}",
+                        message=f"{field} must be greater than zero",
+                    )
                 )
+                continue
+            maximum = (
+                MAX_RISK_BPS if field in {"stop_loss_bps", "take_profit_bps"} else MAX_RISK_MINUTES
             )
+            if numeric_value > maximum:
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_RISK_CONTROL_EXCEEDED",
+                        path=f"risk.{field}",
+                        message=f"{field} must not exceed {maximum}",
+                    )
+                )
 
     if "sizing_preset" in data:
         sizing = data["sizing_preset"]
