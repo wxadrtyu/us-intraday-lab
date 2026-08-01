@@ -134,6 +134,46 @@ def test_registry_event_is_append_only_data_with_immutable_references() -> None:
         event.immutable_refs["dataset_id"] = "changed"
 
 
+@pytest.mark.parametrize("forged_passed", ["yes", "true", 1, 1.0])
+def test_promotion_rejects_coerced_or_forged_gate_passed_values(
+    forged_passed: object,
+) -> None:
+    evidence = GateEvidence(
+        evidence_id="evidence-1",
+        metric_name="base_net_return",
+        source_refs=("run-1",),
+        values={"base": 0.02},
+    )
+    with pytest.raises(ValidationError):
+        GateResult.model_validate(
+            {
+                "reason_code": "POSITIVE_AFTER_COSTS",
+                "threshold": 0.0,
+                "observed": 0.02,
+                "passed": forged_passed,
+                "evidence": evidence,
+            }
+        )
+
+    valid = GateResult(
+        reason_code="POSITIVE_AFTER_COSTS",
+        threshold=0.0,
+        observed=0.02,
+        passed=True,
+        evidence=evidence,
+    )
+    forged = valid.model_copy(update={"passed": forged_passed})
+    with pytest.raises(ValidationError):
+        ValidationDecision(
+            decision_id="decision-forged",
+            strategy_id="strategy-1",
+            split_id="split-1",
+            decision="PROMOTE_TO_PAPER_SHADOW",
+            gate_results=(forged,),
+            decided_at=datetime(2026, 7, 26, tzinfo=UTC),
+        )
+
+
 def test_feature_template_catalog_is_immutable_and_declares_parameter_ownership() -> None:
     parameter = FEATURE_TEMPLATE_CATALOG.entry_templates["momentum_pullback"].parameters[
         "rsi_entry"

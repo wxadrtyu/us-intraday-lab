@@ -16,7 +16,12 @@ from us_intraday_lab.contracts.backtests import CostScenario
 
 
 class _ClosedModel(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        allow_inf_nan=False,
+        revalidate_instances="always",
+    )
 
 
 class ChronologicalSplit(_ClosedModel):
@@ -101,7 +106,7 @@ class GateResult(_ClosedModel):
     reason_code: str = Field(min_length=1, pattern=r"^[A-Z][A-Z0-9_]*$")
     threshold: GateScalar
     observed: GateScalar
-    passed: bool
+    passed: bool = Field(strict=True)
     evidence: GateEvidence
 
 
