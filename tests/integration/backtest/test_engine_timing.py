@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime
 
 import pandas as pd
@@ -206,6 +207,15 @@ def test_engine_rejects_job_strategy_identity_that_does_not_match_definition() -
 
     with pytest.raises(ValueError, match="strategy identity"):
         BacktestEngine(job=job, strategy=compile_strategy(strategy))
+
+
+def test_engine_rejects_compiled_rules_replaced_under_original_fingerprint() -> None:
+    definition = _golden_strategy()
+    compiled = compile_strategy(definition)
+    forged = replace(compiled, entry=compiled.exit)
+
+    with pytest.raises(ValueError, match="compiled strategy content"):
+        BacktestEngine(job=_golden_job(definition), strategy=forged)
 
 
 def test_closeout_processes_boundary_eligible_entry_then_liquidates_on_official_minute() -> None:

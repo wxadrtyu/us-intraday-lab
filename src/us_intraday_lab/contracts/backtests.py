@@ -1,6 +1,7 @@
 import hashlib
 import json
 from collections.abc import Mapping
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, Self
 
@@ -152,3 +153,47 @@ class BacktestResult(_ClosedModel):
         ):
             raise ValueError("succeeded result requires all three cost scenarios")
         return self
+
+
+def failed_backtest_result(
+    *,
+    failure_type: BacktestFailureType,
+    message: object,
+    job_id: str | None = None,
+    run_id: str | None = None,
+    context: Mapping[str, Any] | None = None,
+) -> BacktestResult:
+    """Build a deterministic, complete failed result without partial metrics."""
+    normalized_message = str(message).strip() or "unspecified failure"
+    identity = {
+        "context": dict(context or {}),
+        "failure_type": failure_type,
+        "message": normalized_message,
+    }
+    digest = hashlib.sha256(_canonical_json(identity).encode("utf-8")).hexdigest()
+    effective_job_id = job_id or f"job-failed-{digest}"
+    effective_run_id = run_id or f"run-failed-{digest}"
+    relative_root = Path("artifacts") / "backtests" / effective_run_id
+    content_sha256 = hashlib.sha256(
+        _canonical_json(
+            {
+                **identity,
+                "job_id": effective_job_id,
+                "run_id": effective_run_id,
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return BacktestResult(
+        schema_version="1.0.0",
+        run_id=effective_run_id,
+        job_id=effective_job_id,
+        status="failed",
+        failure=BacktestFailure(
+            failure_type=failure_type,
+            message=normalized_message,
+        ),
+        metrics_by_cost_scenario={},
+        trades_uri=(relative_root / "trades.jsonl").as_posix(),
+        events_uri=(relative_root / "events.jsonl").as_posix(),
+        content_sha256=content_sha256,
+    )

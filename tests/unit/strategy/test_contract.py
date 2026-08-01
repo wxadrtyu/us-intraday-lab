@@ -8,6 +8,7 @@ from us_intraday_lab.contracts.backtests import (
     BacktestJob,
     BacktestResult,
     CostModelIds,
+    failed_backtest_result,
 )
 from us_intraday_lab.contracts.orders import OrderEvent, OrderIntent
 from us_intraday_lab.contracts.strategies import AllCondition, StrategyDefinition
@@ -471,3 +472,22 @@ def test_failed_backtest_result_rejects_partial_metrics() -> None:
 
     with pytest.raises(ValidationError, match="failed result must not include partial metrics"):
         BacktestResult.model_validate(payload)
+
+
+def test_failed_backtest_result_is_complete_deterministic_and_handles_empty_message() -> None:
+    first = failed_backtest_result(
+        failure_type="execution",
+        message="",
+        context={"dataset_id": "dataset-1"},
+    )
+    second = failed_backtest_result(
+        failure_type="execution",
+        message="",
+        context={"dataset_id": "dataset-1"},
+    )
+
+    assert first == second
+    assert first.status == "failed"
+    assert first.failure is not None
+    assert first.failure.message == "unspecified failure"
+    assert first.metrics_by_cost_scenario == {}

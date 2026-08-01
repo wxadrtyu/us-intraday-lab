@@ -119,6 +119,7 @@ def compile_strategy(strategy: StrategyDefinition) -> CompiledStrategy:
         )
 
     return CompiledStrategy(
+        definition=strategy,
         strategy_id=strategy.strategy_id,
         definition_fingerprint=strategy_definition_fingerprint(strategy),
         symbols=strategy.symbols,

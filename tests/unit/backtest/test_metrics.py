@@ -7,6 +7,7 @@ from types import MappingProxyType
 
 import pytest
 
+import us_intraday_lab.backtest.engine as engine_module
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
 from us_intraday_lab.backtest.engine import (
     BacktestArtifactError,
@@ -210,6 +211,29 @@ def test_artifact_writer_publishes_only_after_complete_sibling_is_written(
 
     assert observed
     assert result_path == final / "result.json"
+
+
+def test_artifact_writer_persists_events_and_trades_before_metrics(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _empty_run()
+    original_compute = engine_module.compute_metrics
+    observed_calls = 0
+
+    def assert_inputs_are_already_persisted(*args: object, **kwargs: object) -> dict[str, float]:
+        nonlocal observed_calls
+        observed_calls += 1
+        temporary = next((tmp_path / "artifacts" / "backtests").glob(f".{run.run_id}-*"))
+        assert (temporary / "events.jsonl").is_file()
+        assert (temporary / "trades.jsonl").is_file()
+        return original_compute(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(engine_module, "compute_metrics", assert_inputs_are_already_persisted)
+
+    write_backtest_artifacts(run, root=tmp_path)
+
+    assert observed_calls == 3
 
 
 def test_artifact_writer_cleans_temporary_directory_and_returns_typed_failure(

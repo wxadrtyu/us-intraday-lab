@@ -1,7 +1,11 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
-from us_intraday_lab.contracts.strategies import OrderType, RiskDefinition
+from us_intraday_lab.contracts.strategies import (
+    OrderType,
+    RiskDefinition,
+    StrategyDefinition,
+)
 
 type FeatureValue = float | int | None
 type FeatureRow = Mapping[str, FeatureValue]
@@ -85,6 +89,7 @@ type RuleOperator = ComparisonOperator | AllOperator | AnyOperator
 
 @dataclass(frozen=True)
 class CompiledStrategy:
+    definition: StrategyDefinition
     strategy_id: str
     definition_fingerprint: str
     symbols: tuple[str, ...]

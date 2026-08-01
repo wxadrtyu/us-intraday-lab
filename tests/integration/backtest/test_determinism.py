@@ -118,5 +118,6 @@ def test_cli_fails_nonzero_with_typed_failure_on_artifact_collision(
     )
 
     assert completed.returncode == 1
+    assert '"status":"failed"' in completed.stderr
     assert '"failure_type":"artifact_write"' in completed.stderr
     assert "different content" in completed.stderr

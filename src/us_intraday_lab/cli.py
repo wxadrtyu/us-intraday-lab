@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Never
 
 import typer
 from pydantic import ValidationError
@@ -11,9 +11,15 @@ from us_intraday_lab.backtest.engine import (
     ENGINE_ID,
     BacktestArtifactError,
     BacktestEngine,
+    run_id_for_job,
     write_backtest_artifacts,
 )
-from us_intraday_lab.contracts.backtests import BacktestFailure, BacktestJob, CostModelIds
+from us_intraday_lab.contracts.backtests import (
+    BacktestFailureType,
+    BacktestJob,
+    CostModelIds,
+    failed_backtest_result,
+)
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.archive import (
     DEFAULT_ARCHIVE_READ_LIMITS,
@@ -208,6 +214,28 @@ def _load_strategy(path: Path) -> StrategyDefinition:
         raise typer.BadParameter(f"strategy contract validation failed: {error}") from error
 
 
+def _exit_with_backtest_failure(
+    *,
+    failure_type: BacktestFailureType,
+    error: object,
+    dataset_id: str,
+    strategy_path: Path,
+    job: BacktestJob | None = None,
+) -> Never:
+    result = failed_backtest_result(
+        failure_type=failure_type,
+        message=str(error).strip() or type(error).__name__,
+        job_id=job.job_id if job is not None else None,
+        run_id=run_id_for_job(job) if job is not None else None,
+        context={
+            "dataset_id": dataset_id,
+            "strategy_path": strategy_path.as_posix(),
+        },
+    )
+    typer.echo(result.model_dump_json(), err=True)
+    raise typer.Exit(code=1)
+
+
 @backtest_app.command("run")
 def run_backtest_command(
     strategy: Annotated[
@@ -223,20 +251,33 @@ def run_backtest_command(
     closeout_buffer_minutes: Annotated[int, typer.Option()] = 5,
 ) -> None:
     """Run all v1 cost scenarios against one accepted immutable dataset."""
+    job: BacktestJob | None = None
     try:
         accept_dataset(dataset_id, root=root)
         manifest = verify_snapshot(dataset_id, root=root)
     except (CatalogAcceptanceError, OSError, ValueError) as error:
-        raise typer.BadParameter(
-            f"dataset is not accepted: {error}",
-            param_hint="--dataset-id",
-        ) from error
-    definition = _load_strategy(strategy)
+        _exit_with_backtest_failure(
+            failure_type="dataset_validation",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+        )
     try:
+        definition = _load_strategy(strategy)
         compiled = compile_strategy(definition)
-    except StrategyCompileError as error:
-        reasons = ",".join(f"{issue.code}:{issue.path}" for issue in error.issues)
-        raise typer.BadParameter(f"strategy compilation failed: {error.code}:{reasons}") from error
+    except (
+        StrategyCompileError,
+        ValidationError,
+        ValueError,
+        OSError,
+        typer.BadParameter,
+    ) as error:
+        _exit_with_backtest_failure(
+            failure_type="strategy_validation",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+        )
     try:
         job = BacktestJob.create(
             schema_version="1.0.0",
@@ -253,36 +294,45 @@ def run_backtest_command(
             ),
         )
     except ValidationError as error:
-        raise typer.BadParameter(f"backtest job validation failed: {error}") from error
+        _exit_with_backtest_failure(
+            failure_type="execution",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+        )
 
-    with connect_catalog(root=root) as connection:
-        minute_bars = connection.execute(
-            """
-            SELECT *
-            FROM bars_1m
-            ORDER BY session_date, timestamp, symbol
-            """
-        ).df()
-        signal_bars = connection.execute(
-            """
-            SELECT *
-            FROM bars_15m
-            ORDER BY session_date, available_at, symbol
-            """
-        ).df()
     try:
+        with connect_catalog(root=root) as connection:
+            minute_bars = connection.execute(
+                """
+                SELECT *
+                FROM bars_1m
+                ORDER BY session_date, timestamp, symbol
+                """
+            ).df()
+            signal_bars = connection.execute(
+                """
+                SELECT *
+                FROM bars_15m
+                ORDER BY session_date, available_at, symbol
+                """
+            ).df()
         run = BacktestEngine(job=job, strategy=compiled).run(
             minute_bars=minute_bars,
             signal_bars=signal_bars,
         )
-    except Exception as error:
-        failure = BacktestFailure(failure_type="execution", message=str(error))
-        typer.echo(failure.model_dump_json(), err=True)
-        raise typer.Exit(code=1) from error
+    except Exception as error:  # noqa: BLE001 - CLI boundary must return a typed failure
+        _exit_with_backtest_failure(
+            failure_type="execution",
+            error=error,
+            dataset_id=dataset_id,
+            strategy_path=strategy,
+            job=job,
+        )
     try:
         result_path = write_backtest_artifacts(run, root=root)
     except BacktestArtifactError as error:
-        typer.echo(error.failure.model_dump_json(), err=True)
+        typer.echo(error.result.model_dump_json(), err=True)
         raise typer.Exit(code=1) from error
     typer.echo(result_path)
 

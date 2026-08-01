@@ -26,12 +26,13 @@ from us_intraday_lab.backtest.metrics import (
 )
 from us_intraday_lab.backtest.portfolio import Portfolio, Position
 from us_intraday_lab.contracts.backtests import (
-    BacktestFailure,
     BacktestJob,
     BacktestResult,
     CostScenario,
+    failed_backtest_result,
 )
 from us_intraday_lab.contracts.orders import OrderIntent, OrderReasonCode
+from us_intraday_lab.strategy.compiler import compile_strategy
 from us_intraday_lab.strategy.features import compute_feature_frame
 from us_intraday_lab.strategy.operators import (
     AllOperator,
@@ -196,9 +197,22 @@ class EngineRun:
 class BacktestArtifactError(RuntimeError):
     """Artifact publication failed closed with a typed public failure."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        job_id: str | None = None,
+        run_id: str | None = None,
+    ) -> None:
         super().__init__(message)
-        self.failure = BacktestFailure(failure_type="artifact_write", message=message)
+        self.result = failed_backtest_result(
+            failure_type="artifact_write",
+            message=message,
+            job_id=job_id,
+            run_id=run_id,
+        )
+        assert self.result.failure is not None
+        self.failure = self.result.failure
 
 
 def _is_reparse_path(path: Path) -> bool:
@@ -248,16 +262,28 @@ def _identical_complete_directory(directory: Path, expected: dict[str, bytes]) -
     )
 
 
-def _artifact_contents(run: EngineRun) -> dict[str, bytes]:
+def _event_trade_contents(run: EngineRun) -> dict[str, bytes]:
     events_content = "".join(run.scenarios[scenario].events_jsonl() for scenario in _SCENARIO_ORDER)
     trades_content = "".join(run.scenarios[scenario].trades_jsonl() for scenario in _SCENARIO_ORDER)
+    return {
+        "events.jsonl": events_content.encode("utf-8"),
+        "trades.jsonl": trades_content.encode("utf-8"),
+    }
+
+
+def _complete_artifact_contents(
+    run: EngineRun,
+    persisted: dict[str, bytes],
+) -> dict[str, bytes]:
+    events_content = persisted["events.jsonl"]
+    trades_content = persisted["trades.jsonl"]
     metrics = {scenario: dict(run.scenarios[scenario].metrics) for scenario in _SCENARIO_ORDER}
     deterministic_identity = {
-        "events_sha256": hashlib.sha256(events_content.encode("utf-8")).hexdigest(),
+        "events_sha256": hashlib.sha256(events_content).hexdigest(),
         "job": run.job.model_dump(mode="json"),
         "metrics_by_cost_scenario": metrics,
         "run_id": run.run_id,
-        "trades_sha256": hashlib.sha256(trades_content.encode("utf-8")).hexdigest(),
+        "trades_sha256": hashlib.sha256(trades_content).hexdigest(),
     }
     content_sha256 = _sha256_json(deterministic_identity)
     relative_root = Path("artifacts") / "backtests" / run.run_id
@@ -273,11 +299,14 @@ def _artifact_contents(run: EngineRun) -> dict[str, bytes]:
         content_sha256=content_sha256,
     )
     return {
-        "events.jsonl": events_content.encode("utf-8"),
+        **persisted,
         "job.json": (run.job.canonical_json() + "\n").encode("utf-8"),
         "result.json": (_canonical_json(result.model_dump(mode="json")) + "\n").encode("utf-8"),
-        "trades.jsonl": trades_content.encode("utf-8"),
     }
+
+
+def _write_bytes(path: Path, content: bytes) -> None:
+    path.write_text(content.decode("utf-8"), encoding="utf-8", newline="\n")
 
 
 def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
@@ -285,13 +314,18 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
     if type(run) is not EngineRun:
         raise TypeError("run must be an exact EngineRun")
     if run.run_id != run_id_for_job(run.job):
-        raise BacktestArtifactError("run_id does not match the canonical BacktestJob")
+        raise BacktestArtifactError(
+            "run_id does not match the canonical BacktestJob",
+            job_id=run.job.job_id,
+            run_id=run.run_id,
+        )
     temporary: Path | None = None
     try:
-        expected = _artifact_contents(run)
         parent = _artifact_parent(root)
         final = parent / run.run_id
         if final.exists():
+            persisted = _event_trade_contents(run)
+            expected = _complete_artifact_contents(run, persisted)
             if _identical_complete_directory(final, expected):
                 return final / "result.json"
             raise BacktestArtifactError(
@@ -302,12 +336,12 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
         )
         if temporary.parent != parent or not temporary.name.startswith(f".{run.run_id}-"):
             raise BacktestArtifactError("temporary artifact directory escaped its parent")
-        for relative, content in expected.items():
-            (temporary / relative).write_text(
-                content.decode("utf-8"),
-                encoding="utf-8",
-                newline="\n",
-            )
+        persisted = _event_trade_contents(run)
+        for relative in ("events.jsonl", "trades.jsonl"):
+            _write_bytes(temporary / relative, persisted[relative])
+        expected = _complete_artifact_contents(run, persisted)
+        for relative in ("job.json", "result.json"):
+            _write_bytes(temporary / relative, expected[relative])
         try:
             temporary.rename(final)
             temporary = None
@@ -320,10 +354,21 @@ def write_backtest_artifacts(run: EngineRun, *, root: Path) -> Path:
                 ) from None
             raise
         return final / "result.json"
-    except BacktestArtifactError:
-        raise
+    except BacktestArtifactError as error:
+        if error.result.run_id == run.run_id:
+            raise
+        raise BacktestArtifactError(
+            str(error),
+            job_id=run.job.job_id,
+            run_id=run.run_id,
+        ) from error
     except Exception as error:
-        raise BacktestArtifactError(f"failed to publish backtest artifacts: {error}") from error
+        message = str(error).strip() or type(error).__name__
+        raise BacktestArtifactError(
+            f"failed to publish backtest artifacts: {message}",
+            job_id=run.job.job_id,
+            run_id=run.run_id,
+        ) from error
     finally:
         if temporary is not None and temporary.exists():
             try:
@@ -376,6 +421,12 @@ class BacktestEngine:
             raise TypeError("job must be an exact BacktestJob")
         if type(strategy) is not CompiledStrategy:
             raise TypeError("strategy must be an exact CompiledStrategy")
+        try:
+            expected_strategy = compile_strategy(strategy.definition)
+        except Exception as error:
+            raise ValueError("compiled strategy definition is not valid") from error
+        if strategy != expected_strategy:
+            raise ValueError("compiled strategy content does not match its definition")
         if job.engine_id != ENGINE_ID:
             raise ValueError(f"unsupported engine_id: {job.engine_id}")
         if job.strategy_id != strategy.definition_fingerprint:
@@ -573,6 +624,21 @@ class BacktestEngine:
                     trades=trades,
                     emit=emit,
                 )
+                for position in portfolio.positions:
+                    portfolio.mark_to_market(
+                        position.symbol,
+                        bars_now[position.symbol].close,
+                    )
+                equity_curve.append(
+                    EquityPoint(
+                        event_time=clock_time,
+                        session=session,
+                        equity=portfolio.equity,
+                        gross_exposure=sum(
+                            position.market_value for position in portfolio.positions
+                        ),
+                    )
+                )
                 if clock_time == clock.closeout_signal_time:
                     self._cancel_working_orders(
                         pending,
@@ -616,21 +682,6 @@ class BacktestEngine:
                             cost_model=COST_SCENARIOS[cost_scenario],
                             emit=emit,
                         )
-                for position in portfolio.positions:
-                    portfolio.mark_to_market(
-                        position.symbol,
-                        bars_now[position.symbol].close,
-                    )
-                equity_curve.append(
-                    EquityPoint(
-                        event_time=clock_time,
-                        session=session,
-                        equity=portfolio.equity,
-                        gross_exposure=sum(
-                            position.market_value for position in portfolio.positions
-                        ),
-                    )
-                )
                 if clock_time < clock.closeout_signal_time:
                     self._submit_risk_exits(
                         clock_time=clock_time,
