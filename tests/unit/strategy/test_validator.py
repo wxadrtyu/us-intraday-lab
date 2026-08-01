@@ -221,12 +221,18 @@ def test_raw_scan_rejects_extreme_depth_without_python_recursion() -> None:
     assert "DSL_RAW_PAYLOAD_DEPTH_EXCEEDED" in {issue.code for issue in result.issues}
 
 
-def test_raw_scan_rejects_excessive_node_count_with_stable_issue() -> None:
-    payload = {f"field_{index}": index for index in range(1_100)}
+def test_raw_scan_rejects_excessive_width_before_scanning_children() -> None:
+    payload = {f"url_{index}": index for index in range(5_000)}
 
     result = scan_strategy_payload(payload)
 
-    assert "DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED" in {issue.code for issue in result.issues}
+    assert result.issues == (
+        ValidationIssue(
+            code="DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED",
+            path="",
+            message="strategy payload must not exceed 1024 nodes",
+        ),
+    )
 
 
 @pytest.mark.parametrize(

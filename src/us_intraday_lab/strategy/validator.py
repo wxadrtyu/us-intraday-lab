@@ -154,6 +154,7 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
 
     stack: list[tuple[object, str, bool, int]] = [(payload, "", False, 0)]
     visited = 0
+    scheduled = 1
     while stack:
         value, path, inside_exit, depth = stack.pop()
         visited += 1
@@ -186,6 +187,16 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
             continue
         if type(value) is dict:
             mapping = value
+            if scheduled + len(mapping) > MAX_RAW_PAYLOAD_NODES:
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED",
+                        path=path,
+                        message=(f"strategy payload must not exceed {MAX_RAW_PAYLOAD_NODES} nodes"),
+                    )
+                )
+                continue
+            scheduled += len(mapping)
             string_keys = sorted(key for key in mapping if type(key) is str)
             if len(string_keys) != len(mapping):
                 issues.append(
@@ -233,6 +244,16 @@ def scan_strategy_payload(payload: object) -> StrategyValidation:
             continue
         if type(value) is list:
             sequence = cast(list[object], value)
+            if scheduled + len(sequence) > MAX_RAW_PAYLOAD_NODES:
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_RAW_PAYLOAD_NODE_BUDGET_EXCEEDED",
+                        path=path,
+                        message=(f"strategy payload must not exceed {MAX_RAW_PAYLOAD_NODES} nodes"),
+                    )
+                )
+                continue
+            scheduled += len(sequence)
             stack.extend(
                 (item, f"{path}[{index}]", inside_exit, depth + 1)
                 for index, item in reversed(tuple(enumerate(sequence)))
