@@ -58,6 +58,23 @@ class ParameterRange(_ClosedModel):
         return values
 
 
+class ProposalProvenance(_ClosedModel):
+    source_type: Literal["fixture", "ai"] = "fixture"
+    provider: str = Field(default="fixture", min_length=1, max_length=120)
+    model: str | None = Field(default=None, min_length=1, max_length=200)
+    prompt_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_source_metadata(self) -> Self:
+        if self.source_type == "ai" and (self.model is None or self.prompt_sha256 is None):
+            raise ValueError("AI proposals require provider, model, and prompt hash metadata")
+        if self.source_type == "fixture" and (
+            self.provider != "fixture" or self.model is not None or self.prompt_sha256 is not None
+        ):
+            raise ValueError("fixture proposals must use fixture provenance")
+        return self
+
+
 class HypothesisProposal(_ClosedModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     hypothesis_id: str = Field(min_length=1, max_length=120, pattern=r"^[a-z0-9][a-z0-9-]*$")
@@ -65,11 +82,12 @@ class HypothesisProposal(_ClosedModel):
     entry_template: Literal["momentum_pullback"]
     exit_template: Literal["risk_managed"]
     indicators: tuple[IndicatorName, ...] = Field(min_length=1, max_length=9)
-    parameter_ranges: Mapping[ParameterName, ParameterRange]
+    parameter_ranges: Mapping[ParameterName, ParameterRange] = Field(min_length=1, max_length=10)
     symbols: tuple[Literal["SPY", "QQQ", "IWM"], ...]
     max_variants: int = Field(strict=True, ge=1, le=200)
     seed: int = Field(strict=True, ge=0, le=2**63 - 1)
     rationale: str = Field(min_length=1, max_length=2_000)
+    provenance: ProposalProvenance = ProposalProvenance()
 
     @field_validator("parameter_ranges", mode="after")
     @classmethod
@@ -95,6 +113,7 @@ class HypothesisProposal(_ClosedModel):
         validate_parameter_ranges(
             entry_template=self.entry_template,
             exit_template=self.exit_template,
+            indicators=self.indicators,
             parameter_ranges=self.parameter_ranges,
         )
         return self

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "intraday-momentum-pullback",
+  "thesis": "Trend continuation after a shallow pullback",
+  "entry_template": "momentum_pullback",
+  "exit_template": "risk_managed",
+  "indicators": ["ema_spread", "rsi", "volume_ratio"],
+  "parameter_ranges": {
+    "cooldown_minutes": {"values": [15, 30, 45]},
+    "ema_spread_min": {"values": [-0.001, 0.0, 0.001]},
+    "max_holding_minutes": {"values": [60, 90, 120]},
+    "order_type": {"values": ["market", "limit"]},
+    "rsi_entry": {"values": [35.0, 40.0, 45.0]},
+    "stop_loss_bps": {"values": [25, 35, 45]},
+    "take_profit_bps": {"values": [50, 70, 90]},
+    "volume_ratio_min": {"values": [1.0, 1.2, 1.5]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 12,
+  "seed": 20260726,
+  "rationale": "Price and volume confirmation may reduce false entries."
+}

@@ -49,6 +49,7 @@ def test_proposal_contains_bounded_data_only_search_space() -> None:
         {"python": "print('run me')"},
         {"entry_template": "freeform"},
         {"indicators": ["ema_spread", "custom_alpha"]},
+        {"indicators": ["return_1"]},
         {"symbols": ["SPY", "QQQ", "BTC"]},
         {"max_variants": 201},
         {"parameter_ranges": {"unknown": {"values": [1]}}},
@@ -187,3 +188,20 @@ def test_feature_template_catalog_is_immutable_and_declares_parameter_ownership(
         FEATURE_TEMPLATE_CATALOG.entry_templates["other"] = (
             FEATURE_TEMPLATE_CATALOG.entry_templates["momentum_pullback"]
         )
+
+
+def test_ai_proposal_requires_provider_model_and_prompt_lineage() -> None:
+    payload = _proposal_payload()
+    payload["provenance"] = {"source_type": "ai", "provider": "future-provider"}
+
+    with pytest.raises(ValidationError):
+        HypothesisProposal.model_validate(payload)
+
+    payload["provenance"] = {
+        "source_type": "ai",
+        "provider": "future-provider",
+        "model": "future-model",
+        "prompt_sha256": "a" * 64,
+    }
+    proposal = HypothesisProposal.model_validate(payload)
+    assert proposal.provenance.model == "future-model"

@@ -14,6 +14,7 @@ class ParameterSpec:
     name: ParameterName
     value_type: ParameterType
     affects: ParameterOwner
+    baseline: int | float | str
     minimum: float | int | None = None
     maximum: float | int | None = None
     allowed_values: tuple[str, ...] = ()
@@ -34,11 +35,14 @@ class ParameterSpec:
                     raise ValueError(f"{self.name} is below its catalog minimum")
                 if self.maximum is not None and numeric_value > self.maximum:
                     raise ValueError(f"{self.name} exceeds its catalog maximum")
+        if self.baseline not in parameter_range.values:
+            raise ValueError(f"{self.name} values must include the catalog baseline")
 
 
 @dataclass(frozen=True, slots=True)
 class TemplateSpec:
     template_id: str
+    required_indicators: tuple[str, ...]
     parameters: Mapping[ParameterName, ParameterSpec]
 
 
@@ -52,23 +56,24 @@ class FeatureTemplateCatalog:
 
 _PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
     {
-        "cooldown_minutes": ParameterSpec("cooldown_minutes", "int", "risk", 1, 1_440),
-        "ema_spread_min": ParameterSpec("ema_spread_min", "float", "entry", -1.0, 1.0),
-        "max_entries_per_session": ParameterSpec("max_entries_per_session", "int", "risk", 1, 3),
-        "max_holding_minutes": ParameterSpec("max_holding_minutes", "int", "risk", 1, 1_440),
+        "cooldown_minutes": ParameterSpec("cooldown_minutes", "int", "risk", 30, 1, 1_440),
+        "ema_spread_min": ParameterSpec("ema_spread_min", "float", "entry", 0.0, -1.0, 1.0),
+        "max_entries_per_session": ParameterSpec("max_entries_per_session", "int", "risk", 3, 1, 3),
+        "max_holding_minutes": ParameterSpec("max_holding_minutes", "int", "risk", 90, 1, 1_440),
         "order_type": ParameterSpec(
-            "order_type", "enum", "entry", allowed_values=("market", "limit")
+            "order_type", "enum", "entry", "limit", allowed_values=("market", "limit")
         ),
-        "rsi_entry": ParameterSpec("rsi_entry", "float", "entry", 0.0, 100.0),
+        "rsi_entry": ParameterSpec("rsi_entry", "float", "entry", 40.0, 0.0, 100.0),
         "sizing_preset": ParameterSpec(
             "sizing_preset",
             "enum",
             "sizing",
+            "equal_cash_conservative",
             allowed_values=("equal_cash_conservative", "equal_risk_conservative"),
         ),
-        "stop_loss_bps": ParameterSpec("stop_loss_bps", "int", "risk", 1, 10_000),
-        "take_profit_bps": ParameterSpec("take_profit_bps", "int", "risk", 1, 10_000),
-        "volume_ratio_min": ParameterSpec("volume_ratio_min", "float", "entry", 0.0, 100.0),
+        "stop_loss_bps": ParameterSpec("stop_loss_bps", "int", "risk", 35, 1, 10_000),
+        "take_profit_bps": ParameterSpec("take_profit_bps", "int", "risk", 70, 1, 10_000),
+        "volume_ratio_min": ParameterSpec("volume_ratio_min", "float", "entry", 1.2, 0.0, 100.0),
     }
 )
 
@@ -89,6 +94,7 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
         {
             "momentum_pullback": TemplateSpec(
                 template_id="momentum_pullback",
+                required_indicators=("ema_spread", "rsi", "volume_ratio"),
                 parameters=_PARAMETERS,
             )
         }
@@ -97,6 +103,7 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
         {
             "risk_managed": TemplateSpec(
                 template_id="risk_managed",
+                required_indicators=("rsi",),
                 parameters=_PARAMETERS,
             )
         }
@@ -108,12 +115,18 @@ def validate_parameter_ranges(
     *,
     entry_template: str,
     exit_template: str,
+    indicators: tuple[str, ...],
     parameter_ranges: Mapping[ParameterName, ParameterRange],
 ) -> None:
     entry = FEATURE_TEMPLATE_CATALOG.entry_templates.get(entry_template)
     exit_spec = FEATURE_TEMPLATE_CATALOG.exit_templates.get(exit_template)
     if entry is None or exit_spec is None:
         raise ValueError("proposal references an unknown template")
+    required_indicators = tuple(
+        dict.fromkeys((*entry.required_indicators, *exit_spec.required_indicators))
+    )
+    if indicators != required_indicators:
+        raise ValueError("proposal indicators must exactly match the selected templates")
     allowed = {**entry.parameters, **exit_spec.parameters}
     for name, parameter_range in parameter_ranges.items():
         spec = allowed.get(name)
