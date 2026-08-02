@@ -48,6 +48,35 @@ class PerturbationObservation:
         object.__setattr__(self, "max_drawdown", max_drawdown)
 
 
+def _exact_string_tuple(value: object, *, name: str, minimum: int) -> tuple[str, ...]:
+    if type(value) is not tuple:
+        raise TypeError(f"{name} must be an exact tuple")
+    if len(value) < minimum:
+        raise ValueError(f"{name} must contain at least {minimum} items")
+    if any(type(item) is not str or not item for item in value):
+        raise ValueError(f"{name} must contain non-empty exact strings")
+    if len(set(value)) != len(value):
+        raise ValueError(f"{name} must be unique")
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class ParameterNeighborhoodConfig:
+    baseline_id: str
+    neighbor_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if type(self.baseline_id) is not str or not self.baseline_id:
+            raise ValueError("baseline_id must be a non-empty exact string")
+        neighbors = _exact_string_tuple(
+            self.neighbor_ids,
+            name="neighbor_ids",
+            minimum=2,
+        )
+        if self.baseline_id in neighbors:
+            raise ValueError("baseline_id must not be included in neighbor_ids")
+
+
 @dataclass(frozen=True, slots=True)
 class StartDateObservation:
     """One result tied to an exact configured session offset."""
@@ -67,6 +96,23 @@ class StartDateObservation:
         object.__setattr__(self, "max_drawdown", max_drawdown)
 
 
+@dataclass(frozen=True, slots=True)
+class StartDateConfig:
+    offsets: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        if type(self.offsets) is not tuple:
+            raise TypeError("offsets must be an exact tuple")
+        if len(self.offsets) < 2:
+            raise ValueError("offsets must contain at least 2 items")
+        if any(type(offset) is not int for offset in self.offsets):
+            raise TypeError("offsets must contain exact integers")
+        if tuple(sorted(self.offsets)) != self.offsets or len(set(self.offsets)) != len(
+            self.offsets
+        ):
+            raise ValueError("offsets must be sorted and unique")
+
+
 RobustnessObservation = PerturbationObservation | StartDateObservation
 
 
@@ -78,6 +124,8 @@ class StabilityAssessment:
     required_profitable_fraction: float
     max_drawdown: float
     observations: tuple[RobustnessObservation, ...]
+    parameter_config: ParameterNeighborhoodConfig | None
+    start_date_config: StartDateConfig | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,7 +156,7 @@ def _observations(value: object) -> tuple[PerturbationObservation, ...]:
     )
     observation_ids = tuple(item.observation_id for item in reparsed)
     if len(set(observation_ids)) != len(observation_ids):
-        raise ValueError("observation_id values must be unique")
+        raise ValueError("observations must exactly match declared neighbor IDs")
     return reparsed
 
 
@@ -127,9 +175,6 @@ def _start_date_observations(value: object) -> tuple[StartDateObservation, ...]:
         )
         for item in value
     )
-    offsets = tuple(item.offset_sessions for item in reparsed)
-    if tuple(sorted(offsets)) != offsets or len(set(offsets)) != len(offsets):
-        raise ValueError("start-date offsets must be sorted and unique")
     return reparsed
 
 
@@ -140,6 +185,8 @@ def _assess_perturbations(
     max_drawdown: object,
     pass_reason: str,
     fail_reason: str,
+    parameter_config: ParameterNeighborhoodConfig | None,
+    start_date_config: StartDateConfig | None,
 ) -> StabilityAssessment:
     required = _fraction(
         required_profitable_fraction,
@@ -161,40 +208,63 @@ def _assess_perturbations(
         required_profitable_fraction=required,
         max_drawdown=drawdown_gate,
         observations=observations,
+        parameter_config=parameter_config,
+        start_date_config=start_date_config,
     )
 
 
 def assess_parameter_neighborhood(
     observations: tuple[PerturbationObservation, ...],
     *,
+    config: ParameterNeighborhoodConfig,
     required_profitable_fraction: float = 0.6,
     max_drawdown: float = 0.08,
 ) -> StabilityAssessment:
     """Require a profitable plateau with no neighbor above the drawdown gate."""
 
+    if type(config) is not ParameterNeighborhoodConfig:
+        raise TypeError("config must be an exact ParameterNeighborhoodConfig")
+    validated_config = ParameterNeighborhoodConfig(
+        baseline_id=config.baseline_id,
+        neighbor_ids=config.neighbor_ids,
+    )
+    evidence = _observations(observations)
+    if tuple(item.observation_id for item in evidence) != validated_config.neighbor_ids:
+        raise ValueError("observations must exactly match declared neighbor IDs")
     return _assess_perturbations(
-        _observations(observations),
+        evidence,
         required_profitable_fraction=required_profitable_fraction,
         max_drawdown=max_drawdown,
         pass_reason="STABLE_PARAMETER_NEIGHBORHOOD",
         fail_reason="UNSTABLE_PARAMETER_NEIGHBORHOOD",
+        parameter_config=validated_config,
+        start_date_config=None,
     )
 
 
 def assess_start_date_sensitivity(
     observations: tuple[StartDateObservation, ...],
     *,
+    config: StartDateConfig,
     required_profitable_fraction: float = 0.6,
     max_drawdown: float = 0.08,
 ) -> StabilityAssessment:
     """Require a profitable majority and retain every configured offset result."""
 
+    if type(config) is not StartDateConfig:
+        raise TypeError("config must be an exact StartDateConfig")
+    validated_config = StartDateConfig(offsets=config.offsets)
+    evidence = _start_date_observations(observations)
+    if tuple(item.offset_sessions for item in evidence) != validated_config.offsets:
+        raise ValueError("observations must exactly match configured offsets")
     return _assess_perturbations(
-        _start_date_observations(observations),
+        evidence,
         required_profitable_fraction=required_profitable_fraction,
         max_drawdown=max_drawdown,
         pass_reason="STABLE_START_DATE",
         fail_reason="START_DATE_INSTABILITY",
+        parameter_config=None,
+        start_date_config=validated_config,
     )
 
 

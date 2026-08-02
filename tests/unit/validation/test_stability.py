@@ -4,15 +4,25 @@ import pytest
 
 from us_intraday_lab.validation.stability import (
     PRODUCTION_SYMBOLS,
+    ParameterNeighborhoodConfig,
     PerturbationObservation,
+    StartDateConfig,
     StartDateObservation,
     assess_parameter_neighborhood,
     assess_start_date_sensitivity,
     assess_symbol_concentration,
 )
 
+PARAMETER_CONFIG = ParameterNeighborhoodConfig(
+    baseline_id="rsi=45",
+    neighbor_ids=("rsi=40", "rsi=50", "rsi=55"),
+)
+START_DATE_CONFIG = StartDateConfig(offsets=(0, 5, 10))
 
-def _observation(observation_id: str, net_return: float, drawdown: float) -> PerturbationObservation:
+
+def _observation(
+    observation_id: str, net_return: float, drawdown: float
+) -> PerturbationObservation:
     return PerturbationObservation(
         observation_id=observation_id,
         net_return=net_return,
@@ -23,12 +33,13 @@ def _observation(observation_id: str, net_return: float, drawdown: float) -> Per
 def test_parameter_neighborhood_passes_on_profitable_drawdown_safe_plateau() -> None:
     neighbors = (
         _observation("rsi=40", 0.03, 0.04),
-        _observation("rsi=45", 0.01, 0.07),
-        _observation("rsi=50", -0.002, 0.06),
+        _observation("rsi=50", 0.01, 0.07),
+        _observation("rsi=55", -0.002, 0.06),
     )
 
     result = assess_parameter_neighborhood(
         neighbors,
+        config=PARAMETER_CONFIG,
         required_profitable_fraction=2 / 3,
         max_drawdown=0.08,
     )
@@ -37,14 +48,19 @@ def test_parameter_neighborhood_passes_on_profitable_drawdown_safe_plateau() -> 
     assert result.reason_code == "STABLE_PARAMETER_NEIGHBORHOOD"
     assert result.profitable_count == 2
     assert result.observations == neighbors
+    assert result.parameter_config == PARAMETER_CONFIG
 
 
 def test_parameter_neighborhood_rejects_isolated_optimum_and_drawdown_breach() -> None:
     isolated = assess_parameter_neighborhood(
         (
             _observation("left", -0.01, 0.03),
-            _observation("center", 0.05, 0.04),
-            _observation("right", -0.02, 0.02),
+            _observation("right", 0.05, 0.04),
+            _observation("far", -0.02, 0.02),
+        ),
+        config=ParameterNeighborhoodConfig(
+            baseline_id="center",
+            neighbor_ids=("left", "right", "far"),
         ),
         required_profitable_fraction=0.6,
         max_drawdown=0.08,
@@ -52,8 +68,12 @@ def test_parameter_neighborhood_rejects_isolated_optimum_and_drawdown_breach() -
     breached = assess_parameter_neighborhood(
         (
             _observation("left", 0.01, 0.081),
-            _observation("center", 0.05, 0.04),
-            _observation("right", 0.02, 0.02),
+            _observation("right", -0.02, 0.02),
+            _observation("far", 0.02, 0.02),
+        ),
+        config=ParameterNeighborhoodConfig(
+            baseline_id="center",
+            neighbor_ids=("left", "right", "far"),
         ),
         required_profitable_fraction=0.6,
         max_drawdown=0.08,
@@ -67,7 +87,32 @@ def test_parameter_neighborhood_rejects_isolated_optimum_and_drawdown_breach() -
 
 def test_parameter_neighborhood_requires_multiple_adjacent_observations() -> None:
     with pytest.raises(ValueError, match="at least 2"):
-        assess_parameter_neighborhood((_observation("only-optimum", 0.05, 0.02),))
+        ParameterNeighborhoodConfig(baseline_id="baseline", neighbor_ids=("only",))
+
+
+def test_parameter_neighborhood_requires_exact_declared_neighbors_and_excludes_baseline() -> None:
+    complete = (
+        _observation("rsi=40", 0.03, 0.04),
+        _observation("rsi=50", 0.01, 0.07),
+        _observation("rsi=55", -0.002, 0.06),
+    )
+    invalid_observations = (
+        complete[:-1],
+        complete + (_observation("rsi=60", 0.01, 0.02),),
+        tuple(reversed(complete)),
+        (complete[0], complete[0], complete[2]),
+        (_observation("rsi=45", 0.03, 0.02), complete[1], complete[2]),
+    )
+
+    for invalid in invalid_observations:
+        with pytest.raises(ValueError, match="declared neighbor"):
+            assess_parameter_neighborhood(invalid, config=PARAMETER_CONFIG)
+
+    with pytest.raises(ValueError, match="baseline"):
+        ParameterNeighborhoodConfig(
+            baseline_id="rsi=45",
+            neighbor_ids=("rsi=40", "rsi=45"),
+        )
 
 
 def test_symbol_concentration_uses_positive_profit_and_preserves_losses() -> None:
@@ -125,6 +170,7 @@ def test_start_date_sensitivity_records_every_configured_offset() -> None:
 
     result = assess_start_date_sensitivity(
         offsets,
+        config=START_DATE_CONFIG,
         required_profitable_fraction=2 / 3,
         max_drawdown=0.08,
     )
@@ -133,6 +179,7 @@ def test_start_date_sensitivity_records_every_configured_offset() -> None:
     assert result.reason_code == "STABLE_START_DATE"
     assert result.observations == offsets
     assert result.profitable_count == 2
+    assert result.start_date_config == START_DATE_CONFIG
 
 
 def test_start_date_sensitivity_fails_on_majority_or_any_drawdown_breach() -> None:
@@ -141,14 +188,16 @@ def test_start_date_sensitivity_fails_on_majority_or_any_drawdown_breach() -> No
             StartDateObservation(offset_sessions=0, net_return=0.01, max_drawdown=0.03),
             StartDateObservation(offset_sessions=5, net_return=0.0, max_drawdown=0.04),
             StartDateObservation(offset_sessions=10, net_return=-0.01, max_drawdown=0.05),
-        )
+        ),
+        config=START_DATE_CONFIG,
     )
     breached = assess_start_date_sensitivity(
         (
             StartDateObservation(offset_sessions=0, net_return=0.01, max_drawdown=0.03),
             StartDateObservation(offset_sessions=5, net_return=0.02, max_drawdown=0.081),
             StartDateObservation(offset_sessions=10, net_return=0.01, max_drawdown=0.05),
-        )
+        ),
+        config=START_DATE_CONFIG,
     )
 
     assert unprofitable.reason_code == "START_DATE_INSTABILITY"
@@ -164,12 +213,35 @@ def test_start_date_sensitivity_requires_sorted_unique_exact_offsets() -> None:
 
     for invalid in ((valid, valid), (invalid_offset,), tuple(reversed((valid, invalid_offset)))):
         with pytest.raises((TypeError, ValueError)):
-            assess_start_date_sensitivity(invalid)
+            assess_start_date_sensitivity(invalid, config=START_DATE_CONFIG)
 
     with pytest.raises(ValueError, match="at least 2"):
-        assess_start_date_sensitivity(
-            (StartDateObservation(offset_sessions=0, net_return=0.01, max_drawdown=0.03),)
-        )
+        StartDateConfig(offsets=(0,))
+
+
+def test_start_date_requires_exact_configured_offsets() -> None:
+    complete = (
+        StartDateObservation(offset_sessions=0, net_return=0.03, max_drawdown=0.04),
+        StartDateObservation(offset_sessions=5, net_return=0.02, max_drawdown=0.05),
+        StartDateObservation(offset_sessions=10, net_return=-0.01, max_drawdown=0.07),
+    )
+    for invalid in (
+        complete[:-1],
+        complete + (StartDateObservation(offset_sessions=15, net_return=0.01, max_drawdown=0.02),),
+        tuple(reversed(complete)),
+    ):
+        with pytest.raises(ValueError, match="configured offsets"):
+            assess_start_date_sensitivity(invalid, config=START_DATE_CONFIG)
+
+    for invalid_config in (
+        (0, True),
+        (5, 0),
+        (0, 0),
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            StartDateConfig(offsets=invalid_config)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        StartDateConfig(offsets=[0, 5])  # type: ignore[arg-type]
 
 
 def test_parameter_neighborhood_revalidates_tampered_frozen_observation() -> None:
@@ -177,7 +249,12 @@ def test_parameter_neighborhood_revalidates_tampered_frozen_observation() -> Non
     object.__setattr__(observation, "net_return", math.nan)
 
     with pytest.raises(ValueError, match="finite"):
-        assess_parameter_neighborhood((observation, _observation("other", 0.02, 0.02)))
+        assess_parameter_neighborhood(
+            (observation, _observation("other", 0.02, 0.02)),
+            config=ParameterNeighborhoodConfig(
+                baseline_id="baseline", neighbor_ids=("neighbor", "other")
+            ),
+        )
 
 
 @pytest.mark.parametrize(
@@ -196,6 +273,7 @@ def test_stability_boundaries_reject_coerced_or_nonfinite_inputs(
     with pytest.raises((TypeError, ValueError)):
         assess_parameter_neighborhood(
             neighbors,  # type: ignore[arg-type]
+            config=ParameterNeighborhoodConfig(baseline_id="baseline", neighbor_ids=("x", "y")),
             required_profitable_fraction=fraction,  # type: ignore[arg-type]
             max_drawdown=drawdown,  # type: ignore[arg-type]
         )
