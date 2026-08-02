@@ -16,6 +16,7 @@ from us_intraday_lab.contracts.market import MarketBarClosed
 from us_intraday_lab.contracts.orders import OrderIntent
 from us_intraday_lab.contracts.paper import (
     BrokerOrder,
+    IncidentEvent,
     PaperCheckpoint,
     PaperSession,
     PositionSnapshot,
@@ -598,6 +599,44 @@ class PaperStore:
             )
         return retained
 
+    def append_incident(self, incident: IncidentEvent) -> IncidentEvent:
+        if type(incident) is not IncidentEvent:
+            raise TypeError("incident must be an exact IncidentEvent")
+        retained = IncidentEvent.model_validate(incident.model_dump(mode="python"))
+        content = _model_json(retained)
+        digest = _sha256(content)
+        with self._transaction() as connection:
+            self._require_session(connection, retained.paper_session_id)
+            row = connection.execute(
+                """
+                SELECT event_json, content_sha256 FROM incident_events
+                WHERE incident_id = ?
+                """,
+                (retained.incident_id,),
+            ).fetchone()
+            if row is not None:
+                if row["content_sha256"] != digest or row["event_json"] != content:
+                    raise PaperImmutableConflict("IMMUTABLE_INCIDENT_CONFLICT")
+                return IncidentEvent.model_validate_json(row["event_json"])
+            connection.execute(
+                """
+                INSERT INTO incident_events (
+                    incident_id, paper_session_id, severity, reason_code,
+                    event_json, content_sha256, occurred_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    retained.incident_id,
+                    retained.paper_session_id,
+                    retained.severity,
+                    retained.reason_code,
+                    content,
+                    digest,
+                    retained.occurred_at.isoformat(),
+                ),
+            )
+        return retained
+
     @staticmethod
     def _verified_json(row: sqlite3.Row, *, json_column: str) -> str:
         content = str(row[json_column])
@@ -711,6 +750,22 @@ class PaperStore:
         return tuple(
             PositionSnapshot.model_validate_json(
                 self._verified_json(row, json_column="snapshot_json")
+            )
+            for row in rows
+        )
+
+    def list_incidents(self, paper_session_id: str) -> tuple[IncidentEvent, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT event_json, content_sha256 FROM incident_events
+                WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            IncidentEvent.model_validate_json(
+                self._verified_json(row, json_column="event_json")
             )
             for row in rows
         )

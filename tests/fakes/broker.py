@@ -14,6 +14,7 @@ class SubmitBehavior(str, Enum):
     REJECT = "reject"
     PARTIAL_FILL = "partial_fill"
     DELAYED_FILL = "delayed_fill"
+    FILL = "fill"
 
 
 class FakePaperBroker:
@@ -26,6 +27,7 @@ class FakePaperBroker:
         self._intents: dict[str, OrderIntent] = {}
         self._positions: dict[str, BrokerPosition] = {}
         self.submitted_idempotency_keys: list[str] = []
+        self.submit_attempted_idempotency_keys: list[str] = []
 
     def _require_connection(self) -> None:
         if not self._connected:
@@ -71,6 +73,7 @@ class FakePaperBroker:
 
     def submit(self, intent: OrderIntent) -> BrokerOrder:
         self._require_connection()
+        self.submit_attempted_idempotency_keys.append(intent.idempotency_key)
         retained = self._orders.get(intent.idempotency_key)
         if retained is not None:
             if self._intents[intent.idempotency_key] != intent:
@@ -82,10 +85,12 @@ class FakePaperBroker:
             SubmitBehavior.REJECT: "rejected",
             SubmitBehavior.PARTIAL_FILL: "partially_filled",
             SubmitBehavior.DELAYED_FILL: "submitted",
+            SubmitBehavior.FILL: "filled",
         }[behavior]
-        filled_quantity = (
-            max(1, intent.quantity // 2) if behavior is SubmitBehavior.PARTIAL_FILL else 0
-        )
+        filled_quantity = {
+            SubmitBehavior.PARTIAL_FILL: max(1, intent.quantity // 2),
+            SubmitBehavior.FILL: intent.quantity,
+        }.get(behavior, 0)
         order = BrokerOrder(
             broker_order_id=f"fake-order-{len(self._orders) + 1}",
             client_order_id=intent.idempotency_key,
@@ -103,6 +108,20 @@ class FakePaperBroker:
         self._intents[intent.idempotency_key] = intent
         self._orders[intent.idempotency_key] = order
         self.submitted_idempotency_keys.append(intent.idempotency_key)
+        if behavior is SubmitBehavior.FILL and intent.side == "sell":
+            position = self._positions.get(intent.symbol)
+            if position is not None:
+                remaining = position.quantity - intent.quantity
+                if remaining <= 0:
+                    del self._positions[intent.symbol]
+                else:
+                    self._positions[intent.symbol] = position.model_copy(
+                        update={
+                            "quantity": remaining,
+                            "market_value": remaining * position.average_entry_price,
+                            "observed_at": self._now,
+                        }
+                    )
         return order
 
     def cancel(self, broker_order_id: str) -> BrokerOrder:

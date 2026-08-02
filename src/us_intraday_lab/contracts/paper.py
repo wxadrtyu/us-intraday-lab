@@ -233,6 +233,36 @@ class RiskDecision(_PaperModel):
         return _utc(value, field_name="decided_at")
 
 
+class IncidentEvent(_PaperModel):
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    incident_id: str = Field(min_length=1)
+    paper_session_id: str = Field(min_length=1)
+    severity: Literal["info", "warning", "critical"]
+    reason_code: str = Field(pattern=r"^[A-Z][A-Z0-9_]*$")
+    observed_values: Mapping[str, float | int | bool | str]
+    occurred_at: datetime
+
+    @field_validator("observed_values", mode="after")
+    @classmethod
+    def freeze_observed(
+        cls, value: Mapping[str, float | int | bool | str]
+    ) -> Mapping[str, float | int | bool | str]:
+        if any(not key for key in value):
+            raise ValueError("observed_values keys must be non-empty")
+        return MappingProxyType(dict(sorted(value.items())))
+
+    @field_serializer("observed_values")
+    def serialize_observed(
+        self, value: Mapping[str, float | int | bool | str]
+    ) -> dict[str, float | int | bool | str]:
+        return dict(value)
+
+    @field_validator("occurred_at")
+    @classmethod
+    def validate_occurred_at(cls, value: datetime) -> datetime:
+        return _utc(value, field_name="occurred_at")
+
+
 class ReconciliationResult(_PaperModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     reconciliation_id: str = Field(min_length=1)
