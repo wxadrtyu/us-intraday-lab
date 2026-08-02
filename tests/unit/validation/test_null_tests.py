@@ -371,6 +371,34 @@ def test_null_seed_requires_exact_uint64(seed: object) -> None:
     assert NullTestConfig(seed=2**64 - 1).seed == 2**64 - 1
 
 
+@pytest.mark.parametrize(
+    "generator",
+    [generate_permuted_entry_mask, generate_shifted_entry_mask],
+)
+@pytest.mark.parametrize("seed", [-1, 2**64, True, "1"])
+def test_public_null_generators_require_exact_uint64_seed(
+    generator: object,
+    seed: object,
+) -> None:
+    with pytest.raises((TypeError, ValueError), match="seed"):
+        generator(_opportunities(), seed=seed)  # type: ignore[operator]
+
+
+@pytest.mark.parametrize(
+    "generator",
+    [generate_permuted_entry_mask, generate_shifted_entry_mask],
+)
+@pytest.mark.parametrize("seed", [0, 2**64 - 1])
+def test_public_null_generators_accept_deterministic_uint64_boundaries(
+    generator: object,
+    seed: int,
+) -> None:
+    first = generator(_opportunities(), seed=seed)  # type: ignore[operator]
+    second = generator(_opportunities(), seed=seed)  # type: ignore[operator]
+
+    assert first == second
+
+
 def test_work_bound_counts_framework_passes_and_supports_practical_capacity() -> None:
     production = NullTestConfig(seed=1)
     assert PRODUCTION_NULL_REPETITIONS > 32

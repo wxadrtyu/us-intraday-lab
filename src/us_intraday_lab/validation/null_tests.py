@@ -60,6 +60,14 @@ def _bounded_id(value: object, *, name: str) -> str:
     return value
 
 
+def _validated_seed(value: object) -> int:
+    if type(value) is not int:
+        raise TypeError("seed must be an exact integer")
+    if not 0 <= value <= MAX_NULL_SEED:
+        raise ValueError(f"seed must be between 0 and {MAX_NULL_SEED}")
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class NullOpportunity:
     """One eligible entry with fixed exit and base-cost P&L evidence."""
@@ -156,10 +164,7 @@ class NullTestConfig:
     percentile: float = 0.95
 
     def __post_init__(self) -> None:
-        if type(self.seed) is not int:
-            raise TypeError("seed must be an exact integer")
-        if not 0 <= self.seed <= MAX_NULL_SEED:
-            raise ValueError(f"seed must be between 0 and {MAX_NULL_SEED}")
+        seed = _validated_seed(self.seed)
         if type(self.repetitions) is not int:
             raise TypeError("repetitions must be an exact integer")
         if not 1 <= self.repetitions <= MAX_NULL_REPETITIONS:
@@ -167,6 +172,7 @@ class NullTestConfig:
         percentile = _finite_number(self.percentile, name="percentile")
         if not 0.0 < percentile < 1.0:
             raise ValueError("percentile must be greater than 0 and less than 1")
+        object.__setattr__(self, "seed", seed)
         object.__setattr__(self, "percentile", percentile)
 
 
@@ -337,10 +343,9 @@ def generate_permuted_entry_mask(
     *,
     seed: int,
 ) -> tuple[bool, ...]:
+    validated_seed = _validated_seed(seed)
     evidence = _validated_opportunities(opportunities)
-    if type(seed) is not int:
-        raise TypeError("seed must be an exact integer")
-    return _permuted_mask(_build_plan(evidence), rng=random.Random(seed))
+    return _permuted_mask(_build_plan(evidence), rng=random.Random(validated_seed))
 
 
 def generate_shifted_entry_mask(
@@ -348,10 +353,9 @@ def generate_shifted_entry_mask(
     *,
     seed: int,
 ) -> tuple[bool, ...]:
+    validated_seed = _validated_seed(seed)
     evidence = _validated_opportunities(opportunities)
-    if type(seed) is not int:
-        raise TypeError("seed must be an exact integer")
-    return _shifted_mask(_build_plan(evidence), rng=random.Random(seed))
+    return _shifted_mask(_build_plan(evidence), rng=random.Random(validated_seed))
 
 
 def _score_sequence(
