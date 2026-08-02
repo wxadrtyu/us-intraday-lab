@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from us_intraday_lab.contracts.validation import ChronologicalSplit
 from us_intraday_lab.validation.splits import (
+    FinalTestEvaluator,
     FinalTestIsolationError,
     IsolatedChronologicalViews,
     create_chronological_split,
@@ -85,17 +86,81 @@ def test_final_test_is_a_single_use_capability_after_selection_is_sealed() -> No
     assert views.access_log == ("train", "validation")
     assert not hasattr(views, "final_test_view")
 
-    evaluator = views.seal_selection()
-    final_test = evaluator.final_test_view()
+    evaluator = views.seal_selection(
+        survivor_ids=("strategy-1",),
+        selection_manifest_sha256="a" * 64,
+    )
+    assert evaluator.survivor_ids == ("strategy-1",)
+    assert evaluator.selection_manifest_sha256 == "a" * 64
+    final_test = evaluator.final_test_view(strategy_ids=("strategy-1",))
     assert set(final_test["session_date"]) == set(split.final_test_sessions)
     assert views.access_log == ("train", "validation", "final_test")
 
     with pytest.raises(FinalTestIsolationError, match="FINAL_TEST_ALREADY_CONSUMED"):
-        evaluator.final_test_view()
+        evaluator.final_test_view(strategy_ids=("strategy-1",))
     with pytest.raises(FinalTestIsolationError, match="FINAL_TEST_ALREADY_CONSUMED"):
         views.training_view()
     with pytest.raises(FinalTestIsolationError, match="FINAL_TEST_ALREADY_CONSUMED"):
         views.validation_view()
+
+
+def test_final_test_rejects_unsealed_strategy_requests_without_consuming_data() -> None:
+    sessions = _sessions(20)
+    split = create_chronological_split(sessions, split_id="split-bound")
+    views = IsolatedChronologicalViews(_bars(sessions), split)
+
+    with pytest.raises((TypeError, ValueError)):
+        views.seal_selection(  # type: ignore[call-arg]
+            survivor_ids=(),
+            selection_manifest_sha256="bad",
+        )
+
+    with pytest.raises(FinalTestIsolationError, match="SELECTION_EVIDENCE_NOT_READ"):
+        views.seal_selection(
+            survivor_ids=("strategy-1", "strategy-2"),
+            selection_manifest_sha256="b" * 64,
+        )
+
+    views.training_view()
+    views.validation_view()
+
+    evaluator = views.seal_selection(
+        survivor_ids=("strategy-1", "strategy-2"),
+        selection_manifest_sha256="b" * 64,
+    )
+    with pytest.raises(FinalTestIsolationError, match="UNSEALED_STRATEGY_REQUEST"):
+        evaluator.final_test_view(strategy_ids=("strategy-1", "strategy-3"))
+    assert "final_test" not in views.access_log
+
+    evaluator.final_test_view(strategy_ids=("strategy-1", "strategy-2"))
+    assert views.access_log.count("final_test") == 1
+
+
+def test_owner_rejects_rogue_or_mutated_final_test_evaluator_identity() -> None:
+    sessions = _sessions(20)
+    views = IsolatedChronologicalViews(
+        _bars(sessions),
+        create_chronological_split(sessions, split_id="split-owner-authority"),
+    )
+    views.training_view()
+    views.validation_view()
+    authorized = views.seal_selection(
+        survivor_ids=("strategy-1",),
+        selection_manifest_sha256="d" * 64,
+    )
+
+    rogue = FinalTestEvaluator(views)
+    with pytest.raises(FinalTestIsolationError, match="UNSEALED_STRATEGY_REQUEST"):
+        rogue.final_test_view(strategy_ids=("strategy-2",))
+
+    authorized._survivor_ids = ("strategy-2",)  # type: ignore[attr-defined]
+    authorized._selection_manifest_sha256 = "e" * 64  # type: ignore[attr-defined]
+    with pytest.raises(FinalTestIsolationError, match="UNSEALED_STRATEGY_REQUEST"):
+        authorized.final_test_view(strategy_ids=("strategy-2",))
+    assert "final_test" not in views.access_log
+
+    authorized.final_test_view(strategy_ids=("strategy-1",))
+    assert views.access_log.count("final_test") == 1
 
 
 def test_views_reject_rows_outside_the_declared_split() -> None:

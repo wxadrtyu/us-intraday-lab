@@ -8,6 +8,7 @@ from us_intraday_lab.contracts.validation import WalkForwardWindowResult
 from us_intraday_lab.validation.splits import _validated_sessions
 
 MAX_WALK_FORWARD_WINDOWS = 10_000
+MAX_MATERIALIZED_SESSION_SLOTS = 2_000_000
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +72,9 @@ def build_walk_forward_windows(
     possible = 1 + (len(ordered) - train_count - evaluation_count) // step_count
     if possible > MAX_WALK_FORWARD_WINDOWS:
         raise ValueError("walk-forward configuration exceeds the window budget")
+    materialized_slots = possible * (train_count + evaluation_count)
+    if materialized_slots > MAX_MATERIALIZED_SESSION_SLOTS:
+        raise ValueError("walk-forward configuration exceeds the materialized session-slot budget")
     windows: list[WalkForwardWindow] = []
     for index in range(possible):
         start = index * step_count

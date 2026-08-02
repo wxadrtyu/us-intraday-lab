@@ -1,3 +1,4 @@
+import math
 from collections.abc import Mapping
 from datetime import UTC, date, datetime, timedelta
 from types import MappingProxyType
@@ -82,6 +83,24 @@ class WalkForwardWindowResult(_ClosedModel):
     validation_start: date
     validation_end: date
     metrics_by_cost_scenario: Mapping[CostScenario, Mapping[str, float]]
+
+    @field_validator("metrics_by_cost_scenario", mode="before")
+    @classmethod
+    def validate_metrics_payload(cls, value: object) -> object:
+        if not isinstance(value, Mapping):
+            raise ValueError("walk-forward metrics must be a mapping")  # noqa: TRY004
+        base = value.get("base")
+        if not isinstance(base, Mapping) or "net_return" not in base:
+            raise ValueError("walk-forward metrics require base net_return")
+        for metrics in value.values():
+            if not isinstance(metrics, Mapping):
+                raise ValueError("scenario metrics must be mappings")  # noqa: TRY004
+            for metric_name, metric_value in metrics.items():
+                if type(metric_name) is not str or not metric_name:
+                    raise ValueError("metric names must be non-empty strings")
+                if type(metric_value) not in {int, float} or not math.isfinite(metric_value):
+                    raise ValueError("walk-forward metrics must be exact finite numbers")
+        return value
 
     @field_validator("metrics_by_cost_scenario", mode="after")
     @classmethod

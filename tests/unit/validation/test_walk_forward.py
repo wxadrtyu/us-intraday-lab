@@ -1,7 +1,9 @@
 from datetime import date, timedelta
 
 import pytest
+from pydantic import ValidationError
 
+from us_intraday_lab.contracts.validation import WalkForwardWindowResult
 from us_intraday_lab.validation.walk_forward import (
     WalkForwardWindow,
     build_walk_forward_windows,
@@ -83,3 +85,64 @@ def test_walk_forward_contract_rejects_overlapping_manual_window() -> None:
             train_sessions=sessions[:7],
             evaluation_sessions=sessions[6:],
         )
+
+
+def test_walk_forward_rejects_excessive_materialized_session_slots() -> None:
+    sessions = _sessions(100_000)
+
+    with pytest.raises(ValueError, match="materialized session-slot budget"):
+        build_walk_forward_windows(
+            sessions,
+            train_size=90_000,
+            evaluation_size=1,
+            step_size=1,
+        )
+
+
+@pytest.mark.parametrize(
+    "metrics",
+    [
+        {},
+        {"optimistic": {"net_return": 0.1}},
+        {"base": {}},
+        {"base": {"net_return": True}},
+        {"base": {"net_return": "0.25"}},
+        {"base": {"net_return": float("nan")}},
+        {"base": {"net_return": float("inf")}},
+    ],
+)
+def test_walk_forward_result_contract_requires_strict_finite_base_return(
+    metrics: object,
+) -> None:
+    sessions = _sessions(15)
+
+    with pytest.raises(ValidationError):
+        WalkForwardWindowResult.model_validate(
+            {
+                "window_id": "wf-direct",
+                "strategy_id": "strategy-1",
+                "train_start": sessions[0],
+                "train_end": sessions[9],
+                "validation_start": sessions[10],
+                "validation_end": sessions[14],
+                "metrics_by_cost_scenario": metrics,
+            }
+        )
+
+
+def test_walk_forward_result_revalidates_forged_nested_metrics() -> None:
+    window = build_walk_forward_windows(
+        _sessions(15),
+        train_size=10,
+        evaluation_size=5,
+        step_size=5,
+    )[0]
+    result = record_walk_forward_result(
+        window,
+        strategy_id="strategy-1",
+        base_net_return=0.01,
+    )
+    forged = result.model_copy(update={"metrics_by_cost_scenario": {"base": {"net_return": True}}})
+
+    with pytest.raises(ValidationError):
+        WalkForwardWindowResult.model_validate(forged)

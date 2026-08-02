@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 
 import pandas as pd
@@ -76,6 +77,8 @@ class IsolatedChronologicalViews:
         self._split = reparsed
         self._access_log: list[str] = []
         self._selection_sealed = False
+        self._sealed_survivor_ids: tuple[str, ...] | None = None
+        self._selection_manifest_sha256: str | None = None
         self._final_consumed = False
 
     @property
@@ -96,19 +99,53 @@ class IsolatedChronologicalViews:
     def validation_view(self) -> pd.DataFrame:
         return self._search_view("validation", self._split.validation_sessions)
 
-    def seal_selection(self) -> FinalTestEvaluator:
+    def seal_selection(
+        self,
+        *,
+        survivor_ids: tuple[str, ...],
+        selection_manifest_sha256: str,
+    ) -> FinalTestEvaluator:
+        if type(survivor_ids) is not tuple or not 1 <= len(survivor_ids) <= 200:
+            raise ValueError("survivor_ids must contain between 1 and 200 strategy IDs")
+        if any(type(strategy_id) is not str or not strategy_id for strategy_id in survivor_ids):
+            raise ValueError("survivor_ids must contain non-empty strings")
+        if tuple(sorted(survivor_ids)) != survivor_ids or len(set(survivor_ids)) != len(
+            survivor_ids
+        ):
+            raise ValueError("survivor_ids must be sorted and unique")
+        if (
+            type(selection_manifest_sha256) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", selection_manifest_sha256) is None
+        ):
+            raise ValueError("selection_manifest_sha256 must be a lowercase SHA-256 digest")
         if self._final_consumed:
             raise FinalTestIsolationError("FINAL_TEST_ALREADY_CONSUMED")
         if self._selection_sealed:
             raise FinalTestIsolationError("SELECTION_ALREADY_SEALED")
+        if not {"train", "validation"} <= set(self._access_log):
+            raise FinalTestIsolationError("SELECTION_EVIDENCE_NOT_READ")
+        self._sealed_survivor_ids = survivor_ids
+        self._selection_manifest_sha256 = selection_manifest_sha256
         self._selection_sealed = True
         return FinalTestEvaluator(self)
 
-    def _consume_final_test(self) -> pd.DataFrame:
+    def _sealed_identity(self) -> tuple[tuple[str, ...], str]:
+        if (
+            not self._selection_sealed
+            or self._sealed_survivor_ids is None
+            or self._selection_manifest_sha256 is None
+        ):
+            raise FinalTestIsolationError("SELECTION_NOT_SEALED")
+        return self._sealed_survivor_ids, self._selection_manifest_sha256
+
+    def _consume_final_test(self, *, strategy_ids: tuple[str, ...]) -> pd.DataFrame:
         if not self._selection_sealed:
             raise FinalTestIsolationError("SELECTION_NOT_SEALED")
         if self._final_consumed:
             raise FinalTestIsolationError("FINAL_TEST_ALREADY_CONSUMED")
+        sealed_survivor_ids, _manifest_hash = self._sealed_identity()
+        if type(strategy_ids) is not tuple or strategy_ids != sealed_survivor_ids:
+            raise FinalTestIsolationError("UNSEALED_STRATEGY_REQUEST")
         self._final_consumed = True
         self._access_log.append("final_test")
         return self._frame.loc[
@@ -119,8 +156,23 @@ class IsolatedChronologicalViews:
 class FinalTestEvaluator:
     """Capability granted only when strategy selection has been sealed."""
 
-    def __init__(self, owner: IsolatedChronologicalViews) -> None:
+    def __init__(
+        self,
+        owner: IsolatedChronologicalViews,
+    ) -> None:
+        if type(owner) is not IsolatedChronologicalViews:
+            raise TypeError("owner must be an exact IsolatedChronologicalViews")
         self._owner = owner
 
-    def final_test_view(self) -> pd.DataFrame:
-        return self._owner._consume_final_test()
+    @property
+    def survivor_ids(self) -> tuple[str, ...]:
+        survivor_ids, _manifest_hash = self._owner._sealed_identity()
+        return survivor_ids
+
+    @property
+    def selection_manifest_sha256(self) -> str:
+        _survivor_ids, manifest_hash = self._owner._sealed_identity()
+        return manifest_hash
+
+    def final_test_view(self, *, strategy_ids: tuple[str, ...]) -> pd.DataFrame:
+        return self._owner._consume_final_test(strategy_ids=strategy_ids)
