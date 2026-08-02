@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from types import MappingProxyType
 from typing import Literal, Self
 
@@ -31,6 +31,41 @@ def _utc(value: datetime, *, field_name: str) -> datetime:
     if value.utcoffset() != timedelta(0):
         raise ValueError(f"{field_name} must be timezone-aware UTC")
     return value.astimezone(UTC)
+
+
+class PaperSession(_PaperModel):
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    paper_session_id: str = Field(min_length=1)
+    session_date: date
+    environment: Literal["paper"] = "paper"
+    broker_endpoint: Literal["https://paper-api.alpaca.markets"] = (
+        "https://paper-api.alpaca.markets"
+    )
+    broker_account_id: str = Field(min_length=1)
+    broker_sdk_version: str = Field(min_length=1)
+    market_provider: Literal["alpaca"] = "alpaca"
+    market_feed: Literal["iex"] = "iex"
+    production_symbols: tuple[PaperSymbol, PaperSymbol, PaperSymbol] = (
+        "SPY",
+        "QQQ",
+        "IWM",
+    )
+    status: Literal["initializing", "running", "closeout", "closed", "blocked"] = "initializing"
+    created_at: datetime
+
+    @field_validator("production_symbols")
+    @classmethod
+    def validate_symbols(
+        cls, value: tuple[PaperSymbol, PaperSymbol, PaperSymbol]
+    ) -> tuple[PaperSymbol, PaperSymbol, PaperSymbol]:
+        if value != ("SPY", "QQQ", "IWM"):
+            raise ValueError("production_symbols must be exactly SPY, QQQ, IWM")
+        return value
+
+    @field_validator("created_at")
+    @classmethod
+    def validate_created_at(cls, value: datetime) -> datetime:
+        return _utc(value, field_name="created_at")
 
 
 class BrokerAccount(_PaperModel):
