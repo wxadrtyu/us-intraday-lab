@@ -219,21 +219,49 @@ def test_promotion_requires_stored_passing_decision_for_same_strategy(
     store: RegistryStore,
 ) -> None:
     _register(store)
+    store.transition_strategy(
+        "strategy-a",
+        to_state="candidate",
+        idempotency_key="candidate:awaiting-decision",
+        actor="validation-service",
+        reason_code="VALIDATION_COMPLETE",
+        immutable_refs={"experiment_id": "experiment-a"},
+        occurred_at=NOW,
+    )
     failing = _decision(passed=False)
     store.record_validation_decision(failing)
 
     with pytest.raises(LifecycleError, match="PASSING_VALIDATION_DECISION_REQUIRED"):
         store.transition_strategy(
             "strategy-a",
-            to_state="candidate",
-            idempotency_key="candidate-with-failure",
+            to_state="paper_shadow",
+            idempotency_key="paper-with-failure",
             actor="validation-service",
             reason_code="PROMOTE",
             immutable_refs={"decision_id": failing.decision_id},
             occurred_at=NOW,
         )
 
-    assert store.get_current_state("strategy-a") == "generated"
+    assert store.get_current_state("strategy-a") == "candidate"
+
+
+def test_candidate_state_records_evaluation_entry_without_claiming_gate_success(
+    store: RegistryStore,
+) -> None:
+    _register(store)
+
+    event = store.transition_strategy(
+        "strategy-a",
+        to_state="candidate",
+        idempotency_key="candidate:strategy-a:no-decision-yet",
+        actor="validation-service",
+        reason_code="VALIDATION_COMPLETE",
+        immutable_refs={"experiment_id": "experiment-a"},
+        occurred_at=NOW,
+    )
+
+    assert event.to_state == "candidate"
+    assert store.get_current_state("strategy-a") == "candidate"
 
 
 def test_event_idempotency_is_exact_and_conflicts_do_not_mutate_state(store: RegistryStore) -> None:

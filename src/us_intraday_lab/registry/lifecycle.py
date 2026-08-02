@@ -26,7 +26,7 @@ ALLOWED_TRANSITIONS: dict[RegistryState, frozenset[RegistryState]] = {
     "paused": frozenset(),
     "retired": frozenset(),
 }
-PROMOTION_STATES = frozenset({"candidate", "paper_shadow"})
+PROMOTION_STATES = frozenset({"paper_shadow"})
 
 
 class LifecycleError(RuntimeError):
