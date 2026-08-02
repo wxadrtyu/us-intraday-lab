@@ -32,13 +32,15 @@ CREATE TABLE IF NOT EXISTS registry_events (
     from_state TEXT CHECK (
         from_state IS NULL OR from_state IN (
             'generated', 'backtested', 'validated', 'candidate',
-            'paper_shadow', 'rejected', 'paused', 'retired'
+            'paper_shadow', 'paper_observing', 'paper_ranked', 'leader',
+            'review', 'rejected', 'paused', 'retired'
         )
     ),
     to_state TEXT NOT NULL CHECK (
         to_state IN (
             'generated', 'backtested', 'validated', 'candidate',
-            'paper_shadow', 'rejected', 'paused', 'retired'
+            'paper_shadow', 'paper_observing', 'paper_ranked', 'leader',
+            'review', 'rejected', 'paused', 'retired'
         )
     ),
     actor TEXT NOT NULL,
@@ -53,7 +55,8 @@ CREATE TABLE IF NOT EXISTS strategy_current_state (
     current_state TEXT NOT NULL CHECK (
         current_state IN (
             'generated', 'backtested', 'validated', 'candidate',
-            'paper_shadow', 'rejected', 'paused', 'retired'
+            'paper_shadow', 'paper_observing', 'paper_ranked', 'leader',
+            'review', 'rejected', 'paused', 'retired'
         )
     ),
     last_event_id TEXT NOT NULL UNIQUE,

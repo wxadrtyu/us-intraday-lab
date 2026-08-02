@@ -11,22 +11,35 @@ KNOWN_STATES: frozenset[RegistryState] = frozenset(
         "validated",
         "candidate",
         "paper_shadow",
+        "paper_observing",
+        "paper_ranked",
+        "leader",
+        "review",
         "rejected",
         "paused",
         "retired",
     }
 )
 ALLOWED_TRANSITIONS: dict[RegistryState, frozenset[RegistryState]] = {
-    "generated": frozenset({"candidate"}),
-    "candidate": frozenset({"rejected", "paper_shadow"}),
-    "paper_shadow": frozenset({"rejected"}),
-    "rejected": frozenset(),
-    "backtested": frozenset(),
-    "validated": frozenset(),
-    "paused": frozenset(),
+    "generated": frozenset({"candidate", "review"}),
+    "candidate": frozenset({"rejected", "paper_shadow", "review"}),
+    "paper_shadow": frozenset({"paper_observing", "rejected", "review"}),
+    "paper_observing": frozenset({"paper_ranked", "paused", "review"}),
+    "paper_ranked": frozenset({"leader", "paused", "review"}),
+    "leader": frozenset({"paused", "review"}),
+    "review": frozenset({"paused", "retired", "paper_observing"}),
+    "rejected": frozenset({"review"}),
+    "backtested": frozenset({"review"}),
+    "validated": frozenset({"review"}),
+    "paused": frozenset({"paper_observing", "review"}),
     "retired": frozenset(),
 }
-PROMOTION_STATES = frozenset({"paper_shadow"})
+VALIDATION_PROMOTION_STATES = frozenset({"paper_shadow"})
+STATE_CAPACITY: dict[RegistryState, int] = {
+    "paper_observing": 20,
+    "paper_ranked": 5,
+    "leader": 3,
+}
 
 
 class LifecycleError(RuntimeError):

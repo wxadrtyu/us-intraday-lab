@@ -17,7 +17,8 @@ from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.contracts.validation import ValidationDecision
 from us_intraday_lab.registry.lifecycle import (
     KNOWN_STATES,
-    PROMOTION_STATES,
+    STATE_CAPACITY,
+    VALIDATION_PROMOTION_STATES,
     LifecycleError,
     require_allowed_transition,
 )
@@ -25,7 +26,9 @@ from us_intraday_lab.registry.lifecycle import (
 BUSY_TIMEOUT_MS = 5_000
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _REASON_CODE = re.compile(r"^[A-Z][A-Z0-9_]*$")
-_MIGRATION = Path(__file__).with_name("migrations") / "001_initial.sql"
+_MIGRATION_DIRECTORY = Path(__file__).with_name("migrations")
+_INITIAL_MIGRATION = _MIGRATION_DIRECTORY / "001_initial.sql"
+_FORWARD_MIGRATION = _MIGRATION_DIRECTORY / "002_forward_lifecycle.sql"
 
 
 class IdempotencyConflict(RuntimeError):
@@ -105,9 +108,17 @@ class RegistryStore:
         return connection
 
     def _initialize(self) -> None:
-        migration = _MIGRATION.read_text(encoding="utf-8")
         with closing(self._connect()) as connection:
-            connection.executescript(migration)
+            connection.executescript(_INITIAL_MIGRATION.read_text(encoding="utf-8"))
+            schema = str(
+                connection.execute(
+                    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'registry_events'"
+                ).fetchone()[0]
+            )
+            if "paper_observing" not in schema:
+                connection.execute("PRAGMA foreign_keys = OFF")
+                connection.executescript(_FORWARD_MIGRATION.read_text(encoding="utf-8"))
+                connection.execute("PRAGMA foreign_keys = ON")
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -313,12 +324,22 @@ class RegistryStore:
                 raise LifecycleError("STRATEGY_NOT_REGISTERED")
             from_state = _stored_state(current["current_state"])
             require_allowed_transition(from_state, to_state)
-            if to_state in PROMOTION_STATES:
+            if to_state in VALIDATION_PROMOTION_STATES:
                 self._require_passing_decision(
                     connection,
                     strategy_id=retained_strategy_id,
                     immutable_refs=refs,
                 )
+            capacity = STATE_CAPACITY.get(to_state)
+            if capacity is not None:
+                occupied = int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM strategy_current_state WHERE current_state = ?",
+                        (to_state,),
+                    ).fetchone()[0]
+                )
+                if occupied >= capacity:
+                    raise LifecycleError(f"REGISTRY_STATE_CAPACITY_EXCEEDED: {to_state}")
             event = RegistryEvent(
                 event_id=_derived_event_id(key, request_hash),
                 strategy_id=retained_strategy_id,
