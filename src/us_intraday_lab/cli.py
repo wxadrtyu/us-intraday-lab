@@ -38,14 +38,26 @@ from us_intraday_lab.data.snapshot import (
     import_snapshot,
     verify_snapshot,
 )
+from us_intraday_lab.factory.orchestrator import (
+    BacktestResearchBackend,
+    ResearchRunSummary,
+    current_code_revision,
+    load_accepted_research_dataset,
+    load_research_inputs,
+    resume_research,
+    run_research,
+)
+from us_intraday_lab.factory.proposal import FixtureProposalProvider
 from us_intraday_lab.strategy.compiler import StrategyCompileError, compile_strategy
 from us_intraday_lab.strategy.validator import scan_strategy_payload
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
 backtest_app = typer.Typer(no_args_is_help=True)
+research_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(backtest_app, name="backtest")
+app.add_typer(research_app, name="research")
 
 
 def _archive_limits(
@@ -345,6 +357,72 @@ def run_backtest_command(
         typer.echo(error.result.model_dump_json(), err=True)
         raise typer.Exit(code=1) from error
     typer.echo(result_path)
+
+
+@research_app.command("run")
+def run_research_command(
+    proposal: Annotated[Path, typer.Option(exists=True, dir_okay=False, readable=True)],
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Run or idempotently resume one immutable proposal/dataset experiment."""
+
+    try:
+        hypothesis = FixtureProposalProvider(proposal).load()
+        dataset = load_accepted_research_dataset(root=root, dataset_id=dataset_id)
+        summary = run_research(
+            proposal=hypothesis,
+            dataset=dataset,
+            backend=BacktestResearchBackend(root=root, dataset=dataset),
+            root=root,
+            code_revision=current_code_revision(root),
+        )
+    except Exception as error:
+        raise typer.BadParameter(f"research run failed: {error}") from error
+    typer.echo(f"experiment_id: {summary.experiment_id}")
+    typer.echo(f"report: {summary.report_path}")
+
+
+def _resume_from_id(*, experiment_id: str, root: Path) -> ResearchRunSummary:
+    _proposal, dataset, _manifest = load_research_inputs(
+        experiment_id=experiment_id,
+        root=root,
+    )
+    return resume_research(
+        experiment_id=experiment_id,
+        backend=BacktestResearchBackend(root=root, dataset=dataset),
+        root=root,
+        code_revision=current_code_revision(root),
+    )
+
+
+@research_app.command("resume")
+def resume_research_command(
+    experiment_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Verify completed stages and continue from the first missing stage."""
+
+    try:
+        summary = _resume_from_id(experiment_id=experiment_id, root=root)
+    except Exception as error:
+        raise typer.BadParameter(f"research resume failed: {error}") from error
+    typer.echo(f"experiment_id: {summary.experiment_id}")
+    typer.echo(f"report: {summary.report_path}")
+
+
+@research_app.command("report")
+def report_research_command(
+    experiment_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Verify stored evidence and print the evidence-only Chinese report path."""
+
+    try:
+        summary = _resume_from_id(experiment_id=experiment_id, root=root)
+    except Exception as error:
+        raise typer.BadParameter(f"research report failed: {error}") from error
+    typer.echo(summary.report_path)
 
 
 if __name__ == "__main__":

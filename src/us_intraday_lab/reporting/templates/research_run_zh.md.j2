@@ -1,0 +1,92 @@
+# 策略研究报告
+
+> 历史表现不代表未来收益。本报告仅记录研究与全自动模拟盘候选流程，不构成实盘盈利承诺或投资建议。
+
+## 研究假设
+
+- 假设：{{ proposal.thesis }}
+- 理由：{{ proposal.rationale }}
+- 假设编号：`{{ proposal.hypothesis_id }}`
+- 实验编号：`{{ experiment_id }}`
+- 数据集编号：`{{ dataset.dataset_id }}`
+- 数据内容哈希：`{{ dataset.content_sha256 }}`
+- 代码版本：`{{ manifest.code_revision }}`
+
+## 这次研究做了什么
+
+| 项目 | 数量 |
+|---|---:|
+| 生成策略 | {{ counts.generated }} |
+| 完成验证 | {{ counts.valid }} |
+| 读取最终测试 | {{ counts.tested }} |
+| 被拒绝 | {{ counts.rejected }} |
+| 进入模拟观察 | {{ counts.survived }} |
+
+最终测试只读取了预先封存的策略：{% if selection.survivor_ids %}`{{ selection.survivor_ids | join('`, `') }}`{% else %}无{% endif %}。
+
+## 时间切分
+
+- 训练：{{ manifest.split_definition.train_sessions[0] }} 至 {{ manifest.split_definition.train_sessions[-1] }}
+- 验证：{{ manifest.split_definition.validation_sessions[0] }} 至 {{ manifest.split_definition.validation_sessions[-1] }}
+- 最终测试：{{ manifest.split_definition.final_test_sessions[0] }} 至 {{ manifest.split_definition.final_test_sessions[-1] }}
+- 切分编号：`{{ manifest.split_definition.split_id }}`
+- 选择清单哈希：`{{ selection.selection_manifest_sha256 }}`
+
+## 成本假设
+
+| 场景 | 成本模型编号 |
+|---|---|
+| 乐观 | `{{ manifest.cost_model_versions.optimistic }}` |
+| 基准 | `{{ manifest.cost_model_versions.base }}` |
+| 压力 | `{{ manifest.cost_model_versions.stress }}` |
+
+每个阶段还保存了“固定交易序列下，基准执行成本放大 1.5 倍”的净收益敏感性证据；它用于隔离成本影响，不冒充一次改变成交路径后的独立回测。
+
+## 硬门槛
+
+| 策略 | 门槛代码 | 观察值 | 阈值 | 结果 | 证据编号 |
+|---|---|---:|---:|---|---|
+{% for evaluation in evaluations %}{% for gate in evaluation.gate_results %}| `{{ evaluation.strategy_id }}` | {{ gate.reason_code }} | {{ gate.observed }} | {{ gate.threshold }} | {{ "通过" if gate.passed else "失败" }} | `{{ gate.evidence.evidence_id }}` |
+{% endfor %}{% endfor %}
+
+## 幸存策略透明排名
+
+{% if rankings %}| 排名 | 策略 | 综合分 | 收益一致性 | 回撤质量 | 利润因子质量 | 滚动窗口一致性 | 成本韧性 |
+|---:|---|---:|---:|---:|---:|---:|---:|
+{% for item in rankings %}| {{ loop.index }} | `{{ item.strategy_id }}` | {{ "%.6f" | format(item.score) }} | {{ "%.6f" | format(item.normalized_components.return_consistency) }} | {{ "%.6f" | format(item.normalized_components.drawdown_quality) }} | {{ "%.6f" | format(item.normalized_components.profit_factor_quality) }} | {{ "%.6f" | format(item.normalized_components.walk_forward_consistency) }} | {{ "%.6f" | format(item.normalized_components.cost_resilience) }} |
+{% endfor %}{% else %}没有策略通过全部硬门槛，因此本次没有排名。{% endif %}
+
+## 拒绝原因
+
+{% if rejected %}{% for item in rejected %}- `{{ item.strategy_id }}`：{{ item.failure_reason_codes | join("、") }}
+{% endfor %}{% else %}无。{% endif %}
+
+## 随机基准（Null Test）
+
+| 策略 | 实际收益 | 信号置换阈值 | 时间平移阈值 | 重复次数 | 结果 | 证据哈希 |
+|---|---:|---:|---:|---:|---|---|
+{% for strategy_id, item in robustness_by_id.items() %}| `{{ strategy_id }}` | {{ item.null_evidence.observed_profit }} | {{ item.null_evidence.permutation_threshold }} | {{ item.null_evidence.timestamp_shift_threshold }} | {{ item.null_evidence.repetitions }} | {{ "通过" if item.null_evidence.passed else "失败" }} | `{{ item.null_evidence.evidence_sha256 }}` |
+{% endfor %}
+
+## 标的收益贡献
+
+| 策略 | SPY | QQQ | IWM | 阶段结果哈希 |
+|---|---:|---:|---:|---|
+{% for strategy_id, item in phase_by_id.items() %}| `{{ strategy_id }}` | {{ item.profit_by_symbol.SPY }} | {{ item.profit_by_symbol.QQQ }} | {{ item.profit_by_symbol.IWM }} | `{{ item.result_sha256 }}` |
+{% endfor %}
+
+## 开始日期稳定性
+
+| 策略 | 偏移交易日 | 净收益 | 最大回撤 |
+|---|---:|---:|---:|
+{% for strategy_id, item in robustness_by_id.items() %}{% for point in item.start_date_points %}| `{{ strategy_id }}` | {{ point.offset_sessions }} | {{ point.net_return }} | {{ point.max_drawdown }} |
+{% endfor %}{% endfor %}
+
+## 不可变追踪信息
+
+| 策略 | 内容哈希 | 训练任务 | 验证任务 | 最终测试任务 | 注册表状态 |
+|---|---|---|---|---|---|
+{% for item in traceability %}| `{{ item.strategy_id }}` | `{{ item.content_sha256 }}` | `{{ item.train_job_id }}` | `{{ item.validation_job_id }}` | {% if item.final_job_id %}`{{ item.final_job_id }}`{% else %}未读取{% endif %} | {{ item.state }} |
+{% endfor %}
+
+日历：`{{ dataset.calendar_name }}@{{ dataset.calendar_version }}`；回测引擎：`{{ manifest.backtest_engine_version }}`；变体生成器：`{{ manifest.variant_generator_version }}`。
