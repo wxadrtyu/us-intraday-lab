@@ -76,6 +76,45 @@ def _counts_by_group(
     return counts
 
 
+def _entry_chronology_opportunities() -> tuple[NullOpportunity, ...]:
+    session = date(2026, 7, 6)
+
+    def item(
+        opportunity_id: str,
+        symbol: str,
+        signal_minute: int,
+        entry_minute: int,
+        exit_minute: int,
+        entered: bool,
+        profit: float,
+    ) -> NullOpportunity:
+        start = datetime(2026, 7, 6, 14, 0, tzinfo=UTC)
+        return NullOpportunity(
+            opportunity_id=opportunity_id,
+            symbol=symbol,
+            session=session,
+            signal_time=start + timedelta(minutes=signal_minute),
+            entry_time=start + timedelta(minutes=entry_minute),
+            exit_time=start + timedelta(minutes=exit_minute),
+            entered=entered,
+            holding_rule_net_profit=profit,
+        )
+
+    rows = (
+        item("SPY-late-entry", "SPY", 0, 10, 20, True, 10.0),
+        item("QQQ-early-entry", "QQQ", 1, 2, 15, True, 20.0),
+        item("IWM-coverage", "IWM", 2, 3, 4, False, 0.0),
+        item("SPY-null", "SPY", 20, 21, 22, False, 0.0),
+        item("QQQ-null", "QQQ", 21, 22, 23, False, 0.0),
+    )
+    return tuple(
+        sorted(
+            rows,
+            key=lambda row: (row.session, row.signal_time, row.symbol, row.opportunity_id),
+        )
+    )
+
+
 def test_permutation_is_seeded_session_local_and_preserves_trade_count() -> None:
     opportunities = _opportunities()
     original = tuple(row.entered for row in opportunities)
@@ -144,6 +183,35 @@ def test_internal_scorer_enforces_cooldown_session_limit_and_concurrent_position
     assert result.observed_score.accepted_entry_count == 2
     assert result.observed_score.rejected_entry_count == 4
     assert result.scoring_config == strict_rules
+
+
+def test_internal_scorer_uses_actual_entry_chronology_not_signal_order() -> None:
+    rules = HoldingRuleScoringConfig(
+        scoring_id="entry-order-v1",
+        rule_version="entry-order-v1",
+        cost_model_id="base-cost-v1",
+        cooldown_minutes=0,
+        max_entries_per_session=5,
+        max_concurrent_positions=1,
+    )
+    config = NullTestConfig(seed=9, repetitions=8, percentile=0.75)
+
+    first = run_null_tests(
+        _entry_chronology_opportunities(),
+        config=config,
+        scoring_config=rules,
+    )
+    second = run_null_tests(
+        _entry_chronology_opportunities(),
+        config=config,
+        scoring_config=rules,
+    )
+
+    assert first.observed_score.net_profit == pytest.approx(20.0)
+    assert first.observed_score.accepted_entry_count == 1
+    assert first.observed_score.rejected_entry_count == 1
+    assert first.evidence_sha256 == second.evidence_sha256
+    assert first == second
 
 
 def test_null_test_rejects_candidate_not_better_than_percentile() -> None:
@@ -293,6 +361,14 @@ def test_null_identity_strings_are_bounded_for_hashing_work() -> None:
             entered=opportunity.entered,
             holding_rule_net_profit=opportunity.holding_rule_net_profit,
         )
+
+
+@pytest.mark.parametrize("seed", [-1, 2**64, True, "1"])
+def test_null_seed_requires_exact_uint64(seed: object) -> None:
+    with pytest.raises((TypeError, ValueError), match="seed"):
+        NullTestConfig(seed=seed)  # type: ignore[arg-type]
+
+    assert NullTestConfig(seed=2**64 - 1).seed == 2**64 - 1
 
 
 def test_work_bound_counts_framework_passes_and_supports_practical_capacity() -> None:

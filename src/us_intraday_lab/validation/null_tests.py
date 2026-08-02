@@ -21,12 +21,14 @@ MAX_NULL_WORK_ITEMS = 200_000_000
 MAX_CONFIGURED_ENTRIES_PER_SESSION = 100
 MAX_CONFIGURED_CONCURRENT_POSITIONS = len(PRODUCTION_SYMBOLS)
 MAX_EVIDENCE_ID_LENGTH = 128
+MAX_NULL_SEED = 2**64 - 1
 
 # Conservative row-operation accounting. Setup covers strict validation twice,
 # canonical-order checks, group/evaluation-plan construction, coverage, hashing,
 # and result evidence. Scoring includes bounded active-position checks. Each
 # repetition builds two masks and scores both full sequences.
 _SETUP_OPERATIONS_PER_ROW = 40
+_EVALUATION_ORDER_COMPARISONS_PER_ROW = math.ceil(math.log2(MAX_NULL_OPPORTUNITIES))
 _SCORING_BASE_OPERATIONS_PER_ROW = 12
 _MASK_OPERATIONS_PER_REPETITION_PER_ROW = 6
 
@@ -156,6 +158,8 @@ class NullTestConfig:
     def __post_init__(self) -> None:
         if type(self.seed) is not int:
             raise TypeError("seed must be an exact integer")
+        if not 0 <= self.seed <= MAX_NULL_SEED:
+            raise ValueError(f"seed must be between 0 and {MAX_NULL_SEED}")
         if type(self.repetitions) is not int:
             raise TypeError("repetitions must be an exact integer")
         if not 1 <= self.repetitions <= MAX_NULL_REPETITIONS:
@@ -289,7 +293,19 @@ def _build_plan(opportunities: tuple[NullOpportunity, ...]) -> _NullEvaluationPl
     return _NullEvaluationPlan(
         opportunities=opportunities,
         group_indexes=ordered_groups,
-        evaluation_order=tuple(range(len(opportunities))),
+        evaluation_order=tuple(
+            sorted(
+                range(len(opportunities)),
+                key=lambda index: (
+                    opportunities[index].entry_time,
+                    opportunities[index].session,
+                    opportunities[index].symbol,
+                    opportunities[index].signal_time,
+                    opportunities[index].opportunity_id,
+                    index,
+                ),
+            )
+        ),
     )
 
 
@@ -401,6 +417,7 @@ def _operation_components(
     score_pass = _SCORING_BASE_OPERATIONS_PER_ROW + (scoring_config.max_concurrent_positions)
     operations_per_row = (
         _SETUP_OPERATIONS_PER_ROW
+        + _EVALUATION_ORDER_COMPARISONS_PER_ROW
         + score_pass
         + config.repetitions * (_MASK_OPERATIONS_PER_REPETITION_PER_ROW + 2 * score_pass)
     )
