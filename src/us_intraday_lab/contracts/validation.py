@@ -14,6 +14,26 @@ from pydantic import (
 
 from us_intraday_lab.contracts.backtests import CostScenario
 
+_CHRONOLOGICAL_WEIGHTS = (7, 2, 1)
+
+
+def chronological_split_counts(total: int) -> tuple[int, int, int]:
+    """Allocate sessions with a deterministic largest-remainder 70/20/10 rule."""
+    if type(total) is not int:
+        raise TypeError("total must be an exact integer")
+    if total < 10:
+        raise ValueError("total must contain at least 10 sessions")
+    counts = [total * weight // 10 for weight in _CHRONOLOGICAL_WEIGHTS]
+    remainders = [total * weight % 10 for weight in _CHRONOLOGICAL_WEIGHTS]
+    remaining = total - sum(counts)
+    order = sorted(
+        range(len(remainders)),
+        key=lambda index: (-remainders[index], index),
+    )
+    for index in order[:remaining]:
+        counts[index] += 1
+    return counts[0], counts[1], counts[2]
+
 
 class _ClosedModel(BaseModel):
     model_config = ConfigDict(
@@ -27,9 +47,10 @@ class _ClosedModel(BaseModel):
 class ChronologicalSplit(_ClosedModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     split_id: str = Field(min_length=1)
-    train_sessions: tuple[date, ...] = Field(min_length=1)
-    validation_sessions: tuple[date, ...] = Field(min_length=1)
-    final_test_sessions: tuple[date, ...] = Field(min_length=1)
+    allocation_method: Literal["largest_remainder_70_20_10"] = "largest_remainder_70_20_10"
+    train_sessions: tuple[date, ...] = Field(min_length=1, max_length=100_000)
+    validation_sessions: tuple[date, ...] = Field(min_length=1, max_length=100_000)
+    final_test_sessions: tuple[date, ...] = Field(min_length=1, max_length=100_000)
 
     @model_validator(mode="after")
     def validate_chronology(self) -> Self:
@@ -43,6 +64,12 @@ class ChronologicalSplit(_ClosedModel):
             < self.final_test_sessions[0]
         ):
             raise ValueError("split sessions must be strictly chronological and disjoint")
+        observed_counts = tuple(len(group) for group in groups)
+        total = sum(observed_counts)
+        if total > 100_000:
+            raise ValueError("split cannot exceed 100000 sessions")
+        if observed_counts != chronological_split_counts(total):
+            raise ValueError("split sessions must use deterministic 70/20/10 allocation")
         return self
 
 

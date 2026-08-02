@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import MappingProxyType
 
@@ -71,11 +71,12 @@ def test_proposal_rejects_unsafe_or_unbounded_fields(change: dict[str, object]) 
 
 
 def test_validation_contracts_are_chronological_closed_and_frozen() -> None:
+    sessions = tuple(date(2026, 1, 2) + timedelta(days=index) for index in range(10))
     split = ChronologicalSplit(
         split_id="split-1",
-        train_sessions=(date(2026, 1, 2), date(2026, 1, 3)),
-        validation_sessions=(date(2026, 1, 4),),
-        final_test_sessions=(date(2026, 1, 5),),
+        train_sessions=sessions[:7],
+        validation_sessions=sessions[7:9],
+        final_test_sessions=sessions[9:],
     )
     evidence = GateEvidence(
         evidence_id="evidence-1",
@@ -105,9 +106,9 @@ def test_validation_contracts_are_chronological_closed_and_frozen() -> None:
     with pytest.raises(ValidationError):
         ChronologicalSplit(
             split_id="bad",
-            train_sessions=(date(2026, 1, 5),),
-            validation_sessions=(date(2026, 1, 4),),
-            final_test_sessions=(date(2026, 1, 6),),
+            train_sessions=(*sessions[:6], sessions[7]),
+            validation_sessions=(sessions[6], sessions[8]),
+            final_test_sessions=sessions[9:],
         )
 
     window = WalkForwardWindowResult(

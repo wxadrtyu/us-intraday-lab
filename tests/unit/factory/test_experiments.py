@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -21,11 +21,12 @@ FIXTURE = Path(__file__).parents[2] / "fixtures" / "hypotheses" / "momentum_pull
 
 
 def _split() -> ChronologicalSplit:
+    sessions = tuple(date(2026, 1, 2) + timedelta(days=index) for index in range(10))
     return ChronologicalSplit(
         split_id="split-2026",
-        train_sessions=(date(2026, 1, 2),),
-        validation_sessions=(date(2026, 2, 2),),
-        final_test_sessions=(date(2026, 3, 2),),
+        train_sessions=sessions[:7],
+        validation_sessions=sessions[7:9],
+        final_test_sessions=sessions[9:],
     )
 
 
