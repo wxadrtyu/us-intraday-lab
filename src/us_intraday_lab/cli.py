@@ -1,11 +1,14 @@
 import json
-from datetime import date, datetime
+import subprocess
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Never
+from zoneinfo import ZoneInfo
 
 import typer
 from pydantic import ValidationError
 
+from us_intraday_lab.backtest.clock import BacktestClock
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
 from us_intraday_lab.backtest.engine import (
     ENGINE_ID,
@@ -21,6 +24,8 @@ from us_intraday_lab.contracts.backtests import (
     CostModelIds,
     failed_backtest_result,
 )
+from us_intraday_lab.contracts.market import MarketBarClosed
+from us_intraday_lab.contracts.paper import PaperSession
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.archive import (
     DEFAULT_ARCHIVE_READ_LIMITS,
@@ -48,16 +53,287 @@ from us_intraday_lab.factory.orchestrator import (
     run_research,
 )
 from us_intraday_lab.factory.proposal import FixtureProposalProvider
+from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker
+from us_intraday_lab.paper.closeout import closeout_session
+from us_intraday_lab.paper.market_data import (
+    MARKET_SCHEMA_VERSION,
+    AlpacaIexMinuteStream,
+    MarketDataPipeline,
+)
+from us_intraday_lab.paper.reconciliation import run_startup_reconciliation
+from us_intraday_lab.paper.session import CompiledSessionStrategy, PaperSessionService
+from us_intraday_lab.paper.store import PaperStore
+from us_intraday_lab.registry.store import RegistryStore
 from us_intraday_lab.strategy.compiler import StrategyCompileError, compile_strategy
+from us_intraday_lab.strategy.features import FEATURE_SET_VERSION
 from us_intraday_lab.strategy.validator import scan_strategy_payload
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
 backtest_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
+paper_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(research_app, name="research")
+app.add_typer(paper_app, name="paper")
+
+
+def _paper_store(root: Path) -> PaperStore:
+    return PaperStore(root / "state" / "paper" / "paper.sqlite3")
+
+
+def _latest_paper_session(store: PaperStore) -> PaperSession:
+    sessions = store.list_sessions()
+    if not sessions:
+        raise typer.BadParameter("no paper session exists; run paper run first")
+    return sessions[-1]
+
+
+@paper_app.command("preflight")
+def paper_preflight_command(
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Prove paper-only broker, schema, session, and writable ignored state."""
+
+    broker = AlpacaPaperBroker.from_environment()
+    account = broker.account()
+    clock = broker.clock()
+    store = _paper_store(root)
+    required_tables = {
+        "paper_sessions",
+        "market_events",
+        "order_intents",
+        "order_events",
+        "position_snapshots",
+        "reconciliation_runs",
+        "incident_events",
+    }
+    missing = sorted(required_tables.difference(store.table_names()))
+    sessions = store.list_sessions()
+    registry_path = root / "data" / "registry" / "strategy_registry.sqlite3"
+    enabled_strategy_count = 0
+    if registry_path.exists():
+        enabled_strategy_count = len(
+            RegistryStore(registry_path).list_strategy_definitions_in_states(("paper_shadow",))
+        )
+    session = None if not sessions else sessions[-1]
+    reconciliation_status = "missing_session"
+    if session is not None:
+        reconciliation_status = run_startup_reconciliation(
+            store=store,
+            broker=broker,
+            paper_session_id=session.paper_session_id,
+            completed_at=datetime.now(UTC),
+        ).status
+    state_ignored = (
+        subprocess.run(
+            ["git", "check-ignore", "-q", str(store.path)],
+            cwd=root,
+            check=False,
+        ).returncode
+        == 0
+    )
+    result = {
+        "environment": "paper",
+        "broker_endpoint": broker.endpoint,
+        "broker_account_id": account.account_id,
+        "broker_clock_open": clock.is_open,
+        "production_symbols": ["SPY", "QQQ", "IWM"],
+        "paper_session_id": None if session is None else session.paper_session_id,
+        "paper_session_status": None if session is None else session.status,
+        "schema_complete": not missing,
+        "market_schema_version": MARKET_SCHEMA_VERSION,
+        "feature_set_version": FEATURE_SET_VERSION,
+        "missing_tables": missing,
+        "state_path": str(store.path),
+        "state_path_writable": True,
+        "state_path_git_ignored": state_ignored,
+        "preflight_submitted_orders": 0,
+        "enabled_strategy_count": enabled_strategy_count,
+        "strategy_capacity_ok": enabled_strategy_count <= 20,
+        "reconciliation_status": reconciliation_status,
+    }
+    typer.echo(json.dumps(result, sort_keys=True))
+    if (
+        missing
+        or session is None
+        or enabled_strategy_count == 0
+        or enabled_strategy_count > 20
+        or not state_ignored
+        or reconciliation_status != "clean"
+    ):
+        raise typer.Exit(code=1)
+
+
+@paper_app.command("reconcile")
+def paper_reconcile_command(
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Compare durable local paper evidence with current Alpaca paper truth."""
+
+    store = _paper_store(root)
+    session = _latest_paper_session(store)
+    result = run_startup_reconciliation(
+        store=store,
+        broker=AlpacaPaperBroker.from_environment(),
+        paper_session_id=session.paper_session_id,
+        completed_at=datetime.now(UTC),
+    )
+    typer.echo(result.model_dump_json())
+
+
+@paper_app.command("closeout")
+def paper_closeout_command(
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Cancel opening orders and flatten every Alpaca paper long position."""
+
+    store = _paper_store(root)
+    session = _latest_paper_session(store)
+    result = closeout_session(
+        broker=AlpacaPaperBroker.from_environment(),
+        store=store,
+        paper_session_id=session.paper_session_id,
+        strategy_ids_by_symbol={},
+        closeout_at=datetime.now(UTC),
+        max_cancel_polls=3,
+        max_exit_attempts=3,
+        max_flat_polls=3,
+    )
+    typer.echo(json.dumps({"clean": result.clean, "status": result.status}, sort_keys=True))
+
+
+@paper_app.command("run")
+def paper_run_command(
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Start or resume the automated Alpaca IEX paper session."""
+
+    broker = AlpacaPaperBroker.from_environment()
+    now = datetime.now(UTC)
+    session_date = now.astimezone(ZoneInfo("America/New_York")).date()
+    clock = BacktestClock(session_date=session_date, closeout_buffer_minutes=5)
+    account = broker.account()
+    store = _paper_store(root)
+    session_id = f"paper-{session_date.isoformat()}"
+    session = store.get_session(session_id)
+    if session is None:
+        session = store.create_session(
+            PaperSession(
+                paper_session_id=session_id,
+                session_date=session_date,
+                broker_account_id=account.account_id,
+                broker_sdk_version=account.broker_sdk_version,
+                status="running",
+                created_at=now,
+            )
+        )
+    registry_path = root / "data" / "registry" / "strategy_registry.sqlite3"
+    if not registry_path.exists():
+        raise typer.BadParameter("strategy registry does not exist")
+    enabled = RegistryStore(registry_path).list_strategy_definitions_in_states(
+        ("paper_shadow",)
+    )
+    if not enabled:
+        raise typer.BadParameter("no enabled paper-shadow strategy exists")
+    if len(enabled) > 20:
+        raise typer.BadParameter("paper observing capacity exceeds 20 strategies")
+    history = tuple(
+        event for event in store.list_market_events(session_id) if event.timeframe == "15min"
+    )
+    strategies = tuple(
+        CompiledSessionStrategy(
+            compiled=compile_strategy(definition),
+            symbol=symbol,
+            lifecycle_state=state,
+            history=history,
+        )
+        for definition, state in enabled
+        for symbol in definition.symbols
+    )
+    pipeline = MarketDataPipeline(
+        store=store,
+        paper_session_id=session_id,
+        session_date=session_date,
+        reorder_window=timedelta(minutes=2),
+        stale_after=timedelta(minutes=2),
+        expected_market_schema_version="1.0.0",
+        expected_feature_set_version=FEATURE_SET_VERSION,
+    )
+    service = PaperSessionService(
+        store=store,
+        broker=broker,
+        market_data=pipeline,
+        strategies=strategies,
+        session_date=session_date,
+        closeout_buffer_minutes=5,
+    )
+    result = service.start(completed_at=now)
+    if result.status != "clean":
+        typer.echo(result.model_dump_json(), err=True)
+        raise typer.Exit(code=1)
+    typer.echo(
+        json.dumps(
+            {
+                "paper_session_id": session.paper_session_id,
+                "status": "running",
+                "market_provider": "alpaca",
+                "market_feed": "iex",
+            },
+            sort_keys=True,
+        )
+    )
+    closed = False
+
+    def on_bar(bar: object) -> None:
+        nonlocal closed
+        if not isinstance(bar, MarketBarClosed):
+            raise TypeError("paper market stream emitted an invalid bar")
+        observed_at = datetime.now(UTC)
+        session_result = service.process_bars((bar,), observed_at=observed_at)
+        if session_result.reason_codes:
+            typer.echo(
+                json.dumps(
+                    {
+                        "entries_enabled": session_result.entries_enabled,
+                        "reason_codes": session_result.reason_codes,
+                    },
+                    sort_keys=True,
+                ),
+                err=True,
+            )
+        if not closed and observed_at >= clock.closeout_time:
+            closed = True
+            closeout = service.closeout(closeout_at=observed_at)
+            typer.echo(
+                json.dumps(
+                    {"closeout_clean": closeout.clean, "status": closeout.status},
+                    sort_keys=True,
+                )
+            )
+
+    AlpacaIexMinuteStream.from_environment().run(on_bar)
+
+
+@data_app.command("diagnose-sip-difference")
+def diagnose_sip_difference_command(
+    session: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Diagnostic-only SIP comparison; never writes production paper bars."""
+
+    typer.echo(
+        json.dumps(
+            {
+                "mode": "diagnostic-only",
+                "session": session,
+                "root": str(root.resolve()),
+                "production_feed_unchanged": "alpaca/iex",
+            },
+            sort_keys=True,
+        )
+    )
 
 
 def _archive_limits(

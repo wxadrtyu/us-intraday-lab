@@ -22,6 +22,7 @@ from us_intraday_lab.contracts.paper import (
     PositionSnapshot,
     ReconciliationResult,
     RiskDecision,
+    StrategySessionState,
 )
 
 BUSY_TIMEOUT_MS = 5_000
@@ -637,6 +638,36 @@ class PaperStore:
             )
         return retained
 
+    def upsert_strategy_session_state(
+        self, state: StrategySessionState
+    ) -> StrategySessionState:
+        if type(state) is not StrategySessionState:
+            raise TypeError("state must be an exact StrategySessionState")
+        retained = StrategySessionState.model_validate(state.model_dump(mode="python"))
+        content = _model_json(retained)
+        digest = _sha256(content)
+        with self._transaction() as connection:
+            self._require_session(connection, retained.paper_session_id)
+            connection.execute(
+                """
+                INSERT INTO strategy_session_state (
+                    paper_session_id, strategy_id, state_json, content_sha256, updated_at
+                ) VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(paper_session_id, strategy_id) DO UPDATE SET
+                    state_json = excluded.state_json,
+                    content_sha256 = excluded.content_sha256,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    retained.paper_session_id,
+                    retained.strategy_id,
+                    content,
+                    digest,
+                    retained.updated_at.isoformat(),
+                ),
+            )
+        return retained
+
     @staticmethod
     def _verified_json(row: sqlite3.Row, *, json_column: str) -> str:
         content = str(row[json_column])
@@ -659,6 +690,57 @@ class PaperStore:
             self._verified_json(row, json_column="session_json")
         )
 
+    def list_sessions(self) -> tuple[PaperSession, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT session_json, content_sha256 FROM paper_sessions
+                ORDER BY session_date, created_at, paper_session_id
+                """
+            ).fetchall()
+        return tuple(
+            PaperSession.model_validate_json(
+                self._verified_json(row, json_column="session_json")
+            )
+            for row in rows
+        )
+
+    def transition_session_status(
+        self, paper_session_id: str, status: str
+    ) -> PaperSession:
+        allowed = {
+            "initializing": frozenset({"running", "blocked"}),
+            "running": frozenset({"closeout", "blocked"}),
+            "closeout": frozenset({"closed", "blocked"}),
+            "closed": frozenset(),
+            "blocked": frozenset(),
+        }
+        with self._transaction() as connection:
+            current = self._require_session(connection, paper_session_id)
+            if current.status == status:
+                return current
+            if status not in allowed[current.status]:
+                raise ValueError("PAPER_SESSION_STATUS_TRANSITION_NOT_ALLOWED")
+            payload = current.model_dump(mode="python")
+            payload["status"] = status
+            updated = PaperSession.model_validate(payload)
+            content = _model_json(updated)
+            connection.execute(
+                """
+                UPDATE paper_sessions
+                SET status = ?, session_json = ?, content_sha256 = ?
+                WHERE paper_session_id = ? AND status = ?
+                """,
+                (
+                    updated.status,
+                    content,
+                    _sha256(content),
+                    paper_session_id,
+                    current.status,
+                ),
+            )
+        return updated
+
     def get_order_intent(self, idempotency_key: str) -> OrderIntent | None:
         with closing(self._connect()) as connection:
             row = connection.execute(
@@ -671,6 +753,54 @@ class PaperStore:
         if row is None:
             return None
         return OrderIntent.model_validate_json(self._verified_json(row, json_column="intent_json"))
+
+    def get_risk_decision(self, idempotency_key: str) -> RiskDecision | None:
+        with closing(self._connect()) as connection:
+            row = connection.execute(
+                """
+                SELECT decision_json, content_sha256 FROM risk_decisions
+                WHERE idempotency_key = ?
+                """,
+                (idempotency_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        return RiskDecision.model_validate_json(
+            self._verified_json(row, json_column="decision_json")
+        )
+
+    def list_order_intents(self, paper_session_id: str) -> tuple[OrderIntent, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT intent_json, content_sha256 FROM order_intents
+                WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            OrderIntent.model_validate_json(
+                self._verified_json(row, json_column="intent_json")
+            )
+            for row in rows
+        )
+
+    def get_strategy_session_state(
+        self, paper_session_id: str, strategy_id: str
+    ) -> StrategySessionState | None:
+        with closing(self._connect()) as connection:
+            row = connection.execute(
+                """
+                SELECT state_json, content_sha256 FROM strategy_session_state
+                WHERE paper_session_id = ? AND strategy_id = ?
+                """,
+                (paper_session_id, strategy_id),
+            ).fetchone()
+        if row is None:
+            return None
+        return StrategySessionState.model_validate_json(
+            self._verified_json(row, json_column="state_json")
+        )
 
     def list_market_events(self, paper_session_id: str) -> tuple[MarketBarClosed, ...]:
         with closing(self._connect()) as connection:

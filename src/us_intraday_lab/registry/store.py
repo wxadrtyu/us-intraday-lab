@@ -427,6 +427,31 @@ class RegistryStore:
             None if row is None else StrategyDefinition.model_validate_json(row["definition_json"])
         )
 
+    def list_strategy_definitions_in_states(
+        self, states: tuple[RegistryState, ...]
+    ) -> tuple[tuple[StrategyDefinition, RegistryState], ...]:
+        if not states or any(state not in KNOWN_STATES for state in states):
+            raise ValueError("states must contain known registry states")
+        placeholders = ",".join("?" for _ in states)
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                f"""
+                SELECT d.definition_json, c.current_state
+                FROM strategy_definitions AS d
+                JOIN strategy_current_state AS c USING(strategy_id)
+                WHERE c.current_state IN ({placeholders})
+                ORDER BY d.strategy_id
+                """,
+                states,
+            ).fetchall()
+        return tuple(
+            (
+                StrategyDefinition.model_validate_json(row["definition_json"]),
+                _stored_state(row["current_state"]),
+            )
+            for row in rows
+        )
+
     def get_validation_decision(self, decision_id: str) -> ValidationDecision | None:
         retained = _nonempty(decision_id, name="decision_id")
         with closing(self._connect()) as connection:

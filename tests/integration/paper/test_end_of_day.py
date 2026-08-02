@@ -73,6 +73,7 @@ def test_closeout_cancels_opening_orders_exits_longs_and_persists_flat_snapshot(
     assert broker.positions() == ()
     assert store.list_position_snapshots(SESSION_ID)[-1].positions == ()
     assert store.list_incidents(SESSION_ID) == ()
+    assert store.get_session(SESSION_ID).status == "closed"
 
 
 def test_rejected_exit_retries_same_key_and_records_overnight_incident(
@@ -107,3 +108,4 @@ def test_rejected_exit_retries_same_key_and_records_overnight_incident(
     assert incidents[0].severity == "critical"
     assert incidents[0].observed_values["remaining_symbols"] == "QQQ"
     assert store.list_position_snapshots(SESSION_ID)[-1].positions == result.remaining_positions
+    assert store.get_session(SESSION_ID).status == "blocked"

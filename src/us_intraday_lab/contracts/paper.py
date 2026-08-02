@@ -182,6 +182,24 @@ class PositionSnapshot(_PaperModel):
         return self
 
 
+class StrategySessionState(_PaperModel):
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    paper_session_id: str = Field(min_length=1)
+    strategy_id: str = Field(min_length=1)
+    entry_count: int = Field(ge=0, le=3)
+    position_quantity: int = Field(ge=0)
+    last_signal_at: datetime | None = None
+    updated_at: datetime
+
+    @field_validator("last_signal_at", "updated_at")
+    @classmethod
+    def validate_timestamps(cls, value: datetime | None, info: object) -> datetime | None:
+        if value is None:
+            return None
+        field_name = getattr(info, "field_name", "timestamp")
+        return _utc(value, field_name=field_name)
+
+
 class PaperCheckpoint(_PaperModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     checkpoint_id: str = Field(min_length=1)

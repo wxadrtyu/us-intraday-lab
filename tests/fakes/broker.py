@@ -15,6 +15,7 @@ class SubmitBehavior(str, Enum):
     PARTIAL_FILL = "partial_fill"
     DELAYED_FILL = "delayed_fill"
     FILL = "fill"
+    TIMEOUT_AFTER_ACCEPT = "timeout_after_accept"
 
 
 class FakePaperBroker:
@@ -86,6 +87,7 @@ class FakePaperBroker:
             SubmitBehavior.PARTIAL_FILL: "partially_filled",
             SubmitBehavior.DELAYED_FILL: "submitted",
             SubmitBehavior.FILL: "filled",
+            SubmitBehavior.TIMEOUT_AFTER_ACCEPT: "accepted",
         }[behavior]
         filled_quantity = {
             SubmitBehavior.PARTIAL_FILL: max(1, intent.quantity // 2),
@@ -108,6 +110,8 @@ class FakePaperBroker:
         self._intents[intent.idempotency_key] = intent
         self._orders[intent.idempotency_key] = order
         self.submitted_idempotency_keys.append(intent.idempotency_key)
+        if behavior is SubmitBehavior.TIMEOUT_AFTER_ACCEPT:
+            raise TimeoutError("FAKE_TIMEOUT_AFTER_ACCEPT")
         if behavior is SubmitBehavior.FILL and intent.side == "sell":
             position = self._positions.get(intent.symbol)
             if position is not None:
@@ -122,6 +126,17 @@ class FakePaperBroker:
                             "observed_at": self._now,
                         }
                     )
+        elif behavior in {SubmitBehavior.FILL, SubmitBehavior.PARTIAL_FILL} and intent.side == "buy":
+            position = self._positions.get(intent.symbol)
+            quantity = filled_quantity + (0 if position is None else position.quantity)
+            self._positions[intent.symbol] = BrokerPosition(
+                asset_id=f"asset-{intent.symbol.lower()}",
+                symbol=intent.symbol,
+                quantity=quantity,
+                average_entry_price=100.0,
+                market_value=quantity * 100.0,
+                observed_at=self._now,
+            )
         return order
 
     def cancel(self, broker_order_id: str) -> BrokerOrder:
@@ -147,6 +162,20 @@ class FakePaperBroker:
             }
         )
         self._orders[client_order_id] = filled
+        intent = self._intents[client_order_id]
+        if intent.side == "buy":
+            previous = self._positions.get(intent.symbol)
+            quantity = intent.quantity + (0 if previous is None else previous.quantity)
+            self._positions[intent.symbol] = BrokerPosition(
+                asset_id=f"asset-{intent.symbol.lower()}",
+                symbol=intent.symbol,
+                quantity=quantity,
+                average_entry_price=price,
+                market_value=quantity * price,
+                observed_at=self._now,
+            )
+        elif intent.symbol in self._positions:
+            del self._positions[intent.symbol]
         return filled
 
     def force_position(self, *, symbol: str, quantity: int, price: float) -> None:
@@ -161,6 +190,10 @@ class FakePaperBroker:
 
     def set_stale_clock(self, age: timedelta) -> None:
         self._clock_observed_at = self._now - age
+
+    def set_now(self, now: datetime) -> None:
+        self._now = now
+        self._clock_observed_at = now
 
     def disconnect(self) -> None:
         self._connected = False

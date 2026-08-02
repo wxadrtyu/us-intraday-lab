@@ -161,6 +161,7 @@ def closeout_session(
     session = store.get_session(paper_session_id)
     if session is None:
         raise ValueError("PAPER_SESSION_NOT_FOUND")
+    store.transition_session_status(paper_session_id, "closeout")
 
     cancelled: list[str] = []
     for _ in range(max_cancel_polls):
@@ -249,6 +250,11 @@ def closeout_session(
             occurred_at=closeout_at,
         )
         store.append_incident(incident)
+
+    store.transition_session_status(
+        paper_session_id,
+        "closed" if clean else "blocked",
+    )
 
     return CloseoutResult(
         entries_enabled=False,
