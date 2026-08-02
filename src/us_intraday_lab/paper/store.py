@@ -19,11 +19,14 @@ from us_intraday_lab.contracts.paper import (
     PaperCheckpoint,
     PaperSession,
     PositionSnapshot,
+    ReconciliationResult,
     RiskDecision,
 )
 
 BUSY_TIMEOUT_MS = 5_000
-_MIGRATION = Path(__file__).with_name("migrations") / "001_initial.sql"
+_MIGRATION_DIRECTORY = Path(__file__).with_name("migrations")
+_INITIAL_MIGRATION = _MIGRATION_DIRECTORY / "001_initial.sql"
+_REPLAY_GENERATION_MIGRATION = _MIGRATION_DIRECTORY / "002_replay_generations.sql"
 _TABLES = (
     "incident_events",
     "market_events",
@@ -57,6 +60,24 @@ class StoredOrderBundle:
     broker_order: BrokerOrder
     checkpoint: PaperCheckpoint
     order_event_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class MarketReplayRecord:
+    event: MarketBarClosed
+    checkpoint_base_sequence: int
+
+
+@dataclass(frozen=True, slots=True)
+class OrderReplayRecord:
+    event: BrokerOrder
+    checkpoint_sequence: int
+
+
+@dataclass(frozen=True, slots=True)
+class PositionReplayRecord:
+    snapshot: PositionSnapshot
+    checkpoint_base_sequence: int
 
 
 def _canonical_json(value: object) -> str:
@@ -106,7 +127,12 @@ class PaperStore:
 
     def _initialize(self) -> None:
         with closing(self._connect()) as connection:
-            connection.executescript(_MIGRATION.read_text(encoding="utf-8"))
+            connection.executescript(_INITIAL_MIGRATION.read_text(encoding="utf-8"))
+            market_columns = {
+                str(row[1]) for row in connection.execute("PRAGMA table_info(market_events)")
+            }
+            if "checkpoint_base_sequence" not in market_columns:
+                connection.executescript(_REPLAY_GENERATION_MIGRATION.read_text(encoding="utf-8"))
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -206,6 +232,9 @@ class PaperStore:
         digest = _sha256(content)
         with self._transaction() as connection:
             self._require_session(connection, paper_session_id)
+            checkpoint_base_sequence = self._latest_checkpoint_sequence(
+                connection, paper_session_id
+            )
             row = connection.execute(
                 """
                 SELECT paper_session_id, event_json, content_sha256
@@ -224,14 +253,15 @@ class PaperStore:
             connection.execute(
                 """
                 INSERT INTO market_events (
-                    provider_event_id, paper_session_id, symbol, available_at,
-                    event_json, content_sha256
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    provider_event_id, paper_session_id, symbol,
+                    checkpoint_base_sequence, available_at, event_json, content_sha256
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     retained.provider_event_id,
                     paper_session_id,
                     retained.symbol,
+                    checkpoint_base_sequence,
                     retained.available_at.isoformat(),
                     content,
                     digest,
@@ -295,6 +325,7 @@ class PaperStore:
                 connection,
                 retained_intent.run_id,
                 retained_order,
+                checkpoint_sequence=retained_checkpoint.event_sequence,
                 order_event_id=order_event_id,
                 content=order_json,
                 digest=order_hash,
@@ -354,6 +385,17 @@ class PaperStore:
         if row is None:
             raise ValueError("PAPER_SESSION_NOT_FOUND")
         return PaperSession.model_validate_json(row["session_json"])
+
+    @staticmethod
+    def _latest_checkpoint_sequence(connection: sqlite3.Connection, paper_session_id: str) -> int:
+        retained = connection.execute(
+            """
+            SELECT MAX(event_sequence) FROM paper_checkpoints
+            WHERE paper_session_id = ?
+            """,
+            (paper_session_id,),
+        ).fetchone()[0]
+        return 0 if retained is None else int(retained)
 
     @staticmethod
     def _insert_or_verify_intent(
@@ -431,6 +473,7 @@ class PaperStore:
         paper_session_id: str,
         order: BrokerOrder,
         *,
+        checkpoint_sequence: int,
         order_event_id: str,
         content: str,
         digest: str,
@@ -447,14 +490,15 @@ class PaperStore:
             """
             INSERT INTO order_events (
                 order_event_id, paper_session_id, broker_order_id, idempotency_key,
-                status, event_json, content_sha256, occurred_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                checkpoint_sequence, status, event_json, content_sha256, occurred_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 order_event_id,
                 paper_session_id,
                 order.broker_order_id,
                 order.client_order_id,
+                checkpoint_sequence,
                 order.status,
                 content,
                 digest,
@@ -522,6 +566,9 @@ class PaperStore:
         digest = _sha256(content)
         with self._transaction() as connection:
             self._require_session(connection, retained.paper_session_id)
+            checkpoint_base_sequence = self._latest_checkpoint_sequence(
+                connection, retained.paper_session_id
+            )
             row = connection.execute(
                 """
                 SELECT snapshot_json, content_sha256 FROM position_snapshots
@@ -536,13 +583,14 @@ class PaperStore:
             connection.execute(
                 """
                 INSERT INTO position_snapshots (
-                    snapshot_id, paper_session_id, snapshot_json,
-                    content_sha256, observed_at
-                ) VALUES (?, ?, ?, ?, ?)
+                    snapshot_id, paper_session_id, checkpoint_base_sequence,
+                    snapshot_json, content_sha256, observed_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
                     retained.snapshot_id,
                     retained.paper_session_id,
+                    checkpoint_base_sequence,
                     content,
                     digest,
                     retained.observed_at.isoformat(),
@@ -599,6 +647,25 @@ class PaperStore:
             for row in rows
         )
 
+    def list_market_replay_records(self, paper_session_id: str) -> tuple[MarketReplayRecord, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT event_json, content_sha256, checkpoint_base_sequence
+                FROM market_events WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            MarketReplayRecord(
+                event=MarketBarClosed.model_validate_json(
+                    self._verified_json(row, json_column="event_json")
+                ),
+                checkpoint_base_sequence=int(row["checkpoint_base_sequence"]),
+            )
+            for row in rows
+        )
+
     def list_order_events(self, paper_session_id: str) -> tuple[BrokerOrder, ...]:
         with closing(self._connect()) as connection:
             rows = connection.execute(
@@ -610,6 +677,25 @@ class PaperStore:
             ).fetchall()
         return tuple(
             BrokerOrder.model_validate_json(self._verified_json(row, json_column="event_json"))
+            for row in rows
+        )
+
+    def list_order_replay_records(self, paper_session_id: str) -> tuple[OrderReplayRecord, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT event_json, content_sha256, checkpoint_sequence
+                FROM order_events WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            OrderReplayRecord(
+                event=BrokerOrder.model_validate_json(
+                    self._verified_json(row, json_column="event_json")
+                ),
+                checkpoint_sequence=int(row["checkpoint_sequence"]),
+            )
             for row in rows
         )
 
@@ -629,6 +715,27 @@ class PaperStore:
             for row in rows
         )
 
+    def list_position_replay_records(
+        self, paper_session_id: str
+    ) -> tuple[PositionReplayRecord, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT snapshot_json, content_sha256, checkpoint_base_sequence
+                FROM position_snapshots WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            PositionReplayRecord(
+                snapshot=PositionSnapshot.model_validate_json(
+                    self._verified_json(row, json_column="snapshot_json")
+                ),
+                checkpoint_base_sequence=int(row["checkpoint_base_sequence"]),
+            )
+            for row in rows
+        )
+
     def latest_checkpoint(self, paper_session_id: str) -> PaperCheckpoint | None:
         with closing(self._connect()) as connection:
             row = connection.execute(
@@ -642,4 +749,57 @@ class PaperStore:
             return None
         return PaperCheckpoint.model_validate_json(
             self._verified_json(row, json_column="checkpoint_json")
+        )
+
+    def append_reconciliation(self, result: ReconciliationResult) -> ReconciliationResult:
+        if type(result) is not ReconciliationResult:
+            raise TypeError("result must be an exact ReconciliationResult")
+        retained = ReconciliationResult.model_validate(result.model_dump(mode="python"))
+        content = _model_json(retained)
+        digest = _sha256(content)
+        with self._transaction() as connection:
+            self._require_session(connection, retained.paper_session_id)
+            row = connection.execute(
+                """
+                SELECT reconciliation_json, content_sha256 FROM reconciliation_runs
+                WHERE reconciliation_id = ?
+                """,
+                (retained.reconciliation_id,),
+            ).fetchone()
+            if row is not None:
+                if row["content_sha256"] != digest or row["reconciliation_json"] != content:
+                    raise PaperImmutableConflict("IMMUTABLE_RECONCILIATION_CONFLICT")
+                return ReconciliationResult.model_validate_json(row["reconciliation_json"])
+            connection.execute(
+                """
+                INSERT INTO reconciliation_runs (
+                    reconciliation_id, paper_session_id, status,
+                    reconciliation_json, content_sha256, completed_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    retained.reconciliation_id,
+                    retained.paper_session_id,
+                    retained.status,
+                    content,
+                    digest,
+                    retained.completed_at.isoformat(),
+                ),
+            )
+        return retained
+
+    def list_reconciliation_runs(self, paper_session_id: str) -> tuple[ReconciliationResult, ...]:
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                """
+                SELECT reconciliation_json, content_sha256 FROM reconciliation_runs
+                WHERE paper_session_id = ? ORDER BY sequence_no
+                """,
+                (paper_session_id,),
+            ).fetchall()
+        return tuple(
+            ReconciliationResult.model_validate_json(
+                self._verified_json(row, json_column="reconciliation_json")
+            )
+            for row in rows
         )

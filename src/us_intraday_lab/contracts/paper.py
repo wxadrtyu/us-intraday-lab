@@ -231,3 +231,49 @@ class RiskDecision(_PaperModel):
     @classmethod
     def validate_decided_at(cls, value: datetime) -> datetime:
         return _utc(value, field_name="decided_at")
+
+
+class ReconciliationResult(_PaperModel):
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    reconciliation_id: str = Field(min_length=1)
+    paper_session_id: str = Field(min_length=1)
+    status: Literal["clean", "recoverable", "blocked"]
+    entries_enabled: bool
+    exits_enabled: bool
+    discrepancy_codes: tuple[str, ...]
+    startup_steps: tuple[str, ...]
+    broker_account_id: str = Field(min_length=1)
+    local_state_sha256: str
+    broker_state_sha256: str
+    completed_at: datetime
+
+    @field_validator("discrepancy_codes", "startup_steps")
+    @classmethod
+    def validate_codes(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if any(re.fullmatch(r"[A-Z][A-Z0-9_]*", item) is None for item in value):
+            raise ValueError("codes must contain stable uppercase values")
+        return value
+
+    @field_validator("local_state_sha256", "broker_state_sha256")
+    @classmethod
+    def validate_state_hash(cls, value: str) -> str:
+        if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+            raise ValueError("state hash must be a lowercase SHA-256 digest")
+        return value
+
+    @field_validator("completed_at")
+    @classmethod
+    def validate_completed_at(cls, value: datetime) -> datetime:
+        return _utc(value, field_name="completed_at")
+
+    @model_validator(mode="after")
+    def validate_permissions(self) -> Self:
+        if not self.exits_enabled:
+            raise ValueError("reconciliation must always leave exits enabled")
+        if self.entries_enabled != (self.status == "clean"):
+            raise ValueError("entries may be enabled only for clean reconciliation")
+        if self.status == "clean" and self.discrepancy_codes:
+            raise ValueError("clean reconciliation cannot contain discrepancies")
+        if self.status != "clean" and not self.discrepancy_codes:
+            raise ValueError("non-clean reconciliation requires discrepancies")
+        return self
