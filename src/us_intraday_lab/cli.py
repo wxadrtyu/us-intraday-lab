@@ -26,6 +26,7 @@ from us_intraday_lab.contracts.backtests import (
 )
 from us_intraday_lab.contracts.market import MarketBarClosed
 from us_intraday_lab.contracts.paper import PaperSession
+from us_intraday_lab.contracts.registry import RegistryState
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.data.archive import (
     DEFAULT_ARCHIVE_READ_LIMITS,
@@ -76,6 +77,12 @@ backtest_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
 report_app = typer.Typer(no_args_is_help=True)
+PAPER_SESSION_STATES: tuple[RegistryState, ...] = (
+    "paper_shadow",
+    "paper_observing",
+    "paper_ranked",
+    "leader",
+)
 app.add_typer(data_app, name="data")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(research_app, name="research")
@@ -168,7 +175,7 @@ def paper_preflight_command(
     enabled_strategy_count = 0
     if registry_path.exists():
         enabled_strategy_count = len(
-            RegistryStore(registry_path).list_strategy_definitions_in_states(("paper_shadow",))
+            RegistryStore(registry_path).list_strategy_definitions_in_states(PAPER_SESSION_STATES)
         )
     session = None if not sessions else sessions[-1]
     reconciliation_status = "missing_session"
@@ -285,9 +292,9 @@ def paper_run_command(
     registry_path = root / "data" / "registry" / "strategy_registry.sqlite3"
     if not registry_path.exists():
         raise typer.BadParameter("strategy registry does not exist")
-    enabled = RegistryStore(registry_path).list_strategy_definitions_in_states(("paper_shadow",))
+    enabled = RegistryStore(registry_path).list_strategy_definitions_in_states(PAPER_SESSION_STATES)
     if not enabled:
-        raise typer.BadParameter("no enabled paper-shadow strategy exists")
+        raise typer.BadParameter("no enabled paper lifecycle strategy exists")
     if len(enabled) > 20:
         raise typer.BadParameter("paper observing capacity exceeds 20 strategies")
     history = tuple(
