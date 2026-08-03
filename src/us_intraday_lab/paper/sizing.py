@@ -30,12 +30,8 @@ class SizingRequest:
         _decimal(self.account_equity, name="account_equity", allow_zero=True)
         _decimal(self.reference_price, name="reference_price")
         _decimal(self.stop_distance, name="stop_distance")
-        risk_fraction = _decimal(
-            self.strategy_risk_fraction, name="strategy_risk_fraction"
-        )
-        position_fraction = _decimal(
-            self.max_position_fraction, name="max_position_fraction"
-        )
+        risk_fraction = _decimal(self.strategy_risk_fraction, name="strategy_risk_fraction")
+        position_fraction = _decimal(self.max_position_fraction, name="max_position_fraction")
         if risk_fraction > 1:
             raise ValueError("strategy_risk_fraction must not exceed 1")
         if position_fraction > 1:

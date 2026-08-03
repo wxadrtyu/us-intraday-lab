@@ -172,9 +172,7 @@ class MarketDataPipeline:
         self.store.append_market_event(self.paper_session_id, aggregate)
         return (aggregate,)
 
-    def _aggregate_if_complete(
-        self, *, symbol: str, timestamp: datetime
-    ) -> MarketBarClosed | None:
+    def _aggregate_if_complete(self, *, symbol: str, timestamp: datetime) -> MarketBarClosed | None:
         offset = int((timestamp - self._session_open).total_seconds() // 60)
         bucket_start = self._session_open + timedelta(minutes=(offset // 15) * 15)
         bucket_key = (symbol, bucket_start)
@@ -214,10 +212,7 @@ class MarketDataPipeline:
                 for candidate_symbol, timestamp in self._bars
                 if candidate_symbol == symbol
             )
-            if any(
-                later - earlier > timedelta(minutes=1)
-                for earlier, later in pairwise(starts)
-            ):
+            if any(later - earlier > timedelta(minutes=1) for earlier, later in pairwise(starts)):
                 reasons.add("MARKET_DATA_GAP")
             latest = self._bars[(symbol, latest_start)]
             if observed_at - latest.available_at > self.stale_after:

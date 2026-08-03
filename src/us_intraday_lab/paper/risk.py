@@ -13,9 +13,7 @@ from us_intraday_lab.contracts.paper import RiskDecision
 from us_intraday_lab.paper.sizing import SizingResult
 
 PRODUCTION_SYMBOLS = frozenset({"SPY", "QQQ", "IWM"})
-ENABLED_PAPER_STATES = frozenset(
-    {"paper_shadow", "paper_observing", "paper_ranked", "leader"}
-)
+ENABLED_PAPER_STATES = frozenset({"paper_shadow", "paper_observing", "paper_ranked", "leader"})
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,0 +1,77 @@
+# 模拟盘策略详情：`{{ strategy_id }}`
+
+> 这是研究与模拟盘证据说明，不是盈利承诺或投资建议。所有成交指标只来自券商确认事件。
+
+## 当前结论
+
+- 生命周期状态：`{{ current_state }}`
+- 模拟盘区间：{{ paper_first_day or "尚未开始" }} 至 {{ paper_last_day or "尚未开始" }}
+- 已完成模拟交易日：{{ paper_completed_days }} 天
+- 已平仓交易：{{ closed_trade_count }} 笔
+- 累计已实现盈亏：${{ "%.2f" | format(total_pnl) }}
+- 前向排名：{{ forward_rank or "尚未入榜" }}
+- 前向质量分：{{ forward_quality_score or "尚无" }}
+
+## 不可变策略定义
+
+```json
+{{ definition_json }}
+```
+
+## 历史验证切分与硬门槛
+
+{% if decisions %}{% for decision in decisions %}- 决策 `{{ decision.decision_id }}`；切分 `{{ decision.split_id }}`；结果 `{{ decision.decision }}`
+
+| 门槛 | 观察值 | 阈值 | 结果 | 证据 |
+|---|---:|---:|---|---|
+{% for gate in decision.gate_results %}| {{ gate.reason_code }} | {{ gate.observed }} | {{ gate.threshold }} | {{ "通过" if gate.passed else "失败" }} | `{{ gate.evidence.evidence_id }}` |
+{% endfor %}{% endfor %}{% else %}没有找到历史验证决策。
+{% endif %}
+
+## 模拟盘日期与交易
+
+| 日期 | 会话状态 | 订单 | 已平仓交易 | 已实现盈亏 |
+|---|---|---:|---:|---:|
+{% for item in session_rows %}| {{ item.date }} | {{ item.status }} | {{ item.orders }} | {{ item.closed_trades }} | ${{ "%.2f" | format(item.pnl) }} |
+{% endfor %}
+
+## 前向质量排名组成
+
+{% if forward_component_values %}| 指标 | 原始值 | 标准分 | 权重 |
+|---|---:|---:|---:|
+{% for name, value in forward_component_values.items() %}| {{ name }} | {{ value }} | {{ forward_component_scores[name] }} | {{ forward_weights[name] }} |
+{% endfor %}{% else %}尚未满足 30 个交易日、50 笔平仓交易等硬门槛，因此没有前向排名。
+{% endif %}
+
+## 标的与日期贡献
+
+| 标的 | 已实现盈亏 |
+|---|---:|
+{% for symbol, pnl in pnl_by_symbol.items() %}| {{ symbol }} | ${{ "%.2f" | format(pnl) }} |
+{% endfor %}
+
+| 日期 | 已实现盈亏 |
+|---|---:|
+{% for day, pnl in pnl_by_day %}| {{ day }} | ${{ "%.2f" | format(pnl) }} |
+{% endfor %}
+
+## 执行质量与历史偏离
+
+- 可审计限价单平均不利滑点：{% if execution_slippage_bps is none %}证据不足（市价单没有独立参考价）{% else %}{{ "%.3f" | format(execution_slippage_bps) }} bps{% endif %}
+- 相对历史预期偏离：{{ historical_divergence if historical_divergence is not none else "尚无前向排名证据" }}
+- 费用说明：账本未保存的费用不会被估算，盈亏按已存买卖成交价计算。
+
+## 生命周期事件
+
+| 时间 | 原状态 | 新状态 | 原因 | 事件 |
+|---|---|---|---|---|
+{% for event in lifecycle_events %}| {{ event.occurred_at }} | {{ event.from_state or "-" }} | {{ event.to_state }} | {{ event.reason_code }} | `{{ event.event_id }}` |
+{% endfor %}
+
+## 相关会话异常
+
+异常是策略参与会话的系统级记录，不自动归因于该策略。
+
+{% if incidents %}{% for item in incidents %}- **{{ item.severity }}** `{{ item.reason_code }}`（`{{ item.incident_id }}`）
+{% endfor %}{% else %}没有相关会话异常。
+{% endif %}

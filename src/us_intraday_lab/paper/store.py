@@ -638,9 +638,7 @@ class PaperStore:
             )
         return retained
 
-    def upsert_strategy_session_state(
-        self, state: StrategySessionState
-    ) -> StrategySessionState:
+    def upsert_strategy_session_state(self, state: StrategySessionState) -> StrategySessionState:
         if type(state) is not StrategySessionState:
             raise TypeError("state must be an exact StrategySessionState")
         retained = StrategySessionState.model_validate(state.model_dump(mode="python"))
@@ -699,15 +697,11 @@ class PaperStore:
                 """
             ).fetchall()
         return tuple(
-            PaperSession.model_validate_json(
-                self._verified_json(row, json_column="session_json")
-            )
+            PaperSession.model_validate_json(self._verified_json(row, json_column="session_json"))
             for row in rows
         )
 
-    def transition_session_status(
-        self, paper_session_id: str, status: str
-    ) -> PaperSession:
+    def transition_session_status(self, paper_session_id: str, status: str) -> PaperSession:
         allowed = {
             "initializing": frozenset({"running", "blocked"}),
             "running": frozenset({"closeout", "blocked"}),
@@ -779,9 +773,7 @@ class PaperStore:
                 (paper_session_id,),
             ).fetchall()
         return tuple(
-            OrderIntent.model_validate_json(
-                self._verified_json(row, json_column="intent_json")
-            )
+            OrderIntent.model_validate_json(self._verified_json(row, json_column="intent_json"))
             for row in rows
         )
 
@@ -894,9 +886,7 @@ class PaperStore:
                 (paper_session_id,),
             ).fetchall()
         return tuple(
-            IncidentEvent.model_validate_json(
-                self._verified_json(row, json_column="event_json")
-            )
+            IncidentEvent.model_validate_json(self._verified_json(row, json_column="event_json"))
             for row in rows
         )
 

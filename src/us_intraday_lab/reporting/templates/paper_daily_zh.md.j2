@@ -1,0 +1,91 @@
+# 模拟盘日报：{{ session_date }}
+
+> 本报告只使用 Alpaca 模拟盘账本中的券商确认成交，不使用 K 线推算成交。模拟盘表现不代表未来实盘收益，不构成投资建议。
+
+## 一眼看懂
+
+- 今日已实现盈亏：${{ "%.2f" | format(daily_pnl) }}
+- 截至今日累计已实现盈亏：${{ "%.2f" | format(cumulative_pnl) }}
+- 已平仓交易：{{ closed_trade_count }} 笔
+- 今日最大已实现回撤：${{ "%.2f" | format(max_drawdown) }}
+- 收盘是否平仓：{{ "是" if flat_at_close else "否，需要处理" }}
+- 今日收益率：证据不足（账本尚未保存日初账户净值，不做猜测）
+
+## 账户与会话状态
+
+- 环境：仅模拟盘（paper）
+- 券商账户：`{{ account_id }}`
+- 会话：`{{ paper_session_id }}`
+- 会话状态：`{{ status }}`
+- 启动核对状态：`{{ reconciliation_status }}`
+
+## 今日收益与标的贡献
+
+| 标的 | 已实现盈亏 |
+|---|---:|
+{% for symbol, pnl in pnl_by_symbol.items() %}| {{ symbol }} | ${{ "%.2f" | format(pnl) }} |
+{% endfor %}
+
+## 持仓与收盘平仓结果
+
+{% if final_positions %}| 标的 | 数量 | 券商市值 |
+|---|---:|---:|
+{% for item in final_positions %}| {{ item.symbol }} | {{ item.quantity }} | ${{ "%.2f" | format(item.market_value) }} |
+{% endfor %}{% else %}券商最终持仓快照为空，已平仓。
+{% endif %}
+
+## 订单、成交、拒单与滑点
+
+- 下单意图：{{ order_count }} 个
+- 有成交订单：{{ filled_order_count }} 个
+- 拒单：{{ rejected_order_count }} 个
+- 可计算滑点的限价订单：{{ slippage_available_count }} 个；市价单没有独立基准价时不伪造滑点。
+
+| 策略 | 标的 | 方向 | 状态 | 成交数量 | 成交价 | 滑点(bps) | 券商订单 |
+|---|---|---|---|---:|---:|---:|---|
+{% for item in order_rows %}| `{{ item.strategy_id }}` | {{ item.symbol }} | {{ item.side }} | {{ item.status }} | {{ item.filled_quantity }} | {{ item.fill_price }} | {{ "不可计算" if item.slippage_bps is none else "%.3f" | format(item.slippage_bps) }} | `{{ item.broker_order_id }}` |
+{% endfor %}
+
+## 策略状态变化与今日表现
+
+| 策略 | 当前状态 | 已平仓笔数 | 今日盈亏 | 前向排名 | 质量分 |
+|---|---|---:|---:|---:|---:|
+{% for item in strategy_rows %}| `{{ item.strategy_id }}` | {{ item.state }} | {{ item.trade_count }} | ${{ "%.2f" | format(item.pnl) }} | {{ "-" if item.rank is none else item.rank }} | {{ "-" if item.quality_score is none else item.quality_score }} |
+{% endfor %}
+
+| 时间 | 策略 | 原状态 | 新状态 | 原因 |
+|---|---|---|---|---|
+{% for event in lifecycle_changes %}| {{ event.occurred_at }} | `{{ event.strategy_id }}` | {{ event.from_state or "-" }} | {{ event.to_state }} | {{ event.reason_code }} |
+{% endfor %}
+
+## 观察、排名与领先策略
+
+- 观察中：{% if active_by_state.paper_observing %}`{{ active_by_state.paper_observing | join('`, `') }}`{% else %}无{% endif %}
+- 已排名：{% if active_by_state.paper_ranked %}`{{ active_by_state.paper_ranked | join('`, `') }}`{% else %}无{% endif %}
+- 领先策略：{% if active_by_state.leader %}`{{ active_by_state.leader | join('`, `') }}`{% else %}无{% endif %}
+
+## 数据与系统健康
+
+- 已存市场事件：{{ market_event_count }} 条
+- 最终持仓证据：{{ "完整" if flat_at_close else "仍有持仓" }}
+- 盈亏来源订单：{% if evidence_order_ids %}`{{ evidence_order_ids | join('`, `') }}`{% else %}无{% endif %}
+
+## 异常与待处理事项
+
+{% if incidents %}{% for item in incidents %}- **{{ item.severity }}** `{{ item.reason_code }}`（事件 `{{ item.incident_id }}`）
+{% endfor %}{% else %}没有已记录异常。
+{% endif %}
+
+## 5千、1万、2.5万美元可执行性
+
+以下仅按真实成交价、策略止损距离和固定保守风险参数重放整数股数量，不改变真实模拟盘订单。
+
+{% if feasibility_rows %}| 策略 | 标的 | 参考成交价 | $5,000 | $10,000 | $25,000 |
+|---|---|---:|---:|---:|---:|
+{% for item in feasibility_rows %}| `{{ item.strategy_id }}` | {{ item.symbol }} | {{ item.reference_price }} | {{ item.balances[0].quantity }} 股 | {{ item.balances[1].quantity }} 股 | {{ item.balances[2].quantity }} 股 |
+{% endfor %}{% else %}今日没有可重放的买入成交。
+{% endif %}
+
+## 风险声明
+
+模拟盘成交环境、流动性、滑点和实盘不同；历史与模拟表现都不能保证未来盈利。报告中的金额不包含账本未记录的费用，缺失证据处明确标注而不估算。

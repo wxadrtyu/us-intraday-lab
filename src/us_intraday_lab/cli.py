@@ -53,7 +53,7 @@ from us_intraday_lab.factory.orchestrator import (
     run_research,
 )
 from us_intraday_lab.factory.proposal import FixtureProposalProvider
-from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker
+from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker, PaperBoundaryError
 from us_intraday_lab.paper.closeout import closeout_session
 from us_intraday_lab.paper.market_data import (
     MARKET_SCHEMA_VERSION,
@@ -64,6 +64,8 @@ from us_intraday_lab.paper.reconciliation import run_startup_reconciliation
 from us_intraday_lab.paper.session import CompiledSessionStrategy, PaperSessionService
 from us_intraday_lab.paper.store import PaperStore
 from us_intraday_lab.registry.store import RegistryStore
+from us_intraday_lab.reporting.paper_daily import render_paper_daily_report
+from us_intraday_lab.reporting.strategy_detail import render_strategy_detail_report
 from us_intraday_lab.strategy.compiler import StrategyCompileError, compile_strategy
 from us_intraday_lab.strategy.features import FEATURE_SET_VERSION
 from us_intraday_lab.strategy.validator import scan_strategy_payload
@@ -73,14 +75,62 @@ data_app = typer.Typer(no_args_is_help=True)
 backtest_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
+report_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(research_app, name="research")
 app.add_typer(paper_app, name="paper")
+app.add_typer(report_app, name="report")
 
 
 def _paper_store(root: Path) -> PaperStore:
     return PaperStore(root / "state" / "paper" / "paper.sqlite3")
+
+
+def _registry_store(root: Path) -> RegistryStore:
+    path = root / "data" / "registry" / "strategy_registry.sqlite3"
+    if not path.is_file():
+        raise typer.BadParameter("strategy registry does not exist")
+    return RegistryStore(path)
+
+
+@report_app.command("paper-daily")
+def report_paper_daily_command(
+    session: Annotated[str, typer.Option("--session")],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Render one evidence-only Chinese paper-session report."""
+
+    try:
+        session_date = date.fromisoformat(session)
+        path = render_paper_daily_report(
+            root=root,
+            paper_store=_paper_store(root),
+            registry_store=_registry_store(root),
+            session_date=session_date,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(f"paper daily report failed: {error}") from error
+    typer.echo(path)
+
+
+@report_app.command("strategy")
+def report_strategy_command(
+    strategy_id: Annotated[str, typer.Option("--strategy-id")],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Render one evidence-only Chinese paper-strategy dossier."""
+
+    try:
+        path = render_strategy_detail_report(
+            root=root,
+            paper_store=_paper_store(root),
+            registry_store=_registry_store(root),
+            strategy_id=strategy_id,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(f"strategy report failed: {error}") from error
+    typer.echo(path)
 
 
 def _latest_paper_session(store: PaperStore) -> PaperSession:
@@ -96,7 +146,10 @@ def paper_preflight_command(
 ) -> None:
     """Prove paper-only broker, schema, session, and writable ignored state."""
 
-    broker = AlpacaPaperBroker.from_environment()
+    try:
+        broker = AlpacaPaperBroker.from_environment()
+    except PaperBoundaryError as error:
+        raise typer.BadParameter(str(error)) from error
     account = broker.account()
     clock = broker.clock()
     store = _paper_store(root)
@@ -232,9 +285,7 @@ def paper_run_command(
     registry_path = root / "data" / "registry" / "strategy_registry.sqlite3"
     if not registry_path.exists():
         raise typer.BadParameter("strategy registry does not exist")
-    enabled = RegistryStore(registry_path).list_strategy_definitions_in_states(
-        ("paper_shadow",)
-    )
+    enabled = RegistryStore(registry_path).list_strategy_definitions_in_states(("paper_shadow",))
     if not enabled:
         raise typer.BadParameter("no enabled paper-shadow strategy exists")
     if len(enabled) > 20:

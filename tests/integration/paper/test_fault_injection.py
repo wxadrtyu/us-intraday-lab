@@ -77,9 +77,7 @@ def _components(tmp_path: Path) -> tuple[PaperStore, FakePaperBroker, PaperSessi
     return store, broker, service
 
 
-def _restart(
-    *, store: PaperStore, broker: FakePaperBroker
-) -> PaperSessionService:
+def _restart(*, store: PaperStore, broker: FakePaperBroker) -> PaperSessionService:
     pipeline = MarketDataPipeline(
         store=store,
         paper_session_id=SESSION_ID,
@@ -110,9 +108,7 @@ def test_disconnect_stale_feed_and_open_store_circuit_disable_entries(tmp_path: 
     assert broker.submitted_idempotency_keys == []
 
     _stale_store, stale_broker, stale_service = _components(tmp_path / "stale")
-    stale = stale_service.process_bars(
-        _bars(), observed_at=EXECUTION_AT + timedelta(minutes=3)
-    )
+    stale = stale_service.process_bars(_bars(), observed_at=EXECUTION_AT + timedelta(minutes=3))
     assert stale.entries_enabled is False
     assert "MARKET_DATA_STALE" in stale.reason_codes
     assert stale_broker.submitted_idempotency_keys == []

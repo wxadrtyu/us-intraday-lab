@@ -126,7 +126,9 @@ class FakePaperBroker:
                             "observed_at": self._now,
                         }
                     )
-        elif behavior in {SubmitBehavior.FILL, SubmitBehavior.PARTIAL_FILL} and intent.side == "buy":
+        elif (
+            behavior in {SubmitBehavior.FILL, SubmitBehavior.PARTIAL_FILL} and intent.side == "buy"
+        ):
             position = self._positions.get(intent.symbol)
             quantity = filled_quantity + (0 if position is None else position.quantity)
             self._positions[intent.symbol] = BrokerPosition(

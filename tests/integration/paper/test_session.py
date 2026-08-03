@@ -95,8 +95,7 @@ def test_out_of_order_and_duplicate_minutes_emit_one_session_anchored_bar(
 
     emitted: list[MarketBarClosed] = []
     arrival_order = tuple(
-        bars[index]
-        for index in (1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 14)
+        bars[index] for index in (1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 14)
     )
     for bar in arrival_order + (bars[7],):
         emitted.extend(pipeline.ingest(bar))
@@ -116,9 +115,7 @@ def test_out_of_order_and_duplicate_minutes_emit_one_session_anchored_bar(
 def test_gap_or_stale_stream_opens_the_entry_circuit(tmp_path: Path) -> None:
     pipeline = _pipeline(tmp_path)
     pipeline.ingest(iex_minute_bar(symbol="SPY", bar_start=SESSION_OPEN))
-    pipeline.ingest(
-        iex_minute_bar(symbol="SPY", bar_start=SESSION_OPEN + timedelta(minutes=2))
-    )
+    pipeline.ingest(iex_minute_bar(symbol="SPY", bar_start=SESSION_OPEN + timedelta(minutes=2)))
 
     gap = pipeline.health(observed_at=SESSION_OPEN + timedelta(minutes=3))
     stale = pipeline.health(observed_at=SESSION_OPEN + timedelta(minutes=6))

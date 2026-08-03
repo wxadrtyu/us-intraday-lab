@@ -99,7 +99,9 @@ class CompiledSessionStrategy:
         self.lifecycle_state = lifecycle_state
         self.stop_loss_bps = compiled.risk.stop_loss_bps
         self.order_type = compiled.order_type
-        self._history = [bar for bar in history if bar.symbol == symbol and bar.timeframe == "15min"]
+        self._history = [
+            bar for bar in history if bar.symbol == symbol and bar.timeframe == "15min"
+        ]
 
     def should_enter(self, bar: MarketBarClosed) -> bool:
         if bar.symbol != self.symbol or bar.timeframe != "15min":
@@ -257,9 +259,7 @@ class PaperSessionService:
             reason_codes=tuple(sorted(rejected_reasons)),
         )
 
-    def _signal_already_processed(
-        self, strategy: SessionStrategy, bar: MarketBarClosed
-    ) -> bool:
+    def _signal_already_processed(self, strategy: SessionStrategy, bar: MarketBarClosed) -> bool:
         return any(
             intent.strategy_id == strategy.strategy_id
             and intent.symbol == strategy.symbol
@@ -277,9 +277,7 @@ class PaperSessionService:
     ) -> bool:
         if self._reconciliation is None:
             raise RuntimeError("PAPER_SESSION_NOT_STARTED")
-        state = self.store.get_strategy_session_state(
-            self.paper_session_id, strategy.strategy_id
-        )
+        state = self.store.get_strategy_session_state(self.paper_session_id, strategy.strategy_id)
         entry_count = 0 if state is None else state.entry_count
         account = self.broker.account()
         broker_clock = self.broker.clock()
@@ -298,9 +296,7 @@ class PaperSessionService:
         eligible_at = bar.available_at + timedelta(minutes=1)
         if observed_at < eligible_at:
             return False
-        order_type = cast(
-            Literal["market", "limit"], getattr(strategy, "order_type", "market")
-        )
+        order_type = cast(Literal["market", "limit"], getattr(strategy, "order_type", "market"))
         intent = OrderIntent(
             schema_version="1.0.0",
             run_id=self.paper_session_id,
@@ -332,8 +328,7 @@ class PaperSessionService:
                 regular_close=self.clock.session_close,
                 closeout_buffer=timedelta(
                     minutes=int(
-                        (self.clock.session_close - self.clock.closeout_time).total_seconds()
-                        // 60
+                        (self.clock.session_close - self.clock.closeout_time).total_seconds() // 60
                     )
                 ),
                 feed_observed_at=bar.available_at,
@@ -356,8 +351,7 @@ class PaperSessionService:
                 strategy_loss_limit=strategy.strategy_loss_limit,
                 duplicate_intent=False,
                 conflicting_intent=any(
-                    item.symbol == strategy.symbol and item.side == "buy"
-                    for item in open_orders
+                    item.symbol == strategy.symbol and item.side == "buy" for item in open_orders
                 ),
             )
         )
@@ -425,9 +419,7 @@ class PaperSessionService:
             checkpoint=checkpoint,
         )
 
-    def process_order_update(
-        self, order: BrokerOrder, *, observed_at: datetime
-    ) -> bool:
+    def process_order_update(self, order: BrokerOrder, *, observed_at: datetime) -> bool:
         latest = tuple(
             item
             for item in self.store.list_order_events(self.paper_session_id)
@@ -455,9 +447,7 @@ class PaperSessionService:
                 observed_at=observed_at,
             )
         )
-        current = self.store.get_strategy_session_state(
-            self.paper_session_id, intent.strategy_id
-        )
+        current = self.store.get_strategy_session_state(self.paper_session_id, intent.strategy_id)
         if current is not None:
             self.store.upsert_strategy_session_state(
                 current.model_copy(

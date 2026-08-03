@@ -69,9 +69,10 @@ def _snapshot(
 
 
 def _exit_key(*, paper_session_id: str, symbol: str) -> str:
-    return "po_close_" + _digest(
-        {"paper_session_id": paper_session_id, "symbol": symbol, "action": "exit"}
-    )[:32]
+    return (
+        "po_close_"
+        + _digest({"paper_session_id": paper_session_id, "symbol": symbol, "action": "exit"})[:32]
+    )
 
 
 def _exit_intent(
@@ -188,9 +189,7 @@ def closeout_session(
         intent = _exit_intent(
             paper_session_id=paper_session_id,
             session_date=session.session_date,
-            strategy_id=strategy_ids_by_symbol.get(
-                position.symbol, "paper-account-closeout"
-            ),
+            strategy_id=strategy_ids_by_symbol.get(position.symbol, "paper-account-closeout"),
             position=position,
             closeout_at=closeout_at,
         )

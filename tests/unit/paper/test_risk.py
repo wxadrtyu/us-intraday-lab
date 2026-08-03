@@ -95,7 +95,11 @@ def _context(**updates: object) -> RiskContext:
         ({"account_position_count": 3}, "ACCOUNT_POSITION_LIMIT", "account_position_count"),
         ({"strategy_entry_count": 3}, "STRATEGY_ENTRY_LIMIT", "strategy_entry_count"),
         ({"strategy_state": "paused"}, "STRATEGY_NOT_ENABLED", "strategy_state"),
-        ({"intent": _intent(side="sell", reason_code="exit_signal")}, "LONG_ONLY_ENTRY_REQUIRED", "side"),
+        (
+            {"intent": _intent(side="sell", reason_code="exit_signal")},
+            "LONG_ONLY_ENTRY_REQUIRED",
+            "side",
+        ),
         ({"available_cash": -1.0}, "NEGATIVE_CASH", "available_cash"),
         (
             {"sizing": replace(_context().sizing, required_cash=10_001.0)},
