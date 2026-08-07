@@ -1242,11 +1242,13 @@ class BacktestResearchBackend:
             with connect_catalog(root=self._root) as connection:
                 minute_bars = connection.execute(
                     f"SELECT * FROM bars_1m WHERE session_date IN ({placeholders}) "
+                    "AND symbol IN ('SPY', 'QQQ', 'IWM') "
                     "ORDER BY session_date, timestamp, symbol",
                     list(sessions),
                 ).df()
                 signal_bars = connection.execute(
                     f"SELECT * FROM bars_15m WHERE session_date IN ({placeholders}) "
+                    "AND symbol IN ('SPY', 'QQQ', 'IWM') "
                     "ORDER BY session_date, available_at, symbol",
                     list(sessions),
                 ).df()
