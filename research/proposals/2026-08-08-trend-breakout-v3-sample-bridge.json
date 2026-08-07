@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "trend-breakout-v3-sample-bridge",
+  "thesis": "A narrow intermediate trend threshold can preserve the positive cost-stressed breakout edge while increasing the historical trade sample above the promotion minimum.",
+  "entry_template": "trend_breakout",
+  "exit_template": "trend_failure",
+  "indicators": ["ema_spread", "rsi", "volume_ratio"],
+  "parameter_ranges": {
+    "cooldown_minutes": {"values": [5, 15, 30]},
+    "ema_spread_min": {"values": [0.0, 0.00025, 0.0005, 0.00075, 0.001]},
+    "max_entries_per_session": {"values": [3]},
+    "max_holding_minutes": {"values": [30, 60, 90]},
+    "order_type": {"values": ["limit"]},
+    "rsi_entry": {"values": [40.0, 45.0, 50.0]},
+    "stop_loss_bps": {"values": [35, 50]},
+    "take_profit_bps": {"values": [50, 70]},
+    "volume_ratio_min": {"values": [0.0, 0.2, 0.4, 1.2]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 40,
+  "seed": 202608083,
+  "rationale": "The prior dense search found a 76-trade, positive cost-stressed strategy near EMA 0.0005, RSI 45, no volume floor, 90-minute holding, limit entry, 50-bps stop and target. This search bridges nearby frequency and selectivity values without changing risk gates."
+}
