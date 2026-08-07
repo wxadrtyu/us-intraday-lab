@@ -676,6 +676,31 @@ def _gate_input(
     )
 
 
+def _novel_variants(
+    proposal: HypothesisProposal,
+    *,
+    root: Path,
+) -> tuple[tuple[GeneratedVariant, ...], tuple[str, ...]]:
+    candidates = generate_strategy_variants(proposal)
+    registry_path = root / "data" / "registry" / "strategy_registry.sqlite3"
+    if not registry_path.is_file():
+        return candidates, ()
+    registry = RegistryStore(registry_path)
+    novel: list[GeneratedVariant] = []
+    skipped: list[str] = []
+    for candidate in candidates:
+        existing = registry.get_strategy_definition(candidate.variant_id)
+        if existing is None:
+            novel.append(candidate)
+        elif existing == candidate.definition:
+            skipped.append(candidate.variant_id)
+        else:
+            raise ResearchIntegrityError("IMMUTABLE_STRATEGY_CONFLICT")
+    if not novel:
+        raise ResearchIntegrityError("NO_NOVEL_STRATEGY_VARIANTS")
+    return tuple(novel), tuple(skipped)
+
+
 def _decision_id(experiment_id: str, strategy_id: str, gates: list[dict[str, Any]]) -> str:
     return "decision-" + _sha256_json(
         {
@@ -698,13 +723,18 @@ def _execute(
 ) -> ResearchRunSummary:
     import pandas as pd
 
+    def generated_variants_payload() -> dict[str, Any]:
+        variants, skipped = _novel_variants(proposal, root=root)
+        return {
+            "variants": [_variant_payload(item) for item in variants],
+            "skipped_existing_strategy_ids": list(skipped),
+        }
+
     variants_payload = _ensure_stage(
         store,
         loaded,
         "VARIANTS_GENERATED",
-        lambda: {
-            "variants": [_variant_payload(item) for item in generate_strategy_variants(proposal)]
-        },
+        generated_variants_payload,
     )
     variants = tuple(_variant_from_payload(item) for item in variants_payload["variants"])
     split = manifest.split_definition

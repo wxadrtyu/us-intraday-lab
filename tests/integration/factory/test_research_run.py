@@ -304,6 +304,36 @@ def test_complete_research_run_is_gated_auditable_and_idempotent(tmp_path: Path)
     assert len(backend.robustness_calls) == robustness_call_count
 
 
+def test_new_experiment_skips_identical_strategies_already_in_registry(tmp_path: Path) -> None:
+    root = tmp_path / "lab"
+    root.mkdir()
+    proposal = FixtureProposalProvider(PROPOSAL).load()
+    first = run_research(
+        proposal=proposal,
+        dataset=_dataset(),
+        backend=SyntheticAcceptedBackend(),
+        root=root,
+        code_revision="a1b2c3d",
+    )
+    second_proposal = proposal.model_copy(
+        update={"hypothesis_id": "second-hypothesis", "seed": proposal.seed + 1}
+    )
+
+    second = run_research(
+        proposal=second_proposal,
+        dataset=_dataset(),
+        backend=SyntheticAcceptedBackend(),
+        root=root,
+        code_revision="a1b2c3e",
+    )
+    variants_stage = json.loads(
+        (second.run_directory / "stages" / "02_VARIANTS_GENERATED.json").read_text(encoding="utf-8")
+    )
+
+    assert second.variant_count < first.variant_count
+    assert variants_stage["payload"]["skipped_existing_strategy_ids"]
+
+
 def test_resume_fails_closed_when_completed_stage_content_is_changed(tmp_path: Path) -> None:
     root = tmp_path / "lab"
     root.mkdir()
