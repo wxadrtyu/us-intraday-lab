@@ -184,6 +184,7 @@ def test_engine_golden_sequence_obeys_next_minute_and_finishes_flat() -> None:
 
     assert [event.event_type for event in run.events] == [
         "BAR_CLOSED_15M",
+        "ENTRY_OPPORTUNITY",
         "SIGNAL_ENTER_LONG",
         "ORDER_INTENT_CREATED",
         "ORDER_ELIGIBLE",

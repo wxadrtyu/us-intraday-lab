@@ -162,10 +162,45 @@ def _strategy_payload(
     entry_template: str,
     exit_template: str,
 ) -> dict[str, object]:
-    rsi_operator = "gt" if entry_template == "trend_breakout" else "lt"
+    if entry_template == "trend_dip":
+        entry_conditions = [
+            {"indicator": "ema_spread", "op": "gt", "value": parameters["ema_spread_min"]},
+            {"indicator": "return_1", "op": "lt", "value": parameters["return_1_max"]},
+            {
+                "indicator": "range_position",
+                "op": "lt",
+                "value": parameters["range_position_max"],
+            },
+            {
+                "indicator": "minutes_from_open",
+                "op": "gt",
+                "value": parameters["minutes_from_open_min"],
+            },
+        ]
+    else:
+        rsi_operator = "gt" if entry_template == "trend_breakout" else "lt"
+        entry_conditions = [
+            {
+                "indicator": "ema_spread",
+                "op": "gt",
+                "value": parameters["ema_spread_min"],
+            },
+            {
+                "indicator": "rsi",
+                "op": rsi_operator,
+                "value": parameters["rsi_entry"],
+            },
+            {
+                "indicator": "volume_ratio",
+                "op": "gte",
+                "value": parameters["volume_ratio_min"],
+            },
+        ]
     exit_condition = (
         {"indicator": "ema_spread", "op": "lt", "value": 0.0}
         if exit_template == "trend_failure"
+        else {"indicator": "minutes_from_open", "op": "gte", "value": 390.0}
+        if exit_template == "time_stop"
         else {"indicator": "rsi", "op": "gte", "value": 70.0}
     )
     return {
@@ -173,23 +208,7 @@ def _strategy_payload(
         "symbols": ["SPY", "QQQ", "IWM"],
         "signal_bar_size": "15min",
         "entry": {
-            "all": [
-                {
-                    "indicator": "ema_spread",
-                    "op": "gt",
-                    "value": parameters["ema_spread_min"],
-                },
-                {
-                    "indicator": "rsi",
-                    "op": rsi_operator,
-                    "value": parameters["rsi_entry"],
-                },
-                {
-                    "indicator": "volume_ratio",
-                    "op": "gte",
-                    "value": parameters["volume_ratio_min"],
-                },
-            ]
+            "all": entry_conditions
         },
         "exit": exit_condition,
         "risk": {

@@ -63,6 +63,7 @@ _REQUIRED_SIGNAL_BAR_COLUMNS = frozenset(
 )
 EventType = Literal[
     "BAR_CLOSED_15M",
+    "ENTRY_OPPORTUNITY",
     "SIGNAL_ENTER_LONG",
     "SIGNAL_EXIT_LONG",
     "ORDER_INTENT_CREATED",
@@ -649,6 +650,14 @@ class BacktestEngine:
                         ):
                             runtime.complete_cooldown(key, event_time=clock_time)
                             state = runtime.state_for(key)
+                        entry_matches = _rule_matches(self.strategy.entry, feature_row)
+                        if entry_matches:
+                            emit(
+                                "ENTRY_OPPORTUNITY",
+                                clock_time,
+                                session,
+                                symbol=symbol,
+                            )
                         if (
                             state.phase is RuntimePhase.FLAT
                             and self._session_entry_slots_used(
@@ -657,7 +666,7 @@ class BacktestEngine:
                                 pending=pending,
                             )
                             < self.strategy.risk.max_entries_per_session
-                            and _rule_matches(self.strategy.entry, feature_row)
+                            and entry_matches
                         ):
                             quantity = self._entry_quantity(
                                 portfolio=portfolio,

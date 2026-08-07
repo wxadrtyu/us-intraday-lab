@@ -62,6 +62,13 @@ _PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
     {
         "cooldown_minutes": ParameterSpec("cooldown_minutes", "int", "risk", 30, 1, 1_440),
         "ema_spread_min": ParameterSpec("ema_spread_min", "float", "entry", 0.0, -1.0, 1.0),
+        "minutes_from_open_min": ParameterSpec(
+            "minutes_from_open_min", "int", "entry", 120, 0, 390
+        ),
+        "range_position_max": ParameterSpec(
+            "range_position_max", "float", "entry", 0.3, 0.0, 1.0
+        ),
+        "return_1_max": ParameterSpec("return_1_max", "float", "entry", -0.001, -1.0, 1.0),
         "max_entries_per_session": ParameterSpec("max_entries_per_session", "int", "risk", 3, 1, 3),
         "max_holding_minutes": ParameterSpec("max_holding_minutes", "int", "risk", 90, 1, 1_440),
         "order_type": ParameterSpec(
@@ -106,6 +113,16 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                 required_indicators=("ema_spread", "rsi", "volume_ratio"),
                 parameters=_PARAMETERS,
             ),
+            "trend_dip": TemplateSpec(
+                template_id="trend_dip",
+                required_indicators=(
+                    "ema_spread",
+                    "return_1",
+                    "range_position",
+                    "minutes_from_open",
+                ),
+                parameters=_PARAMETERS,
+            ),
         }
     ),
     exit_templates=MappingProxyType(
@@ -118,6 +135,11 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
             "trend_failure": TemplateSpec(
                 template_id="trend_failure",
                 required_indicators=("ema_spread",),
+                parameters=_PARAMETERS,
+            ),
+            "time_stop": TemplateSpec(
+                template_id="time_stop",
+                required_indicators=("minutes_from_open",),
                 parameters=_PARAMETERS,
             ),
         }

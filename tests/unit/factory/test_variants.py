@@ -94,6 +94,44 @@ def test_trend_breakout_template_requires_upward_momentum_and_exits_on_trend_fai
         }
 
 
+def test_trend_dip_template_is_constrained_to_causal_pullback_features() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "trend-dip",
+            "entry_template": "trend_dip",
+            "exit_template": "time_stop",
+            "indicators": [
+                "ema_spread",
+                "return_1",
+                "range_position",
+                "minutes_from_open",
+            ],
+            "parameter_ranges": {
+                "ema_spread_min": {"values": [0.0, 0.0005]},
+                "return_1_max": {"values": [-0.002, -0.001]},
+                "range_position_max": {"values": [0.2, 0.3]},
+                "minutes_from_open_min": {"values": [90, 120]},
+            },
+            "max_variants": 16,
+        }
+    )
+
+    for variant in generate_strategy_variants(proposal):
+        entry = variant.definition.entry.model_dump(mode="json")["all"]
+        assert [(item["indicator"], item["op"]) for item in entry] == [
+            ("ema_spread", "gt"),
+            ("return_1", "lt"),
+            ("range_position", "lt"),
+            ("minutes_from_open", "gt"),
+        ]
+        assert variant.definition.exit.model_dump(mode="json") == {
+            "indicator": "minutes_from_open",
+            "op": "gte",
+            "value": 390.0,
+        }
+
+
 def test_seed_changes_only_over_budget_selected_subset() -> None:
     proposal = _proposal()
     changed_seed = HypothesisProposal.model_validate(

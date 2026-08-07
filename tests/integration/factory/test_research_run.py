@@ -223,6 +223,30 @@ def test_preselection_counts_train_and_validation_trades_as_historical_sample() 
     assert orchestrator_module._preselected((train,), (validation,)) == (variant.variant_id,)
 
 
+def test_preselection_rejects_a_validation_winner_that_lost_in_training() -> None:
+    proposal = FixtureProposalProvider(PROPOSAL).load()
+    variant = next(
+        item for item in generate_strategy_variants(proposal) if item.selection_reason == "baseline"
+    )
+    backend = SyntheticAcceptedBackend()
+    sessions = tuple(date(2026, 6, day) for day in range(1, 11))
+    train = backend.run_phase(
+        variant=variant, phase="train", sessions=sessions, experiment_id="experiment"
+    )
+    validation = backend.run_phase(
+        variant=variant, phase="validation", sessions=sessions, experiment_id="experiment"
+    )
+    losing_metrics = {
+        scenario: {**values, "net_return": -0.01, "trade_count": 100.0}
+        for scenario, values in train.metrics_by_cost_scenario.items()
+    }
+    losing_train = train.model_copy(
+        update={"metrics_by_cost_scenario": losing_metrics, "cost_1_5x_net_return": -0.02}
+    )
+
+    assert orchestrator_module._preselected((losing_train,), (validation,)) == ()
+
+
 def _dataset() -> AcceptedResearchDataset:
     first = date(2026, 5, 1)
     sessions = tuple(first + timedelta(days=index) for index in range(20))
@@ -421,7 +445,7 @@ def test_real_backend_converts_signal_and_trade_ledger_into_bounded_null_evidenc
     events = tuple(
         BacktestEvent(
             sequence=index * 2 + slot,
-            event_type="SIGNAL_ENTER_LONG",
+            event_type="ENTRY_OPPORTUNITY",
             event_time=datetime(2026, 7, 2, 14, slot * 10, tzinfo=UTC),
             scenario="base",
             session=session,

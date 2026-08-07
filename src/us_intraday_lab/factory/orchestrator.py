@@ -546,13 +546,17 @@ def _preselected(
     train_by_id = {item.strategy_id: item for item in train}
     survivors = []
     for item in validation:
+        train_item = train_by_id[item.strategy_id]
+        train_base = train_item.metrics_by_cost_scenario["base"]
         base = item.metrics_by_cost_scenario["base"]
         historical_trades = (
-            train_by_id[item.strategy_id].metrics_by_cost_scenario["base"]["trade_count"]
+            train_base["trade_count"]
             + base["trade_count"]
         )
         if (
-            base["net_return"] > 0.0
+            train_base["net_return"] > 0.0
+            and train_item.cost_1_5x_net_return > 0.0
+            and base["net_return"] > 0.0
             and item.cost_1_5x_net_return > 0.0
             and historical_trades >= 100.0
             and base["max_drawdown"] <= 0.08
@@ -1461,7 +1465,7 @@ def _null_evidence_from_run(
     signals = tuple(
         event
         for event in base.events
-        if event.event_type == "SIGNAL_ENTER_LONG" and event.symbol is not None
+        if event.event_type == "ENTRY_OPPORTUNITY" and event.symbol is not None
     )
     if not signals:
         return _safe_failed_null_evidence_from_values(
