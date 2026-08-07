@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "trend-breakout-v1",
+  "thesis": "Long-only intraday entries taken with positive EMA spread, upward RSI momentum, and bounded volume confirmation can capture persistent ETF trends after costs, while exiting when the EMA trend turns negative.",
+  "entry_template": "trend_breakout",
+  "exit_template": "trend_failure",
+  "indicators": ["ema_spread", "rsi", "volume_ratio"],
+  "parameter_ranges": {
+    "cooldown_minutes": {"values": [5, 15, 30]},
+    "ema_spread_min": {"values": [0.0, 0.001, 0.002]},
+    "max_entries_per_session": {"values": [3]},
+    "max_holding_minutes": {"values": [30, 60, 90]},
+    "order_type": {"values": ["market", "limit"]},
+    "rsi_entry": {"values": [40.0, 55.0, 65.0]},
+    "stop_loss_bps": {"values": [20, 35, 50]},
+    "take_profit_bps": {"values": [35, 50, 70]},
+    "volume_ratio_min": {"values": [0.0, 0.8, 1.2]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 24,
+  "seed": 202608081,
+  "rationale": "The pullback families either traded too rarely or lost when loosened. This hypothesis changes the causal direction of the entry signal and exits on measured trend failure without adding leverage, short selling, or unrestricted code."
+}
