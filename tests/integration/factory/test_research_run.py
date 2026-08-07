@@ -196,6 +196,33 @@ class SyntheticAcceptedBackend:
         )
 
 
+def test_preselection_counts_train_and_validation_trades_as_historical_sample() -> None:
+    proposal = FixtureProposalProvider(PROPOSAL).load()
+    variant = next(
+        item for item in generate_strategy_variants(proposal) if item.selection_reason == "baseline"
+    )
+    backend = SyntheticAcceptedBackend()
+    sessions = tuple(date(2026, 6, day) for day in range(1, 11))
+
+    def phase_with_trades(phase: str, trade_count: float) -> PhaseEvidence:
+        evidence = backend.run_phase(
+            variant=variant,
+            phase=phase,
+            sessions=sessions,
+            experiment_id="experiment",
+        )
+        metrics = {
+            scenario: {**values, "trade_count": trade_count}
+            for scenario, values in evidence.metrics_by_cost_scenario.items()
+        }
+        return evidence.model_copy(update={"metrics_by_cost_scenario": metrics})
+
+    train = phase_with_trades("train", 60.0)
+    validation = phase_with_trades("validation", 40.0)
+
+    assert orchestrator_module._preselected((train,), (validation,)) == (variant.variant_id,)
+
+
 def _dataset() -> AcceptedResearchDataset:
     first = date(2026, 5, 1)
     sessions = tuple(first + timedelta(days=index) for index in range(20))

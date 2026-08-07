@@ -539,14 +539,22 @@ def _phase_items(payload: Mapping[str, Any]) -> tuple[PhaseEvidence, ...]:
     return tuple(PhaseEvidence.model_validate(item) for item in payload["items"])
 
 
-def _preselected(validation: tuple[PhaseEvidence, ...]) -> tuple[str, ...]:
+def _preselected(
+    train: tuple[PhaseEvidence, ...],
+    validation: tuple[PhaseEvidence, ...],
+) -> tuple[str, ...]:
+    train_by_id = {item.strategy_id: item for item in train}
     survivors = []
     for item in validation:
         base = item.metrics_by_cost_scenario["base"]
+        historical_trades = (
+            train_by_id[item.strategy_id].metrics_by_cost_scenario["base"]["trade_count"]
+            + base["trade_count"]
+        )
         if (
             base["net_return"] > 0.0
             and item.cost_1_5x_net_return > 0.0
-            and base["trade_count"] >= 100.0
+            and historical_trades >= 100.0
             and base["max_drawdown"] <= 0.08
             and base["profit_factor"] >= 1.15
         ):
@@ -622,6 +630,8 @@ def _gate_input(
     phase: PhaseEvidence,
     robustness: RobustnessEvidence,
     manifest: ExperimentManifest,
+    historical_closed_trades: int,
+    historical_source_refs: tuple[str, ...],
 ) -> CandidateGateEvidence:
     parameter_observations = tuple(
         PerturbationObservation(point.observation_id, point.net_return, point.max_drawdown)
@@ -635,10 +645,12 @@ def _gate_input(
     return CandidateGateEvidence(
         strategy_id=variant.variant_id,
         split_id=manifest.split_definition.split_id,
-        source_refs=tuple(dict.fromkeys((*phase.source_refs, *robustness.source_refs))),
+        source_refs=tuple(
+            dict.fromkeys((*historical_source_refs, *phase.source_refs, *robustness.source_refs))
+        ),
         base_net_return=base["net_return"],
         cost_1_5x_net_return=phase.cost_1_5x_net_return,
-        closed_trades=int(base["trade_count"]),
+        closed_trades=historical_closed_trades,
         max_drawdown=base["max_drawdown"],
         profit_factor=base["profit_factor"],
         walk_forward_results=_walk_forward_results(
@@ -751,11 +763,12 @@ def _execute(
         raise ResearchIntegrityError("VALIDATION_SESSION_ISOLATION_MISMATCH")
 
     def selection_payload() -> dict[str, Any]:
-        survivor_ids = _preselected(validation)
+        survivor_ids = _preselected(train, validation)
         selection_hash = _sha256_json(
             {
                 "experiment_id": manifest.experiment_id,
-                "result_hashes": [item.result_sha256 for item in validation],
+                "train_result_hashes": [item.result_sha256 for item in train],
+                "validation_result_hashes": [item.result_sha256 for item in validation],
                 "survivor_ids": survivor_ids,
             }
         )
@@ -771,11 +784,12 @@ def _execute(
         selection_payload,
     )
     final_ids = tuple(cast(list[str], selection["survivor_ids"]))
-    expected_final_ids = _preselected(validation)
+    expected_final_ids = _preselected(train, validation)
     expected_selection_hash = _sha256_json(
         {
             "experiment_id": manifest.experiment_id,
-            "result_hashes": [item.result_sha256 for item in validation],
+            "train_result_hashes": [item.result_sha256 for item in train],
+            "validation_result_hashes": [item.result_sha256 for item in validation],
             "survivor_ids": expected_final_ids,
         }
     )
@@ -819,6 +833,7 @@ def _execute(
         raise ResearchIntegrityError("FINAL_TEST_SELECTION_MISMATCH")
 
     def gates_payload() -> dict[str, Any]:
+        train_by_id = {item.strategy_id: item for item in train}
         validation_by_id = {item.strategy_id: item for item in validation}
         final_by_id = {item.strategy_id: item for item in final_results}
         evaluations: list[dict[str, Any]] = []
@@ -835,12 +850,27 @@ def _execute(
                 raise ResearchIntegrityError("ROBUSTNESS_STRATEGY_MISMATCH")
             robustness_rows.append(robustness.model_dump(mode="json"))
             phase = final_by_id.get(variant.variant_id, validation_by_id[variant.variant_id])
+            historical_phases = [
+                train_by_id[variant.variant_id],
+                validation_by_id[variant.variant_id],
+            ]
+            if variant.variant_id in final_by_id:
+                historical_phases.append(final_by_id[variant.variant_id])
+            historical_closed_trades = sum(
+                int(item.metrics_by_cost_scenario["base"]["trade_count"])
+                for item in historical_phases
+            )
+            historical_source_refs = tuple(
+                dict.fromkeys(ref for item in historical_phases for ref in item.source_refs)
+            )
             evaluation = evaluate_hard_gates(
                 _gate_input(
                     variant=variant,
                     phase=phase,
                     robustness=robustness,
                     manifest=manifest,
+                    historical_closed_trades=historical_closed_trades,
+                    historical_source_refs=historical_source_refs,
                 )
             )
             gate_rows = [item.model_dump(mode="json") for item in evaluation.gate_results]
