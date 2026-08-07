@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "trend-breakout-v2-dense",
+  "thesis": "The profitable trend-breakout region can produce a sufficient historical sample when intermediate EMA and volume thresholds are paired with shorter bounded holding periods and trend-failure exits.",
+  "entry_template": "trend_breakout",
+  "exit_template": "trend_failure",
+  "indicators": ["ema_spread", "rsi", "volume_ratio"],
+  "parameter_ranges": {
+    "cooldown_minutes": {"values": [5, 15, 30]},
+    "ema_spread_min": {"values": [0.0, 0.0005, 0.001, 0.0015]},
+    "max_entries_per_session": {"values": [3]},
+    "max_holding_minutes": {"values": [15, 30, 90]},
+    "order_type": {"values": ["market", "limit"]},
+    "rsi_entry": {"values": [40.0, 45.0, 55.0]},
+    "stop_loss_bps": {"values": [20, 35, 50]},
+    "take_profit_bps": {"values": [35, 50, 70, 100]},
+    "volume_ratio_min": {"values": [0.0, 0.4, 0.8, 1.2]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 30,
+  "seed": 202608082,
+  "rationale": "The first breakout study found positive cost-stressed validation results but insufficient samples. This bounded local search fills the gap between profitable strict filters and frequent unprofitable loose filters."
+}
