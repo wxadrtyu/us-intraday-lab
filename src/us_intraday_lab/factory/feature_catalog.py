@@ -117,15 +117,18 @@ _OVERSOLD_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingPro
 _LATE_DIP_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
     {
         **_TREND_DIP_PARAMETERS,
-        "minutes_from_open_min": replace(_PARAMETERS["minutes_from_open_min"], baseline=120),
-        "range_position_max": replace(_PARAMETERS["range_position_max"], baseline=0.3),
-        "return_1_max": replace(_PARAMETERS["return_1_max"], baseline=-0.001),
-        "vwap_distance_max": replace(_PARAMETERS["vwap_distance_max"], baseline=-10.0),
+        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=60),
+        "minutes_from_open_min": replace(_PARAMETERS["minutes_from_open_min"], baseline=150),
+        "range_position_max": replace(_PARAMETERS["range_position_max"], baseline=0.2),
+        "return_1_max": replace(_PARAMETERS["return_1_max"], baseline=-0.00125),
+        "stop_loss_bps": replace(_PARAMETERS["stop_loss_bps"], baseline=10_000),
+        "take_profit_bps": replace(_PARAMETERS["take_profit_bps"], baseline=10_000),
+        "vwap_distance_max": replace(_PARAMETERS["vwap_distance_max"], baseline=0.0),
     }
 )
 
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.3.0",
+    version="feature-template-catalog-1.4.0",
     indicators=(
         "return_1",
         "return_3",

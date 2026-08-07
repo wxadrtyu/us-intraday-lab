@@ -145,7 +145,7 @@ def test_trend_dip_defaults_encode_the_cost_resilient_anchor() -> None:
                 "range_position",
                 "minutes_from_open",
             ],
-            "parameter_ranges": {"max_holding_minutes": {"values": [90, 120, 150]}},
+            "parameter_ranges": {"max_holding_minutes": {"values": [45, 60, 75]}},
             "max_variants": 3,
         }
     )
@@ -201,12 +201,14 @@ def test_late_dip_rebound_defaults_preserve_the_screened_anchor() -> None:
     )
 
     anchor = next(
-        item for item in generate_strategy_variants(proposal) if item.parameters["max_holding_minutes"] == 120
+        item for item in generate_strategy_variants(proposal) if item.parameters["max_holding_minutes"] == 60
     )
-    assert anchor.parameters["vwap_distance_max"] == -10.0
-    assert anchor.parameters["return_1_max"] == -0.001
-    assert anchor.parameters["range_position_max"] == 0.3
-    assert anchor.parameters["minutes_from_open_min"] == 120
+    assert anchor.parameters["vwap_distance_max"] == 0.0
+    assert anchor.parameters["return_1_max"] == -0.00125
+    assert anchor.parameters["range_position_max"] == 0.2
+    assert anchor.parameters["minutes_from_open_min"] == 150
+    assert anchor.parameters["stop_loss_bps"] == 10_000
+    assert anchor.parameters["take_profit_bps"] == 10_000
 
 
 def test_seed_changes_only_over_budget_selected_subset() -> None:

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "late-dip-rebound-v2-fixed-hold",
+  "thesis": "A late-session 15-minute decline below VWAP that closes in the bottom fifth of its range can earn a short fixed-horizon rebound without path-dependent stop or target exits.",
+  "entry_template": "late_dip_rebound",
+  "exit_template": "time_stop",
+  "indicators": ["vwap_distance_bps", "return_1", "range_position", "minutes_from_open"],
+  "parameter_ranges": {
+    "max_holding_minutes": {"values": [45, 60, 75]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 3,
+  "seed": 202608089,
+  "rationale": "A training-plus-validation-only diagnostic using nine basis points of round-trip cost found the post-150-minute, below-VWAP, sub-minus-12.5-basis-point return, and sub-0.2 range-position rule positive in both phases with 111 raw observations at a 60-minute horizon. Stops and targets are set to the DSL safety maximum so the event engine tests the fixed-horizon hypothesis directly; 45 and 75 minutes are retained as stability neighbors."
+}
