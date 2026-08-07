@@ -16,7 +16,7 @@ from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.factory.feature_catalog import FEATURE_TEMPLATE_CATALOG, ParameterSpec
 from us_intraday_lab.strategy.validator import validate_strategy
 
-VARIANT_GENERATOR_VERSION = "variant-generator-1.5.0"
+VARIANT_GENERATOR_VERSION = "variant-generator-1.6.0"
 SelectionReason = Literal["baseline", "lower_boundary", "upper_boundary", "space_filling"]
 
 
@@ -162,7 +162,40 @@ def _strategy_payload(
     entry_template: str,
     exit_template: str,
 ) -> dict[str, object]:
-    if entry_template == "trend_dip":
+    if entry_template == "causal_dip_ensemble":
+        entry_rule: dict[str, object] = {
+            "any": [
+                {
+                    "all": [
+                        {"indicator": "vwap_distance_bps", "op": "lt", "value": -10.0},
+                        {"indicator": "return_1", "op": "lt", "value": -0.00075},
+                        {"indicator": "range_position", "op": "lt", "value": 0.6},
+                        {"indicator": "minutes_from_open", "op": "gt", "value": 180.0},
+                    ]
+                },
+                {
+                    "all": [
+                        {"indicator": "ema_spread", "op": "gt", "value": 0.0},
+                        {"indicator": "return_1", "op": "lt", "value": -0.002},
+                        {"indicator": "range_position", "op": "lt", "value": 0.3},
+                        {"indicator": "minutes_from_open", "op": "gt", "value": 120.0},
+                    ]
+                },
+                {
+                    "all": [
+                        {"indicator": "ema_spread", "op": "gt", "value": 0.0},
+                        {
+                            "indicator": "return_1",
+                            "op": "lt",
+                            "value": parameters["bridge_return_1_max"],
+                        },
+                        {"indicator": "return_3", "op": "lte", "value": -0.0015},
+                    ]
+                },
+            ]
+        }
+        entry_conditions = []
+    elif entry_template == "trend_dip":
         entry_conditions = [
             {"indicator": "ema_spread", "op": "gt", "value": parameters["ema_spread_min"]},
             {"indicator": "return_1", "op": "lt", "value": parameters["return_1_max"]},
@@ -236,9 +269,7 @@ def _strategy_payload(
         "dsl_version": "1.0.0",
         "symbols": ["SPY", "QQQ", "IWM"],
         "signal_bar_size": "15min",
-        "entry": {
-            "all": entry_conditions
-        },
+        "entry": entry_rule if entry_template == "causal_dip_ensemble" else {"all": entry_conditions},
         "exit": exit_condition,
         "risk": {
             "stop_loss_bps": parameters["stop_loss_bps"],

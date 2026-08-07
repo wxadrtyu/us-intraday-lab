@@ -213,6 +213,49 @@ def test_late_dip_rebound_defaults_preserve_the_screened_anchor() -> None:
     assert anchor.parameters["take_profit_bps"] == 10_000
 
 
+def test_causal_dip_ensemble_preserves_screened_three_branch_rule() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "causal-dip-ensemble",
+            "entry_template": "causal_dip_ensemble",
+            "exit_template": "time_stop",
+            "indicators": [
+                "vwap_distance_bps",
+                "return_1",
+                "range_position",
+                "minutes_from_open",
+                "ema_spread",
+                "return_3",
+            ],
+            "parameter_ranges": {
+                "bridge_return_1_max": {"values": [-0.0019, -0.00185, -0.0018]}
+            },
+            "max_variants": 3,
+        }
+    )
+
+    variants = generate_strategy_variants(proposal)
+
+    assert len(variants) == 3
+    assert {item.parameters["bridge_return_1_max"] for item in variants} == {
+        -0.0019,
+        -0.00185,
+        -0.0018,
+    }
+    anchor = next(item for item in variants if item.selection_reason == "baseline")
+    entry = anchor.definition.entry.model_dump(mode="json")["any"]
+    assert len(entry) == 3
+    assert entry[2]["all"][2] == {
+        "indicator": "return_3",
+        "op": "lte",
+        "value": -0.0015,
+    }
+    assert anchor.parameters["max_holding_minutes"] == 105
+    assert anchor.parameters["cooldown_minutes"] == 15
+    assert anchor.parameters["order_type"] == "market"
+
+
 def test_seed_changes_only_over_budget_selected_subset() -> None:
     proposal = _proposal()
     changed_seed = HypothesisProposal.model_validate(

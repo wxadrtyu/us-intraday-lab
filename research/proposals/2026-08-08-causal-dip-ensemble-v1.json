@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "causal-dip-ensemble-v1",
+  "thesis": "A causal long-only ensemble combining late VWAP dips, trend pullbacks, and a narrow multi-bar sample bridge remains profitable after 1.5-times modeled costs across a compact bridge threshold neighborhood.",
+  "entry_template": "causal_dip_ensemble",
+  "exit_template": "time_stop",
+  "indicators": ["vwap_distance_bps", "return_1", "range_position", "minutes_from_open", "ema_spread", "return_3"],
+  "parameter_ranges": {
+    "bridge_return_1_max": {"values": [-0.0019, -0.00185, -0.0018]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 3,
+  "seed": 202608091,
+  "rationale": "A bounded causal trade-difference diagnostic found a stable three-point neighborhood with 100 to 101 historical trades, positive train and validation returns after 1.5-times costs, validation profit factor near 1.71, and an identical positive development final segment at the strict multi-bar bridge cutoff. The proposal freezes that neighborhood before the formal run."
+}

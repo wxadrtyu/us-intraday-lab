@@ -128,8 +128,22 @@ _LATE_DIP_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingPro
     }
 )
 
+_CAUSAL_DIP_ENSEMBLE_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
+    {
+        **_PARAMETERS,
+        "bridge_return_1_max": ParameterSpec(
+            "bridge_return_1_max", "float", "entry", -0.00185, -1.0, 1.0
+        ),
+        "cooldown_minutes": replace(_PARAMETERS["cooldown_minutes"], baseline=15),
+        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=105),
+        "order_type": replace(_PARAMETERS["order_type"], baseline="market"),
+        "stop_loss_bps": replace(_PARAMETERS["stop_loss_bps"], baseline=10_000),
+        "take_profit_bps": replace(_PARAMETERS["take_profit_bps"], baseline=10_000),
+    }
+)
+
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.5.0",
+    version="feature-template-catalog-1.6.0",
     indicators=(
         "return_1",
         "return_3",
@@ -177,6 +191,18 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                     "minutes_from_open",
                 ),
                 parameters=_LATE_DIP_REBOUND_PARAMETERS,
+            ),
+            "causal_dip_ensemble": TemplateSpec(
+                template_id="causal_dip_ensemble",
+                required_indicators=(
+                    "vwap_distance_bps",
+                    "return_1",
+                    "range_position",
+                    "minutes_from_open",
+                    "ema_spread",
+                    "return_3",
+                ),
+                parameters=_CAUSAL_DIP_ENSEMBLE_PARAMETERS,
             ),
         }
     ),

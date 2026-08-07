@@ -15,6 +15,7 @@ from pydantic import (
 from us_intraday_lab.contracts.strategies import IndicatorName
 
 ParameterName = Literal[
+    "bridge_return_1_max",
     "ema_spread_min",
     "minutes_from_open_min",
     "range_position_max",
@@ -94,6 +95,7 @@ class HypothesisProposal(_ClosedModel):
         "trend_dip",
         "oversold_rebound",
         "late_dip_rebound",
+        "causal_dip_ensemble",
     ]
     exit_template: Literal["risk_managed", "trend_failure", "time_stop"]
     indicators: tuple[IndicatorName, ...] = Field(min_length=1, max_length=9)
