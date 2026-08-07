@@ -108,9 +108,9 @@ def test_trend_dip_template_is_constrained_to_causal_pullback_features() -> None
                 "minutes_from_open",
             ],
             "parameter_ranges": {
-                "ema_spread_min": {"values": [0.0, 0.0005]},
-                "return_1_max": {"values": [-0.002, -0.001]},
-                "range_position_max": {"values": [0.2, 0.3]},
+                "ema_spread_min": {"values": [0.00025, 0.0005]},
+                "return_1_max": {"values": [-0.001, -0.0005]},
+                "range_position_max": {"values": [0.2, 0.4]},
                 "minutes_from_open_min": {"values": [90, 120]},
             },
             "max_variants": 16,
@@ -130,6 +130,32 @@ def test_trend_dip_template_is_constrained_to_causal_pullback_features() -> None
             "op": "gte",
             "value": 390.0,
         }
+
+
+def test_trend_dip_defaults_encode_the_cost_resilient_anchor() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "trend-dip-anchor",
+            "entry_template": "trend_dip",
+            "exit_template": "time_stop",
+            "indicators": [
+                "ema_spread",
+                "return_1",
+                "range_position",
+                "minutes_from_open",
+            ],
+            "parameter_ranges": {"max_holding_minutes": {"values": [120]}},
+            "max_variants": 1,
+        }
+    )
+
+    variant = generate_strategy_variants(proposal)[0]
+
+    assert variant.parameters["stop_loss_bps"] == 100
+    assert variant.parameters["take_profit_bps"] == 200
+    assert variant.parameters["return_1_max"] == -0.0005
+    assert variant.parameters["range_position_max"] == 0.4
 
 
 def test_seed_changes_only_over_budget_selected_subset() -> None:

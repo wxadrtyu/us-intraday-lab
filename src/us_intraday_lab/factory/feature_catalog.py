@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import Literal, cast
 
@@ -88,8 +88,22 @@ _PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
     }
 )
 
+_TREND_DIP_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
+    {
+        **_PARAMETERS,
+        "cooldown_minutes": replace(_PARAMETERS["cooldown_minutes"], baseline=15),
+        "ema_spread_min": replace(_PARAMETERS["ema_spread_min"], baseline=0.00025),
+        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=120),
+        "minutes_from_open_min": replace(_PARAMETERS["minutes_from_open_min"], baseline=90),
+        "range_position_max": replace(_PARAMETERS["range_position_max"], baseline=0.4),
+        "return_1_max": replace(_PARAMETERS["return_1_max"], baseline=-0.0005),
+        "stop_loss_bps": replace(_PARAMETERS["stop_loss_bps"], baseline=100),
+        "take_profit_bps": replace(_PARAMETERS["take_profit_bps"], baseline=200),
+    }
+)
+
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.0.0",
+    version="feature-template-catalog-1.1.0",
     indicators=(
         "return_1",
         "return_3",
@@ -121,7 +135,7 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                     "range_position",
                     "minutes_from_open",
                 ),
-                parameters=_PARAMETERS,
+                parameters=_TREND_DIP_PARAMETERS,
             ),
         }
     ),
@@ -140,7 +154,7 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
             "time_stop": TemplateSpec(
                 template_id="time_stop",
                 required_indicators=("minutes_from_open",),
-                parameters=_PARAMETERS,
+                parameters=_TREND_DIP_PARAMETERS,
             ),
         }
     ),

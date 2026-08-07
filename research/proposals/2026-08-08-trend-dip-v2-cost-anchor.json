@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "trend-dip-v2-cost-anchor",
+  "thesis": "The higher-frequency trend-dip entry can retain its positive base expectancy under stressed costs when paired with the wider 100-basis-point stop and 200-basis-point target observed in the cost-resilient sparse variant.",
+  "entry_template": "trend_dip",
+  "exit_template": "time_stop",
+  "indicators": ["ema_spread", "return_1", "range_position", "minutes_from_open"],
+  "parameter_ranges": {
+    "max_holding_minutes": {"values": [120]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 1,
+  "seed": 202608085,
+  "rationale": "The first formal trend-dip experiment separated two useful observations: a 103-trade rule with positive base returns but excessive tight-stop costs, and a 36-trade rule with positive 1.5x-cost returns at a 100/200 risk envelope. This immutable anchor combines only those previously observed design choices before any new final-test read."
+}
