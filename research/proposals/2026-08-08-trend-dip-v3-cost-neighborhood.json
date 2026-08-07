@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "trend-dip-v3-cost-neighborhood",
+  "thesis": "The higher-frequency trend-dip entry remains cost-resilient across a compact 90-to-150-minute holding neighborhood when paired with a 100-basis-point stop and 200-basis-point target.",
+  "entry_template": "trend_dip",
+  "exit_template": "time_stop",
+  "indicators": ["ema_spread", "return_1", "range_position", "minutes_from_open"],
+  "parameter_ranges": {
+    "max_holding_minutes": {"values": [90, 120, 150]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 3,
+  "seed": 202608086,
+  "rationale": "The one-point anchor completed all chronological phases but correctly stopped before gates because parameter stability requires neighbors. This proposal preserves the same evidence-led entry and risk envelope while adding only adjacent holding periods."
+}

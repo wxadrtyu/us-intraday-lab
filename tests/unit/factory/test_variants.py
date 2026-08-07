@@ -145,12 +145,14 @@ def test_trend_dip_defaults_encode_the_cost_resilient_anchor() -> None:
                 "range_position",
                 "minutes_from_open",
             ],
-            "parameter_ranges": {"max_holding_minutes": {"values": [120]}},
-            "max_variants": 1,
+            "parameter_ranges": {"max_holding_minutes": {"values": [90, 120, 150]}},
+            "max_variants": 3,
         }
     )
 
-    variant = generate_strategy_variants(proposal)[0]
+    variant = next(
+        item for item in generate_strategy_variants(proposal) if item.parameters["max_holding_minutes"] == 120
+    )
 
     assert variant.parameters["stop_loss_bps"] == 100
     assert variant.parameters["take_profit_bps"] == 200

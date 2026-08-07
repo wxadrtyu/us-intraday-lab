@@ -92,7 +92,7 @@ class HypothesisProposal(_ClosedModel):
     indicators: tuple[IndicatorName, ...] = Field(min_length=1, max_length=9)
     parameter_ranges: Mapping[ParameterName, ParameterRange] = Field(min_length=1, max_length=10)
     symbols: tuple[Literal["SPY", "QQQ", "IWM"], ...]
-    max_variants: int = Field(strict=True, ge=1, le=200)
+    max_variants: int = Field(strict=True, ge=3, le=200)
     seed: int = Field(strict=True, ge=0, le=2**63 - 1)
     rationale: str = Field(min_length=1, max_length=2_000)
     provenance: ProposalProvenance = ProposalProvenance()
@@ -124,6 +124,9 @@ class HypothesisProposal(_ClosedModel):
             indicators=self.indicators,
             parameter_ranges=self.parameter_ranges,
         )
+        search_space_size = math.prod(len(item.values) for item in self.parameter_ranges.values())
+        if search_space_size < 3:
+            raise ValueError("proposal search space must contain at least three robustness neighbors")
         from us_intraday_lab.factory.feature_catalog import required_variant_budget
 
         if self.max_variants < required_variant_budget(

@@ -215,25 +215,26 @@ def test_ai_proposal_requires_provider_model_and_prompt_lineage() -> None:
 
 
 @pytest.mark.parametrize("max_variants", [1, 2])
-def test_proposal_budget_must_fit_distinct_baseline_and_boundaries(
+def test_proposal_budget_must_fit_robustness_neighborhood(
     max_variants: int,
 ) -> None:
     payload = _proposal_payload()
     payload["max_variants"] = max_variants
 
-    with pytest.raises(ValidationError, match="baseline and boundary"):
+    with pytest.raises(ValidationError, match="greater than or equal to 3"):
         HypothesisProposal.model_validate(payload)
 
 
-def test_singleton_search_space_allows_one_variant() -> None:
+def test_singleton_search_space_is_rejected_without_robustness_neighbors() -> None:
     payload = _proposal_payload()
     payload["parameter_ranges"] = {
         "rsi_entry": {"values": [40.0]},
         "stop_loss_bps": {"values": [35]},
     }
-    payload["max_variants"] = 1
+    payload["max_variants"] = 3
 
-    assert HypothesisProposal.model_validate(payload).max_variants == 1
+    with pytest.raises(ValidationError, match="three robustness neighbors"):
+        HypothesisProposal.model_validate(payload)
 
 
 def test_proposal_hash_rejects_model_copy_forgery() -> None:
