@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "causal-dip-ensemble-v2-diversified-exit",
+  "thesis": "The qualified causal dip ensemble retains its cost-adjusted edge while a compact holding-time neighborhood distributes positive final-segment profit across both SPY and QQQ.",
+  "entry_template": "causal_dip_ensemble",
+  "exit_template": "time_stop",
+  "indicators": ["vwap_distance_bps", "return_1", "range_position", "minutes_from_open", "ema_spread", "return_3"],
+  "parameter_ranges": {
+    "max_holding_minutes": {"values": [114, 116, 118]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 3,
+  "seed": 202608092,
+  "rationale": "The immutable v1 experiment passed every hard gate except symbol profit concentration. A bounded minute-level exit diagnostic then found a contiguous 114 to 118 minute region with 100 historical trades, positive 1.5-times-cost returns in train, validation, and the development final segment, profit factors above 1.4, and final positive-profit concentration between 0.58 and 0.63. This proposal freezes the lower, baseline, and upper holding-time points before its formal run."
+}

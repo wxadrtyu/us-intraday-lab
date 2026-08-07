@@ -16,7 +16,7 @@ from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.factory.feature_catalog import FEATURE_TEMPLATE_CATALOG, ParameterSpec
 from us_intraday_lab.strategy.validator import validate_strategy
 
-VARIANT_GENERATOR_VERSION = "variant-generator-1.6.0"
+VARIANT_GENERATOR_VERSION = "variant-generator-1.7.0"
 SelectionReason = Literal["baseline", "lower_boundary", "upper_boundary", "space_filling"]
 
 

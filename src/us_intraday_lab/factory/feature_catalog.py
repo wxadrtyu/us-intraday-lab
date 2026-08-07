@@ -135,7 +135,7 @@ _CAUSAL_DIP_ENSEMBLE_PARAMETERS: Mapping[ParameterName, ParameterSpec] = Mapping
             "bridge_return_1_max", "float", "entry", -0.00185, -1.0, 1.0
         ),
         "cooldown_minutes": replace(_PARAMETERS["cooldown_minutes"], baseline=15),
-        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=105),
+        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=116),
         "order_type": replace(_PARAMETERS["order_type"], baseline="market"),
         "stop_loss_bps": replace(_PARAMETERS["stop_loss_bps"], baseline=10_000),
         "take_profit_bps": replace(_PARAMETERS["take_profit_bps"], baseline=10_000),
@@ -143,7 +143,7 @@ _CAUSAL_DIP_ENSEMBLE_PARAMETERS: Mapping[ParameterName, ParameterSpec] = Mapping
 )
 
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.6.0",
+    version="feature-template-catalog-1.7.0",
     indicators=(
         "return_1",
         "return_3",

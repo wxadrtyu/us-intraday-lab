@@ -251,7 +251,7 @@ def test_causal_dip_ensemble_preserves_screened_three_branch_rule() -> None:
         "op": "lte",
         "value": -0.0015,
     }
-    assert anchor.parameters["max_holding_minutes"] == 105
+    assert anchor.parameters["max_holding_minutes"] == 116
     assert anchor.parameters["cooldown_minutes"] == 15
     assert anchor.parameters["order_type"] == "market"
 

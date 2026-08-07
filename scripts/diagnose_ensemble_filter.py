@@ -30,6 +30,7 @@ def definition(
     bridge: bool = False,
     bridge_return_max: float = -0.0018,
     bridge_return_3_max: float = 0.0,
+    max_holding_minutes: int = 105,
 ) -> StrategyDefinition:
     branches: list[dict[str, object]] = [
         {
@@ -70,7 +71,7 @@ def definition(
             "risk": {
                 "stop_loss_bps": 10000,
                 "take_profit_bps": 10000,
-                "max_holding_minutes": 105,
+                "max_holding_minutes": max_holding_minutes,
                 "cooldown_minutes": 15,
                 "max_entries_per_session": 3,
                 "sizing_preset": "equal_cash_conservative",
