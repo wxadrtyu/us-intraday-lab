@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "high-frequency-momentum-pullback-v1",
+  "thesis": "Frequent long-only continuation entries after shallow intraday pullbacks can retain a positive edge after realistic costs when entry filters are broad but exits and daily entry counts remain constrained.",
+  "entry_template": "momentum_pullback",
+  "exit_template": "risk_managed",
+  "indicators": ["ema_spread", "rsi", "volume_ratio"],
+  "parameter_ranges": {
+    "cooldown_minutes": {"values": [5, 15, 30]},
+    "ema_spread_min": {"values": [-0.004, -0.002, 0.0]},
+    "max_entries_per_session": {"values": [3]},
+    "max_holding_minutes": {"values": [30, 60, 90]},
+    "order_type": {"values": ["market", "limit"]},
+    "rsi_entry": {"values": [40.0, 55.0, 70.0]},
+    "stop_loss_bps": {"values": [20, 35, 50]},
+    "take_profit_bps": {"values": [35, 50, 70]},
+    "volume_ratio_min": {"values": [0.0, 0.6, 1.2]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 18,
+  "seed": 20260808,
+  "rationale": "The first run produced too few signals. This bounded search increases opportunity frequency while preserving long-only execution, finite holding periods, stop losses, take profits, cooldowns, position limits, and all historical promotion gates."
+}
