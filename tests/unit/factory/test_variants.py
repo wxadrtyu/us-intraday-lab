@@ -145,7 +145,7 @@ def test_trend_dip_defaults_encode_the_cost_resilient_anchor() -> None:
                 "range_position",
                 "minutes_from_open",
             ],
-            "parameter_ranges": {"max_holding_minutes": {"values": [45, 60, 75]}},
+            "parameter_ranges": {"max_holding_minutes": {"values": [90, 120, 150]}},
             "max_variants": 3,
         }
     )
@@ -195,7 +195,7 @@ def test_late_dip_rebound_defaults_preserve_the_screened_anchor() -> None:
                 "range_position",
                 "minutes_from_open",
             ],
-            "parameter_ranges": {"max_holding_minutes": {"values": [90, 120, 150]}},
+            "parameter_ranges": {"max_holding_minutes": {"values": [45, 60, 75]}},
             "max_variants": 3,
         }
     )
