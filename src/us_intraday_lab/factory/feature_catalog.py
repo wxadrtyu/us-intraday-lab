@@ -114,8 +114,18 @@ _OVERSOLD_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingPro
     }
 )
 
+_LATE_DIP_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
+    {
+        **_TREND_DIP_PARAMETERS,
+        "minutes_from_open_min": replace(_PARAMETERS["minutes_from_open_min"], baseline=120),
+        "range_position_max": replace(_PARAMETERS["range_position_max"], baseline=0.3),
+        "return_1_max": replace(_PARAMETERS["return_1_max"], baseline=-0.001),
+        "vwap_distance_max": replace(_PARAMETERS["vwap_distance_max"], baseline=-10.0),
+    }
+)
+
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.2.0",
+    version="feature-template-catalog-1.3.0",
     indicators=(
         "return_1",
         "return_3",
@@ -153,6 +163,16 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                 template_id="oversold_rebound",
                 required_indicators=("rsi", "vwap_distance_bps", "return_1"),
                 parameters=_OVERSOLD_REBOUND_PARAMETERS,
+            ),
+            "late_dip_rebound": TemplateSpec(
+                template_id="late_dip_rebound",
+                required_indicators=(
+                    "vwap_distance_bps",
+                    "return_1",
+                    "range_position",
+                    "minutes_from_open",
+                ),
+                parameters=_LATE_DIP_REBOUND_PARAMETERS,
             ),
         }
     ),

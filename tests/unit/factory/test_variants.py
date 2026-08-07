@@ -182,6 +182,33 @@ def test_oversold_rebound_template_uses_only_causal_oversold_features() -> None:
         ]
 
 
+def test_late_dip_rebound_defaults_preserve_the_screened_anchor() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "late-dip-rebound",
+            "entry_template": "late_dip_rebound",
+            "exit_template": "time_stop",
+            "indicators": [
+                "vwap_distance_bps",
+                "return_1",
+                "range_position",
+                "minutes_from_open",
+            ],
+            "parameter_ranges": {"max_holding_minutes": {"values": [90, 120, 150]}},
+            "max_variants": 3,
+        }
+    )
+
+    anchor = next(
+        item for item in generate_strategy_variants(proposal) if item.parameters["max_holding_minutes"] == 120
+    )
+    assert anchor.parameters["vwap_distance_max"] == -10.0
+    assert anchor.parameters["return_1_max"] == -0.001
+    assert anchor.parameters["range_position_max"] == 0.3
+    assert anchor.parameters["minutes_from_open_min"] == 120
+
+
 def test_seed_changes_only_over_budget_selected_subset() -> None:
     proposal = _proposal()
     changed_seed = HypothesisProposal.model_validate(

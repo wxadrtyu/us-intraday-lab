@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "late-dip-rebound-v1",
+  "thesis": "After the opening period, a completed 15-minute bar that extends below session VWAP and closes near its low can earn a two-hour long-only mean-reversion rebound.",
+  "entry_template": "late_dip_rebound",
+  "exit_template": "time_stop",
+  "indicators": ["vwap_distance_bps", "return_1", "range_position", "minutes_from_open"],
+  "parameter_ranges": {
+    "max_holding_minutes": {"values": [90, 120, 150]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 3,
+  "seed": 202608088,
+  "rationale": "A causal coarse screen found the minus-10-basis-point VWAP distance, minus-10-basis-point one-bar return, sub-0.3 range position, and post-120-minute family produced roughly 125 observations and positive six-basis-point-cost average returns across all chronological segments. Only adjacent holding periods are tested to limit multiplicity."
+}

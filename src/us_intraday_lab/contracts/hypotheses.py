@@ -89,7 +89,11 @@ class HypothesisProposal(_ClosedModel):
     hypothesis_id: str = Field(min_length=1, max_length=120, pattern=r"^[a-z0-9][a-z0-9-]*$")
     thesis: str = Field(min_length=1, max_length=2_000)
     entry_template: Literal[
-        "momentum_pullback", "trend_breakout", "trend_dip", "oversold_rebound"
+        "momentum_pullback",
+        "trend_breakout",
+        "trend_dip",
+        "oversold_rebound",
+        "late_dip_rebound",
     ]
     exit_template: Literal["risk_managed", "trend_failure", "time_stop"]
     indicators: tuple[IndicatorName, ...] = Field(min_length=1, max_length=9)
