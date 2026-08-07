@@ -1,3 +1,4 @@
+import gzip
 import hashlib
 import io
 import json
@@ -319,6 +320,38 @@ def test_inspection_detects_legacy_datetime_column(tmp_path: Path) -> None:
     assert member.max_timestamp.isoformat() == "2026-07-02T19:59:00+00:00"
 
 
+def test_inspection_and_import_support_gzip_csv_member(tmp_path: Path) -> None:
+    legacy_rows = (
+        _minute_rows("AAPL")
+        .decode()
+        .replace("ticker,date,", "symbol,datetime,")
+        .replace("+00:00", "")
+    )
+    payload = gzip.compress(legacy_rows.encode())
+    member_name = "price_intraday_1min.csv.gz"
+    archive_path = _tar_with_member(tmp_path, name=member_name, payload=payload)
+
+    member = inspect_archive(archive_path, member_names=(member_name,)).members[0]
+    manifest, _ = import_snapshot(
+        archive_path,
+        root=tmp_path / "repo",
+        source=_source_declaration(member_names=(member_name,)),
+    )
+
+    assert member.name == member_name
+    assert member.row_estimate == 390
+    assert member.columns == (
+        "symbol",
+        "datetime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    )
+    assert manifest.row_count == 390
+
+
 @pytest.mark.parametrize("name", ["/absolute.csv", "../escape.csv", r"C:\escape.csv"])
 def test_inspection_rejects_absolute_and_traversal_members(tmp_path: Path, name: str) -> None:
     archive_path = _tar_with_member(tmp_path, name=name, payload=FIXTURE.read_bytes())
@@ -478,6 +511,41 @@ def test_import_always_treats_observed_core_etfs_as_production(tmp_path: Path) -
             root=tmp_path / "repo",
             source=_source_declaration(),
         )
+
+
+def test_production_gate_uses_common_observed_window_and_keeps_internal_sessions() -> None:
+    source = ArchiveSourceDeclaration(
+        provider="tiingo",
+        feed="iex",
+        bar_size="1min",
+        member_names=(MEMBER_NAME,),
+        production_symbols=("IWM", "QQQ", "SPY"),
+        expected_start_date=date(2025, 6, 23),
+        expected_end_date=date(2026, 7, 2),
+        ingested_at=INGESTED_AT,
+    )
+    bars = pd.DataFrame(
+        {
+            "symbol": ["IWM", "IWM", "QQQ", "QQQ", "QQQ", "SPY", "SPY", "SPY"],
+            "session_date": [
+                date(2026, 4, 13),
+                date(2026, 7, 2),
+                date(2025, 6, 27),
+                date(2026, 4, 13),
+                date(2026, 7, 2),
+                date(2025, 6, 23),
+                date(2026, 4, 13),
+                date(2026, 7, 2),
+            ],
+        }
+    )
+
+    groups = snapshot_module._expected_production_groups(source, ("IWM", "QQQ", "SPY"), bars)
+
+    assert ("SPY", date(2026, 4, 13)) in groups
+    assert ("QQQ", date(2026, 5, 1)) in groups
+    assert ("IWM", date(2026, 7, 2)) in groups
+    assert not any(session_date < date(2026, 4, 13) for _, session_date in groups)
 
 
 def test_import_rejects_declared_member_with_wrong_cadence(tmp_path: Path) -> None:

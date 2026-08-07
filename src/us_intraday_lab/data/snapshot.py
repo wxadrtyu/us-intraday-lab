@@ -41,6 +41,9 @@ _BAR_SIZE = "1min"
 _SCHEMA_VERSION = "1.0.0"
 _EVIDENCE_SCHEMA_VERSION = "1.0.0"
 _TIINGO_MINUTE_COLUMNS = frozenset({"ticker", "date", "open", "high", "low", "close", "volume"})
+_LEGACY_TIINGO_MINUTE_COLUMNS = frozenset(
+    {"symbol", "datetime", "open", "high", "low", "close", "volume"}
+)
 _CANONICAL_SYMBOL = re.compile(r"^[A-Z][A-Z0-9]*(?:[.-][A-Z0-9]+)*$")
 _XNYS = exchange_calendars.get_calendar("XNYS")
 _NEW_YORK = "America/New_York"
@@ -142,6 +145,18 @@ class SnapshotVerificationError(ValueError):
     """Raised when an immutable snapshot no longer matches its manifest."""
 
 
+def _normalize_tiingo_source_schema(source: pd.DataFrame) -> pd.DataFrame:
+    """Map the legacy archive's symbol/datetime aliases to Tiingo field names."""
+    columns = frozenset(str(column) for column in source.columns)
+    if _TIINGO_MINUTE_COLUMNS.issubset(columns):
+        return source
+    if _LEGACY_TIINGO_MINUTE_COLUMNS.issubset(columns):
+        normalized = source.rename(columns={"symbol": "ticker", "datetime": "date"}).copy()
+        normalized["date"] = pd.to_datetime(normalized["date"], utc=True, errors="raise")
+        return normalized
+    return source
+
+
 def _package_version(distribution: str) -> str:
     try:
         return version(distribution)
@@ -223,10 +238,26 @@ def _effective_production_symbols(
 def _expected_production_groups(
     source: ArchiveSourceDeclaration,
     production_symbols: tuple[str, ...],
+    bars: pd.DataFrame,
 ) -> set[ExpectedGroup]:
+    if not production_symbols:
+        return set()
+    observed_dates = {
+        symbol: sorted(set(bars.loc[bars["symbol"].eq(symbol), "session_date"].tolist()))
+        for symbol in production_symbols
+    }
+    if any(not dates for dates in observed_dates.values()):
+        start_date = source.expected_start_date
+        end_date = source.expected_end_date
+    else:
+        start_date = max(dates[0] for dates in observed_dates.values())
+        end_date = min(dates[-1] for dates in observed_dates.values())
+        if start_date > end_date:
+            start_date = source.expected_start_date
+            end_date = source.expected_end_date
     sessions = _XNYS.sessions_in_range(
-        pd.Timestamp(source.expected_start_date),
-        pd.Timestamp(source.expected_end_date),
+        pd.Timestamp(start_date),
+        pd.Timestamp(end_date),
     )
     return {(symbol, session.date()) for symbol in production_symbols for session in sessions}
 
@@ -234,8 +265,9 @@ def _expected_production_groups(
 def _expected_source_groups(
     source: ArchiveSourceDeclaration,
     production_symbols: tuple[str, ...],
+    bars: pd.DataFrame,
 ) -> set[ExpectedGroup]:
-    return _expected_production_groups(source, production_symbols).union(
+    return _expected_production_groups(source, production_symbols, bars).union(
         source.expected_robustness_groups
     )
 
@@ -476,11 +508,14 @@ def import_snapshot(
     undeclared = sorted(set(source.member_names).difference(inspected_members))
     if undeclared:
         raise ValueError(f"declared source members are absent or unapproved: {undeclared}")
-    invalid_schema = [
-        name
-        for name in source.member_names
-        if not _TIINGO_MINUTE_COLUMNS.issubset(inspected_members[name].columns)
-    ]
+    invalid_schema = []
+    for name in source.member_names:
+        columns = frozenset(inspected_members[name].columns)
+        if not (
+            _TIINGO_MINUTE_COLUMNS.issubset(columns)
+            or _LEGACY_TIINGO_MINUTE_COLUMNS.issubset(columns)
+        ):
+            invalid_schema.append(name)
     if invalid_schema:
         raise ValueError(
             "declared source members lack required Tiingo columns: " + ",".join(invalid_schema)
@@ -524,7 +559,7 @@ def import_snapshot(
         member_frames = frames_by_member[member_name]
         if not member_frames:
             raise ValueError(f"declared source member contains no tabular rows: {member_name}")
-        member_rows = pd.concat(member_frames, ignore_index=True)
+        member_rows = _normalize_tiingo_source_schema(pd.concat(member_frames, ignore_index=True))
         try:
             member_non_monotonic, cadence = _source_order_and_cadence(member_rows)
         except ValueError as error:
@@ -543,8 +578,8 @@ def import_snapshot(
     _validate_canonical_symbols(bars)
     _validate_declared_date_range(bars, source)
     effective_production = _effective_production_symbols(bars, source)
-    expected_production_groups = _expected_production_groups(source, effective_production)
-    expected_source_groups = _expected_source_groups(source, effective_production)
+    expected_production_groups = _expected_production_groups(source, effective_production, bars)
+    expected_source_groups = _expected_source_groups(source, effective_production, bars)
     source_quality = assess_minute_bars(
         bars,
         expected_groups=expected_source_groups,
@@ -823,7 +858,7 @@ def verify_snapshot(dataset_id: str, *, root: Path) -> DatasetManifest:
     effective_production = _effective_production_symbols(bars, source)
     quality = assess_minute_bars(
         bars,
-        expected_groups=_expected_production_groups(source, effective_production),
+        expected_groups=_expected_production_groups(source, effective_production, bars),
         production_symbols=effective_production,
     )
     observed = {

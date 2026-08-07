@@ -2,6 +2,7 @@ import json
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import MappingProxyType, SimpleNamespace
+from typing import Self
 
 import pandas as pd
 import pytest
@@ -20,6 +21,7 @@ from us_intraday_lab.factory.orchestrator import (
     RobustnessEvidence,
     RobustnessPoint,
     StartDatePoint,
+    load_accepted_research_dataset,
     resume_research,
     run_research,
 )
@@ -30,6 +32,51 @@ from us_intraday_lab.registry.store import RegistryStore
 PROPOSAL = Path(__file__).parents[2] / "fixtures" / "hypotheses" / "momentum_pullback.json"
 ACCEPTED_AT = datetime(2026, 8, 2, 2, 0, tzinfo=UTC)
 RUNNER = CliRunner()
+
+
+def test_research_dataset_uses_only_sessions_shared_by_all_production_symbols(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from us_intraday_lab.data import catalog as catalog_module
+    from us_intraday_lab.data import snapshot as snapshot_module
+
+    sessions = tuple(date(2026, 4, day) for day in range(13, 23))
+    executed: list[str] = []
+
+    class FakeResult:
+        def fetchall(self) -> list[tuple[date]]:
+            return [(session,) for session in sessions]
+
+    class FakeConnection:
+        def execute(self, query: str) -> FakeResult:
+            executed.append(query)
+            return FakeResult()
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    monkeypatch.setattr(catalog_module, "accept_dataset", lambda *args, **kwargs: None)
+    monkeypatch.setattr(catalog_module, "connect_catalog", lambda **kwargs: FakeConnection())
+    monkeypatch.setattr(
+        snapshot_module,
+        "verify_snapshot",
+        lambda *args, **kwargs: SimpleNamespace(
+            dataset_id="dataset",
+            content_sha256="a" * 64,
+            calendar_name="XNYS",
+            calendar_version="test",
+            created_at=ACCEPTED_AT,
+        ),
+    )
+
+    dataset = load_accepted_research_dataset(root=tmp_path, dataset_id="dataset")
+
+    assert dataset.sessions == sessions
+    assert "HAVING COUNT(DISTINCT symbol) = 3" in executed[0]
 
 
 class SyntheticAcceptedBackend:

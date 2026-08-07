@@ -1131,7 +1131,10 @@ def load_accepted_research_dataset(
     manifest = verify_snapshot(dataset_id, root=root)
     with connect_catalog(root=root) as connection:
         rows = connection.execute(
-            "SELECT DISTINCT session_date FROM bars_1m ORDER BY session_date"
+            "SELECT session_date FROM bars_1m "
+            "WHERE symbol IN ('SPY', 'QQQ', 'IWM') "
+            "GROUP BY session_date HAVING COUNT(DISTINCT symbol) = 3 "
+            "ORDER BY session_date"
         ).fetchall()
     sessions = tuple(row[0] for row in rows)
     return AcceptedResearchDataset(
@@ -1243,15 +1246,8 @@ class BacktestResearchBackend:
         if phase not in {"train", "validation", "final_test"}:
             raise ValueError("phase must be train, validation, or final_test")
         minute_bars, signal_bars = self._load_frames(sessions)
-        session_set = set(sessions)
-        minute_phase = cast(
-            Any,
-            minute_bars.loc[minute_bars["session_date"].isin(session_set)].copy(deep=True),
-        )
-        signal_phase = cast(
-            Any,
-            signal_bars.loc[signal_bars["session_date"].isin(session_set)].copy(deep=True),
-        )
+        minute_phase = cast(Any, minute_bars.copy(deep=True))
+        signal_phase = cast(Any, signal_bars.copy(deep=True))
         if minute_phase.empty or signal_phase.empty:
             raise ValueError(f"{phase} phase has no bars")
         compiled = compile_strategy(variant.definition)

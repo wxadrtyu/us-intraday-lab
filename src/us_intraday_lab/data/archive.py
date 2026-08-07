@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import hashlib
 import shutil
 import tarfile
@@ -12,7 +13,7 @@ from typing import IO, cast
 import pandas as pd
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
-_APPROVED_SUFFIXES = frozenset({".csv", ".parquet"})
+_APPROVED_SUFFIXES = frozenset({".csv", ".csv.gz", ".parquet"})
 _READ_CHUNK_ROWS = 100_000
 
 
@@ -115,6 +116,13 @@ def _validate_member_name(name: str) -> None:
         raise UnsafeArchiveError(f"unsafe archive member path: {name}")
 
 
+def _member_suffix(name: str) -> str:
+    lowered = name.lower()
+    if lowered.endswith(".csv.gz"):
+        return ".csv.gz"
+    return Path(lowered).suffix
+
+
 def _approved_members(
     archive: tarfile.TarFile,
     *,
@@ -130,7 +138,7 @@ def _approved_members(
             continue
         if not member.isfile():
             raise UnsafeArchiveError(f"archive special members are not allowed: {member.name}")
-        if Path(member.name).suffix.lower() in _APPROVED_SUFFIXES:
+        if _member_suffix(member.name) in _APPROVED_SUFFIXES:
             if member.name in approved_names:
                 raise UnsafeArchiveError(f"duplicate approved archive member name: {member.name}")
             approved_names.add(member.name)
@@ -195,7 +203,11 @@ def _member_frames(
     limits: ArchiveReadLimits,
 ) -> Iterator[pd.DataFrame]:
     with _member_stream(archive, member) as stream:
-        if Path(member.name).suffix.lower() == ".csv":
+        suffix = _member_suffix(member.name)
+        if suffix == ".csv.gz":
+            with gzip.GzipFile(fileobj=stream, mode="rb") as decompressed:
+                yield from _csv_frames(cast(IO[bytes], decompressed))
+        elif suffix == ".csv":
             yield from _csv_frames(stream)
         else:
             yield from _parquet_frames(stream, limits=limits)

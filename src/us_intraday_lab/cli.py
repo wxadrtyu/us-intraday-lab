@@ -194,6 +194,22 @@ def paper_preflight_command(
         ).returncode
         == 0
     )
+    readiness_blockers: list[str] = []
+    if not registry_path.exists():
+        readiness_blockers.append("STRATEGY_REGISTRY_MISSING")
+    if enabled_strategy_count == 0:
+        readiness_blockers.append("NO_ENABLED_PAPER_STRATEGY")
+    if session is None:
+        readiness_blockers.append("PAPER_SESSION_NOT_STARTED")
+    elif reconciliation_status != "clean":
+        readiness_blockers.append("RECONCILIATION_NOT_CLEAN")
+    preflight_passed = (
+        not missing
+        and enabled_strategy_count <= 20
+        and state_ignored
+        and reconciliation_status in {"missing_session", "clean"}
+    )
+    ready_for_paper_run = preflight_passed and not readiness_blockers
     result = {
         "environment": "paper",
         "broker_endpoint": broker.endpoint,
@@ -213,16 +229,12 @@ def paper_preflight_command(
         "enabled_strategy_count": enabled_strategy_count,
         "strategy_capacity_ok": enabled_strategy_count <= 20,
         "reconciliation_status": reconciliation_status,
+        "preflight_passed": preflight_passed,
+        "ready_for_paper_run": ready_for_paper_run,
+        "readiness_blockers": readiness_blockers,
     }
     typer.echo(json.dumps(result, sort_keys=True))
-    if (
-        missing
-        or session is None
-        or enabled_strategy_count == 0
-        or enabled_strategy_count > 20
-        or not state_ignored
-        or reconciliation_status != "clean"
-    ):
+    if not preflight_passed:
         raise typer.Exit(code=1)
 
 

@@ -184,16 +184,24 @@ def _group_results(
 ) -> tuple[SymbolSessionQuality, ...]:
     normalized_production = {symbol.strip().upper() for symbol in production_symbols}
     source_non_monotonic = set(source_non_monotonic_groups)
+    group_indices = (
+        pd.DataFrame({"symbol": symbols, "session_date": session_dates})
+        .groupby(["symbol", "session_date"], sort=False, observed=True)
+        .indices
+    )
     results: list[SymbolSessionQuality] = []
     for symbol, session_date in sorted(all_groups):
-        group_rows = symbols.eq(symbol) & session_dates.eq(session_date)
-        group_timestamps = timestamps.loc[group_rows]
+        raw_positions = group_indices.get((symbol, session_date))
+        positions = None if raw_positions is None else pd.Index(raw_positions, dtype="int64")
+        group_timestamps = (
+            timestamps.iloc[positions] if positions is not None else timestamps.iloc[0:0]
+        )
         expected = _expected_or_none(session_date)
         expected_bars = 0 if expected is None else len(expected)
         if expected is None:
             observed_bars = 0
             missing_expected_bars = 0
-            outside_session_rows = int(group_rows.sum())
+            outside_session_rows = len(group_timestamps)
         else:
             observed = pd.DatetimeIndex(group_timestamps).intersection(expected).unique()
             observed_bars = len(observed)
@@ -213,9 +221,15 @@ def _group_results(
                 expected_bars=expected_bars,
                 observed_bars=observed_bars,
                 missing_expected_bars=missing_expected_bars,
-                duplicate_rows=int(duplicate_mask.loc[group_rows].sum()),
-                invalid_ohlc_rows=int(invalid_ohlc_mask.loc[group_rows].sum()),
-                invalid_volume_rows=int(invalid_volume_mask.loc[group_rows].sum()),
+                duplicate_rows=(
+                    0 if positions is None else int(duplicate_mask.iloc[positions].sum())
+                ),
+                invalid_ohlc_rows=(
+                    0 if positions is None else int(invalid_ohlc_mask.iloc[positions].sum())
+                ),
+                invalid_volume_rows=(
+                    0 if positions is None else int(invalid_volume_mask.iloc[positions].sum())
+                ),
                 outside_session_rows=outside_session_rows,
                 non_monotonic=(
                     (symbol, session_date) in source_non_monotonic
