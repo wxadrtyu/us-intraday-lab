@@ -882,6 +882,22 @@ def _execute(
             )
             if robustness.strategy_id != variant.variant_id:
                 raise ResearchIntegrityError("ROBUSTNESS_STRATEGY_MISMATCH")
+            robustness = robustness.model_copy(
+                update={
+                    "walk_forward_net_returns": _historical_walk_forward_returns(
+                        train_by_id[variant.variant_id],
+                        validation_by_id[variant.variant_id],
+                    ),
+                    "source_refs": tuple(
+                        dict.fromkeys(
+                            (
+                                *robustness.source_refs,
+                                f"train-result:{train_by_id[variant.variant_id].result_sha256}",
+                            )
+                        )
+                    ),
+                }
+            )
             robustness_rows.append(robustness.model_dump(mode="json"))
             phase = final_by_id.get(variant.variant_id, validation_by_id[variant.variant_id])
             historical_phases = [
@@ -1442,6 +1458,31 @@ def _compound_returns(values: tuple[float, ...]) -> float:
     if not values:
         raise ValueError("return sequence must not be empty")
     return math.prod(1.0 + value for value in values) - 1.0
+
+
+def _historical_walk_forward_returns(
+    train: PhaseEvidence,
+    validation: PhaseEvidence,
+    *,
+    window_sessions: int = 5,
+) -> tuple[float, ...]:
+    if type(window_sessions) is not int or window_sessions <= 0:
+        raise ValueError("window_sessions must be a positive exact integer")
+    overlapping = set(train.session_net_returns).intersection(validation.session_net_returns)
+    if overlapping:
+        raise ResearchIntegrityError("WALK_FORWARD_PHASE_OVERLAP")
+    ordered = tuple(
+        value
+        for _session, value in sorted(
+            {**train.session_net_returns, **validation.session_net_returns}.items()
+        )
+    )
+    if len(ordered) < window_sessions:
+        raise ResearchIntegrityError("INSUFFICIENT_WALK_FORWARD_SESSIONS")
+    return tuple(
+        _compound_returns(ordered[index : index + window_sessions])
+        for index in range(len(ordered) - window_sessions + 1)
+    )
 
 
 def _null_evidence_from_run(

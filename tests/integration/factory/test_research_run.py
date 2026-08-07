@@ -247,6 +247,36 @@ def test_preselection_rejects_a_validation_winner_that_lost_in_training() -> Non
     assert orchestrator_module._preselected((losing_train,), (validation,)) == ()
 
 
+def test_walk_forward_compounds_rolling_five_session_historical_windows() -> None:
+    proposal = FixtureProposalProvider(PROPOSAL).load()
+    variant = generate_strategy_variants(proposal)[0]
+    backend = SyntheticAcceptedBackend()
+    train_sessions = tuple(date(2026, 6, day) for day in range(1, 7))
+    validation_sessions = tuple(date(2026, 6, day) for day in range(7, 12))
+    train = backend.run_phase(
+        variant=variant,
+        phase="train",
+        sessions=train_sessions,
+        experiment_id="experiment",
+    ).model_copy(
+        update={"session_net_returns": {item.isoformat(): 0.01 for item in train_sessions}}
+    )
+    validation = backend.run_phase(
+        variant=variant,
+        phase="validation",
+        sessions=validation_sessions,
+        experiment_id="experiment",
+    ).model_copy(
+        update={"session_net_returns": {item.isoformat(): -0.005 for item in validation_sessions}}
+    )
+
+    windows = orchestrator_module._historical_walk_forward_returns(train, validation)
+
+    assert len(windows) == 7
+    assert windows[0] == pytest.approx((1.01**5) - 1.0)
+    assert windows[-1] == pytest.approx((0.995**5) - 1.0)
+
+
 def _dataset() -> AcceptedResearchDataset:
     first = date(2026, 5, 1)
     sessions = tuple(first + timedelta(days=index) for index in range(20))
