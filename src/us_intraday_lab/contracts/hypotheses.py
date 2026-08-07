@@ -84,8 +84,8 @@ class HypothesisProposal(_ClosedModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     hypothesis_id: str = Field(min_length=1, max_length=120, pattern=r"^[a-z0-9][a-z0-9-]*$")
     thesis: str = Field(min_length=1, max_length=2_000)
-    entry_template: Literal["momentum_pullback"]
-    exit_template: Literal["risk_managed"]
+    entry_template: Literal["momentum_pullback", "trend_breakout"]
+    exit_template: Literal["risk_managed", "trend_failure"]
     indicators: tuple[IndicatorName, ...] = Field(min_length=1, max_length=9)
     parameter_ranges: Mapping[ParameterName, ParameterRange] = Field(min_length=1, max_length=10)
     symbols: tuple[Literal["SPY", "QQQ", "IWM"], ...]

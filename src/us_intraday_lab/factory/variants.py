@@ -42,8 +42,8 @@ class GeneratedVariant:
         return _canonical_json(self.definition.model_dump(mode="json"))
 
 
-def _parameter_specs() -> dict[ParameterName, ParameterSpec]:
-    template = FEATURE_TEMPLATE_CATALOG.entry_templates["momentum_pullback"]
+def _parameter_specs(entry_template: str) -> dict[ParameterName, ParameterSpec]:
+    template = FEATURE_TEMPLATE_CATALOG.entry_templates[entry_template]
     return dict(template.parameters)
 
 
@@ -97,7 +97,7 @@ def _selected_parameter_tuples(
 ) -> tuple[tuple[tuple[ParameterValue, ...], SelectionReason], ...]:
     values = _sorted_values(proposal)
     names = tuple(values)
-    specs = _parameter_specs()
+    specs = _parameter_specs(proposal.entry_template)
     baseline = tuple(specs[name].baseline for name in names)
     lower = tuple(values[name][0] for name in names)
     upper = tuple(values[name][-1] for name in names)
@@ -156,7 +156,18 @@ def _selected_parameter_tuples(
     return tuple(selected)
 
 
-def _strategy_payload(parameters: dict[ParameterName, ParameterValue]) -> dict[str, object]:
+def _strategy_payload(
+    parameters: dict[ParameterName, ParameterValue],
+    *,
+    entry_template: str,
+    exit_template: str,
+) -> dict[str, object]:
+    rsi_operator = "gt" if entry_template == "trend_breakout" else "lt"
+    exit_condition = (
+        {"indicator": "ema_spread", "op": "lt", "value": 0.0}
+        if exit_template == "trend_failure"
+        else {"indicator": "rsi", "op": "gte", "value": 70.0}
+    )
     return {
         "dsl_version": "1.0.0",
         "symbols": ["SPY", "QQQ", "IWM"],
@@ -168,7 +179,11 @@ def _strategy_payload(parameters: dict[ParameterName, ParameterValue]) -> dict[s
                     "op": "gt",
                     "value": parameters["ema_spread_min"],
                 },
-                {"indicator": "rsi", "op": "lt", "value": parameters["rsi_entry"]},
+                {
+                    "indicator": "rsi",
+                    "op": rsi_operator,
+                    "value": parameters["rsi_entry"],
+                },
                 {
                     "indicator": "volume_ratio",
                     "op": "gte",
@@ -176,7 +191,7 @@ def _strategy_payload(parameters: dict[ParameterName, ParameterValue]) -> dict[s
                 },
             ]
         },
-        "exit": {"indicator": "rsi", "op": "gte", "value": 70.0},
+        "exit": exit_condition,
         "risk": {
             "stop_loss_bps": parameters["stop_loss_bps"],
             "take_profit_bps": parameters["take_profit_bps"],
@@ -193,13 +208,20 @@ def _variant(
     searched: tuple[ParameterValue, ...],
     names: tuple[ParameterName, ...],
     reason: SelectionReason,
+    *,
+    entry_template: str,
+    exit_template: str,
 ) -> GeneratedVariant:
-    specs = _parameter_specs()
+    specs = _parameter_specs(entry_template)
     parameters: dict[ParameterName, ParameterValue] = {
         name: spec.baseline for name, spec in specs.items()
     }
     parameters.update(dict(zip(names, searched, strict=True)))
-    payload = _strategy_payload(parameters)
+    payload = _strategy_payload(
+        parameters,
+        entry_template=entry_template,
+        exit_template=exit_template,
+    )
     definition_hash = hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
     definition = StrategyDefinition.model_validate({"strategy_id": definition_hash[:16], **payload})
     validation = validate_strategy(definition)
@@ -233,5 +255,14 @@ def generate_strategy_variants(
     reparsed = HypothesisProposal.model_validate(proposal)
     names = tuple(reparsed.parameter_ranges)
     selected = _selected_parameter_tuples(reparsed)
-    variants = tuple(_variant(values, names, reason) for values, reason in selected)
+    variants = tuple(
+        _variant(
+            values,
+            names,
+            reason,
+            entry_template=reparsed.entry_template,
+            exit_template=reparsed.exit_template,
+        )
+        for values, reason in selected
+    )
     return deduplicate_variants(variants)[: reparsed.max_variants]

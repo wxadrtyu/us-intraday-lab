@@ -100,7 +100,12 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                 template_id="momentum_pullback",
                 required_indicators=("ema_spread", "rsi", "volume_ratio"),
                 parameters=_PARAMETERS,
-            )
+            ),
+            "trend_breakout": TemplateSpec(
+                template_id="trend_breakout",
+                required_indicators=("ema_spread", "rsi", "volume_ratio"),
+                parameters=_PARAMETERS,
+            ),
         }
     ),
     exit_templates=MappingProxyType(
@@ -109,7 +114,12 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                 template_id="risk_managed",
                 required_indicators=("rsi",),
                 parameters=_PARAMETERS,
-            )
+            ),
+            "trend_failure": TemplateSpec(
+                template_id="trend_failure",
+                required_indicators=("ema_spread",),
+                parameters=_PARAMETERS,
+            ),
         }
     ),
 )

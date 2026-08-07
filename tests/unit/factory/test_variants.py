@@ -65,6 +65,35 @@ def test_descriptive_text_does_not_change_variant_ids() -> None:
     ]
 
 
+def test_trend_breakout_template_requires_upward_momentum_and_exits_on_trend_failure() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "trend-breakout",
+            "entry_template": "trend_breakout",
+            "exit_template": "trend_failure",
+            "parameter_ranges": {
+                "ema_spread_min": {"values": [0.0, 0.001]},
+                "rsi_entry": {"values": [40.0, 55.0]},
+                "volume_ratio_min": {"values": [1.0, 1.2]},
+            },
+            "max_variants": 8,
+        }
+    )
+
+    variants = generate_strategy_variants(proposal)
+
+    for variant in variants:
+        entry = variant.definition.entry.model_dump(mode="json")
+        assert entry["all"][1]["indicator"] == "rsi"
+        assert entry["all"][1]["op"] == "gt"
+        assert variant.definition.exit.model_dump(mode="json") == {
+            "indicator": "ema_spread",
+            "op": "lt",
+            "value": 0.0,
+        }
+
+
 def test_seed_changes_only_over_budget_selected_subset() -> None:
     proposal = _proposal()
     changed_seed = HypothesisProposal.model_validate(
