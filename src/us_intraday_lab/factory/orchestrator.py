@@ -1479,9 +1479,17 @@ def _null_evidence_from_run(
     ordered_signals = tuple(
         sorted(signals, key=lambda item: (item.session, item.event_time, item.symbol or ""))
     )
+    candidates = tuple(
+        event
+        for event in base.events
+        if event.event_type == "ENTRY_CANDIDATE" and event.symbol is not None
+    ) or ordered_signals
+    ordered_candidates = tuple(
+        sorted(candidates, key=lambda item: (item.session, item.event_time, item.symbol or ""))
+    )
     matched: set[int] = set()
     for trade in sorted(base.trades, key=lambda item: item.entry_time):
-        candidates = [
+        matching_signal_indexes = [
             index
             for index, signal in enumerate(ordered_signals)
             if index not in matched
@@ -1489,16 +1497,32 @@ def _null_evidence_from_run(
             and signal.session == trade.session
             and signal.event_time <= trade.entry_time
         ]
-        if candidates:
-            matched.add(max(candidates, key=lambda index: ordered_signals[index].event_time))
+        if matching_signal_indexes:
+            matched.add(
+                max(
+                    matching_signal_indexes,
+                    key=lambda index: ordered_signals[index].event_time,
+                )
+            )
 
     grouped = {
-        (symbol, session): group.sort_values("timestamp")
+        (
+            symbol,
+            session.date() if isinstance(session, pd.Timestamp) else session,
+        ): group.sort_values("timestamp")
         for (symbol, session), group in minute_bars.groupby(["symbol", "session_date"], sort=False)
+    }
+    matched_signal_keys = {
+        (
+            ordered_signals[index].symbol,
+            ordered_signals[index].session,
+            ordered_signals[index].event_time,
+        )
+        for index in matched
     }
     opportunities: list[NullOpportunity] = []
     base_cost = COST_SCENARIOS["base"]
-    for index, signal in enumerate(ordered_signals):
+    for signal in ordered_candidates:
         assert signal.symbol is not None
         group = grouped.get((signal.symbol, signal.session))
         if group is None:
@@ -1540,7 +1564,7 @@ def _null_evidence_from_run(
                 signal_time=signal.event_time,
                 entry_time=entry_time,
                 exit_time=exit_time,
-                entered=index in matched,
+                entered=(signal.symbol, signal.session, signal.event_time) in matched_signal_keys,
                 holding_rule_net_profit=profit,
             )
         )

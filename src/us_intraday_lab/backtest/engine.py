@@ -50,7 +50,7 @@ from us_intraday_lab.strategy.runtime import (
     StrategyRuntime,
 )
 
-ENGINE_ID = "event-engine-1.0.0"
+ENGINE_ID = "event-engine-1.1.0"
 CALENDAR_ID = f"XNYS@{version('exchange-calendars')}"
 MAX_POSITIONS = 3
 RISK_BUDGET_FRACTION = 0.005
@@ -63,6 +63,7 @@ _REQUIRED_SIGNAL_BAR_COLUMNS = frozenset(
 )
 EventType = Literal[
     "BAR_CLOSED_15M",
+    "ENTRY_CANDIDATE",
     "ENTRY_OPPORTUNITY",
     "SIGNAL_ENTER_LONG",
     "SIGNAL_EXIT_LONG",
@@ -501,6 +502,17 @@ def _rule_matches(rule: RuleOperator, features: FeatureRow) -> bool:
     raise TypeError("engine received an unsupported compiled rule")
 
 
+def _rule_observable(rule: RuleOperator, features: FeatureRow) -> bool:
+    if type(rule) is ComparisonOperator:
+        value = rule.indicator_fn(features)
+        return value is not None and not pd.isna(value) and isfinite(float(value))
+    if type(rule) is AllOperator:
+        return all(_rule_observable(child, features) for child in rule.children)
+    if type(rule) is AnyOperator:
+        return all(_rule_observable(child, features) for child in rule.children)
+    raise TypeError("engine received an unsupported compiled rule")
+
+
 class BacktestEngine:
     """Replay completed features and eligible orders against official minutes."""
 
@@ -650,6 +662,13 @@ class BacktestEngine:
                         ):
                             runtime.complete_cooldown(key, event_time=clock_time)
                             state = runtime.state_for(key)
+                        if _rule_observable(self.strategy.entry, feature_row):
+                            emit(
+                                "ENTRY_CANDIDATE",
+                                clock_time,
+                                session,
+                                symbol=symbol,
+                            )
                         entry_matches = _rule_matches(self.strategy.entry, feature_row)
                         if entry_matches:
                             emit(

@@ -127,7 +127,7 @@ def _golden_job(
         schema_version="1.0.0",
         strategy_id=compiled.definition_fingerprint,
         dataset_id="synthetic-accepted-dataset",
-        engine_id="event-engine-1.0.0",
+        engine_id="event-engine-1.1.0",
         calendar_id=CALENDAR_ID,
         input_data_sha256=input_data_sha256(minute_bars, signal_bars),
         initial_cash=25_000.0,
@@ -184,6 +184,7 @@ def test_engine_golden_sequence_obeys_next_minute_and_finishes_flat() -> None:
 
     assert [event.event_type for event in run.events] == [
         "BAR_CLOSED_15M",
+        "ENTRY_CANDIDATE",
         "ENTRY_OPPORTUNITY",
         "SIGNAL_ENTER_LONG",
         "ORDER_INTENT_CREATED",

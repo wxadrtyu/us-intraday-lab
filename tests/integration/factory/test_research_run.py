@@ -511,3 +511,71 @@ def test_real_backend_converts_signal_and_trade_ledger_into_bounded_null_evidenc
     assert {
         key.rsplit(":", maxsplit=1)[-1] for key in evidence.trade_count_by_symbol_session
     } == set(symbols)
+
+
+def test_null_evidence_matches_date_events_to_timestamp_dataframe_sessions() -> None:
+    variant = generate_strategy_variants(FixtureProposalProvider(PROPOSAL).load())[0]
+    session = date(2026, 7, 2)
+    events = tuple(
+        BacktestEvent(
+            sequence=index * 2 + slot + 1,
+            event_type="ENTRY_OPPORTUNITY",
+            event_time=datetime(2026, 7, 2, 14, slot * 10, tzinfo=UTC),
+            scenario="base",
+            session=session,
+            symbol=symbol,
+            details=MappingProxyType({}),
+        )
+        for index, symbol in enumerate(("SPY", "QQQ", "IWM"))
+        for slot in range(2)
+    )
+    trades = tuple(
+        TradeRecord(
+            symbol=symbol,
+            session=session,
+            quantity=10,
+            entry_time=datetime(2026, 7, 2, 14, 5, tzinfo=UTC),
+            exit_time=datetime(2026, 7, 2, 14, 30, tzinfo=UTC),
+            entry_price=100.0,
+            exit_price=101.0,
+            gross_pnl=10.0,
+            net_pnl=9.0,
+            cost_paid=1.0,
+            forced=False,
+        )
+        for symbol in ("SPY", "QQQ", "IWM")
+    )
+    timestamps = pd.date_range("2026-07-02T14:00:00Z", periods=100, freq="min")
+    minute_bars = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "symbol": symbol,
+                    "session_date": pd.Timestamp(session),
+                    "timestamp": timestamps,
+                    "open": [100.0 + index * 0.01 for index in range(len(timestamps))],
+                }
+            )
+            for symbol in ("SPY", "QQQ", "IWM")
+        ],
+        ignore_index=True,
+    )
+    run = SimpleNamespace(
+        scenarios={
+            "base": SimpleNamespace(
+                events=events,
+                trades=trades,
+                metrics={"net_return": 0.01, "trade_count": 3.0},
+            )
+        }
+    )
+
+    evidence = orchestrator_module._null_evidence_from_run(
+        variant=variant,
+        run=run,
+        minute_bars=minute_bars,
+        initial_cash=100_000.0,
+        result_sha256="f" * 64,
+    )
+
+    assert len(evidence.evidence_opportunity_ids) == 6
