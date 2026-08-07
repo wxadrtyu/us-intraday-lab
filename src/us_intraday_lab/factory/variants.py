@@ -16,7 +16,7 @@ from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.factory.feature_catalog import FEATURE_TEMPLATE_CATALOG, ParameterSpec
 from us_intraday_lab.strategy.validator import validate_strategy
 
-VARIANT_GENERATOR_VERSION = "variant-generator-1.1.0"
+VARIANT_GENERATOR_VERSION = "variant-generator-1.2.0"
 SelectionReason = Literal["baseline", "lower_boundary", "upper_boundary", "space_filling"]
 
 
@@ -176,6 +176,16 @@ def _strategy_payload(
                 "op": "gt",
                 "value": parameters["minutes_from_open_min"],
             },
+        ]
+    elif entry_template == "oversold_rebound":
+        entry_conditions = [
+            {"indicator": "rsi", "op": "lt", "value": parameters["rsi_entry"]},
+            {
+                "indicator": "vwap_distance_bps",
+                "op": "lt",
+                "value": parameters["vwap_distance_max"],
+            },
+            {"indicator": "return_1", "op": "lt", "value": parameters["return_1_max"]},
         ]
     else:
         rsi_operator = "gt" if entry_template == "trend_breakout" else "lt"

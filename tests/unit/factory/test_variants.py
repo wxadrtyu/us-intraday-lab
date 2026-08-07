@@ -160,6 +160,28 @@ def test_trend_dip_defaults_encode_the_cost_resilient_anchor() -> None:
     assert variant.parameters["range_position_max"] == 0.4
 
 
+def test_oversold_rebound_template_uses_only_causal_oversold_features() -> None:
+    proposal = HypothesisProposal.model_validate(
+        {
+            **_proposal().model_dump(mode="json"),
+            "hypothesis_id": "oversold-rebound",
+            "entry_template": "oversold_rebound",
+            "exit_template": "time_stop",
+            "indicators": ["rsi", "vwap_distance_bps", "return_1", "minutes_from_open"],
+            "parameter_ranges": {"max_holding_minutes": {"values": [45, 60, 90]}},
+            "max_variants": 3,
+        }
+    )
+
+    for variant in generate_strategy_variants(proposal):
+        entry = variant.definition.entry.model_dump(mode="json")["all"]
+        assert [(item["indicator"], item["op"]) for item in entry] == [
+            ("rsi", "lt"),
+            ("vwap_distance_bps", "lt"),
+            ("return_1", "lt"),
+        ]
+
+
 def test_seed_changes_only_over_budget_selected_subset() -> None:
     proposal = _proposal()
     changed_seed = HypothesisProposal.model_validate(

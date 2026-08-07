@@ -85,6 +85,9 @@ _PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
         "stop_loss_bps": ParameterSpec("stop_loss_bps", "int", "risk", 35, 1, 10_000),
         "take_profit_bps": ParameterSpec("take_profit_bps", "int", "risk", 70, 1, 10_000),
         "volume_ratio_min": ParameterSpec("volume_ratio_min", "float", "entry", 1.2, 0.0, 100.0),
+        "vwap_distance_max": ParameterSpec(
+            "vwap_distance_max", "float", "entry", -10.0, -10_000.0, 10_000.0
+        ),
     }
 )
 
@@ -102,8 +105,17 @@ _TREND_DIP_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
     }
 )
 
+_OVERSOLD_REBOUND_PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
+    {
+        **_TREND_DIP_PARAMETERS,
+        "max_holding_minutes": replace(_PARAMETERS["max_holding_minutes"], baseline=60),
+        "rsi_entry": replace(_PARAMETERS["rsi_entry"], baseline=35.0),
+        "vwap_distance_max": replace(_PARAMETERS["vwap_distance_max"], baseline=-10.0),
+    }
+)
+
 FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
-    version="feature-template-catalog-1.1.0",
+    version="feature-template-catalog-1.2.0",
     indicators=(
         "return_1",
         "return_3",
@@ -137,6 +149,11 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
                 ),
                 parameters=_TREND_DIP_PARAMETERS,
             ),
+            "oversold_rebound": TemplateSpec(
+                template_id="oversold_rebound",
+                required_indicators=("rsi", "vwap_distance_bps", "return_1"),
+                parameters=_OVERSOLD_REBOUND_PARAMETERS,
+            ),
         }
     ),
     exit_templates=MappingProxyType(
@@ -154,7 +171,7 @@ FEATURE_TEMPLATE_CATALOG = FeatureTemplateCatalog(
             "time_stop": TemplateSpec(
                 template_id="time_stop",
                 required_indicators=("minutes_from_open",),
-                parameters=_TREND_DIP_PARAMETERS,
+                parameters=MappingProxyType({}),
             ),
         }
     ),
