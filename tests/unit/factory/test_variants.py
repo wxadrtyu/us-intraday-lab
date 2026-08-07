@@ -195,18 +195,20 @@ def test_late_dip_rebound_defaults_preserve_the_screened_anchor() -> None:
                 "range_position",
                 "minutes_from_open",
             ],
-            "parameter_ranges": {"max_holding_minutes": {"values": [45, 60, 75]}},
-            "max_variants": 3,
+            "parameter_ranges": {
+                "range_position_max": {"values": [0.5, 0.55, 0.6]},
+                "return_1_max": {"values": [-0.001, -0.0009, -0.0008]}
+            },
+            "max_variants": 9,
         }
     )
 
-    anchor = next(
-        item for item in generate_strategy_variants(proposal) if item.parameters["max_holding_minutes"] == 60
-    )
-    assert anchor.parameters["vwap_distance_max"] == 0.0
-    assert anchor.parameters["return_1_max"] == -0.00125
-    assert anchor.parameters["range_position_max"] == 0.2
-    assert anchor.parameters["minutes_from_open_min"] == 150
+    anchor = next(item for item in generate_strategy_variants(proposal) if item.selection_reason == "baseline")
+    assert anchor.parameters["vwap_distance_max"] == 10.0
+    assert anchor.parameters["return_1_max"] == -0.0009
+    assert anchor.parameters["range_position_max"] == 0.55
+    assert anchor.parameters["minutes_from_open_min"] == 180
+    assert anchor.parameters["max_holding_minutes"] == 75
     assert anchor.parameters["stop_loss_bps"] == 10_000
     assert anchor.parameters["take_profit_bps"] == 10_000
 

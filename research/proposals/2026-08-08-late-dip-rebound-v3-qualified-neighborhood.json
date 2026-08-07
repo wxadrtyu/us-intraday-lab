@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "hypothesis_id": "late-dip-rebound-v3-qualified-neighborhood",
+  "thesis": "A late-session dip-rebound rule remains profitable after 1.5-times modeled costs and above 100 historical trades across a compact return-threshold and range-position neighborhood.",
+  "entry_template": "late_dip_rebound",
+  "exit_template": "time_stop",
+  "indicators": ["vwap_distance_bps", "return_1", "range_position", "minutes_from_open"],
+  "parameter_ranges": {
+    "range_position_max": {"values": [0.5, 0.55, 0.6]},
+    "return_1_max": {"values": [-0.001, -0.0009, -0.0008]}
+  },
+  "symbols": ["SPY", "QQQ", "IWM"],
+  "max_variants": 9,
+  "seed": 202608090,
+  "rationale": "A bounded event-engine diagnostic on training and validation only found two adjacent configurations with 103 and 107 trades, positive 1.5x-cost returns in both phases, and phase profit factors between 1.53 and 1.74. This nine-point immutable neighborhood varies only the two thresholds separating those configurations before final-test access."
+}
