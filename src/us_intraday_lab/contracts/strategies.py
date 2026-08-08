@@ -14,7 +14,7 @@ IndicatorName = Literal[
     "minutes_from_open",
 ]
 ComparisonOp = Literal["gt", "gte", "lt", "lte"]
-SignalBarSize = Literal["15min"]
+SignalBarSize = Literal["5min", "15min"]
 OrderType = Literal["market", "limit"]
 SizingPreset = Literal[
     "equal_cash_conservative",

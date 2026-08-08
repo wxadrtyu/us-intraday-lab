@@ -62,6 +62,7 @@ _REQUIRED_SIGNAL_BAR_COLUMNS = frozenset(
     {"symbol", "available_at", "open", "high", "low", "close", "volume", "session_date"}
 )
 EventType = Literal[
+    "BAR_CLOSED_5M",
     "BAR_CLOSED_15M",
     "ENTRY_CANDIDATE",
     "ENTRY_OPPORTUNITY",

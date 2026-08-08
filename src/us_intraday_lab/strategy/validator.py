@@ -14,6 +14,7 @@ from us_intraday_lab.contracts.strategies import (
 )
 
 PRODUCTION_SYMBOLS = frozenset({"SPY", "QQQ", "IWM"})
+FIVE_MINUTE_SYMBOLS = ("AAPL", "QQQ")
 ALLOWED_INDICATORS = frozenset(
     {
         "return_1",
@@ -835,6 +836,12 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
             )
     if "symbols" in data:
         symbols = data["symbols"]
+        declared_bar_size = data.get("signal_bar_size")
+        allowed_symbols = (
+            frozenset(FIVE_MINUTE_SYMBOLS)
+            if declared_bar_size == "5min"
+            else PRODUCTION_SYMBOLS
+        )
         if type(symbols) is not tuple:
             issues.append(
                 ValidationIssue(
@@ -862,7 +869,7 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
                             message="symbols must contain exact strings",
                         )
                     )
-                elif symbol not in PRODUCTION_SYMBOLS:
+                elif symbol not in allowed_symbols:
                     issues.append(
                         ValidationIssue(
                             code="DSL_UNSUPPORTED_SYMBOL",
@@ -872,14 +879,34 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
                     )
     if "signal_bar_size" in data:
         bar_size = data["signal_bar_size"]
-        if type(bar_size) is not str or bar_size != "15min":
+        if type(bar_size) is not str or bar_size not in {"5min", "15min"}:
             issues.append(
                 ValidationIssue(
                     code="DSL_UNSUPPORTED_SIGNAL_BAR",
                     path="signal_bar_size",
-                    message="only completed 15-minute signal bars are supported",
+                    message="only completed 5-minute or 15-minute signal bars are supported",
                 )
             )
+        elif type(data.get("symbols")) is tuple:
+            symbol_scope = cast(tuple[object, ...], data["symbols"])
+            safe_string_scope = all(type(symbol) is str for symbol in symbol_scope)
+            if bar_size == "5min" and (
+                not safe_string_scope or symbol_scope != FIVE_MINUTE_SYMBOLS
+            ):
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_FIVE_MINUTE_SYMBOL_SCOPE",
+                        path="symbols",
+                        message=f"{bar_size} strategies require the exact ordered symbol scope",
+                    )
+                )
+                issues.append(
+                    ValidationIssue(
+                        code="DSL_UNSUPPORTED_SIGNAL_BAR",
+                        path="signal_bar_size",
+                        message="5-minute bars require the closed AAPL/QQQ research scope",
+                    )
+                )
     if "risk" in data:
         _validate_risk(data["risk"], issues)
     if "order_type" in data:
