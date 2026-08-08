@@ -322,9 +322,20 @@ def screen_long_horizon_campaign(
         stage="PROPOSAL_ACCEPTED",
         payload={"dataset_id": dataset_id, "proposal_ids": [item.proposal_id for item in proposals]},
     )
+    variants_by_proposal = {
+        proposal.proposal_id: generate_long_horizon_variants(proposal)
+        for proposal in proposals
+    }
     variants = tuple(
-        strategy for proposal in proposals for strategy in generate_long_horizon_variants(proposal)
+        strategy
+        for proposal in proposals
+        for strategy in variants_by_proposal[proposal.proposal_id]
     )
+    proposal_by_strategy_id = {
+        strategy.strategy_id: proposal_id
+        for proposal_id, strategies in variants_by_proposal.items()
+        for strategy in strategies
+    }
     if len({strategy.strategy_id for strategy in variants}) != len(variants):
         raise ValueError("generated strategy identities must be campaign-unique")
     _stage(
@@ -349,17 +360,22 @@ def screen_long_horizon_campaign(
     )
     if len(train_survivors) < 4:
         raise NoLongHorizonCandidateError("fewer than four variants passed training floors")
-    ranked_train = sorted(
-        train_survivors,
-        key=lambda strategy: (
-            -next(
-                result.cost_1_5x_annualized_return
-                for result in train_results
-                if result.strategy_id == strategy.strategy_id
+    train_by_id = {result.strategy_id: result for result in train_results}
+    ranked_train = tuple(
+        strategy
+        for proposal in proposals
+        for strategy in sorted(
+            (
+                item
+                for item in train_survivors
+                if proposal_by_strategy_id[item.strategy_id] == proposal.proposal_id
             ),
-            strategy.strategy_id,
-        ),
-    )[: min(12, len(train_survivors))]
+            key=lambda item: (
+                -train_by_id[item.strategy_id].cost_1_5x_annualized_return,
+                item.strategy_id,
+            ),
+        )[:4]
+    )
     validation_results = tuple(
         effective_backend.evaluate(strategy, split.validation_sessions, phase="validation")
         for strategy in ranked_train
@@ -372,17 +388,34 @@ def screen_long_horizon_campaign(
             "passed": sum(map(_passes_validation, validation_results)),
         },
     )
-    passing_validation = [result for result in validation_results if _passes_validation(result)]
-    passing_validation.sort(
-        key=lambda result: (-result.cost_1_5x_annualized_return, result.strategy_id)
+    passing_validation = tuple(
+        result for result in validation_results if _passes_validation(result)
     )
-    if len(passing_validation) < 4:
+    eligible_families: list[list[PhaseEvaluation]] = []
+    for proposal in proposals:
+        family = [
+            result
+            for result in passing_validation
+            if proposal_by_strategy_id[result.strategy_id] == proposal.proposal_id
+        ]
+        family.sort(
+            key=lambda result: (-result.cost_1_5x_annualized_return, result.strategy_id)
+        )
+        if len(family) >= 4:
+            eligible_families.append(family)
+    if not eligible_families:
         raise NoLongHorizonCandidateError("fewer than four variants passed validation floors")
-    if passing_validation[0].cost_1_5x_annualized_return < 0.10:
+    eligible_families.sort(
+        key=lambda family: (
+            -family[0].cost_1_5x_annualized_return,
+            family[0].strategy_id,
+        )
+    )
+    selected_results = tuple(eligible_families[0][:4])
+    if selected_results[0].cost_1_5x_annualized_return < 0.10:
         raise NoLongHorizonCandidateError(
             "best validation variant is below ten percent annualized after 1.5x costs"
         )
-    selected_results = tuple(passing_validation[:4])
     winner_id = selected_results[0].strategy_id
     survivor_ids = tuple(sorted(result.strategy_id for result in selected_results))
     survivor_strategies = tuple(

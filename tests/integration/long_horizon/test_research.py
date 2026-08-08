@@ -131,6 +131,32 @@ class _SpyIwmBackend(_Backend):
         )
 
 
+class _ScatteredValidationBackend(_Backend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.validation_counts: dict[str, int] = {}
+
+    def evaluate(self, strategy, sessions: tuple[date, ...], *, phase: str) -> PhaseEvaluation:
+        result = super().evaluate(strategy, sessions, phase=phase)
+        if phase != "validation":
+            return result
+        proposal_id = strategy.strategy_id.rsplit("-", 1)[0]
+        count = self.validation_counts.get(proposal_id, 0)
+        self.validation_counts[proposal_id] = count + 1
+        daily_return = 0.0005 if count == 0 else -0.0001
+        return PhaseEvaluation(
+            strategy_id=result.strategy_id,
+            sessions=result.sessions,
+            base_session_returns=tuple(daily_return for _ in sessions),
+            stress_session_returns=tuple(daily_return - 0.00005 for _ in sessions),
+            cost_1_5x_session_returns=tuple(daily_return - 0.00005 for _ in sessions),
+            closed_trades=result.closed_trades,
+            max_drawdown=result.max_drawdown,
+            profit_factor=result.profit_factor,
+            pnl_by_symbol=result.pnl_by_symbol,
+        )
+
+
 def test_screen_never_reads_or_reserves_final(tmp_path: Path) -> None:
     backend = _Backend()
 
@@ -194,6 +220,23 @@ def test_screen_accepts_the_closed_spy_iwm_scope(tmp_path: Path) -> None:
     )
 
     assert selection.winner_strategy.symbols == ("SPY", "IWM")
+
+
+def test_screen_rejects_scattered_winners_without_one_four_variant_family(
+    tmp_path: Path,
+) -> None:
+    proposals = tuple(_proposal(f"proposal-{index}", index) for index in range(4))
+
+    with pytest.raises(
+        NoLongHorizonCandidateError,
+        match="fewer than four variants passed validation floors",
+    ):
+        screen_long_horizon_campaign(
+            proposals,
+            dataset_id="data-a",
+            root=tmp_path,
+            backend=_ScatteredValidationBackend(),
+        )
 
 
 def test_second_experiment_cannot_reopen_consumed_campaign_final(tmp_path: Path) -> None:
