@@ -57,3 +57,21 @@ def test_variants_are_seeded_bounded_valid_dsl_and_include_neighbors() -> None:
     assert all(item.symbols == ("AAPL", "QQQ") for item in first)
     assert all(item.signal_bar_size == "5min" for item in first)
 
+
+def test_trend_pullback_omits_optional_ema_filter_when_not_proposed() -> None:
+    proposal = LongHorizonHypothesisProposal.model_validate(
+        {
+            **_payload(),
+            "entry_template": "trend_pullback_5m",
+            "parameter_ranges": {
+                "return_1_max": {"values": [-0.0013, -0.0014]},
+                "range_position_max": {"values": [0.075, 0.09]},
+            },
+            "max_variants": 4,
+        }
+    )
+
+    for variant in generate_long_horizon_variants(proposal):
+        indicators = [rule.indicator for rule in variant.entry.all]
+        assert "ema_spread" not in indicators
+        assert variant.risk.sizing_preset == "equal_cash_conservative"

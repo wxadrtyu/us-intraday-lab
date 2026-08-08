@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
+from us_intraday_lab.backtest.metrics import TradeRecord
 from us_intraday_lab.long_horizon.final_ledger import FinalTestIsolationError
 from us_intraday_lab.long_horizon.orchestrator import (
+    NoLongHorizonCandidateError,
     PhaseEvaluation,
+    cost_adjusted_trade_session_returns,
     finalize_long_horizon_campaign,
     screen_long_horizon_campaign,
 )
@@ -54,6 +57,7 @@ class _Backend:
             sessions=sessions,
             base_session_returns=returns,
             stress_session_returns=tuple(value - 0.0001 for value in returns),
+            cost_1_5x_session_returns=tuple(value - 0.00005 for value in returns),
             closed_trades=max(100, len(sessions)),
             max_drawdown=0.02,
             profit_factor=1.4,
@@ -62,6 +66,48 @@ class _Backend:
 
     def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]:
         return tuple(0.0002 for _ in sessions)
+
+
+class _MixedValidationBackend(_Backend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.validation_count = 0
+
+    def evaluate(self, strategy, sessions: tuple[date, ...], *, phase: str) -> PhaseEvaluation:
+        result = super().evaluate(strategy, sessions, phase=phase)
+        if phase != "validation":
+            return result
+        daily_return = 0.00045 if self.validation_count == 0 else 0.00015
+        self.validation_count += 1
+        return PhaseEvaluation(
+            strategy_id=result.strategy_id,
+            sessions=result.sessions,
+            base_session_returns=result.base_session_returns,
+            stress_session_returns=result.stress_session_returns,
+            cost_1_5x_session_returns=tuple(daily_return for _ in sessions),
+            closed_trades=result.closed_trades,
+            max_drawdown=result.max_drawdown,
+            profit_factor=result.profit_factor,
+            pnl_by_symbol=result.pnl_by_symbol,
+        )
+
+
+class _ConcentratedBackend(_Backend):
+    def evaluate(self, strategy, sessions: tuple[date, ...], *, phase: str) -> PhaseEvaluation:
+        result = super().evaluate(strategy, sessions, phase=phase)
+        if phase != "validation":
+            return result
+        return PhaseEvaluation(
+            strategy_id=result.strategy_id,
+            sessions=result.sessions,
+            base_session_returns=result.base_session_returns,
+            stress_session_returns=result.stress_session_returns,
+            cost_1_5x_session_returns=result.cost_1_5x_session_returns,
+            closed_trades=result.closed_trades,
+            max_drawdown=result.max_drawdown,
+            profit_factor=result.profit_factor,
+            pnl_by_symbol={"AAPL": 100.0, "QQQ": -1.0},
+        )
 
 
 def test_screen_never_reads_or_reserves_final(tmp_path: Path) -> None:
@@ -81,6 +127,40 @@ def test_screen_never_reads_or_reserves_final(tmp_path: Path) -> None:
     assert not (tmp_path / "state" / "long_horizon_final.sqlite3").exists()
 
 
+def test_screen_requires_ten_percent_winner_but_keeps_positive_neighbors(
+    tmp_path: Path,
+) -> None:
+    backend = _MixedValidationBackend()
+
+    selection = screen_long_horizon_campaign(
+        (_proposal("proposal-a", 1), _proposal("proposal-b", 2)),
+        dataset_id="data-a",
+        root=tmp_path,
+        backend=backend,
+    )
+
+    assert selection.winner_validation.cost_1_5x_annualized_return >= 0.10
+    assert any(
+        item.cost_1_5x_annualized_return < 0.10
+        for item in selection.validation_evaluations
+    )
+
+
+def test_screen_rejects_validation_profit_concentrated_in_one_symbol(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(
+        NoLongHorizonCandidateError,
+        match="fewer than four variants passed validation floors",
+    ):
+        screen_long_horizon_campaign(
+            (_proposal("proposal-a", 1), _proposal("proposal-b", 2)),
+            dataset_id="data-a",
+            root=tmp_path,
+            backend=_ConcentratedBackend(),
+        )
+
+
 def test_second_experiment_cannot_reopen_consumed_campaign_final(tmp_path: Path) -> None:
     backend = _Backend()
     selection = screen_long_horizon_campaign(
@@ -97,3 +177,27 @@ def test_second_experiment_cannot_reopen_consumed_campaign_final(tmp_path: Path)
     with pytest.raises(FinalTestIsolationError, match="CAMPAIGN_FINAL_ALREADY_CONSUMED"):
         finalize_long_horizon_campaign(selection, root=tmp_path, backend=backend)
     assert backend.phases.count("final_test") == 1
+
+
+def test_cost_adjustment_scales_recorded_cost_without_inventing_empty_day_pnl() -> None:
+    first = date(2025, 1, 2)
+    second = date(2025, 1, 3)
+    trade = TradeRecord(
+        symbol="AAPL",
+        session=first,
+        quantity=1,
+        entry_time=datetime(2025, 1, 2, 15, tzinfo=UTC),
+        exit_time=datetime(2025, 1, 2, 16, tzinfo=UTC),
+        entry_price=100.0,
+        exit_price=110.0,
+        gross_pnl=10.0,
+        net_pnl=8.0,
+        cost_paid=2.0,
+        forced=False,
+    )
+
+    returns = cost_adjusted_trade_session_returns(
+        (trade,), (first, second), initial_cash=100.0, cost_multiplier=1.5
+    )
+
+    assert returns == pytest.approx((0.07, 0.0))

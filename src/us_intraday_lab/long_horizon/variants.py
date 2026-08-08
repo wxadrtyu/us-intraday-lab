@@ -42,18 +42,24 @@ def _rules(template: str, parameters: dict[str, float]) -> tuple[dict[str, Any],
     p = {**_DEFAULTS, **parameters}
     minutes = _comparison("minutes_from_open", "gte", p["minutes_from_open_min"])
     if template == "trend_pullback_5m":
+        trend_filter = (
+            [_comparison("ema_spread", "gt", p["ema_spread_min"])]
+            if "ema_spread_min" in parameters
+            else []
+        )
         entry = {
             "all": [
-                _comparison("ema_spread", "gt", p["ema_spread_min"]),
+                *trend_filter,
                 _comparison("return_1", "lte", p["return_1_max"]),
                 _comparison("range_position", "lte", p["range_position_max"]),
                 minutes,
+                _comparison("minutes_from_open", "lte", p["minutes_from_open_max"]),
             ]
         }
         exit_rule = {
             "any": [
                 _comparison("return_1", "gt", p["return_1_min"]),
-                _comparison("rsi", "gt", 65.0),
+                _comparison("rsi", "gt", p["rsi_min"]),
             ]
         }
     elif template == "opening_reclaim_5m":
@@ -126,7 +132,11 @@ def _strategy(
                 "max_entries_per_session": round(
                     parameters.get("max_entries_per_session", 2.0)
                 ),
-                "sizing_preset": "equal_risk_conservative",
+                "sizing_preset": (
+                    "equal_cash_conservative"
+                    if proposal.entry_template == "trend_pullback_5m"
+                    else "equal_risk_conservative"
+                ),
             },
             "order_type": "market",
         }

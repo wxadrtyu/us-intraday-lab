@@ -13,7 +13,7 @@ from typing import Protocol, cast
 import pandas as pd
 
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
-from us_intraday_lab.backtest.metrics import EquityPoint
+from us_intraday_lab.backtest.metrics import EquityPoint, TradeRecord
 from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.long_horizon.engine import (
@@ -34,6 +34,7 @@ from us_intraday_lab.long_horizon.snapshot import read_five_minute_snapshot
 from us_intraday_lab.long_horizon.splits import LongHorizonSplit, create_long_horizon_split
 from us_intraday_lab.long_horizon.variants import generate_long_horizon_variants
 from us_intraday_lab.strategy.compiler import compile_strategy
+from us_intraday_lab.validation.stability import assess_symbol_concentration
 
 
 class NoLongHorizonCandidateError(RuntimeError):
@@ -46,6 +47,7 @@ class PhaseEvaluation:
     sessions: tuple[date, ...]
     base_session_returns: tuple[float, ...]
     stress_session_returns: tuple[float, ...]
+    cost_1_5x_session_returns: tuple[float, ...]
     closed_trades: int
     max_drawdown: float
     profit_factor: float
@@ -58,6 +60,7 @@ class PhaseEvaluation:
             len(self.sessions)
             == len(self.base_session_returns)
             == len(self.stress_session_returns)
+            == len(self.cost_1_5x_session_returns)
         ):
             raise ValueError("phase return evidence must cover every session")
         if self.closed_trades < 0 or not 0.0 <= self.max_drawdown <= 1.0:
@@ -65,10 +68,14 @@ class PhaseEvaluation:
         values = (
             *self.base_session_returns,
             *self.stress_session_returns,
+            *self.cost_1_5x_session_returns,
             self.profit_factor,
             *self.pnl_by_symbol.values(),
         )
-        if any(not math.isfinite(value) or value <= -1.0 for value in values[: len(self.sessions) * 2]):
+        if any(
+            not math.isfinite(value) or value <= -1.0
+            for value in values[: len(self.sessions) * 3]
+        ):
             raise ValueError("phase session returns must be finite and greater than -1")
         if not math.isfinite(self.profit_factor) or any(
             not math.isfinite(value) for value in self.pnl_by_symbol.values()
@@ -86,6 +93,16 @@ class PhaseEvaluation:
     @property
     def stress_annualized_return(self) -> float:
         return float((1.0 + self.stress_total_return) ** (252 / len(self.sessions)) - 1.0)
+
+    @property
+    def cost_1_5x_total_return(self) -> float:
+        return math.prod(1.0 + value for value in self.cost_1_5x_session_returns) - 1.0
+
+    @property
+    def cost_1_5x_annualized_return(self) -> float:
+        return float(
+            (1.0 + self.cost_1_5x_total_return) ** (252 / len(self.sessions)) - 1.0
+        )
 
 
 class LongHorizonResearchBackend(Protocol):
@@ -151,6 +168,10 @@ def _phase_from_record(record: Mapping[str, object]) -> PhaseEvaluation:
         stress_session_returns=tuple(
             float(cast("float | int", value))
             for value in cast(list[object], record["stress_session_returns"])
+        ),
+        cost_1_5x_session_returns=tuple(
+            float(cast("float | int", value))
+            for value in cast(list[object], record["cost_1_5x_session_returns"])
         ),
         closed_trades=int(cast(int, record["closed_trades"])),
         max_drawdown=float(cast(float, record["max_drawdown"])),
@@ -228,6 +249,7 @@ def _phase_record(evaluation: PhaseEvaluation) -> dict[str, object]:
         "sessions": [value.isoformat() for value in evaluation.sessions],
         "base_session_returns": list(evaluation.base_session_returns),
         "stress_session_returns": list(evaluation.stress_session_returns),
+        "cost_1_5x_session_returns": list(evaluation.cost_1_5x_session_returns),
         "closed_trades": evaluation.closed_trades,
         "max_drawdown": evaluation.max_drawdown,
         "profit_factor": evaluation.profit_factor,
@@ -238,7 +260,7 @@ def _phase_record(evaluation: PhaseEvaluation) -> dict[str, object]:
 def _passes_train(evaluation: PhaseEvaluation) -> bool:
     return (
         evaluation.base_total_return > 0.0
-        and evaluation.stress_total_return > 0.0
+        and evaluation.cost_1_5x_total_return > 0.0
         and evaluation.max_drawdown <= 0.08
         and evaluation.profit_factor >= 1.0
     )
@@ -247,9 +269,13 @@ def _passes_train(evaluation: PhaseEvaluation) -> bool:
 def _passes_validation(evaluation: PhaseEvaluation) -> bool:
     return (
         evaluation.base_total_return > 0.0
-        and evaluation.stress_total_return > 0.0
+        and evaluation.cost_1_5x_total_return > 0.0
         and evaluation.max_drawdown <= 0.08
         and evaluation.profit_factor >= 1.15
+        and assess_symbol_concentration(
+            evaluation.pnl_by_symbol,
+            required_symbols=("AAPL", "QQQ"),
+        ).passed
     )
 
 
@@ -317,7 +343,7 @@ def screen_long_horizon_campaign(
         train_survivors,
         key=lambda strategy: (
             -next(
-                result.stress_annualized_return
+                result.cost_1_5x_annualized_return
                 for result in train_results
                 if result.strategy_id == strategy.strategy_id
             ),
@@ -338,10 +364,14 @@ def screen_long_horizon_campaign(
     )
     passing_validation = [result for result in validation_results if _passes_validation(result)]
     passing_validation.sort(
-        key=lambda result: (-result.stress_annualized_return, result.strategy_id)
+        key=lambda result: (-result.cost_1_5x_annualized_return, result.strategy_id)
     )
     if len(passing_validation) < 4:
         raise NoLongHorizonCandidateError("fewer than four variants passed validation floors")
+    if passing_validation[0].cost_1_5x_annualized_return < 0.10:
+        raise NoLongHorizonCandidateError(
+            "best validation variant is below ten percent annualized after 1.5x costs"
+        )
     selected_results = tuple(passing_validation[:4])
     winner_id = selected_results[0].strategy_id
     survivor_ids = tuple(sorted(result.strategy_id for result in selected_results))
@@ -425,12 +455,14 @@ def finalize_long_horizon_campaign(
     )
     validation = selection.winner_validation
     strategy_returns = validation.base_session_returns + final_result.base_session_returns
-    stress_returns = validation.stress_session_returns + final_result.stress_session_returns
+    stressed_returns = (
+        validation.cost_1_5x_session_returns + final_result.cost_1_5x_session_returns
+    )
     benchmark = effective_backend.benchmark_returns(selection.split.oos_sessions)
     metrics = compute_long_horizon_oos_metrics(
         strategy_session_returns=strategy_returns,
         benchmark_session_returns=benchmark,
-        cost_1_5x_session_returns=stress_returns,
+        cost_1_5x_session_returns=stressed_returns,
     )
     final_stage_hash = _stage(
         experiment_root,
@@ -477,6 +509,29 @@ def _session_returns(
         current = ending[session]
         returns.append(current / previous - 1.0)
         previous = current
+    return tuple(returns)
+
+
+def cost_adjusted_trade_session_returns(
+    trades: tuple[TradeRecord, ...],
+    sessions: tuple[date, ...],
+    *,
+    initial_cash: float,
+    cost_multiplier: float,
+) -> tuple[float, ...]:
+    evidence = {session: [0.0, 0.0] for session in sessions}
+    for trade in trades:
+        if trade.session not in evidence:
+            raise ValueError("trade falls outside requested phase sessions")
+        evidence[trade.session][0] += trade.gross_pnl
+        evidence[trade.session][1] += trade.cost_paid
+    equity = initial_cash
+    returns: list[float] = []
+    for session in sessions:
+        gross_pnl, base_cost = evidence[session]
+        pnl = gross_pnl - cost_multiplier * base_cost
+        returns.append(pnl / equity)
+        equity += pnl
     return tuple(returns)
 
 
@@ -535,6 +590,12 @@ class LocalFiveMinuteResearchBackend:
             ),
             stress_session_returns=_session_returns(
                 stress.equity_curve, initial_cash=stress.initial_cash
+            ),
+            cost_1_5x_session_returns=cost_adjusted_trade_session_returns(
+                base.trades,
+                sessions,
+                initial_cash=base.initial_cash,
+                cost_multiplier=1.5,
             ),
             closed_trades=len(base.trades),
             max_drawdown=base.metrics["max_drawdown"],

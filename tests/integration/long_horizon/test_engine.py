@@ -124,3 +124,13 @@ def test_feature_bar_cannot_trade_before_available_at() -> None:
     assert all(intent.signal_time >= datetime(2025, 1, 2, 15, 0, tzinfo=UTC) for intent in run.intents)
     assert all(intent.eligible_time == intent.signal_time + timedelta(minutes=5) for intent in run.intents)
 
+
+def test_engine_retains_observable_entry_candidates_and_matching_opportunities() -> None:
+    run = _run().scenarios["base"]
+    candidates = [event for event in run.events if event.event_type == "ENTRY_CANDIDATE"]
+    opportunities = [event for event in run.events if event.event_type == "ENTRY_OPPORTUNITY"]
+
+    assert candidates
+    assert opportunities
+    assert len(candidates) > len(opportunities)
+    assert all(event.event_time >= datetime(2025, 1, 2, 15, tzinfo=UTC) for event in opportunities)

@@ -196,6 +196,17 @@ def _matches(rule: RuleOperator, features: FeatureRow) -> bool:
     raise TypeError("unsupported compiled rule")
 
 
+def _observable(rule: RuleOperator, features: FeatureRow) -> bool:
+    if type(rule) is ComparisonOperator:
+        value = rule.indicator_fn(features)
+        return value is not None and not pd.isna(value) and isfinite(float(value))
+    if type(rule) is AllOperator:
+        return all(_observable(child, features) for child in rule.children)
+    if type(rule) is AnyOperator:
+        return all(_observable(child, features) for child in rule.children)
+    raise TypeError("unsupported compiled rule")
+
+
 @dataclass(slots=True)
 class _OpenTrade:
     symbol: str
@@ -454,13 +465,18 @@ class FiveMinuteBacktestEngine:
                             position = None
 
                     features = cast(FeatureRow, row.to_dict())
+                    if _observable(self.strategy.entry, features):
+                        emit("ENTRY_CANDIDATE", event_time, session, symbol)
+                    entry_matches = _matches(self.strategy.entry, features)
+                    if entry_matches:
+                        emit("ENTRY_OPPORTUNITY", event_time, session, symbol)
                     if symbol not in pending and position is None:
                         cooldown = cooldown_until.get(symbol)
                         if (
                             (cooldown is None or event_time >= cooldown)
                             and entries_by_session[session]
                             < self.strategy.risk.max_entries_per_session
-                            and _matches(self.strategy.entry, features)
+                            and entry_matches
                             and bar_index + 1 < len(times)
                         ):
                             reference = float(row["close"])
