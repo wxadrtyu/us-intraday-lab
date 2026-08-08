@@ -45,7 +45,7 @@ def declaration() -> FiveMinuteSourceDeclaration:
         feed="iex",
         bar_size="5min",
         member_name="price_intraday_vol_5min.csv",
-        member_sha256="ed35c8f515451ee243d1f2e42810742098dc841b5c7106867e2838eb228aabab",
+        member_sha256="2aa6d1483d4aed73edad83c255f837ca95004cb9230108966ae825074289e669",
         symbols=("AAPL", "QQQ"),
         source_timezone="America/New_York",
         expected_start_date=date(2025, 1, 2),
