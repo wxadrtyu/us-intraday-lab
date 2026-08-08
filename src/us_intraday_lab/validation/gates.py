@@ -10,6 +10,7 @@ from typing import cast
 from us_intraday_lab.contracts.validation import GateEvidence, GateResult, WalkForwardWindowResult
 from us_intraday_lab.validation.null_tests import NullTestResult
 from us_intraday_lab.validation.stability import (
+    ALLOWED_SYMBOL_SCOPES,
     PRODUCTION_SYMBOLS,
     PerturbationObservation,
     StabilityAssessment,
@@ -84,6 +85,7 @@ class CandidateGateEvidence:
     symbol_concentration: SymbolConcentrationAssessment | None
     start_date_stability: StabilityAssessment | None
     null_test: NullTestResult | None
+    required_symbols: tuple[str, ...] = PRODUCTION_SYMBOLS
 
     def __post_init__(self) -> None:
         _strict_identity(self.strategy_id, name="strategy_id")
@@ -108,6 +110,8 @@ class CandidateGateEvidence:
         )
         if self.walk_forward_results is not None and type(self.walk_forward_results) is not tuple:
             raise TypeError("walk_forward_results must be an exact tuple or None")
+        if self.required_symbols not in ALLOWED_SYMBOL_SCOPES:
+            raise ValueError("required_symbols must use an approved exact scope")
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,6 +217,8 @@ def _validated_start_date(value: StabilityAssessment | None) -> StabilityAssessm
 
 def _validated_symbol(
     value: SymbolConcentrationAssessment | None,
+    *,
+    required_symbols: tuple[str, ...],
 ) -> SymbolConcentrationAssessment | None:
     if value is None:
         return None
@@ -220,11 +226,16 @@ def _validated_symbol(
         raise TypeError("symbol_concentration must be a SymbolConcentrationAssessment")
     return assess_symbol_concentration(
         value.profit_by_symbol,
+        required_symbols=required_symbols,
         max_positive_profit_share=MAX_SYMBOL_POSITIVE_PROFIT_SHARE,
     )
 
 
-def _validated_null(value: NullTestResult | None) -> NullTestResult | None:
+def _validated_null(
+    value: NullTestResult | None,
+    *,
+    required_symbols: tuple[str, ...],
+) -> NullTestResult | None:
     if value is None:
         return None
     if type(value) is not NullTestResult:
@@ -255,11 +266,11 @@ def _validated_null(value: NullTestResult | None) -> NullTestResult | None:
     covered_symbols = {
         symbol
         for key in value.trade_count_by_symbol_session
-        for symbol in PRODUCTION_SYMBOLS
+        for symbol in required_symbols
         if key.endswith(f":{symbol}")
     }
-    if covered_symbols != set(PRODUCTION_SYMBOLS):
-        raise ValueError("null_test evidence must cover SPY, QQQ, and IWM")
+    if covered_symbols != set(required_symbols):
+        raise ValueError("null_test evidence must cover the required symbol scope")
     return value
 
 
@@ -276,9 +287,12 @@ def evaluate_hard_gates(evidence: CandidateGateEvidence) -> HardGateEvaluation:
         strategy_id=candidate.strategy_id,
     )
     parameter = _validated_parameter(candidate.parameter_neighborhood)
-    symbol = _validated_symbol(candidate.symbol_concentration)
+    symbol = _validated_symbol(
+        candidate.symbol_concentration,
+        required_symbols=candidate.required_symbols,
+    )
     start_date = _validated_start_date(candidate.start_date_stability)
-    null_test = _validated_null(candidate.null_test)
+    null_test = _validated_null(candidate.null_test, required_symbols=candidate.required_symbols)
 
     wf_profitable = (
         sum(item.metrics_by_cost_scenario["base"]["net_return"] > 0.0 for item in walk_forward)

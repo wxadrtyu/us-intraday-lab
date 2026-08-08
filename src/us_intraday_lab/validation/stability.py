@@ -9,6 +9,8 @@ from types import MappingProxyType
 from typing import cast
 
 PRODUCTION_SYMBOLS = ("SPY", "QQQ", "IWM")
+LONG_HORIZON_SYMBOLS = ("AAPL", "QQQ")
+ALLOWED_SYMBOL_SCOPES = (PRODUCTION_SYMBOLS, LONG_HORIZON_SYMBOLS)
 
 
 def _finite_number(value: object, *, name: str) -> float:
@@ -271,19 +273,22 @@ def assess_start_date_sensitivity(
 def assess_symbol_concentration(
     profit_by_symbol: Mapping[str, float],
     *,
+    required_symbols: tuple[str, ...] = PRODUCTION_SYMBOLS,
     max_positive_profit_share: float = 0.70,
 ) -> SymbolConcentrationAssessment:
     """Assess concentration against positive profit while retaining losses."""
 
     if not isinstance(profit_by_symbol, Mapping):
         raise TypeError("profit_by_symbol must be a mapping")
-    if set(profit_by_symbol) != set(PRODUCTION_SYMBOLS) or len(profit_by_symbol) != len(
-        PRODUCTION_SYMBOLS
+    if required_symbols not in ALLOWED_SYMBOL_SCOPES:
+        raise ValueError("required_symbols must use an approved exact scope")
+    if set(profit_by_symbol) != set(required_symbols) or len(profit_by_symbol) != len(
+        required_symbols
     ):
-        raise ValueError("profit_by_symbol must contain exactly SPY, QQQ, and IWM")
+        raise ValueError("profit_by_symbol must contain exactly the required symbol scope")
     normalized = {
         symbol: _finite_number(profit_by_symbol[symbol], name=f"profit_by_symbol[{symbol}]")
-        for symbol in PRODUCTION_SYMBOLS
+        for symbol in required_symbols
     }
     share_gate = _fraction(max_positive_profit_share, name="max_positive_profit_share")
     total_profit = math.fsum(normalized.values())

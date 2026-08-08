@@ -277,3 +277,13 @@ def test_stability_boundaries_reject_coerced_or_nonfinite_inputs(
             required_profitable_fraction=fraction,  # type: ignore[arg-type]
             max_drawdown=drawdown,  # type: ignore[arg-type]
         )
+
+
+def test_symbol_concentration_accepts_closed_long_horizon_scope() -> None:
+    result = assess_symbol_concentration(
+        {"AAPL": 55.0, "QQQ": 45.0},
+        required_symbols=("AAPL", "QQQ"),
+    )
+
+    assert result.passed is True
+    assert tuple(result.profit_by_symbol) == ("AAPL", "QQQ")

@@ -12,7 +12,11 @@ from datetime import UTC, date, datetime, timedelta
 from types import MappingProxyType
 from typing import Literal, cast
 
-from us_intraday_lab.validation.stability import PRODUCTION_SYMBOLS
+from us_intraday_lab.validation.stability import (
+    ALLOWED_SYMBOL_SCOPES,
+    LONG_HORIZON_SYMBOLS,
+    PRODUCTION_SYMBOLS,
+)
 
 PRODUCTION_NULL_REPETITIONS = 200
 MAX_NULL_REPETITIONS = 10_000
@@ -83,8 +87,11 @@ class NullOpportunity:
 
     def __post_init__(self) -> None:
         _bounded_id(self.opportunity_id, name="opportunity_id")
-        if type(self.symbol) is not str or self.symbol not in PRODUCTION_SYMBOLS:
-            raise ValueError("symbol must be SPY, QQQ, or IWM")
+        if type(self.symbol) is not str or self.symbol not in {
+            *PRODUCTION_SYMBOLS,
+            *LONG_HORIZON_SYMBOLS,
+        }:
+            raise ValueError("symbol must belong to an approved research scope")
         if type(self.session) is not date:
             raise TypeError("session must be an exact date")
         signal_time = _utc(self.signal_time, name="signal_time")
@@ -162,6 +169,7 @@ class NullTestConfig:
     seed: int
     repetitions: int = PRODUCTION_NULL_REPETITIONS
     percentile: float = 0.95
+    symbols: tuple[str, ...] = PRODUCTION_SYMBOLS
 
     def __post_init__(self) -> None:
         seed = _validated_seed(self.seed)
@@ -172,6 +180,8 @@ class NullTestConfig:
         percentile = _finite_number(self.percentile, name="percentile")
         if not 0.0 < percentile < 1.0:
             raise ValueError("percentile must be greater than 0 and less than 1")
+        if self.symbols not in ALLOWED_SYMBOL_SCOPES:
+            raise ValueError("symbols must use an approved exact scope")
         object.__setattr__(self, "seed", seed)
         object.__setattr__(self, "percentile", percentile)
 
@@ -230,6 +240,7 @@ def _validated_test_config(value: object) -> NullTestConfig:
         seed=value.seed,
         repetitions=value.repetitions,
         percentile=value.percentile,
+        symbols=value.symbols,
     )
 
 
@@ -246,15 +257,23 @@ def _validated_scoring_config(value: object) -> HoldingRuleScoringConfig:
     )
 
 
-def _validated_opportunities(value: object) -> tuple[NullOpportunity, ...]:
+def _validated_opportunities(
+    value: object,
+    *,
+    symbols: tuple[str, ...] = PRODUCTION_SYMBOLS,
+) -> tuple[NullOpportunity, ...]:
     if type(value) is not tuple or not value:
         raise TypeError("opportunities must be a non-empty exact tuple")
     if len(value) > MAX_NULL_OPPORTUNITIES:
         raise ValueError("opportunities exceed the evidence budget")
     if any(type(item) is not NullOpportunity for item in value):
         raise TypeError("opportunities must contain exact NullOpportunity values")
-    if {item.symbol for item in value} != set(PRODUCTION_SYMBOLS):
-        raise ValueError("opportunities must cover exactly SPY, QQQ, and IWM")
+    if symbols not in ALLOWED_SYMBOL_SCOPES:
+        raise ValueError("symbols must use an approved exact scope")
+    if {item.symbol for item in value} != set(symbols):
+        if symbols == PRODUCTION_SYMBOLS:
+            raise ValueError("opportunities must cover exactly SPY, QQQ, and IWM")
+        raise ValueError("opportunities must cover exactly the configured symbols")
     reparsed = tuple(
         NullOpportunity(
             opportunity_id=item.opportunity_id,
@@ -470,12 +489,15 @@ def _evidence_sha256(
     config: NullTestConfig,
     scoring_config: HoldingRuleScoringConfig,
 ) -> str:
+    config_payload: dict[str, object] = {
+        "percentile": config.percentile,
+        "repetitions": config.repetitions,
+        "seed": config.seed,
+    }
+    if config.symbols != PRODUCTION_SYMBOLS:
+        config_payload["symbols"] = list(config.symbols)
     payload = {
-        "config": {
-            "percentile": config.percentile,
-            "repetitions": config.repetitions,
-            "seed": config.seed,
-        },
+        "config": config_payload,
         "opportunities": [
             {
                 "entered": item.entered,
@@ -534,7 +556,10 @@ def run_null_tests(
 
     validated_config = _validated_test_config(config)
     validated_scoring = _validated_scoring_config(scoring_config)
-    canonical_evidence = _validated_opportunities(opportunities)
+    canonical_evidence = _validated_opportunities(
+        opportunities,
+        symbols=validated_config.symbols,
+    )
     operation_bound = null_framework_operation_bound(
         len(canonical_evidence),
         config=validated_config,
@@ -590,7 +615,10 @@ def run_null_tests(
     # Reparse immediately before retained evidence/hash construction. No external
     # callback receives the private canonical objects, but this final boundary
     # check also detects accidental internal mutation.
-    retained_evidence = _validated_opportunities(plan.opportunities)
+    retained_evidence = _validated_opportunities(
+        plan.opportunities,
+        symbols=validated_config.symbols,
+    )
     if retained_evidence != canonical_evidence:
         raise ValueError("canonical null evidence changed during evaluation")
     trade_counts = {

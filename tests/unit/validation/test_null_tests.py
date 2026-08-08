@@ -163,6 +163,46 @@ def test_internal_whole_sequence_scorer_enforces_overlap_and_is_deterministic() 
     assert all(first.observed_profit > item.percentile_threshold for item in first.distributions)
 
 
+def test_null_test_accepts_closed_aapl_qqq_scope() -> None:
+    session = date(2026, 7, 6)
+    start = datetime(2026, 7, 6, 14, 0, tzinfo=UTC)
+    opportunities = tuple(
+        NullOpportunity(
+            opportunity_id=f"{symbol}-{slot}",
+            symbol=symbol,
+            session=session,
+            signal_time=start + timedelta(minutes=slot),
+            entry_time=start + timedelta(minutes=slot + 1),
+            exit_time=start + timedelta(minutes=slot + 2),
+            entered=slot == 0,
+            holding_rule_net_profit=10.0 if slot == 0 else -1.0,
+        )
+        for slot in range(2)
+        for symbol in ("AAPL", "QQQ")
+    )
+
+    result = run_null_tests(
+        opportunities,
+        config=NullTestConfig(
+            seed=3,
+            repetitions=4,
+            percentile=0.75,
+            symbols=("AAPL", "QQQ"),
+        ),
+        scoring_config=HoldingRuleScoringConfig(
+            scoring_id="five-minute",
+            rule_version="v1",
+            cost_model_id="base",
+            max_concurrent_positions=2,
+        ),
+    )
+
+    assert set(result.trade_count_by_symbol_session) == {
+        "2026-07-06:AAPL",
+        "2026-07-06:QQQ",
+    }
+
+
 def test_internal_scorer_enforces_cooldown_session_limit_and_concurrent_positions() -> None:
     opportunities = _opportunities(exit_after_minutes=0)
     strict_rules = HoldingRuleScoringConfig(
