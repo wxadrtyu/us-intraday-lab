@@ -54,6 +54,15 @@ from us_intraday_lab.factory.orchestrator import (
     run_research,
 )
 from us_intraday_lab.factory.proposal import FixtureProposalProvider
+from us_intraday_lab.long_horizon.catalog import (
+    accept_five_minute_dataset,
+    build_five_minute_catalog,
+)
+from us_intraday_lab.long_horizon.contracts import FiveMinuteSourceDeclaration
+from us_intraday_lab.long_horizon.snapshot import (
+    import_five_minute_snapshot,
+    verify_five_minute_snapshot,
+)
 from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker, PaperBoundaryError
 from us_intraday_lab.paper.closeout import closeout_session
 from us_intraday_lab.paper.market_data import (
@@ -73,6 +82,7 @@ from us_intraday_lab.strategy.validator import scan_strategy_payload
 
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
+long_horizon_data_app = typer.Typer(no_args_is_help=True)
 backtest_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
@@ -84,6 +94,7 @@ PAPER_SESSION_STATES: tuple[RegistryState, ...] = (
     "leader",
 )
 app.add_typer(data_app, name="data")
+app.add_typer(long_horizon_data_app, name="long-horizon-data")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(research_app, name="research")
 app.add_typer(paper_app, name="paper")
@@ -556,6 +567,78 @@ def accept_dataset_command(
     typer.echo(f"bars_1m: {summary.bar_counts['1min']}")
     typer.echo(f"bars_5m: {summary.bar_counts['5min']}")
     typer.echo(f"bars_15m: {summary.bar_counts['15min']}")
+
+
+@long_horizon_data_app.command("import")
+def import_long_horizon_data_command(
+    archive: Annotated[Path, typer.Option(exists=True, dir_okay=False, readable=True)],
+    root: Annotated[Path, typer.Option(file_okay=False)],
+    member_sha256: Annotated[str, typer.Option()] = (
+        "2aa6d1483d4aed73edad83c255f837ca95004cb9230108966ae825074289e669"
+    ),
+    expected_start_date: Annotated[str, typer.Option()] = "2025-01-02",
+    expected_end_date: Annotated[str, typer.Option()] = "2026-07-02",
+    ingested_at: Annotated[str, typer.Option()] = "2026-08-08T00:00:00+00:00",
+    code_revision: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """Import the closed AAPL/QQQ legacy five-minute source."""
+
+    declaration = FiveMinuteSourceDeclaration(
+        provider="tiingo",
+        feed="iex",
+        bar_size="5min",
+        member_name="price_intraday_vol_5min.csv",
+        member_sha256=member_sha256,
+        symbols=("AAPL", "QQQ"),
+        source_timezone="America/New_York",
+        expected_start_date=date.fromisoformat(expected_start_date),
+        expected_end_date=date.fromisoformat(expected_end_date),
+        ingested_at=datetime.fromisoformat(ingested_at),
+    )
+    manifest = import_five_minute_snapshot(
+        archive,
+        declaration,
+        root=root,
+        code_revision=code_revision or current_code_revision(root),
+    )
+    typer.echo(manifest.dataset_id)
+
+
+@long_horizon_data_app.command("verify")
+def verify_long_horizon_data_command(
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    manifest = verify_five_minute_snapshot(dataset_id, root=root)
+    typer.echo(manifest.dataset_id)
+
+
+@long_horizon_data_app.command("build-catalog")
+def build_long_horizon_catalog_command(
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    typer.echo(build_five_minute_catalog(dataset_id, root=root))
+
+
+@long_horizon_data_app.command("accept")
+def accept_long_horizon_data_command(
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    summary = accept_five_minute_dataset(dataset_id, root=root)
+    typer.echo(
+        json.dumps(
+            {
+                "accepted_sessions": summary.accepted_sessions,
+                "dataset_id": summary.dataset_id,
+                "missing_expected_bars": summary.missing_expected_bars,
+                "row_count": summary.row_count,
+                "symbols": list(summary.symbols),
+            },
+            sort_keys=True,
+        )
+    )
 
 
 def _load_strategy(path: Path) -> StrategyDefinition:
