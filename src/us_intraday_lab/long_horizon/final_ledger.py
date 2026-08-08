@@ -72,6 +72,21 @@ class CampaignFinalLedger:
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
 
+    def is_consumed(self, *, dataset_id: str, split_id: str) -> bool:
+        """Return whether the exact campaign final interval has been consumed."""
+
+        dataset_id = _nonempty(dataset_id, name="dataset_id")
+        split_id = _nonempty(split_id, name="split_id")
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT consumed_at FROM campaign_final_use
+                WHERE dataset_id = ? AND split_id = ?
+                """,
+                (dataset_id, split_id),
+            ).fetchone()
+        return row is not None and row[0] is not None
+
     @staticmethod
     def _token(dataset_id: str, split_id: str, survivors_json: str) -> str:
         payload = json.dumps(

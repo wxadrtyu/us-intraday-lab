@@ -1,5 +1,6 @@
 import json
 import subprocess
+from dataclasses import asdict
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Never
@@ -59,6 +60,12 @@ from us_intraday_lab.long_horizon.catalog import (
     build_five_minute_catalog,
 )
 from us_intraday_lab.long_horizon.contracts import FiveMinuteSourceDeclaration
+from us_intraday_lab.long_horizon.orchestrator import (
+    finalize_long_horizon_campaign,
+    load_campaign_selection,
+    screen_long_horizon_campaign,
+)
+from us_intraday_lab.long_horizon.proposal import LongHorizonHypothesisProposal
 from us_intraday_lab.long_horizon.snapshot import (
     import_five_minute_snapshot,
     verify_five_minute_snapshot,
@@ -83,6 +90,7 @@ from us_intraday_lab.strategy.validator import scan_strategy_payload
 app = typer.Typer(no_args_is_help=True)
 data_app = typer.Typer(no_args_is_help=True)
 long_horizon_data_app = typer.Typer(no_args_is_help=True)
+long_horizon_research_app = typer.Typer(no_args_is_help=True)
 backtest_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
@@ -95,6 +103,7 @@ PAPER_SESSION_STATES: tuple[RegistryState, ...] = (
 )
 app.add_typer(data_app, name="data")
 app.add_typer(long_horizon_data_app, name="long-horizon-data")
+app.add_typer(long_horizon_research_app, name="long-horizon-research")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(research_app, name="research")
 app.add_typer(paper_app, name="paper")
@@ -639,6 +648,79 @@ def accept_long_horizon_data_command(
             sort_keys=True,
         )
     )
+
+
+@long_horizon_research_app.command("screen")
+def screen_long_horizon_research_command(
+    proposal_dir: Annotated[
+        Path, typer.Option(exists=True, file_okay=False, readable=True)
+    ],
+    dataset_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    proposal_paths = tuple(sorted(proposal_dir.glob("*.json")))
+    if not proposal_paths:
+        raise typer.BadParameter("proposal directory contains no JSON proposals")
+    proposals = tuple(
+        LongHorizonHypothesisProposal.model_validate_json(path.read_text(encoding="utf-8"))
+        for path in proposal_paths
+    )
+    selection = screen_long_horizon_campaign(
+        proposals,
+        dataset_id=dataset_id,
+        root=root,
+    )
+    typer.echo(selection.selection_manifest)
+
+
+@long_horizon_research_app.command("finalize")
+def finalize_long_horizon_research_command(
+    selection_manifest: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, readable=True)
+    ],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    result = finalize_long_horizon_campaign(
+        load_campaign_selection(selection_manifest),
+        root=root,
+    )
+    typer.echo(
+        json.dumps(
+            {
+                "experiment_id": result.experiment_id,
+                "final_consumed": result.final_consumed,
+                "oos_metrics": asdict(result.oos_metrics),
+                "winner_id": result.winner_id,
+            },
+            sort_keys=True,
+        )
+    )
+
+
+@long_horizon_research_app.command("resume")
+def resume_long_horizon_research_command(
+    experiment_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    experiment_root = root / "artifacts" / "long_horizon" / "experiments" / experiment_id
+    manifests = tuple(sorted(experiment_root.glob("selection-*.json")))
+    if len(manifests) != 1:
+        raise typer.BadParameter("experiment must contain exactly one selection manifest")
+    result = finalize_long_horizon_campaign(load_campaign_selection(manifests[0]), root=root)
+    typer.echo(result.final_evidence_sha256)
+
+
+@long_horizon_research_app.command("report")
+def report_long_horizon_research_command(
+    experiment_id: Annotated[str, typer.Option()],
+    root: Annotated[Path, typer.Option(exists=True, file_okay=False, readable=True)],
+) -> None:
+    event_log = (
+        root / "artifacts" / "long_horizon" / "experiments" / experiment_id / "events.jsonl"
+    )
+    if not event_log.is_file():
+        raise typer.BadParameter("experiment event log does not exist")
+    typer.echo(event_log)
 
 
 def _load_strategy(path: Path) -> StrategyDefinition:
