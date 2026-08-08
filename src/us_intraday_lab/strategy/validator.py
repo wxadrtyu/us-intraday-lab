@@ -14,7 +14,8 @@ from us_intraday_lab.contracts.strategies import (
 )
 
 PRODUCTION_SYMBOLS = frozenset({"SPY", "QQQ", "IWM"})
-FIVE_MINUTE_SYMBOLS = ("AAPL", "QQQ")
+FIVE_MINUTE_SYMBOL_SCOPES = (("AAPL", "QQQ"), ("SPY", "IWM"))
+FIVE_MINUTE_SYMBOLS = frozenset(symbol for scope in FIVE_MINUTE_SYMBOL_SCOPES for symbol in scope)
 ALLOWED_INDICATORS = frozenset(
     {
         "return_1",
@@ -838,7 +839,7 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
         symbols = data["symbols"]
         declared_bar_size = data.get("signal_bar_size")
         allowed_symbols = (
-            frozenset(FIVE_MINUTE_SYMBOLS)
+            FIVE_MINUTE_SYMBOLS
             if declared_bar_size == "5min"
             else PRODUCTION_SYMBOLS
         )
@@ -891,7 +892,7 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
             symbol_scope = cast(tuple[object, ...], data["symbols"])
             safe_string_scope = all(type(symbol) is str for symbol in symbol_scope)
             if bar_size == "5min" and (
-                not safe_string_scope or symbol_scope != FIVE_MINUTE_SYMBOLS
+                not safe_string_scope or symbol_scope not in FIVE_MINUTE_SYMBOL_SCOPES
             ):
                 issues.append(
                     ValidationIssue(
@@ -904,7 +905,7 @@ def validate_strategy(strategy: StrategyDefinition) -> StrategyValidation:
                     ValidationIssue(
                         code="DSL_UNSUPPORTED_SIGNAL_BAR",
                         path="signal_bar_size",
-                        message="5-minute bars require the closed AAPL/QQQ research scope",
+                        message="5-minute bars require an approved closed research scope",
                     )
                 )
     if "risk" in data:

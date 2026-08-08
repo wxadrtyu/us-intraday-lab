@@ -118,7 +118,7 @@ def _strategy(
         {
             "strategy_id": f"{proposal.proposal_id}-{suffix}",
             "dsl_version": "1.0.0",
-            "symbols": ["AAPL", "QQQ"],
+            "symbols": list(proposal.symbols),
             "signal_bar_size": "5min",
             "entry": entry,
             "exit": exit_rule,

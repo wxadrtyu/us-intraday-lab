@@ -35,6 +35,17 @@ def test_only_approved_five_minute_templates_are_accepted(template: str) -> None
     assert proposal.max_variants <= 50
 
 
+def test_spy_iwm_proposal_generates_only_the_declared_scope() -> None:
+    proposal = LongHorizonHypothesisProposal.model_validate(
+        {**_payload(), "symbols": ["SPY", "IWM"]}
+    )
+
+    assert all(
+        variant.symbols == ("SPY", "IWM")
+        for variant in generate_long_horizon_variants(proposal)
+    )
+
+
 def test_search_space_requires_three_distinct_neighbors() -> None:
     with pytest.raises(ValidationError, match="three robustness neighbors"):
         LongHorizonHypothesisProposal.model_validate(

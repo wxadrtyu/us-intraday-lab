@@ -25,6 +25,7 @@ from us_intraday_lab.long_horizon.final_ledger import (
     CampaignFinalLedger,
     FinalTestIsolationError,
 )
+from us_intraday_lab.long_horizon.hf_snapshot import HfFiveMinuteSnapshotStore
 from us_intraday_lab.long_horizon.metrics import (
     LongHorizonOosMetrics,
     compute_long_horizon_oos_metrics,
@@ -34,7 +35,11 @@ from us_intraday_lab.long_horizon.snapshot import read_five_minute_snapshot
 from us_intraday_lab.long_horizon.splits import LongHorizonSplit, create_long_horizon_split
 from us_intraday_lab.long_horizon.variants import generate_long_horizon_variants
 from us_intraday_lab.strategy.compiler import compile_strategy
-from us_intraday_lab.validation.stability import assess_symbol_concentration
+from us_intraday_lab.validation.stability import (
+    AAPL_QQQ_SYMBOLS,
+    SPY_IWM_SYMBOLS,
+    assess_symbol_concentration,
+)
 
 
 class NoLongHorizonCandidateError(RuntimeError):
@@ -267,6 +272,11 @@ def _passes_train(evaluation: PhaseEvaluation) -> bool:
 
 
 def _passes_validation(evaluation: PhaseEvaluation) -> bool:
+    symbol_scope = (
+        AAPL_QQQ_SYMBOLS
+        if set(evaluation.pnl_by_symbol) == set(AAPL_QQQ_SYMBOLS)
+        else SPY_IWM_SYMBOLS
+    )
     return (
         evaluation.base_total_return > 0.0
         and evaluation.cost_1_5x_total_return > 0.0
@@ -274,7 +284,7 @@ def _passes_validation(evaluation: PhaseEvaluation) -> bool:
         and evaluation.profit_factor >= 1.15
         and assess_symbol_concentration(
             evaluation.pnl_by_symbol,
-            required_symbols=("AAPL", "QQQ"),
+            required_symbols=symbol_scope,
         ).passed
     )
 
@@ -541,15 +551,43 @@ class LocalFiveMinuteResearchBackend:
     def __init__(self, *, root: Path, dataset_id: str) -> None:
         self.root = root.resolve()
         self.dataset_id = dataset_id
-        self.bars = read_five_minute_snapshot(dataset_id, root=self.root)
-        self.bars["available_at"] = pd.to_datetime(self.bars["timestamp"], utc=True) + pd.Timedelta(
-            minutes=5
-        )
+        self._hf_store: HfFiveMinuteSnapshotStore | None = None
+        self._legacy_bars: pd.DataFrame | None = None
+        if dataset_id.startswith("hf-finnhub-5min-"):
+            self._hf_store = HfFiveMinuteSnapshotStore(root=self.root, dataset_id=dataset_id)
+            observed = set(self._hf_store.symbols)
+        else:
+            self._legacy_bars = read_five_minute_snapshot(dataset_id, root=self.root)
+            observed = set(self._legacy_bars["symbol"].astype(str))
+        if observed == set(AAPL_QQQ_SYMBOLS):
+            self.symbols = AAPL_QQQ_SYMBOLS
+        elif observed == set(SPY_IWM_SYMBOLS):
+            self.symbols = SPY_IWM_SYMBOLS
+        else:
+            raise ValueError("backend dataset uses an unsupported symbol scope")
 
     def accepted_sessions(self, dataset_id: str) -> tuple[date, ...]:
         if dataset_id != self.dataset_id:
             raise ValueError("backend dataset identity mismatch")
-        return tuple(sorted(self.bars["session_date"].unique()))
+        if self._hf_store is not None:
+            return self._hf_store.accepted_sessions
+        if self._legacy_bars is None:
+            raise RuntimeError("backend has no data store")
+        return tuple(sorted(self._legacy_bars["session_date"].unique()))
+
+    def _read_sessions(self, sessions: tuple[date, ...]) -> pd.DataFrame:
+        if self._hf_store is not None:
+            selected = self._hf_store.read_sessions(sessions)
+        else:
+            if self._legacy_bars is None:
+                raise RuntimeError("backend has no data store")
+            selected = self._legacy_bars.loc[
+                self._legacy_bars["session_date"].isin(sessions)
+            ].copy()
+        selected["available_at"] = pd.to_datetime(
+            selected["timestamp"], utc=True
+        ) + pd.Timedelta(minutes=5)
+        return selected
 
     def evaluate(
         self,
@@ -558,7 +596,9 @@ class LocalFiveMinuteResearchBackend:
         *,
         phase: str,
     ) -> PhaseEvaluation:
-        selected = self.bars.loc[self.bars["session_date"].isin(sessions)].copy()
+        if strategy.symbols != self.symbols:
+            raise ValueError("strategy symbol scope does not match backend dataset")
+        selected = self._read_sessions(sessions)
         if tuple(sorted(selected["session_date"].unique())) != sessions:
             raise ValueError("backend phase does not exactly cover requested sessions")
         compiled = compile_strategy(strategy)
@@ -580,7 +620,7 @@ class LocalFiveMinuteResearchBackend:
         stress = run.scenarios["stress"]
         pnl_by_symbol = {
             symbol: math.fsum(trade.net_pnl for trade in base.trades if trade.symbol == symbol)
-            for symbol in ("AAPL", "QQQ")
+            for symbol in self.symbols
         }
         return PhaseEvaluation(
             strategy_id=strategy.strategy_id,
@@ -604,9 +644,11 @@ class LocalFiveMinuteResearchBackend:
         )
 
     def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]:
-        qqq = self.bars.loc[
-            (self.bars["symbol"] == "QQQ") & self.bars["session_date"].isin(sessions)
-        ].sort_values(["session_date", "timestamp"], kind="stable")
+        benchmark_symbol = "QQQ" if self.symbols == AAPL_QQQ_SYMBOLS else "SPY"
+        bars = self._read_sessions(sessions)
+        qqq = bars.loc[bars["symbol"] == benchmark_symbol].sort_values(
+            ["session_date", "timestamp"], kind="stable"
+        )
         closes = qqq.groupby("session_date", sort=True, observed=True)["close"].last()
         if tuple(closes.index) != sessions:
             raise ValueError("benchmark does not exactly cover requested sessions")

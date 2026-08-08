@@ -24,17 +24,25 @@ def _payload(symbols: list[str]) -> dict[str, object]:
     }
 
 
-def test_five_minute_strategy_allows_only_aapl_qqq_long_scope() -> None:
+def test_five_minute_strategy_accepts_aapl_qqq_long_scope() -> None:
     strategy = StrategyDefinition.model_validate(_payload(["AAPL", "QQQ"]))
 
     assert validate_strategy(strategy).passed
 
 
-@pytest.mark.parametrize("symbols", [["QQQ", "AAPL"], ["AAPL"], ["AAPL", "QQQ", "SPY"]])
+def test_five_minute_strategy_accepts_spy_iwm_long_scope() -> None:
+    strategy = StrategyDefinition.model_validate(_payload(["SPY", "IWM"]))
+
+    assert validate_strategy(strategy).passed
+
+
+@pytest.mark.parametrize(
+    "symbols",
+    [["QQQ", "AAPL"], ["IWM", "SPY"], ["AAPL"], ["AAPL", "QQQ", "SPY"]],
+)
 def test_five_minute_scope_rejects_other_symbol_sets(symbols: list[str]) -> None:
     strategy = StrategyDefinition.model_validate(_payload(symbols))
 
     validation = validate_strategy(strategy)
     assert not validation.passed
     assert "DSL_FIVE_MINUTE_SYMBOL_SCOPE" in {issue.code for issue in validation.issues}
-

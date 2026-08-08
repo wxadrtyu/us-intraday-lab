@@ -17,13 +17,18 @@ from us_intraday_lab.long_horizon.orchestrator import (
 from us_intraday_lab.long_horizon.proposal import LongHorizonHypothesisProposal
 
 
-def _proposal(proposal_id: str, seed: int) -> LongHorizonHypothesisProposal:
+def _proposal(
+    proposal_id: str,
+    seed: int,
+    *,
+    symbols: tuple[str, str] = ("AAPL", "QQQ"),
+) -> LongHorizonHypothesisProposal:
     return LongHorizonHypothesisProposal.model_validate(
         {
             "proposal_id": proposal_id,
             "schema_version": "1.0.0",
             "entry_template": "momentum_5m",
-            "symbols": ["AAPL", "QQQ"],
+            "symbols": list(symbols),
             "parameter_ranges": {
                 "return_1_min": {"values": [0.0005, 0.001]},
                 "stop_loss_bps": {"values": [40, 60]},
@@ -110,6 +115,22 @@ class _ConcentratedBackend(_Backend):
         )
 
 
+class _SpyIwmBackend(_Backend):
+    def evaluate(self, strategy, sessions: tuple[date, ...], *, phase: str) -> PhaseEvaluation:
+        result = super().evaluate(strategy, sessions, phase=phase)
+        return PhaseEvaluation(
+            strategy_id=result.strategy_id,
+            sessions=result.sessions,
+            base_session_returns=result.base_session_returns,
+            stress_session_returns=result.stress_session_returns,
+            cost_1_5x_session_returns=result.cost_1_5x_session_returns,
+            closed_trades=result.closed_trades,
+            max_drawdown=result.max_drawdown,
+            profit_factor=result.profit_factor,
+            pnl_by_symbol={"SPY": 55.0, "IWM": 45.0},
+        )
+
+
 def test_screen_never_reads_or_reserves_final(tmp_path: Path) -> None:
     backend = _Backend()
 
@@ -159,6 +180,20 @@ def test_screen_rejects_validation_profit_concentrated_in_one_symbol(
             root=tmp_path,
             backend=_ConcentratedBackend(),
         )
+
+
+def test_screen_accepts_the_closed_spy_iwm_scope(tmp_path: Path) -> None:
+    selection = screen_long_horizon_campaign(
+        (
+            _proposal("proposal-spy-a", 1, symbols=("SPY", "IWM")),
+            _proposal("proposal-spy-b", 2, symbols=("SPY", "IWM")),
+        ),
+        dataset_id="data-a",
+        root=tmp_path,
+        backend=_SpyIwmBackend(),
+    )
+
+    assert selection.winner_strategy.symbols == ("SPY", "IWM")
 
 
 def test_second_experiment_cannot_reopen_consumed_campaign_final(tmp_path: Path) -> None:

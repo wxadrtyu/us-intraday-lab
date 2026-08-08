@@ -16,12 +16,14 @@ from us_intraday_lab.long_horizon.engine import (
 from us_intraday_lab.strategy.compiler import compile_strategy
 
 
-def _strategy(*, entry_minute: int = 30) -> StrategyDefinition:
+def _strategy(
+    *, entry_minute: int = 30, symbols: tuple[str, str] = ("AAPL", "QQQ")
+) -> StrategyDefinition:
     return StrategyDefinition.model_validate(
         {
             "strategy_id": "five-minute-engine-test",
             "dsl_version": "1.0.0",
-            "symbols": ["AAPL", "QQQ"],
+            "symbols": list(symbols),
             "signal_bar_size": "5min",
             "entry": {
                 "all": [
@@ -50,11 +52,13 @@ def _strategy(*, entry_minute: int = 30) -> StrategyDefinition:
     )
 
 
-def _bars(*, ambiguous: bool = False) -> pd.DataFrame:
+def _bars(
+    *, ambiguous: bool = False, symbols: tuple[str, str] = ("AAPL", "QQQ")
+) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     session = date(2025, 1, 2)
     available = datetime(2025, 1, 2, 14, 35, tzinfo=UTC)
-    for symbol in ("AAPL", "QQQ"):
+    for symbol in symbols:
         for index in range(8):
             price = 100.0
             if symbol == "AAPL" and index == 6:
@@ -81,9 +85,14 @@ def _bars(*, ambiguous: bool = False) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _run(*, ambiguous: bool = False, entry_minute: int = 30):
-    bars = _bars(ambiguous=ambiguous)
-    compiled = compile_strategy(_strategy(entry_minute=entry_minute))
+def _run(
+    *,
+    ambiguous: bool = False,
+    entry_minute: int = 30,
+    symbols: tuple[str, str] = ("AAPL", "QQQ"),
+):
+    bars = _bars(ambiguous=ambiguous, symbols=symbols)
+    compiled = compile_strategy(_strategy(entry_minute=entry_minute, symbols=symbols))
     job = BacktestJob.create(
         schema_version="1.0.0",
         strategy_id=compiled.definition_fingerprint,
@@ -134,3 +143,9 @@ def test_engine_retains_observable_entry_candidates_and_matching_opportunities()
     assert opportunities
     assert len(candidates) > len(opportunities)
     assert all(event.event_time >= datetime(2025, 1, 2, 15, tzinfo=UTC) for event in opportunities)
+
+
+def test_engine_accepts_the_closed_spy_iwm_scope() -> None:
+    run = _run(symbols=("SPY", "IWM")).scenarios["base"]
+
+    assert {trade.symbol for trade in run.trades} == {"SPY", "IWM"}

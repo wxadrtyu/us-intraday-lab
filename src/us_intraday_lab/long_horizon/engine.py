@@ -102,13 +102,17 @@ def five_minute_input_sha256(bars_5m: pd.DataFrame) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _normalize_bars(bars: pd.DataFrame) -> pd.DataFrame:
+def _normalize_bars(
+    bars: pd.DataFrame,
+    *,
+    symbols: tuple[str, ...] = ("AAPL", "QQQ"),
+) -> pd.DataFrame:
     missing = sorted(_REQUIRED.difference(bars.columns))
     if missing:
         raise ValueError("five-minute bars lack required columns: " + ",".join(missing))
     frame = bars.loc[:, sorted(_REQUIRED)].copy()
-    if set(frame["symbol"]) != {"AAPL", "QQQ"}:
-        raise ValueError("five-minute engine requires exact AAPL/QQQ coverage")
+    if tuple(sorted(set(frame["symbol"]))) != tuple(sorted(symbols)):
+        raise ValueError("five-minute engine input must exactly cover strategy symbols")
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
     frame["available_at"] = pd.to_datetime(frame["available_at"], utc=True)
     if frame.duplicated(["symbol", "session_date", "available_at"]).any():
@@ -249,7 +253,7 @@ class FiveMinuteBacktestEngine:
     def run(self, *, bars_5m: pd.DataFrame) -> EngineRun:
         if five_minute_input_sha256(bars_5m) != self.job.input_data_sha256:
             raise ValueError("five-minute input does not match BacktestJob identity")
-        frame = _feature_frame(_normalize_bars(bars_5m))
+        frame = _feature_frame(_normalize_bars(bars_5m, symbols=self.strategy.symbols))
         scenarios = {
             scenario: self._run_scenario(frame, scenario=scenario) for scenario in _SCENARIOS
         }

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "spy-iwm-opening-dip-rebound-v1",
+  "entry_template": "trend_pullback_5m",
+  "symbols": ["SPY", "IWM"],
+  "parameter_ranges": {
+    "return_1_max": {"values": [-0.0005, -0.0008, -0.0011, -0.0014]},
+    "range_position_max": {"values": [0.1, 0.25, 0.4]},
+    "minutes_from_open_min": {"values": [5]},
+    "minutes_from_open_max": {"values": [60]},
+    "return_1_min": {"values": [1.0]},
+    "rsi_min": {"values": [100.0]},
+    "stop_loss_bps": {"values": [40, 70]},
+    "take_profit_bps": {"values": [80, 120]},
+    "max_holding_minutes": {"values": [180, 240]},
+    "cooldown_minutes": {"values": [30]},
+    "max_entries_per_session": {"values": [2]}
+  },
+  "max_variants": 32,
+  "seed": 2026080801,
+  "rationale": "Broad index ETFs can overreact during opening price discovery; bounded dip depth, range location, and exit-risk neighbors test whether a causal next-bar rebound survives conservative costs.",
+  "provenance": "ai"
+}
