@@ -37,6 +37,16 @@ _DEFAULTS: dict[str, float] = {
     "peer_prior_session_return_max": -0.001,
     "cross_return_from_open_max": -0.002,
     "cross_prior_session_return_max": -0.001,
+    "cross_prior_session_return_min": -0.01,
+    "cross_return_from_open_min": 0.001,
+    "cross_trailing_session_return_5_min": -0.05,
+    "relative_return_from_open_max": -0.003,
+    "return_from_open_min": -0.015,
+    "trailing_session_return_3_max": -0.10,
+    "tqqq_entry_minutes": 90.0,
+    "soxl_entry_minutes": 120.0,
+    "tqqq_exit_minutes": 180.0,
+    "soxl_exit_minutes": 330.0,
 }
 
 
@@ -128,6 +138,113 @@ def _rules(template: str, parameters: dict[str, float]) -> tuple[dict[str, Any],
         exit_rule = {
             "any": [_comparison("minutes_from_open", "gt", 1_000.0)]
         }
+    elif template == "cross_regime_reversal_5m":
+        cross_current = p["cross_return_from_open_min"]
+        cross_prior = p["cross_prior_session_return_max"]
+        cross_trend = p["cross_trailing_session_return_5_min"]
+        entry = {
+            "all": [
+                _comparison("return_from_open", "gte", cross_current),
+                _comparison("peer_return_from_open", "gte", cross_current),
+                _comparison("prior_session_return", "lte", cross_prior),
+                _comparison("peer_prior_session_return", "lte", cross_prior),
+                _comparison("trailing_session_return_5", "gte", cross_trend),
+                _comparison("peer_trailing_session_return_5", "gte", cross_trend),
+                minutes,
+                _comparison("minutes_from_open", "lte", p["minutes_from_open_max"]),
+            ]
+        }
+        exit_rule = {
+            "any": [_comparison("minutes_from_open", "gt", 1_000.0)]
+        }
+    elif template == "cross_momentum_5m":
+        cross_current = p["cross_return_from_open_min"]
+        cross_prior = p["cross_prior_session_return_min"]
+        entry = {
+            "all": [
+                _comparison("return_from_open", "gte", cross_current),
+                _comparison("peer_return_from_open", "gte", cross_current),
+                _comparison("prior_session_return", "gte", cross_prior),
+                _comparison("peer_prior_session_return", "gte", cross_prior),
+                minutes,
+                _comparison("minutes_from_open", "lte", p["minutes_from_open_max"]),
+            ]
+        }
+        exit_rule = {
+            "any": [_comparison("minutes_from_open", "gt", 1_000.0)]
+        }
+    elif template == "relative_laggard_5m":
+        entry = {
+            "all": [
+                _comparison(
+                    "relative_return_from_open",
+                    "lte",
+                    p["relative_return_from_open_max"],
+                ),
+                _comparison("return_from_open", "gte", p["return_from_open_min"]),
+                _comparison(
+                    "prior_session_return",
+                    "gte",
+                    p["cross_prior_session_return_min"],
+                ),
+                _comparison(
+                    "peer_prior_session_return",
+                    "gte",
+                    p["cross_prior_session_return_min"],
+                ),
+                minutes,
+                _comparison("minutes_from_open", "lte", p["minutes_from_open_max"]),
+            ]
+        }
+        exit_rule = {
+            "any": [_comparison("minutes_from_open", "gt", 1_000.0)]
+        }
+    elif template == "asymmetric_pair_ensemble_5m":
+        soxl_entry: dict[str, Any] = {
+            "all": [
+                _comparison("is_soxl", "gte", 0.5),
+                _comparison(
+                    "relative_return_from_open",
+                    "lte",
+                    p["relative_return_from_open_max"],
+                ),
+                _comparison("return_from_open", "gte", p["return_from_open_min"]),
+                _comparison(
+                    "pair_prior_session_return_min",
+                    "gte",
+                    p["cross_prior_session_return_min"],
+                ),
+                _comparison("minutes_from_open", "eq", p["soxl_entry_minutes"]),
+            ]
+        }
+        tqqq_entry: dict[str, Any] = {
+            "all": [
+                _comparison("is_tqqq", "gte", 0.5),
+                _comparison(
+                    "trailing_session_return_3",
+                    "lte",
+                    p["trailing_session_return_3_max"],
+                ),
+                _comparison("minutes_from_open", "eq", p["tqqq_entry_minutes"]),
+            ]
+        }
+        entry = {"any": [soxl_entry, tqqq_entry]}
+        exit_rule = {
+            "any": [
+                {
+                    "all": [
+                        _comparison("is_tqqq", "gte", 0.5),
+                        _comparison("minutes_from_open", "gte", p["tqqq_exit_minutes"]),
+                    ]
+                },
+                {
+                    "all": [
+                        _comparison("is_soxl", "gte", 0.5),
+                        _comparison("minutes_from_open", "gte", p["soxl_exit_minutes"]),
+                    ]
+                },
+            ]
+        }
     else:
         raise ValueError("unsupported long-horizon template")
     return entry, exit_rule
@@ -140,6 +257,7 @@ def _strategy(
     entry, exit_rule = _rules(proposal.entry_template, parameters)
     canonical = json.dumps(parameters, sort_keys=True, separators=(",", ":"))
     suffix = hashlib.sha256(canonical.encode()).hexdigest()[:12]
+    asymmetric = proposal.entry_template == "asymmetric_pair_ensemble_5m"
     strategy = StrategyDefinition.model_validate(
         {
             "strategy_id": f"{proposal.proposal_id}-{suffix}",
@@ -150,18 +268,29 @@ def _strategy(
             "exit": exit_rule,
             "risk": {
                 "stop_loss_bps": round(parameters.get("stop_loss_bps", 50.0)),
-                "take_profit_bps": round(parameters.get("take_profit_bps", 100.0)),
+                "take_profit_bps": round(
+                    parameters.get("take_profit_bps", 10_000.0 if asymmetric else 100.0)
+                ),
                 "max_holding_minutes": round(
-                    parameters.get("max_holding_minutes", 60.0)
+                    parameters.get("max_holding_minutes", 1_000.0 if asymmetric else 60.0)
                 ),
                 "cooldown_minutes": round(parameters.get("cooldown_minutes", 30.0)),
                 "max_entries_per_session": round(
-                    parameters.get("max_entries_per_session", 2.0)
+                    parameters.get("max_entries_per_session", 1.0 if asymmetric else 2.0)
                 ),
                 "sizing_preset": (
+                    "equal_cash_leveraged_25pct"
+                    if proposal.entry_template
+                    in {"cross_regime_reversal_5m", "cross_momentum_5m"}
+                    else
                     "equal_cash_conservative"
                     if proposal.entry_template
-                    in {"trend_pullback_5m", "cross_rebound_5m"}
+                    in {
+                        "trend_pullback_5m",
+                        "cross_rebound_5m",
+                        "relative_laggard_5m",
+                        "asymmetric_pair_ensemble_5m",
+                    }
                     else "equal_risk_conservative"
                 ),
             },

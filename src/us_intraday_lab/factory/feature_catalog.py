@@ -80,7 +80,11 @@ _PARAMETERS: Mapping[ParameterName, ParameterSpec] = MappingProxyType(
             "enum",
             "sizing",
             "equal_cash_conservative",
-            allowed_values=("equal_cash_conservative", "equal_risk_conservative"),
+            allowed_values=(
+                "equal_cash_conservative",
+                "equal_cash_leveraged_25pct",
+                "equal_risk_conservative",
+            ),
         ),
         "stop_loss_bps": ParameterSpec("stop_loss_bps", "int", "risk", 35, 1, 10_000),
         "take_profit_bps": ParameterSpec("take_profit_bps", "int", "risk", 70, 1, 10_000),

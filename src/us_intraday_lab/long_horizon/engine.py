@@ -36,8 +36,8 @@ from us_intraday_lab.strategy.operators import (
     RuleOperator,
 )
 
-FIVE_MINUTE_ENGINE_ID = "five-minute-engine-1.1.0"
-FIVE_MINUTE_FEATURE_SET_VERSION = "5m-v1.1.0"
+FIVE_MINUTE_ENGINE_ID = "five-minute-engine-1.5.0"
+FIVE_MINUTE_FEATURE_SET_VERSION = "5m-v1.4.0"
 _SCENARIOS: tuple[CostScenario, ...] = ("optimistic", "base", "stress")
 _REQUIRED = frozenset(
     {
@@ -158,6 +158,8 @@ def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
         group["return_1"] = close.pct_change(fill_method=None)
         group["return_3"] = close.pct_change(3, fill_method=None)
         group["return_from_open"] = close / float(group["open"].iloc[0]) - 1.0
+        group["is_tqqq"] = float(_symbol == "TQQQ")
+        group["is_soxl"] = float(_symbol == "SOXL")
         fast = close.ewm(span=3, adjust=False, min_periods=3).mean()
         slow = close.ewm(span=8, adjust=False, min_periods=8).mean()
         group["ema_spread"] = fast / slow - 1.0
@@ -198,9 +200,39 @@ def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
     )["close"].last()
     session_return = session_close.groupby(level="symbol").pct_change(fill_method=None)
     prior_session_return = session_return.groupby(level="symbol").shift(1)
+    trailing_session_return_3 = (
+        session_close.groupby(level="symbol")
+        .pct_change(3, fill_method=None)
+        .groupby(level="symbol")
+        .shift(1)
+    )
+    trailing_session_return_5 = (
+        session_close.groupby(level="symbol")
+        .pct_change(5, fill_method=None)
+        .groupby(level="symbol")
+        .shift(1)
+    )
     prior_lookup = prior_session_return.rename("prior_session_return").reset_index()
     frame = frame.merge(
         prior_lookup,
+        on=["symbol", "session_date"],
+        how="left",
+        validate="many_to_one",
+    )
+    trailing_3_lookup = trailing_session_return_3.rename(
+        "trailing_session_return_3"
+    ).reset_index()
+    frame = frame.merge(
+        trailing_3_lookup,
+        on=["symbol", "session_date"],
+        how="left",
+        validate="many_to_one",
+    )
+    trailing_lookup = trailing_session_return_5.rename(
+        "trailing_session_return_5"
+    ).reset_index()
+    frame = frame.merge(
+        trailing_lookup,
         on=["symbol", "session_date"],
         how="left",
         validate="many_to_one",
@@ -211,8 +243,17 @@ def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
     frame["peer_return_from_open"] = peer_groups["return_from_open"].transform(
         _peer_values
     )
+    frame["relative_return_from_open"] = (
+        frame["return_from_open"] - frame["peer_return_from_open"]
+    )
     frame["peer_prior_session_return"] = peer_groups[
         "prior_session_return"
+    ].transform(_peer_values)
+    frame["pair_prior_session_return_min"] = frame[
+        ["prior_session_return", "peer_prior_session_return"]
+    ].min(axis=1, skipna=False)
+    frame["peer_trailing_session_return_5"] = peer_groups[
+        "trailing_session_return_5"
     ].transform(_peer_values)
     return frame.sort_values(
         ["session_date", "available_at", "symbol"], kind="stable", ignore_index=True
@@ -519,7 +560,13 @@ class FiveMinuteBacktestEngine:
                             and bar_index + 1 < len(times)
                         ):
                             reference = float(row["close"])
-                            quantity = floor(cash * 0.49 / reference)
+                            cash_fraction = (
+                                0.25
+                                if self.strategy.risk.sizing_preset
+                                == "equal_cash_leveraged_25pct"
+                                else 0.49
+                            )
+                            quantity = floor(cash * cash_fraction / reference)
                             if self.strategy.risk.sizing_preset == "equal_risk_conservative":
                                 risk_per_share = reference * self.strategy.risk.stop_loss_bps / 10_000
                                 quantity = min(

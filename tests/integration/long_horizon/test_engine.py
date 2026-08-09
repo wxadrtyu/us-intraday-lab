@@ -18,7 +18,10 @@ from us_intraday_lab.strategy.compiler import compile_strategy
 
 
 def _strategy(
-    *, entry_minute: int = 30, symbols: tuple[str, str] = ("AAPL", "QQQ")
+    *,
+    entry_minute: int = 30,
+    symbols: tuple[str, str] = ("AAPL", "QQQ"),
+    sizing_preset: str = "equal_cash_conservative",
 ) -> StrategyDefinition:
     return StrategyDefinition.model_validate(
         {
@@ -46,7 +49,7 @@ def _strategy(
                 "max_holding_minutes": 90,
                 "cooldown_minutes": 30,
                 "max_entries_per_session": 1,
-                "sizing_preset": "equal_cash_conservative",
+                "sizing_preset": sizing_preset,
             },
             "order_type": "market",
         }
@@ -91,9 +94,16 @@ def _run(
     ambiguous: bool = False,
     entry_minute: int = 30,
     symbols: tuple[str, str] = ("AAPL", "QQQ"),
+    sizing_preset: str = "equal_cash_conservative",
 ):
     bars = _bars(ambiguous=ambiguous, symbols=symbols)
-    compiled = compile_strategy(_strategy(entry_minute=entry_minute, symbols=symbols))
+    compiled = compile_strategy(
+        _strategy(
+            entry_minute=entry_minute,
+            symbols=symbols,
+            sizing_preset=sizing_preset,
+        )
+    )
     job = BacktestJob.create(
         schema_version="1.0.0",
         strategy_id=compiled.definition_fingerprint,
@@ -118,6 +128,12 @@ def test_entry_fills_at_next_five_minute_open() -> None:
 
     assert aapl.entry_time == datetime(2025, 1, 2, 15, 5, tzinfo=UTC)
     assert aapl.entry_price == 101.0
+
+
+def test_leveraged_sizing_caps_each_symbol_at_twenty_five_percent() -> None:
+    run = _run(sizing_preset="equal_cash_leveraged_25pct").scenarios["base"]
+
+    assert {trade.quantity for trade in run.trades} == {250}
 
 
 def test_same_bar_stop_and_target_uses_adverse_first() -> None:
@@ -185,4 +201,51 @@ def test_cross_session_features_use_only_completed_prior_sessions() -> None:
     assert current.loc[0, "prior_session_return"] == pytest.approx(-0.1)
     assert current.loc[0, "return_from_open"] == pytest.approx(0.0)
     assert current.loc[0, "peer_return_from_open"] == pytest.approx(0.0)
+    assert current.loc[0, "relative_return_from_open"] == pytest.approx(0.0)
     assert current.loc[0, "peer_prior_session_return"] == pytest.approx(-0.1)
+    assert current.loc[0, "pair_prior_session_return_min"] == pytest.approx(-0.1)
+
+
+def test_trailing_session_features_exclude_the_current_session() -> None:
+    rows: list[dict[str, object]] = []
+    sessions = (
+        date(2025, 1, 13),
+        date(2025, 1, 14),
+        date(2025, 1, 15),
+        date(2025, 1, 16),
+        date(2025, 1, 17),
+        date(2025, 1, 21),
+        date(2025, 1, 22),
+    )
+    closes = (100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 500.0)
+    for session, close in zip(sessions, closes, strict=True):
+        start = datetime.combine(session, datetime.min.time(), tzinfo=UTC) + timedelta(
+            hours=14, minutes=35
+        )
+        for symbol, scale in (("SPY", 1.0), ("IWM", 2.0)):
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "timestamp": start,
+                    "available_at": start,
+                    "open": close * scale,
+                    "high": close * scale + 0.1,
+                    "low": close * scale - 0.1,
+                    "close": close * scale,
+                    "volume": 1_000.0,
+                    "session_date": session,
+                }
+            )
+    features = _feature_frame(pd.DataFrame(rows))
+    current = features.loc[
+        (features["session_date"] == sessions[-1])
+        & (features["symbol"] == "SPY")
+    ].reset_index(drop=True)
+
+    expected = closes[-2] / closes[0] - 1.0
+    expected_three = closes[-2] / closes[-5] - 1.0
+    assert current.loc[0, "trailing_session_return_3"] == pytest.approx(expected_three)
+    assert current.loc[0, "trailing_session_return_5"] == pytest.approx(expected)
+    assert current.loc[0, "peer_trailing_session_return_5"] == pytest.approx(expected)
+    assert current.loc[0, "is_tqqq"] == 0.0
+    assert current.loc[0, "is_soxl"] == 0.0

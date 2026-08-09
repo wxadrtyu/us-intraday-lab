@@ -29,12 +29,40 @@ def feature_prior_session_return(features: FeatureRow) -> FeatureValue:
     return features.get("prior_session_return")
 
 
+def feature_trailing_session_return_3(features: FeatureRow) -> FeatureValue:
+    return features.get("trailing_session_return_3")
+
+
+def feature_trailing_session_return_5(features: FeatureRow) -> FeatureValue:
+    return features.get("trailing_session_return_5")
+
+
 def feature_peer_return_from_open(features: FeatureRow) -> FeatureValue:
     return features.get("peer_return_from_open")
 
 
+def feature_relative_return_from_open(features: FeatureRow) -> FeatureValue:
+    return features.get("relative_return_from_open")
+
+
 def feature_peer_prior_session_return(features: FeatureRow) -> FeatureValue:
     return features.get("peer_prior_session_return")
+
+
+def feature_pair_prior_session_return_min(features: FeatureRow) -> FeatureValue:
+    return features.get("pair_prior_session_return_min")
+
+
+def feature_peer_trailing_session_return_5(features: FeatureRow) -> FeatureValue:
+    return features.get("peer_trailing_session_return_5")
+
+
+def feature_is_tqqq(features: FeatureRow) -> FeatureValue:
+    return features.get("is_tqqq")
+
+
+def feature_is_soxl(features: FeatureRow) -> FeatureValue:
+    return features.get("is_soxl")
 
 
 def feature_ema_spread(features: FeatureRow) -> FeatureValue:
@@ -67,6 +95,10 @@ def feature_minutes_from_open(features: FeatureRow) -> FeatureValue:
 
 def compare_gt(left: float, right: float) -> bool:
     return left > right
+
+
+def compare_eq(left: float, right: float) -> bool:
+    return left == right
 
 
 def compare_gte(left: float, right: float) -> bool:

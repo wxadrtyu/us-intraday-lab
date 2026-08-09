@@ -13,6 +13,10 @@ EntryTemplate = Literal[
     "vwap_reversion_5m",
     "momentum_5m",
     "cross_rebound_5m",
+    "cross_regime_reversal_5m",
+    "cross_momentum_5m",
+    "relative_laggard_5m",
+    "asymmetric_pair_ensemble_5m",
 ]
 
 APPROVED_PARAMETERS = frozenset(
@@ -43,6 +47,16 @@ APPROVED_PARAMETERS = frozenset(
         "peer_prior_session_return_max",
         "cross_return_from_open_max",
         "cross_prior_session_return_max",
+        "cross_prior_session_return_min",
+        "cross_return_from_open_min",
+        "cross_trailing_session_return_5_min",
+        "relative_return_from_open_max",
+        "return_from_open_min",
+        "trailing_session_return_3_max",
+        "tqqq_entry_minutes",
+        "soxl_entry_minutes",
+        "tqqq_exit_minutes",
+        "soxl_exit_minutes",
     }
 )
 

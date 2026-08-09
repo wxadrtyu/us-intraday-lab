@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "tqqq-soxl-asymmetric-pair-ensemble-v1",
+  "entry_template": "asymmetric_pair_ensemble_5m",
+  "symbols": ["TQQQ", "SOXL"],
+  "parameter_ranges": {
+    "relative_return_from_open_max": {"values": [-0.004, -0.005, -0.006]},
+    "return_from_open_min": {"values": [-0.0175, -0.02]},
+    "cross_prior_session_return_min": {"values": [-0.03]},
+    "trailing_session_return_3_max": {"values": [-0.1]},
+    "tqqq_entry_minutes": {"values": [90]},
+    "soxl_entry_minutes": {"values": [120]},
+    "tqqq_exit_minutes": {"values": [180]},
+    "soxl_exit_minutes": {"values": [330]},
+    "stop_loss_bps": {"values": [1000, 10000]}
+  },
+  "max_variants": 12,
+  "seed": 2026080907,
+  "rationale": "A bounded asymmetric ensemble combines a TQQQ three-session crash rebound with SOXL-only relative-laggard mean reversion. The branches use distinct causal evidence and fixed intraday decision times, allow at most one entry per session, and retain the unchanged train, development-validation, cost, drawdown, concentration, and sealed-final gates.",
+  "provenance": "ai"
+}

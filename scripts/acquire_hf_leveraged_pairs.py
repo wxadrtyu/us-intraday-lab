@@ -17,7 +17,6 @@ REPO_TYPE = "dataset"
 REVISION = "main"
 PAIR_SCOPES = {
     "spy-tqqq": ("SPY", "TQQQ"),
-    "tqqq-upro": ("TQQQ", "UPRO"),
     "tqqq-soxl": ("TQQQ", "SOXL"),
 }
 

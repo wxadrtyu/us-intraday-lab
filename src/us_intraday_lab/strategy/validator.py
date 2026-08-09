@@ -28,8 +28,15 @@ ALLOWED_INDICATORS = frozenset(
         "return_3",
         "return_from_open",
         "prior_session_return",
+        "trailing_session_return_3",
+        "trailing_session_return_5",
         "peer_return_from_open",
+        "relative_return_from_open",
         "peer_prior_session_return",
+        "pair_prior_session_return_min",
+        "peer_trailing_session_return_5",
+        "is_tqqq",
+        "is_soxl",
         "ema_spread",
         "rsi",
         "atr_bps",
@@ -39,7 +46,7 @@ ALLOWED_INDICATORS = frozenset(
         "minutes_from_open",
     }
 )
-ALLOWED_COMPARISONS = frozenset({"gt", "gte", "lt", "lte"})
+ALLOWED_COMPARISONS = frozenset({"eq", "gt", "gte", "lt", "lte"})
 MAX_CONDITION_DEPTH = 3
 MAX_LEAF_CONDITIONS = 12
 MAX_ENTRIES_PER_SESSION = 3
@@ -785,6 +792,7 @@ def _validate_risk(risk: object, issues: list[ValidationIssue]) -> None:
         sizing = data["sizing_preset"]
         if type(sizing) is not str or sizing not in {
             "equal_cash_conservative",
+            "equal_cash_leveraged_25pct",
             "equal_risk_conservative",
         }:
             issues.append(

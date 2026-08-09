@@ -7,8 +7,15 @@ IndicatorName = Literal[
     "return_3",
     "return_from_open",
     "prior_session_return",
+    "trailing_session_return_3",
+    "trailing_session_return_5",
     "peer_return_from_open",
+    "relative_return_from_open",
     "peer_prior_session_return",
+    "pair_prior_session_return_min",
+    "peer_trailing_session_return_5",
+    "is_tqqq",
+    "is_soxl",
     "ema_spread",
     "rsi",
     "atr_bps",
@@ -17,11 +24,12 @@ IndicatorName = Literal[
     "range_position",
     "minutes_from_open",
 ]
-ComparisonOp = Literal["gt", "gte", "lt", "lte"]
+ComparisonOp = Literal["eq", "gt", "gte", "lt", "lte"]
 SignalBarSize = Literal["5min", "15min"]
 OrderType = Literal["market", "limit"]
 SizingPreset = Literal[
     "equal_cash_conservative",
+    "equal_cash_leveraged_25pct",
     "equal_risk_conservative",
 ]
 

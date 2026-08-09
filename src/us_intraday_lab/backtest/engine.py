@@ -984,6 +984,9 @@ class BacktestEngine:
         cash_quantity = floor((portfolio.available_cash / free_slots) / adverse_price)
         if self.strategy.risk.sizing_preset == "equal_cash_conservative":
             return max(0, cash_quantity)
+        if self.strategy.risk.sizing_preset == "equal_cash_leveraged_25pct":
+            capped_quantity = floor(portfolio.equity * 0.25 / adverse_price)
+            return max(0, min(cash_quantity, capped_quantity))
         risk_per_share = reference_price * self.strategy.risk.stop_loss_bps / 10_000
         risk_quantity = floor(portfolio.equity * RISK_BUDGET_FRACTION / risk_per_share)
         return max(0, min(cash_quantity, risk_quantity))

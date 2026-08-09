@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "tqqq-soxl-cross-regime-reversal-v1",
+  "entry_template": "cross_regime_reversal_5m",
+  "symbols": ["TQQQ", "SOXL"],
+  "parameter_ranges": {
+    "cross_prior_session_return_max": {"values": [-0.005, -0.0075, -0.01, -0.015]},
+    "cross_return_from_open_min": {"values": [0.0, 0.001, 0.002]},
+    "cross_trailing_session_return_5_min": {"values": [-0.075, -0.05, -0.03]},
+    "minutes_from_open_min": {"values": [30]},
+    "minutes_from_open_max": {"values": [30]},
+    "stop_loss_bps": {"values": [1000]},
+    "take_profit_bps": {"values": [2000]},
+    "max_holding_minutes": {"values": [360]},
+    "cooldown_minutes": {"values": [30]},
+    "max_entries_per_session": {"values": [1]}
+  },
+  "max_variants": 36,
+  "seed": 2026080902,
+  "rationale": "After both leveraged growth ETFs fell in the prior session, a synchronized first-thirty-minute reversal may persist into the close when both instruments remain outside a severe five-session decline regime. Every regime value is based only on completed sessions and the search is frozen before validation access.",
+  "provenance": "ai"
+}
