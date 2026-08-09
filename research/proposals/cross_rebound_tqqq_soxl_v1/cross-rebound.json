@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "tqqq-soxl-cross-rebound-v1",
+  "entry_template": "cross_rebound_5m",
+  "symbols": ["TQQQ", "SOXL"],
+  "parameter_ranges": {
+    "cross_return_from_open_max": {"values": [-0.005, -0.0075, -0.01, -0.015]},
+    "cross_prior_session_return_max": {"values": [-0.005, -0.0075, -0.01]},
+    "minutes_from_open_min": {"values": [30]},
+    "minutes_from_open_max": {"values": [30]},
+    "stop_loss_bps": {"values": [200, 400]},
+    "take_profit_bps": {"values": [400, 1000]},
+    "max_holding_minutes": {"values": [360]},
+    "cooldown_minutes": {"values": [30]},
+    "max_entries_per_session": {"values": [1]}
+  },
+  "max_variants": 48,
+  "seed": 2026080903,
+  "rationale": "A joint opening capitulation in leveraged Nasdaq and semiconductor ETFs after a negative prior session may produce a higher-volatility rebound, tested with symmetric signals and conservative stop neighborhoods.",
+  "provenance": "ai"
+}

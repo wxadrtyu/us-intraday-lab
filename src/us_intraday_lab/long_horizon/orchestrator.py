@@ -18,6 +18,7 @@ from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
 from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.long_horizon.engine import (
     FIVE_MINUTE_ENGINE_ID,
+    FIVE_MINUTE_FEATURE_SET_VERSION,
     FiveMinuteBacktestEngine,
     five_minute_input_sha256,
 )
@@ -35,11 +36,8 @@ from us_intraday_lab.long_horizon.snapshot import read_five_minute_snapshot
 from us_intraday_lab.long_horizon.splits import LongHorizonSplit, create_long_horizon_split
 from us_intraday_lab.long_horizon.variants import generate_long_horizon_variants
 from us_intraday_lab.strategy.compiler import compile_strategy
-from us_intraday_lab.validation.stability import (
-    AAPL_QQQ_SYMBOLS,
-    SPY_IWM_SYMBOLS,
-    assess_symbol_concentration,
-)
+from us_intraday_lab.strategy.validator import FIVE_MINUTE_SYMBOL_SCOPES
+from us_intraday_lab.validation.stability import assess_symbol_concentration
 
 
 class NoLongHorizonCandidateError(RuntimeError):
@@ -262,6 +260,59 @@ def _phase_record(evaluation: PhaseEvaluation) -> dict[str, object]:
     }
 
 
+def _checkpointed_evaluate(
+    backend: LongHorizonResearchBackend,
+    strategy: StrategyDefinition,
+    sessions: tuple[date, ...],
+    *,
+    phase: str,
+    dataset_id: str,
+    experiment_root: Path,
+) -> PhaseEvaluation:
+    cache_key = _sha256(
+        {
+            "dataset_id": dataset_id,
+            "engine_id": FIVE_MINUTE_ENGINE_ID,
+            "feature_set_version": FIVE_MINUTE_FEATURE_SET_VERSION,
+            "phase": phase,
+            "sessions": sessions,
+            "strategy": strategy.model_dump(mode="json"),
+        }
+    )
+    checkpoint = experiment_root / "checkpoints" / phase / f"{cache_key}.json"
+    if checkpoint.is_file():
+        try:
+            envelope = cast(
+                dict[str, object], json.loads(checkpoint.read_text(encoding="utf-8"))
+            )
+            if envelope.get("cache_key") != cache_key:
+                raise ValueError("phase checkpoint cache key mismatch")
+            evaluation = _phase_from_record(
+                cast(dict[str, object], envelope["evaluation"])
+            )
+        except (KeyError, json.JSONDecodeError, TypeError, ValueError) as error:
+            raise ValueError("phase checkpoint is invalid") from error
+        if evaluation.strategy_id != strategy.strategy_id or evaluation.sessions != sessions:
+            raise ValueError("phase checkpoint scope mismatch")
+        return evaluation
+    evaluation = backend.evaluate(strategy, sessions, phase=phase)
+    if evaluation.strategy_id != strategy.strategy_id or evaluation.sessions != sessions:
+        raise ValueError("backend phase evaluation scope mismatch")
+    checkpoint.parent.mkdir(parents=True, exist_ok=True)
+    temporary = checkpoint.with_suffix(".tmp")
+    temporary.write_text(
+        json.dumps(
+            {"cache_key": cache_key, "evaluation": _phase_record(evaluation)},
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, checkpoint)
+    return evaluation
+
+
 def _passes_train(evaluation: PhaseEvaluation) -> bool:
     return (
         evaluation.base_total_return > 0.0
@@ -272,11 +323,14 @@ def _passes_train(evaluation: PhaseEvaluation) -> bool:
 
 
 def _passes_validation(evaluation: PhaseEvaluation) -> bool:
-    symbol_scope = (
-        AAPL_QQQ_SYMBOLS
-        if set(evaluation.pnl_by_symbol) == set(AAPL_QQQ_SYMBOLS)
-        else SPY_IWM_SYMBOLS
+    matching_scopes = tuple(
+        scope
+        for scope in FIVE_MINUTE_SYMBOL_SCOPES
+        if set(evaluation.pnl_by_symbol) == set(scope)
     )
+    if len(matching_scopes) != 1:
+        raise ValueError("evaluation uses an unsupported symbol scope")
+    symbol_scope = matching_scopes[0]
     return (
         evaluation.base_total_return > 0.0
         and evaluation.cost_1_5x_total_return > 0.0
@@ -344,7 +398,14 @@ def screen_long_horizon_campaign(
         payload={"variant_count": len(variants)},
     )
     train_results = tuple(
-        effective_backend.evaluate(strategy, split.train_sessions, phase="train")
+        _checkpointed_evaluate(
+            effective_backend,
+            strategy,
+            split.train_sessions,
+            phase="train",
+            dataset_id=dataset_id,
+            experiment_root=experiment_root,
+        )
         for strategy in variants
     )
     _stage(
@@ -377,7 +438,14 @@ def screen_long_horizon_campaign(
         )[:4]
     )
     validation_results = tuple(
-        effective_backend.evaluate(strategy, split.validation_sessions, phase="validation")
+        _checkpointed_evaluate(
+            effective_backend,
+            strategy,
+            split.validation_sessions,
+            phase="validation",
+            dataset_id=dataset_id,
+            experiment_root=experiment_root,
+        )
         for strategy in ranked_train
     )
     _stage(
@@ -586,18 +654,23 @@ class LocalFiveMinuteResearchBackend:
         self.dataset_id = dataset_id
         self._hf_store: HfFiveMinuteSnapshotStore | None = None
         self._legacy_bars: pd.DataFrame | None = None
+        self._phase_bars: dict[tuple[date, ...], pd.DataFrame] = {}
         if dataset_id.startswith("hf-finnhub-5min-"):
             self._hf_store = HfFiveMinuteSnapshotStore(root=self.root, dataset_id=dataset_id)
-            observed = set(self._hf_store.symbols)
+            observed_order = self._hf_store.symbols
         else:
             self._legacy_bars = read_five_minute_snapshot(dataset_id, root=self.root)
             observed = set(self._legacy_bars["symbol"].astype(str))
-        if observed == set(AAPL_QQQ_SYMBOLS):
-            self.symbols = AAPL_QQQ_SYMBOLS
-        elif observed == set(SPY_IWM_SYMBOLS):
-            self.symbols = SPY_IWM_SYMBOLS
-        else:
+            matching_scope = next(
+                (scope for scope in FIVE_MINUTE_SYMBOL_SCOPES if set(scope) == observed),
+                None,
+            )
+            if matching_scope is None:
+                raise ValueError("backend dataset uses an unsupported symbol scope")
+            observed_order = matching_scope
+        if observed_order not in FIVE_MINUTE_SYMBOL_SCOPES:
             raise ValueError("backend dataset uses an unsupported symbol scope")
+        self.symbols = observed_order
 
     def accepted_sessions(self, dataset_id: str) -> tuple[date, ...]:
         if dataset_id != self.dataset_id:
@@ -609,6 +682,9 @@ class LocalFiveMinuteResearchBackend:
         return tuple(sorted(self._legacy_bars["session_date"].unique()))
 
     def _read_sessions(self, sessions: tuple[date, ...]) -> pd.DataFrame:
+        cached = self._phase_bars.get(sessions)
+        if cached is not None:
+            return cached
         if self._hf_store is not None:
             selected = self._hf_store.read_sessions(sessions)
         else:
@@ -620,6 +696,7 @@ class LocalFiveMinuteResearchBackend:
         selected["available_at"] = pd.to_datetime(
             selected["timestamp"], utc=True
         ) + pd.Timedelta(minutes=5)
+        self._phase_bars[sessions] = selected
         return selected
 
     def evaluate(
@@ -677,7 +754,13 @@ class LocalFiveMinuteResearchBackend:
         )
 
     def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]:
-        benchmark_symbol = "QQQ" if self.symbols == AAPL_QQQ_SYMBOLS else "SPY"
+        benchmark_symbol = {
+            ("AAPL", "QQQ"): "QQQ",
+            ("SPY", "IWM"): "SPY",
+            ("SPY", "TQQQ"): "SPY",
+            ("TQQQ", "UPRO"): "UPRO",
+            ("TQQQ", "SOXL"): "TQQQ",
+        }[self.symbols]
         bars = self._read_sessions(sessions)
         qqq = bars.loc[bars["symbol"] == benchmark_symbol].sort_values(
             ["session_date", "timestamp"], kind="stable"

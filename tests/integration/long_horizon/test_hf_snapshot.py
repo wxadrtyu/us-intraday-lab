@@ -20,16 +20,22 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _source(root: Path) -> None:
-    raw = root / "data" / "raw" / "hf_spy_iwm_5min"
-    catalog = root / "data" / "catalog" / "hf_spy_iwm_5min" / "months"
+def _source(
+    root: Path,
+    *,
+    slug: str = "spy-iwm",
+    symbols: tuple[str, str] = ("SPY", "IWM"),
+) -> None:
+    source_name = f"hf_{slug.replace('-', '_')}_5min"
+    raw = root / "data" / "raw" / source_name
+    catalog = root / "data" / "catalog" / source_name / "months"
     raw.mkdir(parents=True)
     catalog.mkdir(parents=True)
     rows: list[dict[str, object]] = []
     for session in (date(2024, 1, 2), date(2024, 1, 3)):
         start = datetime.combine(session, datetime.min.time(), tzinfo=UTC) + timedelta(hours=14, minutes=30)
         for index in range(78):
-            for symbol in ("SPY", "IWM"):
+            for symbol in symbols:
                 price = 100.0 + index / 10
                 timestamp = start + timedelta(minutes=index * 5)
                 rows.append(
@@ -45,7 +51,7 @@ def _source(root: Path) -> None:
                         "session_date": session,
                     }
                 )
-    output = raw / "spy-iwm-2024-01.parquet"
+    output = raw / f"{slug}-2024-01.parquet"
     pd.DataFrame(rows).to_parquet(output, index=False)
     record = {
         "accepted_sessions": ["2024-01-02", "2024-01-03"],
@@ -57,9 +63,9 @@ def _source(root: Path) -> None:
         "revision": "main",
         "source_filename": "data/ohlcv_2024-01.parquet",
         "source_sha256": "a" * 64,
-        "symbols": ["SPY", "IWM"],
+        "symbols": list(symbols),
     }
-    (catalog / "spy-iwm-2024-01.json").write_text(json.dumps(record), encoding="utf-8")
+    (catalog / f"{slug}-2024-01.json").write_text(json.dumps(record), encoding="utf-8")
 
 
 def test_hf_snapshot_reads_only_explicitly_requested_sessions(tmp_path: Path) -> None:
@@ -96,3 +102,24 @@ def test_hf_snapshot_reads_only_explicitly_requested_sessions(tmp_path: Path) ->
     assert backend.benchmark_returns((date(2024, 1, 2),)) == (0.0,)
     with pytest.raises(HfFiveMinuteSnapshotError, match="session hash mismatch"):
         store.read_sessions((date(2024, 1, 3),))
+
+
+def test_hf_snapshot_supports_an_explicit_alternate_pair(tmp_path: Path) -> None:
+    _source(tmp_path, slug="tqqq-upro", symbols=("TQQQ", "UPRO"))
+
+    manifest = publish_hf_five_minute_snapshot(
+        root=tmp_path,
+        start_month="2024-01",
+        end_month="2024-01",
+        code_revision="test",
+        created_at=datetime(2024, 2, 1, tzinfo=UTC),
+        slug="tqqq-upro",
+        symbols=("TQQQ", "UPRO"),
+    )
+    store = HfFiveMinuteSnapshotStore(root=tmp_path, dataset_id=manifest.dataset_id)
+
+    assert store.symbols == ("TQQQ", "UPRO")
+    assert set(store.read_sessions((date(2024, 1, 2),))["symbol"]) == {
+        "TQQQ",
+        "UPRO",
+    }

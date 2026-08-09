@@ -12,6 +12,7 @@ EntryTemplate = Literal[
     "opening_reclaim_5m",
     "vwap_reversion_5m",
     "momentum_5m",
+    "cross_rebound_5m",
 ]
 
 APPROVED_PARAMETERS = frozenset(
@@ -36,6 +37,12 @@ APPROVED_PARAMETERS = frozenset(
         "max_holding_minutes",
         "cooldown_minutes",
         "max_entries_per_session",
+        "return_from_open_max",
+        "peer_return_from_open_max",
+        "prior_session_return_max",
+        "peer_prior_session_return_max",
+        "cross_return_from_open_max",
+        "cross_prior_session_return_max",
     }
 )
 
@@ -61,7 +68,9 @@ class LongHorizonHypothesisProposal(_ClosedModel):
     schema_version: Literal["1.0.0"]
     proposal_id: str = Field(min_length=1, max_length=128)
     entry_template: EntryTemplate
-    symbols: tuple[Literal["AAPL", "QQQ", "SPY", "IWM"], ...]
+    symbols: tuple[
+        Literal["AAPL", "QQQ", "SPY", "IWM", "TQQQ", "UPRO", "SOXL"], ...
+    ]
     parameter_ranges: dict[str, ParameterRange] = Field(min_length=1, max_length=12)
     max_variants: int = Field(ge=4, le=50)
     seed: int = Field(ge=0, le=2**64 - 1)
@@ -70,7 +79,13 @@ class LongHorizonHypothesisProposal(_ClosedModel):
 
     @model_validator(mode="after")
     def validate_closed_search_space(self) -> Self:
-        if self.symbols not in (("AAPL", "QQQ"), ("SPY", "IWM")):
+        if self.symbols not in (
+            ("AAPL", "QQQ"),
+            ("SPY", "IWM"),
+            ("SPY", "TQQQ"),
+            ("TQQQ", "UPRO"),
+            ("TQQQ", "SOXL"),
+        ):
             raise ValueError("symbols must use an approved exact ordered pair")
         unknown = sorted(set(self.parameter_ranges).difference(APPROVED_PARAMETERS))
         if unknown:

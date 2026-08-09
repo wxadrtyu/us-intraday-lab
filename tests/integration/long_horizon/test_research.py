@@ -174,6 +174,31 @@ def test_screen_never_reads_or_reserves_final(tmp_path: Path) -> None:
     assert not (tmp_path / "state" / "long_horizon_final.sqlite3").exists()
 
 
+def test_screen_resumes_completed_phase_evaluations_from_checkpoints(
+    tmp_path: Path,
+) -> None:
+    proposals = (_proposal("proposal-a", 1), _proposal("proposal-b", 2))
+    first_backend = _Backend()
+    first = screen_long_horizon_campaign(
+        proposals,
+        dataset_id="data-a",
+        root=tmp_path,
+        backend=first_backend,
+    )
+    assert first_backend.phases
+
+    resumed_backend = _Backend()
+    resumed = screen_long_horizon_campaign(
+        proposals,
+        dataset_id="data-a",
+        root=tmp_path,
+        backend=resumed_backend,
+    )
+
+    assert resumed_backend.phases == []
+    assert resumed.selection_sha256 == first.selection_sha256
+
+
 def test_screen_requires_ten_percent_winner_but_keeps_positive_neighbors(
     tmp_path: Path,
 ) -> None:

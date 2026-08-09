@@ -24,7 +24,13 @@ def _payload() -> dict[str, object]:
 
 @pytest.mark.parametrize(
     "template",
-    ["trend_pullback_5m", "opening_reclaim_5m", "vwap_reversion_5m", "momentum_5m"],
+    [
+        "trend_pullback_5m",
+        "opening_reclaim_5m",
+        "vwap_reversion_5m",
+        "momentum_5m",
+        "cross_rebound_5m",
+    ],
 )
 def test_only_approved_five_minute_templates_are_accepted(template: str) -> None:
     proposal = LongHorizonHypothesisProposal.model_validate(
@@ -85,4 +91,29 @@ def test_trend_pullback_omits_optional_ema_filter_when_not_proposed() -> None:
     for variant in generate_long_horizon_variants(proposal):
         indicators = [rule.indicator for rule in variant.entry.all]
         assert "ema_spread" not in indicators
+        assert variant.risk.sizing_preset == "equal_cash_conservative"
+
+
+def test_cross_rebound_uses_only_causal_self_and_peer_features() -> None:
+    proposal = LongHorizonHypothesisProposal.model_validate(
+        {
+            **_payload(),
+            "entry_template": "cross_rebound_5m",
+            "symbols": ["SPY", "TQQQ"],
+            "parameter_ranges": {
+                "cross_return_from_open_max": {"values": [-0.002, -0.003]},
+                "cross_prior_session_return_max": {"values": [-0.001, -0.002]},
+            },
+            "max_variants": 4,
+        }
+    )
+
+    for variant in generate_long_horizon_variants(proposal):
+        indicators = {rule.indicator for rule in variant.entry.all}
+        assert {
+            "return_from_open",
+            "peer_return_from_open",
+            "prior_session_return",
+            "peer_prior_session_return",
+        }.issubset(indicators)
         assert variant.risk.sizing_preset == "equal_cash_conservative"

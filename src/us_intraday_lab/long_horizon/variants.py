@@ -31,6 +31,12 @@ _DEFAULTS: dict[str, float] = {
     "max_holding_minutes": 60.0,
     "cooldown_minutes": 30.0,
     "max_entries_per_session": 2.0,
+    "return_from_open_max": -0.002,
+    "peer_return_from_open_max": -0.002,
+    "prior_session_return_max": -0.001,
+    "peer_prior_session_return_max": -0.001,
+    "cross_return_from_open_max": -0.002,
+    "cross_prior_session_return_max": -0.001,
 }
 
 
@@ -102,6 +108,26 @@ def _rules(template: str, parameters: dict[str, float]) -> tuple[dict[str, Any],
             ]
         }
         exit_rule = {"any": [_comparison("return_1", "lt", p["return_1_max"])]}
+    elif template == "cross_rebound_5m":
+        cross_current = p["cross_return_from_open_max"]
+        cross_prior = p["cross_prior_session_return_max"]
+        entry = {
+            "all": [
+                _comparison("return_from_open", "lte", cross_current),
+                _comparison("peer_return_from_open", "lte", cross_current),
+                _comparison("prior_session_return", "lte", cross_prior),
+                _comparison(
+                    "peer_prior_session_return",
+                    "lte",
+                    cross_prior,
+                ),
+                minutes,
+                _comparison("minutes_from_open", "lte", p["minutes_from_open_max"]),
+            ]
+        }
+        exit_rule = {
+            "any": [_comparison("minutes_from_open", "gt", 1_000.0)]
+        }
     else:
         raise ValueError("unsupported long-horizon template")
     return entry, exit_rule
@@ -134,7 +160,8 @@ def _strategy(
                 ),
                 "sizing_preset": (
                     "equal_cash_conservative"
-                    if proposal.entry_template == "trend_pullback_5m"
+                    if proposal.entry_template
+                    in {"trend_pullback_5m", "cross_rebound_5m"}
                     else "equal_risk_conservative"
                 ),
             },

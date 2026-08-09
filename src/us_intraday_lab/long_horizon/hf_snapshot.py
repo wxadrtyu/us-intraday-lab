@@ -16,9 +16,9 @@ from pydantic import ValidationError
 from us_intraday_lab.contracts.datasets import DatasetManifest, DatasetQuality
 
 _SCHEMA_VERSION = "1.0.0"
-_SYMBOLS = ("SPY", "IWM")
+_DEFAULT_SYMBOLS = ("SPY", "IWM")
+_DEFAULT_SLUG = "spy-iwm"
 _REPOSITORY = "mito0o852/OHLCV-1m"
-_SESSION_ROWS = 156
 
 
 class HfFiveMinuteSnapshotError(ValueError):
@@ -66,12 +66,18 @@ def _month_values(start: str, end: str) -> tuple[str, ...]:
 
 
 def _load_month_records(
-    root: Path, *, start_month: str, end_month: str
+    root: Path,
+    *,
+    start_month: str,
+    end_month: str,
+    slug: str,
+    symbols: tuple[str, str],
 ) -> tuple[dict[str, Any], ...]:
-    manifest_root = root / "data" / "catalog" / "hf_spy_iwm_5min" / "months"
+    source_name = f"hf_{slug.replace('-', '_')}_5min"
+    manifest_root = root / "data" / "catalog" / source_name / "months"
     records: list[dict[str, Any]] = []
     for month in _month_values(start_month, end_month):
-        path = manifest_root / f"spy-iwm-{month}.json"
+        path = manifest_root / f"{slug}-{month}.json"
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as error:
@@ -79,7 +85,7 @@ def _load_month_records(
         if (
             not isinstance(record, dict)
             or record.get("month") != month
-            or tuple(record.get("symbols", ())) != _SYMBOLS
+            or tuple(record.get("symbols", ())) != symbols
             or record.get("bar_size") != "5min"
             or record.get("repository") != _REPOSITORY
         ):
@@ -89,7 +95,11 @@ def _load_month_records(
 
 
 def _identity_payload(
-    *, source_sha256: str, content_sha256: str, code_revision: str
+    *,
+    source_sha256: str,
+    content_sha256: str,
+    code_revision: str,
+    symbols: tuple[str, str],
 ) -> dict[str, str | list[str]]:
     return {
         "schema_version": _SCHEMA_VERSION,
@@ -97,7 +107,7 @@ def _identity_payload(
         "content_sha256": content_sha256,
         "code_revision": code_revision,
         "repository": _REPOSITORY,
-        "symbols": list(_SYMBOLS),
+        "symbols": list(symbols),
         "bar_size": "5min",
     }
 
@@ -114,11 +124,28 @@ def publish_hf_five_minute_snapshot(
     end_month: str,
     code_revision: str = "working-tree",
     created_at: datetime | None = None,
+    slug: str = _DEFAULT_SLUG,
+    symbols: tuple[str, str] = _DEFAULT_SYMBOLS,
 ) -> DatasetManifest:
     """Publish audited monthly extracts into immutable, session-isolated files."""
 
     root = root.resolve()
-    records = _load_month_records(root, start_month=start_month, end_month=end_month)
+    if (
+        type(slug) is not str
+        or not slug
+        or type(symbols) is not tuple
+        or len(symbols) != 2
+        or len(set(symbols)) != 2
+        or any(type(symbol) is not str or not symbol for symbol in symbols)
+    ):
+        raise ValueError("snapshot requires a slug and an exact pair of symbols")
+    records = _load_month_records(
+        root,
+        start_month=start_month,
+        end_month=end_month,
+        slug=slug,
+        symbols=symbols,
+    )
     canonical = root / "data" / "lake" / "long_horizon" / "canonical"
     canonical.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=".hf-snapshot-", dir=canonical)).resolve()
@@ -128,7 +155,8 @@ def publish_hf_five_minute_snapshot(
         observed_sessions: set[date] = set()
         for record in records:
             month = str(record["month"])
-            compact = root / "data" / "raw" / "hf_spy_iwm_5min" / f"spy-iwm-{month}.parquet"
+            source_name = f"hf_{slug.replace('-', '_')}_5min"
+            compact = root / "data" / "raw" / source_name / f"{slug}-{month}.parquet"
             if _sha256_file(compact) != record.get("output_sha256"):
                 raise HfFiveMinuteSnapshotError(f"compact month hash mismatch: {month}")
             bars = pd.read_parquet(compact)
@@ -146,7 +174,8 @@ def publish_hf_five_minute_snapshot(
                 group = bars.loc[bars["session_date"] == session].sort_values(
                     ["timestamp", "symbol"], kind="stable", ignore_index=True
                 )
-                if len(group) != _SESSION_ROWS or set(group["symbol"].astype(str)) != set(_SYMBOLS):
+                expected_rows = 78 * len(symbols)
+                if len(group) != expected_rows or set(group["symbol"].astype(str)) != set(symbols):
                     raise HfFiveMinuteSnapshotError(f"invalid session scope: {session}")
                 relative = Path("sessions") / f"{session.isoformat()}.parquet"
                 output = temporary / relative
@@ -186,6 +215,7 @@ def publish_hf_five_minute_snapshot(
             source_sha256=source_sha256,
             content_sha256=content_sha256,
             code_revision=code_revision,
+            symbols=symbols,
         )
         dataset_id = _dataset_id(identity_payload)
         evidence = {
@@ -211,8 +241,8 @@ def publish_hf_five_minute_snapshot(
             provider="huggingface",
             feed="finnhub-derived",
             bar_size="5min",
-            row_count=len(session_records) * _SESSION_ROWS,
-            symbols=_SYMBOLS,
+            row_count=sum(cast(int, record["row_count"]) for record in session_records),
+            symbols=symbols,
             min_timestamp=min(all_timestamps).to_pydatetime(),
             max_timestamp=max(all_timestamps).to_pydatetime(),
             quality=DatasetQuality(passed=True),
@@ -252,10 +282,13 @@ class HfFiveMinuteSnapshotStore:
         if (
             evidence["identity_payload"].get("source_sha256") != self.manifest.source_sha256
             or evidence["identity_payload"].get("content_sha256") != self.manifest.content_sha256
-            or tuple(evidence["identity_payload"].get("symbols", ())) != _SYMBOLS
+            or tuple(evidence["identity_payload"].get("symbols", ()))
+            != self.manifest.symbols
         ):
             raise HfFiveMinuteSnapshotError("snapshot manifest and evidence disagree")
-        self.symbols = _SYMBOLS
+        self.symbols = cast(tuple[str, str], self.manifest.symbols)
+        if len(self.symbols) != 2 or len(set(self.symbols)) != 2:
+            raise HfFiveMinuteSnapshotError("snapshot must contain an exact symbol pair")
         self._sessions = {
             date.fromisoformat(item["session_date"]): cast(dict[str, Any], item)
             for item in evidence["sessions"]

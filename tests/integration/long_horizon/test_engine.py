@@ -11,6 +11,7 @@ from us_intraday_lab.contracts.strategies import StrategyDefinition
 from us_intraday_lab.long_horizon.engine import (
     FIVE_MINUTE_ENGINE_ID,
     FiveMinuteBacktestEngine,
+    _feature_frame,
     five_minute_input_sha256,
 )
 from us_intraday_lab.strategy.compiler import compile_strategy
@@ -149,3 +150,39 @@ def test_engine_accepts_the_closed_spy_iwm_scope() -> None:
     run = _run(symbols=("SPY", "IWM")).scenarios["base"]
 
     assert {trade.symbol for trade in run.trades} == {"SPY", "IWM"}
+
+
+def test_cross_session_features_use_only_completed_prior_sessions() -> None:
+    rows: list[dict[str, object]] = []
+    sessions = (date(2025, 1, 2), date(2025, 1, 3), date(2025, 1, 6))
+    closes = {sessions[0]: 100.0, sessions[1]: 90.0, sessions[2]: 80.0}
+    for session in sessions:
+        start = datetime.combine(session, datetime.min.time(), tzinfo=UTC) + timedelta(
+            hours=14, minutes=35
+        )
+        for symbol, scale in (("SPY", 1.0), ("IWM", 2.0)):
+            for index in range(2):
+                price = closes[session] * scale
+                rows.append(
+                    {
+                        "symbol": symbol,
+                        "timestamp": start + timedelta(minutes=5 * index),
+                        "available_at": start + timedelta(minutes=5 * index),
+                        "open": closes[session] * scale,
+                        "high": price + 0.1,
+                        "low": price - 0.1,
+                        "close": price,
+                        "volume": 1_000.0,
+                        "session_date": session,
+                    }
+                )
+    features = _feature_frame(pd.DataFrame(rows))
+    current = features.loc[
+        (features["session_date"] == sessions[2])
+        & (features["symbol"] == "SPY")
+    ].reset_index(drop=True)
+
+    assert current.loc[0, "prior_session_return"] == pytest.approx(-0.1)
+    assert current.loc[0, "return_from_open"] == pytest.approx(0.0)
+    assert current.loc[0, "peer_return_from_open"] == pytest.approx(0.0)
+    assert current.loc[0, "peer_prior_session_return"] == pytest.approx(-0.1)

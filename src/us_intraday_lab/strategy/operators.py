@@ -21,6 +21,22 @@ def feature_return_3(features: FeatureRow) -> FeatureValue:
     return features.get("return_3")
 
 
+def feature_return_from_open(features: FeatureRow) -> FeatureValue:
+    return features.get("return_from_open")
+
+
+def feature_prior_session_return(features: FeatureRow) -> FeatureValue:
+    return features.get("prior_session_return")
+
+
+def feature_peer_return_from_open(features: FeatureRow) -> FeatureValue:
+    return features.get("peer_return_from_open")
+
+
+def feature_peer_prior_session_return(features: FeatureRow) -> FeatureValue:
+    return features.get("peer_prior_session_return")
+
+
 def feature_ema_spread(features: FeatureRow) -> FeatureValue:
     return features.get("ema_spread")
 

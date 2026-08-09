@@ -22,12 +22,16 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--start-month", required=True)
     parser.add_argument("--end-month", required=True)
+    parser.add_argument("--slug", default="spy-iwm")
+    parser.add_argument("--symbols", nargs=2, default=("SPY", "IWM"))
     args = parser.parse_args()
     manifest = publish_hf_five_minute_snapshot(
         root=args.root,
         start_month=args.start_month,
         end_month=args.end_month,
         code_revision=_revision(Path.cwd()),
+        slug=args.slug,
+        symbols=tuple(args.symbols),
     )
     print(manifest.model_dump_json(indent=2))
 

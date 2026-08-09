@@ -51,6 +51,10 @@ def test_indicator_dispatch_is_the_exact_literal_release_one_allowlist() -> None
     assert tuple(INDICATORS) == (
         "return_1",
         "return_3",
+        "return_from_open",
+        "prior_session_return",
+        "peer_return_from_open",
+        "peer_prior_session_return",
         "ema_spread",
         "rsi",
         "atr_bps",

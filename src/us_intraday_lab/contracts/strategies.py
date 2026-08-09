@@ -5,6 +5,10 @@ from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag
 IndicatorName = Literal[
     "return_1",
     "return_3",
+    "return_from_open",
+    "prior_session_return",
+    "peer_return_from_open",
+    "peer_prior_session_return",
     "ema_spread",
     "rsi",
     "atr_bps",

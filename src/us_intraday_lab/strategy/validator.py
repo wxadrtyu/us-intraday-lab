@@ -14,12 +14,22 @@ from us_intraday_lab.contracts.strategies import (
 )
 
 PRODUCTION_SYMBOLS = frozenset({"SPY", "QQQ", "IWM"})
-FIVE_MINUTE_SYMBOL_SCOPES = (("AAPL", "QQQ"), ("SPY", "IWM"))
+FIVE_MINUTE_SYMBOL_SCOPES = (
+    ("AAPL", "QQQ"),
+    ("SPY", "IWM"),
+    ("SPY", "TQQQ"),
+    ("TQQQ", "UPRO"),
+    ("TQQQ", "SOXL"),
+)
 FIVE_MINUTE_SYMBOLS = frozenset(symbol for scope in FIVE_MINUTE_SYMBOL_SCOPES for symbol in scope)
 ALLOWED_INDICATORS = frozenset(
     {
         "return_1",
         "return_3",
+        "return_from_open",
+        "prior_session_return",
+        "peer_return_from_open",
+        "peer_prior_session_return",
         "ema_spread",
         "rsi",
         "atr_bps",

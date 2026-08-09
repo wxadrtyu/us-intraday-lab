@@ -36,8 +36,8 @@ from us_intraday_lab.strategy.operators import (
     RuleOperator,
 )
 
-FIVE_MINUTE_ENGINE_ID = "five-minute-engine-1.0.0"
-FIVE_MINUTE_FEATURE_SET_VERSION = "5m-v1.0.0"
+FIVE_MINUTE_ENGINE_ID = "five-minute-engine-1.1.0"
+FIVE_MINUTE_FEATURE_SET_VERSION = "5m-v1.1.0"
 _SCENARIOS: tuple[CostScenario, ...] = ("optimistic", "base", "stress")
 _REQUIRED = frozenset(
     {
@@ -134,6 +134,16 @@ def _normalize_bars(
     )
 
 
+def _peer_values(values: pd.Series) -> pd.Series:
+    if len(values) != 2:
+        raise ValueError("peer features require an exact two-symbol session scope")
+    return pd.Series(
+        (values.iloc[1], values.iloc[0]),
+        index=values.index,
+        dtype="float64",
+    )
+
+
 def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
     computed: list[pd.DataFrame] = []
     for (_symbol, raw_session), raw_group in bars.groupby(
@@ -147,6 +157,7 @@ def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
         volume = group["volume"]
         group["return_1"] = close.pct_change(fill_method=None)
         group["return_3"] = close.pct_change(3, fill_method=None)
+        group["return_from_open"] = close / float(group["open"].iloc[0]) - 1.0
         fast = close.ewm(span=3, adjust=False, min_periods=3).mean()
         slow = close.ewm(span=8, adjust=False, min_periods=8).mean()
         group["ema_spread"] = fast / slow - 1.0
@@ -179,7 +190,31 @@ def _feature_frame(bars: pd.DataFrame) -> pd.DataFrame:
         )
         group["feature_set_version"] = FIVE_MINUTE_FEATURE_SET_VERSION
         computed.append(group)
-    return pd.concat(computed, ignore_index=True).sort_values(
+    frame = pd.concat(computed, ignore_index=True).sort_values(
+        ["session_date", "available_at", "symbol"], kind="stable", ignore_index=True
+    )
+    session_close = frame.groupby(
+        ["symbol", "session_date"], sort=True, observed=True
+    )["close"].last()
+    session_return = session_close.groupby(level="symbol").pct_change(fill_method=None)
+    prior_session_return = session_return.groupby(level="symbol").shift(1)
+    prior_lookup = prior_session_return.rename("prior_session_return").reset_index()
+    frame = frame.merge(
+        prior_lookup,
+        on=["symbol", "session_date"],
+        how="left",
+        validate="many_to_one",
+    )
+    peer_groups = frame.groupby(
+        ["session_date", "available_at"], sort=False, observed=True
+    )
+    frame["peer_return_from_open"] = peer_groups["return_from_open"].transform(
+        _peer_values
+    )
+    frame["peer_prior_session_return"] = peer_groups[
+        "prior_session_return"
+    ].transform(_peer_values)
+    return frame.sort_values(
         ["session_date", "available_at", "symbol"], kind="stable", ignore_index=True
     )
 
