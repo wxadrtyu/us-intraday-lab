@@ -161,6 +161,67 @@ def _fallback_minute_returns(raw_paths: tuple[Path, ...]) -> dict[int, pd.Series
     }
 
 
+def spy_interval_returns(
+    raw_paths: tuple[Path, ...],
+    *,
+    entry_minute: int,
+    exit_minutes: tuple[int, ...],
+) -> dict[int, pd.Series]:
+    """Return exact SPY returns from an entry open to each scheduled exit open."""
+
+    if not raw_paths:
+        raise ValueError("at least one raw path is required")
+    if not 0 <= entry_minute < 389:
+        raise ValueError("entry minute is outside regular trading hours")
+    if (
+        not exit_minutes
+        or tuple(sorted(set(exit_minutes))) != exit_minutes
+        or any(minute <= entry_minute or minute > 389 for minute in exit_minutes)
+    ):
+        raise ValueError("exit minutes must be sorted, unique, and after entry")
+    select_values = ",\n".join(
+        f"exp(sum(spy_logret_1) FILTER (WHERE minute_index >= {entry_minute} "
+        f"AND minute_index < {minute})) - 1.0 AS return_{minute}"
+        for minute in exit_minutes
+    )
+    frames = []
+    for raw_path in raw_paths:
+        connection = duckdb.connect()
+        frames.append(
+            connection.execute(
+                f"""
+                WITH localized AS (
+                    SELECT timezone('America/New_York', datetime) AS timestamp,
+                           spy_logret_1
+                    FROM read_parquet(?)
+                ), unique_minutes AS (
+                    SELECT CAST(timestamp AS DATE) AS session_date, timestamp,
+                           (date_part('hour', timestamp) - 9) * 60
+                             + date_part('minute', timestamp) - 30 AS minute_index,
+                           avg(spy_logret_1) AS spy_logret_1
+                    FROM localized
+                    WHERE CAST(timestamp AS TIME) >= TIME '09:30:00'
+                      AND CAST(timestamp AS TIME) < TIME '16:00:00'
+                    GROUP BY session_date, timestamp
+                )
+                SELECT session_date, {select_values}
+                FROM unique_minutes
+                GROUP BY session_date
+                ORDER BY session_date
+                """,
+                [raw_path.resolve().as_posix()],
+            ).fetch_df()
+        )
+        connection.close()
+    frame = pd.concat(frames, ignore_index=True)
+    if frame["session_date"].duplicated().any():
+        raise ValueError("raw paths overlap in SPY interval session coverage")
+    return {
+        minute: frame.set_index("session_date")[f"return_{minute}"].astype(float)
+        for minute in exit_minutes
+    }
+
+
 def _compose(
     dates: pd.Index,
     symbols: tuple[str, ...],

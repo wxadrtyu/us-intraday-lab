@@ -1,3 +1,4 @@
+import math
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -10,6 +11,7 @@ from us_intraday_lab.tp_ensemble import (
     evaluate_tp_ensemble,
     exclude_tp_symbol,
     slice_tp_evaluation,
+    spy_interval_returns,
     tp_metrics,
     tp_null_distributions,
     validate_period_sessions,
@@ -123,3 +125,21 @@ def test_period_scope_normalizes_date_and_timestamp_values() -> None:
             end_exclusive="2026-07-01",
             minimum_sessions=1,
         )
+
+
+def test_spy_interval_returns_excludes_the_scheduled_exit_minute(tmp_path: Path) -> None:
+    timezone = ZoneInfo("America/New_York")
+    session = date(2025, 1, 2)
+    rows = [
+        {
+            "datetime": datetime.combine(session, time(10, 1 + offset), timezone),
+            "spy_logret_1": value,
+        }
+        for offset, value in enumerate((0.01, 0.02, 0.50))
+    ]
+    raw_path = tmp_path / "spy.parquet"
+    pd.DataFrame(rows).to_parquet(raw_path, index=False)
+
+    observed = spy_interval_returns((raw_path,), entry_minute=31, exit_minutes=(33,))[33]
+
+    assert observed.loc[pd.Timestamp(session)] == pytest.approx(math.expm1(0.03))
