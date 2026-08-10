@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_sha256": "4e1d11cc096ab412239da646fb14001d03ef2192583ab18e6857850089e719d4",
+  "selection_sha256": "a756d7e116d63a8c20324b8f8d3e8542b39f6b14c1be3a8f0d5b604a42784b5e",
+  "failed_dataset_id": "twelvedata-financial-world-model-2026h1-v3",
+  "failed_error_file": "artifacts/portfolio_research/portfolio-858a78f33c63bb041081b575d70863b0/final-error.json",
+  "failed_evidence_sha256": "35fe56fc800a984bf447a34a641c117844091575b3078adfcc17674aac389662",
+  "failure_stage": "PRE_STRATEGY_EVALUATION_SCOPE_CHECK",
+  "strategy_evaluations_before_failure": 0,
+  "recovery_dataset_id": "twelvedata-financial-world-model-2026h1-v3-recovery-1",
+  "maximum_recovery_uses": 1,
+  "immutability_contract": "The proposal, survivor set, winner, parameters, ranking, data bytes, costs, and gates are unchanged. Recovery only fixes date-like type normalization before the first strategy evaluation."
+}

@@ -59,3 +59,35 @@ on the sealed 2026H1 interval.
 The sealed 2026H1 snapshot covers 123 sessions from 2026-01-02 through
 2026-06-30 and has SHA-256
 `f27fc6084780309b1563ac0b1fe48ae56991cf5cc5b604b259bf0669d9acb348`.
+
+## v3 final result
+
+The frozen v3 family is also rejected and must not enter `paper_shadow`.
+The exact winner and its eight frozen survivors were evaluated on 2026H1 only
+after their development metrics, ranking, parameters, universe, data bytes,
+costs, and gates had been sealed. An initial access failed before the first
+strategy evaluation because date-like values had incompatible Python types. A
+separate, hash-bound recovery row documented that failure and the recovery run
+was then consumed exactly once.
+
+The isolated 2026H1 result made 4.20% over 123 sessions (8.80% annualized),
+with -0.312 matched-SPY information ratio, 9.02% maximum drawdown, 1.307 profit
+factor, and 46 trades. Its four time-fold annualized returns were 134.97%,
+-6.86%, -23.17%, and -14.56%, showing that the gain was dominated by the first
+part of the interval.
+
+Combined 2024 through 2026H1 evidence remained superficially attractive at
+11.22% annualized return, 0.819 information ratio, 1.388 profit factor, and 198
+trades. It nevertheless failed the unchanged 8% drawdown ceiling at 9.02% and
+also failed start-date stability, leave-one-symbol-out stability, parameter
+stability, and the circular-shift null test. Only annual return, information
+ratio, profit factor, trade count, walk-forward positivity, symbol
+concentration, and the signal-permutation null test passed.
+
+The immutable final evidence is stored under experiment
+`portfolio-858a78f33c63bb041081b575d70863b0` with evidence SHA-256
+`abbef22711fc2fa101a9b8fa22aa2ba0b1e9e3c48513275b3376c47464bbc326`.
+The consumed 2026H1 observations are audit evidence only and must not be used
+to tune another strategy family. The next family must be motivated and screened
+from development data without adapting its rules to these final outcomes, and
+it requires a genuinely new forward interval before promotion.
