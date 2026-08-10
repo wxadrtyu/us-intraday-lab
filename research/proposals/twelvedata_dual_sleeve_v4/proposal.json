@@ -63,6 +63,8 @@
     "minimum_combined_oos_profit_factor": 1.15,
     "minimum_combined_oos_trades": 100,
     "minimum_positive_fold_fraction": 0.6,
+    "combined_oos_fold_count": 5,
+    "minimum_family_survivors": 12,
     "maximum_positive_symbol_concentration": 0.7,
     "require_positive_2024_and_2025": true,
     "require_start_date_stability": true,

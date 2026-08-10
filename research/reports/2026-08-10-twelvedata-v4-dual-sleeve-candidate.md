@@ -49,9 +49,10 @@ The focused v4 neighborhood contains 36 combinations:
 - fixed stock and SPY sleeve weights: 50% each.
 
 All other conditions are fixed. After exact `[31, exit)` SPY interval correction,
-23 of the 36 combinations passed the core development screen. The ranked
-representative used a 0.75% stock excess floor, 0.70 opening-range floor, 0.30%
-SPY floor, and minute-330 SPY exit.
+22 of the 36 combinations passed every formal development screen. The frozen
+ranking contract selected a 0.50% stock excess floor, 0.70 opening-range floor,
+0.30% SPY floor, and minute-300 SPY exit. This representative maximizes the
+weakest train/2024/2025 annual return; it does not maximize OOS return alone.
 
 ## Development evidence
 
@@ -59,21 +60,25 @@ All returns include 9 bps per active sleeve. The representative produced:
 
 | Segment | Annual return | Matched-SPY IR | MDD | PF |
 |---|---:|---:|---:|---:|
-| 2020-2023 train | 8.53% | -0.394 | 4.58% | 1.584 |
-| 2024 | 15.93% | 1.535 | 2.78% | 2.140 |
-| 2025 | 8.74% | -0.075 | 3.45% | 1.463 |
-| 2024-2025 OOS | 12.30% | 0.682 | 3.45% | 1.744 |
+| 2020-2023 train | 8.53% | -0.341 | 4.51% | 1.591 |
+| 2024 | 15.86% | 1.427 | 2.74% | 2.109 |
+| 2025 | 8.57% | -0.173 | 3.50% | 1.437 |
+| 2024-2025 OOS | 12.17% | 0.582 | 3.50% | 1.712 |
 
-The combined OOS interval had 182 sleeve trades, 31.61% maximum positive-symbol
-concentration, and five positive time-fold annual returns: 12.36%, 18.37%,
-7.42%, 21.31%, and 3.12%.
+The combined OOS interval had 186 sleeve trades, 33.64% maximum positive-symbol
+concentration, and five positive time-fold annual returns: 12.04%, 18.91%,
+4.88%, 22.85%, and 3.53%.
 
-Start-date offsets of 0, 20, 40, and 60 sessions retained 11.11%-12.30%
-annualized return, 0.553-0.695 IR, and 3.45% MDD. Removing the worst-return
-symbol still left 20.92% cumulative OOS return; the worst leave-one-symbol-out
-drawdown was 4.37%. The observed 25.64% OOS total return exceeded both 500-run
-95th-percentile null thresholds: 14.20% for session-signal permutation and
-12.90% for circular shift.
+Start-date offsets of 0, 20, 40, and 60 sessions retained 11.20%-12.17%
+annualized return, 0.509-0.592 IR, and 3.50% MDD. Removing the worst-return
+symbol still left 20.66% cumulative OOS return; the worst leave-one-symbol-out
+drawdown was 4.41%. The observed 25.36% OOS total return exceeded both 500-run
+95th-percentile null thresholds: 15.26% for session-signal permutation and
+13.19% for circular shift.
+
+The formal selection manifest is experiment
+`portfolio-d344ba7e6c43a544a5abcc877835389a`; its immutable selection SHA-256 is
+`f37ad21c8c8051a01550539948ecc8fb03ec511cfddd01ad677868509168a416`.
 
 ## Promotion boundary
 
@@ -88,3 +93,12 @@ prospective observation, not broker orders. The frozen family must next pass:
 
 Until then, lifecycle state remains research-only and no Alpaca paper orders
 may be emitted.
+
+## Prospective research shadow
+
+The append-only prospective campaign
+`research-shadow-0295f7e9816fc4fea565c51a4945a3d6` starts no earlier than
+2026-08-11 and requires 120 distinct new sessions. Its database-enforced order
+route is `FORBIDDEN`; it records only signals and theoretical execution
+evidence. At creation it contained 0 of 120 sessions and was correctly ineligible
+for the forward gate.
