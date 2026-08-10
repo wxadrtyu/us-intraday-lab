@@ -102,3 +102,15 @@ The append-only prospective campaign
 route is `FORBIDDEN`; it records only signals and theoretical execution
 evidence. At creation it contained 0 of 120 sessions and was correctly ineligible
 for the forward gate.
+
+Daily observations use read-only Alpaca IEX historical minute bars. Each run
+loads a 45-calendar-day context window, requires exactly 390 SPY target minutes
+and at least 385 target minutes for every frozen stock, computes both sleeve
+signals and theoretical fills after the close, and appends one immutable record.
+The observation adapter has no trading-client import and cannot submit orders.
+
+At automation setup time the Windows environment did not contain
+`ALPACA_PAPER_API_KEY` or `ALPACA_PAPER_SECRET_KEY`. A no-edit interactive
+credential setup script was placed on the desktop. Daily acquisition remains
+fail-closed until that script is run and Codex is restarted so the new process
+can inherit the user-scoped variables.
