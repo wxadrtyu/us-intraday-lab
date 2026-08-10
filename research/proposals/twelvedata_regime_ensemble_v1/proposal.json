@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "twelvedata-regime-ensemble-v1",
+  "provenance": "ai",
+  "direction": "long_only",
+  "capital_contract": {
+    "maximum_gross_exposure": 1.0,
+    "allocation_when_one_branch_active": 1.0,
+    "overlap_strength_share_values": [0.25, 0.5]
+  },
+  "strength_branch": {
+    "decision_minutes": 45,
+    "exit_minutes_values": [300, 330, 360],
+    "maximum_selected_stocks": 3,
+    "minimum_cumulative_relative_volume": 1.5,
+    "minimum_return_from_open": 0.005,
+    "minimum_return_over_spy": 0.02,
+    "minimum_opening_range_position": 0.8,
+    "require_above_causal_vwap": true,
+    "require_spy_positive": true
+  },
+  "recovery_branch": {
+    "decision_minutes": 60,
+    "exit_minutes": 360,
+    "maximum_selected_stocks_values": [3, 5],
+    "minimum_last_30_minute_return": 0.003,
+    "maximum_return_from_open": 0.0,
+    "minimum_trailing_three_session_return": -0.15,
+    "require_spy_nonpositive": true
+  },
+  "cost_contract": {
+    "round_trip_cost_1_5x": 0.0009
+  },
+  "development_selection": {
+    "minimum_family_survivors": 4,
+    "minimum_train_annualized_return": 0.08,
+    "minimum_validation_annualized_return": 0.1,
+    "minimum_validation_information_ratio": 0.5,
+    "maximum_validation_drawdown": 0.08,
+    "minimum_validation_profit_factor": 1.15,
+    "minimum_validation_trades": 50,
+    "minimum_positive_validation_folds": 3,
+    "validation_fold_count": 4,
+    "maximum_positive_symbol_concentration": 0.7,
+    "rank_order": [
+      "validation_annualized_return_desc",
+      "validation_information_ratio_desc",
+      "variant_id_asc"
+    ]
+  },
+  "combined_oos_gates": {
+    "minimum_cost_1_5x_annualized_return": 0.1,
+    "minimum_information_ratio": 0.5,
+    "maximum_drawdown": 0.08,
+    "minimum_profit_factor": 1.15,
+    "minimum_trades": 100,
+    "minimum_positive_walk_forward_fraction": 0.6,
+    "walk_forward_fold_count": 5,
+    "maximum_positive_symbol_concentration": 0.7,
+    "start_date_offsets_sessions": [0, 20, 40, 60],
+    "minimum_profitable_start_date_fraction": 0.6,
+    "minimum_profitable_leave_one_symbol_out_fraction": 0.6,
+    "null_test": {
+      "methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_CIRCULAR_SHIFT"],
+      "repetitions": 500,
+      "percentile": 0.95,
+      "seed": 20260810
+    }
+  },
+  "research_data": {
+    "train_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/train.parquet",
+    "train_sha256": "1586255c4c8baebba1b26ba627d2f5aa2580c219f00f5a669e87ab6b999b8c2a",
+    "validation_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/val.parquet",
+    "validation_sha256": "dd9e466408ed9613e121bf012cad9c4d0923acd9fb4df049d2ca2062ccd61e2d",
+    "train_feature_cache_sha256": "6f449f616f76e368ce3f882ae06c37aacf64e1db36af1a8d0f1bc237484eee1c",
+    "validation_feature_cache_sha256": "ab63ec2aebc57bed7ae71ae37f0970bc1fe1dff7bd2644fdc987e4ca9b2f57d2"
+  },
+  "sealed_final": {
+    "period": "2025",
+    "source_url": "https://huggingface.co/datasets/twelvedata/financial-world-model/resolve/main/bars_1min/test.parquet",
+    "local_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/test.parquet",
+    "maximum_uses": 1
+  },
+  "rationale": "A bounded long-only portfolio uses volume-confirmed stocks already outperforming SPY by two percent in a positive opening regime and a distinct bottom-ranked recovery branch when SPY is nonpositive. Dynamic allocation keeps total gross exposure at or below one hundred percent. The frozen neighborhood tests only exit timing, recovery breadth, and overlap allocation observed to be locally stable on 2020-2024 research and development data."
+}

@@ -46,6 +46,28 @@ def information_ratio(returns: pd.Series, benchmark: pd.Series) -> float:
 
 
 def load_daily(path: Path, *, split: str) -> tuple[pd.DataFrame, pd.Series]:
+    cache_dir = path.parent.parent / "derived_daily_v2"
+    frame_cache = cache_dir / f"{path.stem}-features.parquet"
+    benchmark_cache = cache_dir / f"{path.stem}-benchmark.parquet"
+    if frame_cache.exists() and benchmark_cache.exists():
+        frame = pd.read_parquet(frame_cache)
+        benchmark_frame = pd.read_parquet(benchmark_cache)
+        benchmark = benchmark_frame.set_index("session_date")["benchmark_return"]
+        print(
+            json.dumps(
+                {
+                    "cache": "hit",
+                    "split": split,
+                    "sessions": int(frame["session_date"].nunique()),
+                    "symbols": int(frame["symbol"].nunique()),
+                    "symbol_sessions": len(frame),
+                    "start": str(frame["session_date"].min()),
+                    "end": str(frame["session_date"].max()),
+                },
+                sort_keys=True,
+            )
+        )
+        return frame, benchmark
     con = duckdb.connect()
     minutes = (
         15,
@@ -77,7 +99,25 @@ def load_daily(path: Path, *, split: str) -> tuple[pd.DataFrame, pd.Series]:
         380,
         385,
     )
-    decision_minutes = (15, 30, 45, 60, 90, 120, 150, 240, 300, 330, 360)
+    decision_minutes = (
+        15,
+        30,
+        45,
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270,
+        300,
+        330,
+        360,
+        375,
+        380,
+        385,
+    )
     value_columns = ",\n".join(
         [
             f"max(close) FILTER (WHERE minute = {minute}) AS close_{minute}, "
@@ -149,6 +189,13 @@ def load_daily(path: Path, *, split: str) -> tuple[pd.DataFrame, pd.Series]:
     benchmark_frame = con.execute(benchmark_query, [str(path)]).fetch_df()
     benchmark = benchmark_frame.set_index("session_date")["benchmark_return"]
     frame["split"] = split
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    frame_temporary = frame_cache.with_suffix(".tmp.parquet")
+    benchmark_temporary = benchmark_cache.with_suffix(".tmp.parquet")
+    frame.to_parquet(frame_temporary, index=False)
+    benchmark_frame.to_parquet(benchmark_temporary, index=False)
+    os.replace(frame_temporary, frame_cache)
+    os.replace(benchmark_temporary, benchmark_cache)
     print(
         json.dumps(
             {
