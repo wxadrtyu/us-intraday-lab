@@ -17,6 +17,7 @@ REPO_TYPE = "dataset"
 REVISION = "main"
 PAIR_SCOPES = {
     "spy-tqqq": ("SPY", "TQQQ"),
+    "tqqq-upro": ("TQQQ", "UPRO"),
     "tqqq-soxl": ("TQQQ", "SOXL"),
 }
 
@@ -57,9 +58,7 @@ def _retained_record(root: Path, slug: str, month: str) -> dict[str, object] | N
     )
     if not output.is_file() or not manifest.is_file():
         return None
-    record = cast(
-        dict[str, object], json.loads(manifest.read_text(encoding="utf-8"))
-    )
+    record = cast(dict[str, object], json.loads(manifest.read_text(encoding="utf-8")))
     if record.get("output_sha256") != _sha256(output):
         raise ValueError(f"retained output hash mismatch for {slug} {month}")
     return record
@@ -70,12 +69,15 @@ def acquire_month(month: str, *, root: Path) -> tuple[dict[str, object], ...]:
     from huggingface_hub import hf_hub_download
 
     root = root.resolve()
-    retained = {
-        slug: _retained_record(root, slug, month) for slug in PAIR_SCOPES
-    }
+    retained = {slug: _retained_record(root, slug, month) for slug in PAIR_SCOPES}
     if all(record is not None for record in retained.values()):
         return tuple(record for record in retained.values() if record is not None)
-    staging = (root / "data" / "staging" / "hf_ohlcv_1m_leveraged").resolve()
+    staging = Path(
+        os.environ.get(
+            "US_INTRADAY_HF_STAGING",
+            str(root / "data" / "staging" / "hf_ohlcv_1m_leveraged"),
+        )
+    ).resolve()
     staging.mkdir(parents=True, exist_ok=True)
     filename = f"data/ohlcv_{month}.parquet"
     source = Path(
@@ -99,16 +101,15 @@ def acquire_month(month: str, *, root: Path) -> tuple[dict[str, object], ...]:
             completed.append(existing)
             continue
         output_dir = root / "data" / "raw" / f"hf_{slug.replace('-', '_')}_5min"
-        manifest_dir = (
-            root
-            / "data"
-            / "catalog"
-            / f"hf_{slug.replace('-', '_')}_5min"
-            / "months"
-        )
+        manifest_dir = root / "data" / "catalog" / f"hf_{slug.replace('-', '_')}_5min" / "months"
         output_dir.mkdir(parents=True, exist_ok=True)
         manifest_dir.mkdir(parents=True, exist_ok=True)
-        result = aggregate_hf_regular_minutes(selected, symbols=pair)
+        sparse_minute_policy = slug == "tqqq-upro"
+        result = aggregate_hf_regular_minutes(
+            selected,
+            symbols=pair,
+            allow_sparse_minutes_with_complete_buckets=sparse_minute_policy,
+        )
         if not result.accepted_sessions:
             raise ValueError(f"month {month} contains no complete {slug} sessions")
         output = output_dir / f"{slug}-{month}.parquet"
@@ -119,6 +120,11 @@ def acquire_month(month: str, *, root: Path) -> tuple[dict[str, object], ...]:
             "accepted_sessions": [value.isoformat() for value in result.accepted_sessions],
             "bar_size": "5min",
             "month": month,
+            "minute_completeness_policy": (
+                "complete-five-minute-buckets-no-fill"
+                if sparse_minute_policy
+                else "complete-one-minute-grid"
+            ),
             "output_path": output.as_posix(),
             "output_rows": len(result.bars),
             "output_sha256": _sha256(output),

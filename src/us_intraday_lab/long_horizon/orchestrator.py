@@ -13,6 +13,7 @@ from typing import Protocol, cast
 import pandas as pd
 
 from us_intraday_lab.backtest.costs import COST_SCENARIOS
+from us_intraday_lab.backtest.engine import EngineRun
 from us_intraday_lab.backtest.metrics import EquityPoint, TradeRecord
 from us_intraday_lab.contracts.backtests import BacktestJob, CostModelIds
 from us_intraday_lab.contracts.strategies import StrategyDefinition
@@ -76,8 +77,7 @@ class PhaseEvaluation:
             *self.pnl_by_symbol.values(),
         )
         if any(
-            not math.isfinite(value) or value <= -1.0
-            for value in values[: len(self.sessions) * 3]
+            not math.isfinite(value) or value <= -1.0 for value in values[: len(self.sessions) * 3]
         ):
             raise ValueError("phase session returns must be finite and greater than -1")
         if not math.isfinite(self.profit_factor) or any(
@@ -103,9 +103,7 @@ class PhaseEvaluation:
 
     @property
     def cost_1_5x_annualized_return(self) -> float:
-        return float(
-            (1.0 + self.cost_1_5x_total_return) ** (252 / len(self.sessions)) - 1.0
-        )
+        return float((1.0 + self.cost_1_5x_total_return) ** (252 / len(self.sessions)) - 1.0)
 
 
 class LongHorizonResearchBackend(Protocol):
@@ -119,7 +117,11 @@ class LongHorizonResearchBackend(Protocol):
         phase: str,
     ) -> PhaseEvaluation: ...
 
-    def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]: ...
+    def benchmark_returns(
+        self,
+        strategy: StrategyDefinition,
+        sessions: tuple[date, ...],
+    ) -> tuple[float, ...]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,7 +139,9 @@ class CampaignSelection:
     @property
     def winner_strategy(self) -> StrategyDefinition:
         return next(
-            strategy for strategy in self.survivor_strategies if strategy.strategy_id == self.winner_id
+            strategy
+            for strategy in self.survivor_strategies
+            if strategy.strategy_id == self.winner_id
         )
 
     @property
@@ -161,8 +165,7 @@ def _phase_from_record(record: Mapping[str, object]) -> PhaseEvaluation:
     return PhaseEvaluation(
         strategy_id=str(record["strategy_id"]),
         sessions=tuple(
-            date.fromisoformat(str(value))
-            for value in cast(list[object], record["sessions"])
+            date.fromisoformat(str(value)) for value in cast(list[object], record["sessions"])
         ),
         base_session_returns=tuple(
             float(cast("float | int", value))
@@ -282,14 +285,10 @@ def _checkpointed_evaluate(
     checkpoint = experiment_root / "checkpoints" / phase / f"{cache_key}.json"
     if checkpoint.is_file():
         try:
-            envelope = cast(
-                dict[str, object], json.loads(checkpoint.read_text(encoding="utf-8"))
-            )
+            envelope = cast(dict[str, object], json.loads(checkpoint.read_text(encoding="utf-8")))
             if envelope.get("cache_key") != cache_key:
                 raise ValueError("phase checkpoint cache key mismatch")
-            evaluation = _phase_from_record(
-                cast(dict[str, object], envelope["evaluation"])
-            )
+            evaluation = _phase_from_record(cast(dict[str, object], envelope["evaluation"]))
         except (KeyError, json.JSONDecodeError, TypeError, ValueError) as error:
             raise ValueError("phase checkpoint is invalid") from error
         if evaluation.strategy_id != strategy.strategy_id or evaluation.sessions != sessions:
@@ -324,9 +323,7 @@ def _passes_train(evaluation: PhaseEvaluation) -> bool:
 
 def _passes_validation(evaluation: PhaseEvaluation) -> bool:
     matching_scopes = tuple(
-        scope
-        for scope in FIVE_MINUTE_SYMBOL_SCOPES
-        if set(evaluation.pnl_by_symbol) == set(scope)
+        scope for scope in FIVE_MINUTE_SYMBOL_SCOPES if set(evaluation.pnl_by_symbol) == set(scope)
     )
     if len(matching_scopes) != 1:
         raise ValueError("evaluation uses an unsupported symbol scope")
@@ -366,19 +363,24 @@ def screen_long_horizon_campaign(
     sessions = effective_backend.accepted_sessions(dataset_id)
     split = create_long_horizon_split(sessions, split_id=f"{dataset_id}-60-20-20-v1")
     proposal_records = [proposal.model_dump(mode="json") for proposal in proposals]
-    experiment_id = "lh-" + _sha256(
-        {"dataset_id": dataset_id, "proposals": proposal_records, "split_id": split.split_id}
-    )[:32]
+    experiment_id = (
+        "lh-"
+        + _sha256(
+            {"dataset_id": dataset_id, "proposals": proposal_records, "split_id": split.split_id}
+        )[:32]
+    )
     experiment_root = root.resolve() / "artifacts" / "long_horizon" / "experiments" / experiment_id
     experiment_root.mkdir(parents=True, exist_ok=True)
     _stage(
         experiment_root,
         stage="PROPOSAL_ACCEPTED",
-        payload={"dataset_id": dataset_id, "proposal_ids": [item.proposal_id for item in proposals]},
+        payload={
+            "dataset_id": dataset_id,
+            "proposal_ids": [item.proposal_id for item in proposals],
+        },
     )
     variants_by_proposal = {
-        proposal.proposal_id: generate_long_horizon_variants(proposal)
-        for proposal in proposals
+        proposal.proposal_id: generate_long_horizon_variants(proposal) for proposal in proposals
     }
     variants = tuple(
         strategy
@@ -413,9 +415,7 @@ def screen_long_horizon_campaign(
         stage="TRAIN_COMPLETE",
         payload={"evaluated": len(train_results), "passed": sum(map(_passes_train, train_results))},
     )
-    train_survivor_ids = {
-        result.strategy_id for result in train_results if _passes_train(result)
-    }
+    train_survivor_ids = {result.strategy_id for result in train_results if _passes_train(result)}
     train_survivors = tuple(
         strategy for strategy in variants if strategy.strategy_id in train_survivor_ids
     )
@@ -466,9 +466,7 @@ def screen_long_horizon_campaign(
             for result in passing_validation
             if proposal_by_strategy_id[result.strategy_id] == proposal.proposal_id
         ]
-        family.sort(
-            key=lambda result: (-result.cost_1_5x_annualized_return, result.strategy_id)
-        )
+        family.sort(key=lambda result: (-result.cost_1_5x_annualized_return, result.strategy_id))
         if len(family) >= 4:
             eligible_families.append(family)
     if not eligible_families:
@@ -566,10 +564,10 @@ def finalize_long_horizon_campaign(
     )
     validation = selection.winner_validation
     strategy_returns = validation.base_session_returns + final_result.base_session_returns
-    stressed_returns = (
-        validation.cost_1_5x_session_returns + final_result.cost_1_5x_session_returns
-    )
-    benchmark = effective_backend.benchmark_returns(selection.split.oos_sessions)
+    stressed_returns = validation.cost_1_5x_session_returns + final_result.cost_1_5x_session_returns
+    benchmark = effective_backend.benchmark_returns(
+        selection.winner_strategy, validation.sessions
+    ) + effective_backend.benchmark_returns(selection.winner_strategy, final_result.sessions)
     metrics = compute_long_horizon_oos_metrics(
         strategy_session_returns=strategy_returns,
         benchmark_session_returns=benchmark,
@@ -646,6 +644,58 @@ def cost_adjusted_trade_session_returns(
     return tuple(returns)
 
 
+def matched_benchmark_session_returns(
+    trades: tuple[TradeRecord, ...],
+    benchmark_bars: pd.DataFrame,
+    sessions: tuple[date, ...],
+    *,
+    initial_cash: float,
+) -> tuple[float, ...]:
+    """Match benchmark exposure to each strategy trade's time and cash notional."""
+
+    if initial_cash <= 0.0 or not math.isfinite(initial_cash):
+        raise ValueError("initial_cash must be finite and positive")
+    required = {"session_date", "available_at", "open", "close"}
+    if missing := sorted(required.difference(benchmark_bars.columns)):
+        raise ValueError("benchmark bars lack required columns: " + ",".join(missing))
+    bars = benchmark_bars.loc[:, sorted(required)].copy()
+    bars["available_at"] = pd.to_datetime(bars["available_at"], utc=True)
+    if bars.duplicated(["session_date", "available_at"]).any():
+        raise ValueError("benchmark bars must be unique by session and availability")
+    observed_sessions = tuple(sorted(bars["session_date"].unique()))
+    if observed_sessions != sessions:
+        raise ValueError("benchmark does not exactly cover requested sessions")
+    by_time = bars.set_index(["session_date", "available_at"])
+    pnl_by_session = {session: 0.0 for session in sessions}
+    for trade in trades:
+        if trade.session not in pnl_by_session:
+            raise ValueError("trade falls outside requested benchmark sessions")
+        entry_key = (trade.session, pd.Timestamp(trade.entry_time))
+        exit_key = (trade.session, pd.Timestamp(trade.exit_time))
+        try:
+            entry_row = by_time.loc[entry_key]
+            exit_row = by_time.loc[exit_key]
+        except KeyError as exc:
+            raise ValueError("benchmark lacks a strategy trade timestamp") from exc
+        benchmark_entry = float(entry_row["open"])
+        benchmark_exit = float(exit_row["close"] if trade.forced else exit_row["open"])
+        if min(benchmark_entry, benchmark_exit) <= 0.0:
+            raise ValueError("benchmark prices must be positive")
+        strategy_notional = trade.entry_price * trade.quantity
+        pnl_by_session[trade.session] += strategy_notional * (
+            benchmark_exit / benchmark_entry - 1.0
+        )
+    equity = initial_cash
+    returns: list[float] = []
+    for session in sessions:
+        pnl = pnl_by_session[session]
+        returns.append(pnl / equity)
+        equity += pnl
+        if equity <= 0.0:
+            raise ValueError("matched benchmark equity must remain positive")
+    return tuple(returns)
+
+
 class LocalFiveMinuteResearchBackend:
     """Project-owned adapter from immutable bars to the conservative engine."""
 
@@ -655,6 +705,7 @@ class LocalFiveMinuteResearchBackend:
         self._hf_store: HfFiveMinuteSnapshotStore | None = None
         self._legacy_bars: pd.DataFrame | None = None
         self._phase_bars: dict[tuple[date, ...], pd.DataFrame] = {}
+        self._runs: dict[tuple[str, tuple[date, ...]], EngineRun] = {}
         if dataset_id.startswith("hf-finnhub-5min-"):
             self._hf_store = HfFiveMinuteSnapshotStore(root=self.root, dataset_id=dataset_id)
             observed_order = self._hf_store.symbols
@@ -693,25 +744,27 @@ class LocalFiveMinuteResearchBackend:
             selected = self._legacy_bars.loc[
                 self._legacy_bars["session_date"].isin(sessions)
             ].copy()
-        selected["available_at"] = pd.to_datetime(
-            selected["timestamp"], utc=True
-        ) + pd.Timedelta(minutes=5)
+        selected["available_at"] = pd.to_datetime(selected["timestamp"], utc=True) + pd.Timedelta(
+            minutes=5
+        )
         self._phase_bars[sessions] = selected
         return selected
 
-    def evaluate(
+    def _run_strategy(
         self,
         strategy: StrategyDefinition,
         sessions: tuple[date, ...],
-        *,
-        phase: str,
-    ) -> PhaseEvaluation:
+    ) -> EngineRun:
         if strategy.symbols != self.symbols:
             raise ValueError("strategy symbol scope does not match backend dataset")
+        compiled = compile_strategy(strategy)
+        cache_key = (compiled.definition_fingerprint, sessions)
+        cached = self._runs.get(cache_key)
+        if cached is not None:
+            return cached
         selected = self._read_sessions(sessions)
         if tuple(sorted(selected["session_date"].unique())) != sessions:
             raise ValueError("backend phase does not exactly cover requested sessions")
-        compiled = compile_strategy(strategy)
         job = BacktestJob.create(
             schema_version="1.0.0",
             strategy_id=compiled.definition_fingerprint,
@@ -722,10 +775,25 @@ class LocalFiveMinuteResearchBackend:
             initial_cash=100_000.0,
             closeout_buffer_minutes=5,
             cost_model_ids=CostModelIds(
-                **{scenario: COST_SCENARIOS[scenario].model_id for scenario in ("optimistic", "base", "stress")}
+                **{
+                    scenario: COST_SCENARIOS[scenario].model_id
+                    for scenario in ("optimistic", "base", "stress")
+                }
             ),
         )
         run = FiveMinuteBacktestEngine(job=job, strategy=compiled).run(bars_5m=selected)
+        self._runs[cache_key] = run
+        return run
+
+    def evaluate(
+        self,
+        strategy: StrategyDefinition,
+        sessions: tuple[date, ...],
+        *,
+        phase: str,
+    ) -> PhaseEvaluation:
+        del phase
+        run = self._run_strategy(strategy, sessions)
         base = run.scenarios["base"]
         stress = run.scenarios["stress"]
         pnl_by_symbol = {
@@ -753,7 +821,11 @@ class LocalFiveMinuteResearchBackend:
             pnl_by_symbol=pnl_by_symbol,
         )
 
-    def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]:
+    def benchmark_returns(
+        self,
+        strategy: StrategyDefinition,
+        sessions: tuple[date, ...],
+    ) -> tuple[float, ...]:
         benchmark_symbol = {
             ("AAPL", "QQQ"): "QQQ",
             ("SPY", "IWM"): "SPY",
@@ -762,11 +834,13 @@ class LocalFiveMinuteResearchBackend:
             ("TQQQ", "SOXL"): "TQQQ",
         }[self.symbols]
         bars = self._read_sessions(sessions)
-        qqq = bars.loc[bars["symbol"] == benchmark_symbol].sort_values(
-            ["session_date", "timestamp"], kind="stable"
+        benchmark_bars = bars.loc[bars["symbol"] == benchmark_symbol].sort_values(
+            ["session_date", "available_at"], kind="stable"
         )
-        closes = qqq.groupby("session_date", sort=True, observed=True)["close"].last()
-        if tuple(closes.index) != sessions:
-            raise ValueError("benchmark does not exactly cover requested sessions")
-        returns = closes.pct_change(fill_method=None).fillna(0.0)
-        return tuple(float(value) for value in returns)
+        trades = self._run_strategy(strategy, sessions).scenarios["base"].trades
+        return matched_benchmark_session_returns(
+            trades,
+            benchmark_bars,
+            sessions,
+            initial_cash=100_000.0,
+        )

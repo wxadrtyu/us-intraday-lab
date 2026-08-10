@@ -33,7 +33,9 @@ def _source(
     catalog.mkdir(parents=True)
     rows: list[dict[str, object]] = []
     for session in (date(2024, 1, 2), date(2024, 1, 3)):
-        start = datetime.combine(session, datetime.min.time(), tzinfo=UTC) + timedelta(hours=14, minutes=30)
+        start = datetime.combine(session, datetime.min.time(), tzinfo=UTC) + timedelta(
+            hours=14, minutes=30
+        )
         for index in range(78):
             for symbol in symbols:
                 price = 100.0 + index / 10
@@ -99,7 +101,6 @@ def test_hf_snapshot_reads_only_explicitly_requested_sessions(tmp_path: Path) ->
         date(2024, 1, 2),
         date(2024, 1, 3),
     )
-    assert backend.benchmark_returns((date(2024, 1, 2),)) == (0.0,)
     with pytest.raises(HfFiveMinuteSnapshotError, match="session hash mismatch"):
         store.read_sessions((date(2024, 1, 3),))
 

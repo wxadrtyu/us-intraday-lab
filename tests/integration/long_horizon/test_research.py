@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from us_intraday_lab.backtest.metrics import TradeRecord
@@ -12,6 +13,7 @@ from us_intraday_lab.long_horizon.orchestrator import (
     PhaseEvaluation,
     cost_adjusted_trade_session_returns,
     finalize_long_horizon_campaign,
+    matched_benchmark_session_returns,
     screen_long_horizon_campaign,
 )
 from us_intraday_lab.long_horizon.proposal import LongHorizonHypothesisProposal
@@ -54,8 +56,7 @@ class _Backend:
         self.phases.append(phase)
         edge = int(strategy.strategy_id[-1], 16) / 100_000
         returns = tuple(
-            0.001 + edge + ((index % 3) - 1) * 0.00001
-            for index, _session in enumerate(sessions)
+            0.001 + edge + ((index % 3) - 1) * 0.00001 for index, _session in enumerate(sessions)
         )
         return PhaseEvaluation(
             strategy_id=strategy.strategy_id,
@@ -69,7 +70,8 @@ class _Backend:
             pnl_by_symbol={"AAPL": 55.0, "QQQ": 45.0},
         )
 
-    def benchmark_returns(self, sessions: tuple[date, ...]) -> tuple[float, ...]:
+    def benchmark_returns(self, strategy, sessions: tuple[date, ...]) -> tuple[float, ...]:
+        del strategy
         return tuple(0.0002 for _ in sessions)
 
 
@@ -212,10 +214,7 @@ def test_screen_requires_ten_percent_winner_but_keeps_positive_neighbors(
     )
 
     assert selection.winner_validation.cost_1_5x_annualized_return >= 0.10
-    assert any(
-        item.cost_1_5x_annualized_return < 0.10
-        for item in selection.validation_evaluations
-    )
+    assert any(item.cost_1_5x_annualized_return < 0.10 for item in selection.validation_evaluations)
 
 
 def test_screen_rejects_validation_profit_concentrated_in_one_symbol(
@@ -304,3 +303,57 @@ def test_cost_adjustment_scales_recorded_cost_without_inventing_empty_day_pnl() 
     )
 
     assert returns == pytest.approx((0.07, 0.0))
+
+
+def test_matched_benchmark_uses_strategy_times_and_cash_notional() -> None:
+    first = date(2025, 1, 2)
+    second = date(2025, 1, 3)
+    first_entry = datetime(2025, 1, 2, 15, tzinfo=UTC)
+    first_exit = datetime(2025, 1, 2, 16, tzinfo=UTC)
+    second_entry = datetime(2025, 1, 3, 15, tzinfo=UTC)
+    second_exit = datetime(2025, 1, 3, 16, tzinfo=UTC)
+    trades = (
+        TradeRecord(
+            symbol="TQQQ",
+            session=first,
+            quantity=5,
+            entry_time=first_entry,
+            exit_time=first_exit,
+            entry_price=100.0,
+            exit_price=101.0,
+            gross_pnl=5.0,
+            net_pnl=5.0,
+            cost_paid=0.0,
+            forced=False,
+        ),
+        TradeRecord(
+            symbol="TQQQ",
+            session=second,
+            quantity=5,
+            entry_time=second_entry,
+            exit_time=second_exit,
+            entry_price=100.0,
+            exit_price=99.0,
+            gross_pnl=-5.0,
+            net_pnl=-5.0,
+            cost_paid=0.0,
+            forced=True,
+        ),
+    )
+    bars = pd.DataFrame(
+        [
+            {"session_date": first, "available_at": first_entry, "open": 200.0, "close": 201.0},
+            {"session_date": first, "available_at": first_exit, "open": 220.0, "close": 221.0},
+            {"session_date": second, "available_at": second_entry, "open": 250.0, "close": 251.0},
+            {"session_date": second, "available_at": second_exit, "open": 230.0, "close": 225.0},
+        ]
+    )
+
+    returns = matched_benchmark_session_returns(
+        trades,
+        bars,
+        (first, second),
+        initial_cash=1_000.0,
+    )
+
+    assert returns == pytest.approx((0.05, -50.0 / 1_050.0))

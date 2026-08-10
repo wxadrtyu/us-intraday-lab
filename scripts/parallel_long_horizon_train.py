@@ -56,6 +56,7 @@ def main() -> None:
     parser.add_argument("--proposal-dir", required=True, type=Path)
     parser.add_argument("--dataset-id", required=True)
     parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--strategy-id")
     args = parser.parse_args()
     if not 1 <= args.workers <= 16:
         raise ValueError("workers must be between one and sixteen")
@@ -69,22 +70,24 @@ def main() -> None:
         strategy
         for proposal in proposals
         for strategy in generate_long_horizon_variants(proposal)
+        if args.strategy_id is None or strategy.strategy_id == args.strategy_id
     )
+    if not variants:
+        raise ValueError("strategy-id did not match a generated variant")
     root = args.root.resolve()
-    metadata_backend = LocalFiveMinuteResearchBackend(
-        root=root, dataset_id=args.dataset_id
-    )
+    metadata_backend = LocalFiveMinuteResearchBackend(root=root, dataset_id=args.dataset_id)
     sessions = metadata_backend.accepted_sessions(args.dataset_id)
-    split = create_long_horizon_split(
-        sessions, split_id=f"{args.dataset_id}-60-20-20-v1"
+    split = create_long_horizon_split(sessions, split_id=f"{args.dataset_id}-60-20-20-v1")
+    experiment_id = (
+        "lh-"
+        + _sha256(
+            {
+                "dataset_id": args.dataset_id,
+                "proposals": [proposal.model_dump(mode="json") for proposal in proposals],
+                "split_id": split.split_id,
+            }
+        )[:32]
     )
-    experiment_id = "lh-" + _sha256(
-        {
-            "dataset_id": args.dataset_id,
-            "proposals": [proposal.model_dump(mode="json") for proposal in proposals],
-            "split_id": split.split_id,
-        }
-    )[:32]
     experiment_root = root / "artifacts" / "long_horizon" / "experiments" / experiment_id
     experiment_root.mkdir(parents=True, exist_ok=True)
     records = tuple(strategy.model_dump(mode="json") for strategy in variants)

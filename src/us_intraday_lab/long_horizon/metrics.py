@@ -61,7 +61,7 @@ def compute_long_horizon_oos_metrics(
     cost_1_5x_session_returns: tuple[float, ...],
     annualization_sessions: int = 252,
 ) -> LongHorizonOosMetrics:
-    """Compute geometric OOS return and annualized IR against QQQ."""
+    """Compute geometric OOS return and annualized IR against the supplied benchmark."""
 
     strategy = _returns(strategy_session_returns, name="strategy_session_returns")
     benchmark = _returns(benchmark_session_returns, name="benchmark_session_returns")
@@ -80,15 +80,11 @@ def compute_long_horizon_oos_metrics(
     if active_stdev <= 0.0:
         raise ValueError("OOS_INFORMATION_RATIO_UNDEFINED")
     tracking_error = active_stdev * math.sqrt(annualization_sessions)
-    information_ratio = (
-        statistics.fmean(active) * annualization_sessions / tracking_error
-    )
+    information_ratio = statistics.fmean(active) * annualization_sessions / tracking_error
     strategy_total = _total_return(strategy)
     benchmark_total = _total_return(benchmark)
     stressed_total = _total_return(stressed)
-    stressed_annualized = (1.0 + stressed_total) ** (
-        annualization_sessions / len(stressed)
-    ) - 1.0
+    stressed_annualized = (1.0 + stressed_total) ** (annualization_sessions / len(stressed)) - 1.0
     return LongHorizonOosMetrics(
         oos_sessions=len(strategy),
         strategy_total_return=float(strategy_total),
