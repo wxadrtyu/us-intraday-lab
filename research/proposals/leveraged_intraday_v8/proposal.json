@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v8-overlay",
+  "candidate_id": "lev-v8-086cf05c6e7b4eae",
+  "lifecycle_state": "research_candidate_only",
+  "direction": "long_only",
+  "instruments": ["TQQQ", "SOXL"],
+  "bar_size": "5min",
+  "maximum_gross_exposure": 1.0,
+  "underlying_strategy": {
+    "proposal_id": "leveraged-intraday-v7",
+    "candidate_id": "lev-v7-685d7980ace025ec"
+  },
+  "causal_overlay": {
+    "input": "prior completed-session net strategy returns",
+    "fast_lookback_sessions": 5,
+    "fast_compounded_return_floor": -0.05,
+    "slow_lookback_sessions": 20,
+    "slow_compounded_return_floor": -0.10,
+    "enabled_when": "both trailing compounded-return floors pass",
+    "warmup_action": "cash"
+  },
+  "execution": {
+    "signal_uses_completed_bar_only": true,
+    "entry": "next_bar_open",
+    "round_trip_cost": 0.0009,
+    "overnight_positions": false
+  },
+  "selection_contract": {
+    "parameter_ranking_period": "2022-01-03/2025-12-31",
+    "consumed_diagnostic_period": "2026-01-01/2026-03-30",
+    "diagnostic_used_for_ranking": false
+  },
+  "historical_result": {
+    "train_2022_2023": {
+      "annualized_return": 0.5157467249817229,
+      "max_drawdown": 0.09767574014177316,
+      "information_ratio": 1.9441691758952744
+    },
+    "development_oos_2024_2025": {
+      "annualized_return": 0.6623871492387421,
+      "max_drawdown": 0.06279841193749991,
+      "information_ratio": 2.308239672037509
+    },
+    "aggregate_through_consumed_2026q1": {
+      "annualized_return": 0.5385224987313486,
+      "max_drawdown": 0.08840781374978346,
+      "information_ratio": 1.942794105705035
+    },
+    "consumed_2026q1_only": {
+      "annualized_return": -0.16977037870941014,
+      "total_return": -0.043331483076636035,
+      "max_drawdown": 0.08840781374978335,
+      "information_ratio": -0.8020593174541041
+    }
+  },
+  "robustness_result": {
+    "double_cost_aggregate_annualized_return": 0.3915083736806537,
+    "one_bar_delay_aggregate_annualized_return": 0.23512151458673203,
+    "double_cost_and_delay_aggregate_annualized_return": 0.1284816688358954,
+    "paper_shadow_gate_passed": false
+  },
+  "restrictions": {
+    "broker_construction_allowed": false,
+    "order_submission_allowed": false,
+    "paper_shadow_activation_allowed": false,
+    "reason": "cost and latency robustness gates failed and no independent final period remains"
+  }
+}

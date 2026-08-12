@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
@@ -213,6 +214,9 @@ def load_daily(path: Path, *, split: str) -> tuple[pd.DataFrame, pd.Series]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
     root = Path(os.environ.get("TWELVEDATA_ROOT", "E:/us-intraday-lab-data/twelvedata-http"))
     train, train_benchmark = load_daily(root / "bars_1min/train.parquet", split="train")
     validation, validation_benchmark = load_daily(
@@ -499,21 +503,17 @@ def main() -> None:
                                     gross,
                                 )
 
-    print(
-        json.dumps(
-            {
-                "scanned": len(scanned),
-                "passing": len(passing),
-                "gate_counts": {
-                    "train_annual": sum(item.train_annual >= 0.08 for item in scanned),
-                    "validation_annual": sum(item.validation_annual >= 0.10 for item in scanned),
-                    "information_ratio": sum(item.validation_ir >= 0.50 for item in scanned),
-                    "folds": sum(sum(value > 0.0 for value in item.folds) >= 3 for item in scanned),
-                },
-            },
-            sort_keys=True,
-        )
-    )
+    summary = {
+        "scanned": len(scanned),
+        "passing": len(passing),
+        "gate_counts": {
+            "train_annual": sum(item.train_annual >= 0.08 for item in scanned),
+            "validation_annual": sum(item.validation_annual >= 0.10 for item in scanned),
+            "information_ratio": sum(item.validation_ir >= 0.50 for item in scanned),
+            "folds": sum(sum(value > 0.0 for value in item.folds) >= 3 for item in scanned),
+        },
+    }
+    print(json.dumps(summary, sort_keys=True))
     frontiers = {
         "passing": sorted(
             passing,
@@ -534,6 +534,21 @@ def main() -> None:
     for frontier, items in frontiers.items():
         for item in items:
             print(json.dumps({"frontier": frontier, **asdict(item)}, sort_keys=True))
+    if args.output is not None:
+        result = {
+            "schema_version": "1.0.0",
+            "research_mode": "historical_accelerated_replay",
+            "cost_model": {"round_trip_cost": ROUND_TRIP_COST_1_5X},
+            "summary": summary,
+            "frontiers": {
+                name: [asdict(item) for item in items] for name, items in frontiers.items()
+            },
+        }
+        output = args.output.resolve()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        temporary = output.with_suffix(".tmp")
+        temporary.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        temporary.replace(output)
 
 
 if __name__ == "__main__":

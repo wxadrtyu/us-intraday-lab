@@ -114,3 +114,19 @@ At automation setup time the Windows environment did not contain
 credential setup script was placed on the desktop. Daily acquisition remains
 fail-closed until that script is run and Codex is restarted so the new process
 can inherit the user-scoped variables.
+
+## 2026-08-11 simulation activation
+
+The research workflow was corrected after review: waiting for 120 new sessions
+is not a useful strategy-development loop. Historical minute replay remains the
+primary qualification mechanism, while the prospective campaign is retained as
+long-term execution and regime-drift evidence.
+
+Because v4 passed every frozen historical hard gate, it was activated as
+simulation-only `paper_shadow`. This state produces signals and theoretical
+fills but cannot construct a broker or submit orders. The existing database
+campaign still enforces `order_route=FORBIDDEN`. Prospective evidence does not
+block `paper_shadow`, but it continues to block any future live-order state.
+
+The immutable activation artifact is written under
+`artifacts/paper_shadow/twelvedata-dual-sleeve-v4-0e0230153290/activation.json`.
