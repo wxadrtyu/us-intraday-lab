@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11",
+  "candidate_id": "lev-v11-4e846213afaa35db",
+  "provenance": "ai_programmatic_full_data_search",
+  "direction": "long_only",
+  "lifecycle_state": "research_candidate_target_hit_stress_failed_not_for_paper",
+  "universe": [
+    "SPY", "QQQ", "IWM", "TQQQ", "SOXL", "XLB", "XLC", "XLE",
+    "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"
+  ],
+  "capital_contract": {
+    "maximum_gross_exposure": 1.0,
+    "long_only": true,
+    "overlapping_positions_forbidden": true,
+    "unused_capital_stays_cash": true
+  },
+  "sleeves": {
+    "opening": {
+      "family": "all_relative_strength",
+      "decision_bar": 2,
+      "entry_bar": 3,
+      "exit_bar": 15,
+      "minimum_return_from_open": 0.01,
+      "minimum_return_over_spy": 0.006,
+      "minimum_spy_return": 0.0,
+      "minimum_prior_five_session_return": -0.1
+    },
+    "morning": {
+      "family": "all_relative_strength",
+      "decision_bar": 17,
+      "entry_bar": 18,
+      "exit_bar": 42,
+      "minimum_return_from_open": 0.02,
+      "minimum_return_over_spy": 0.0,
+      "minimum_spy_return": 0.0,
+      "minimum_prior_five_session_return": -0.05
+    },
+    "afternoon": {
+      "family": "all_trend_pullback",
+      "decision_bar": 53,
+      "entry_bar": 54,
+      "exit_bar": 66,
+      "maximum_return_from_open": -0.015,
+      "minimum_recent_bounce": -0.003,
+      "minimum_spy_return": -0.02,
+      "minimum_prior_five_session_return": -0.1
+    },
+    "late": {
+      "family": "risk_trend_pullback",
+      "risk_universe": ["QQQ", "IWM", "TQQQ", "SOXL"],
+      "decision_bar": 71,
+      "entry_bar": 72,
+      "exit_bar": 77,
+      "maximum_return_from_open": -0.01,
+      "minimum_recent_bounce": -0.003,
+      "minimum_spy_return": -0.02,
+      "minimum_prior_five_session_return": 0.0
+    }
+  },
+  "cost_contract": {
+    "round_trip_cost": 0.0009,
+    "entry": "next_5_minute_bar_open",
+    "cost_applied_per_active_sleeve": true
+  },
+  "selection_disclosure": {
+    "development_oos": "2024-01-01/2025-12-31",
+    "consumed_target_validation": "2026-01-01/2026-08-12",
+    "2026_is_independent_blind_test": false,
+    "search_scale": {
+      "scanned_sleeves": 76752,
+      "portfolio_combinations": 98876,
+      "boosted_combinations": 2416
+    }
+  },
+  "baseline_results": {
+    "development_oos_annualized_return": 0.5149379778668983,
+    "development_oos_max_drawdown": 0.07667554348041183,
+    "development_oos_information_ratio": 2.4486217899524263,
+    "2026_total_return": 0.20852873748657208,
+    "2026_max_drawdown": 0.17681421565341326,
+    "2026_information_ratio": 1.0102769064971748
+  },
+  "promotion_gates": {
+    "numeric_target_at_9bp": "pass",
+    "double_cost_18bp": "fail",
+    "one_bar_5_minute_delay": "fail",
+    "independent_forward_interval": "not_available",
+    "paper_shadow": "forbidden_until_stress_and_forward_gates_pass"
+  }
+}
