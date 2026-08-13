@@ -25,6 +25,7 @@ from zoneinfo import ZoneInfo
 import exchange_calendars  # type: ignore[import-untyped]
 import numpy as np
 import pandas as pd
+from exchange_calendars.errors import NotSessionError  # type: ignore[import-untyped]
 
 from us_intraday_lab.data.calendar import expected_minute_index
 
@@ -213,6 +214,22 @@ class ReadOnlyAlpacaIexDownloader:
 
 def normalize_alpaca_bars(source: pd.DataFrame, *, ingested_at: datetime | None = None) -> pd.DataFrame:
     """Retain Alpaca bar fields, restrict to XNYS RTH, and never synthesize rows."""
+    if source.empty:
+        return pd.DataFrame(
+            {
+                "symbol": pd.Series(dtype="string"),
+                "timestamp": pd.Series([], dtype="datetime64[ns, UTC]"),
+                "open": pd.Series(dtype="float64"),
+                "high": pd.Series(dtype="float64"),
+                "low": pd.Series(dtype="float64"),
+                "close": pd.Series(dtype="float64"),
+                "volume": pd.Series(dtype="float64"),
+                "session_date": pd.Series(dtype="object"),
+                "provider": pd.Series(dtype="string"),
+                "feed": pd.Series(dtype="string"),
+                "ingested_at": pd.Series([], dtype="datetime64[ns, UTC]"),
+            }
+        )
     missing = sorted(set(_REQUIRED_SOURCE_COLUMNS).difference(source.columns))
     if missing:
         raise ValueError(f"Alpaca IEX bar schema is missing columns: {missing}")
@@ -234,10 +251,30 @@ def normalize_alpaca_bars(source: pd.DataFrame, *, ingested_at: datetime | None 
     frame["feed"] = "iex"
     observed_at = datetime.now(UTC) if ingested_at is None else ingested_at.astimezone(UTC)
     frame["ingested_at"] = observed_at
-    return cast(
-        pd.DataFrame,
-        frame.sort_values(["symbol", "timestamp"], kind="stable", ignore_index=True),
-    )
+    frame, _ = restrict_to_xnys_regular_grid(frame)
+    return frame.sort_values(["symbol", "timestamp"], kind="stable", ignore_index=True)
+
+
+def restrict_to_xnys_regular_grid(bars: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Remove source rows outside each session's exact XNYS regular-minute grid."""
+    if bars.empty:
+        return bars.copy(), 0
+    session_dates = tuple(sorted(set(bars["session_date"].tolist())))
+    expected_parts: list[pd.DatetimeIndex] = []
+    for session_date in session_dates:
+        try:
+            expected_parts.append(expected_minute_index(cast(date, session_date)))
+        except NotSessionError:
+            continue
+    if expected_parts:
+        expected = pd.DatetimeIndex(
+            [timestamp for part in expected_parts for timestamp in part]
+        )
+    else:
+        expected = pd.DatetimeIndex([], tz="UTC")
+    retained = pd.DatetimeIndex(bars["timestamp"]).isin(expected)
+    filtered_rows = int((~retained).sum())
+    return bars.loc[retained].copy().reset_index(drop=True), filtered_rows
 
 
 def assess_acquired_bars(
@@ -357,12 +394,14 @@ def publish_window_snapshot(
     root: Path,
     window: AcquisitionWindow,
     symbols: tuple[str, ...],
+    source_outside_session_rows_filtered: int = 0,
 ) -> dict[str, object]:
     """Atomically publish one content-addressed snapshot; an existing ID is read-only."""
     root = root.resolve()
     canonical = root / "data" / "lake" / "acquired"
     canonical.mkdir(parents=True, exist_ok=True)
     quality = assess_acquired_bars(bars, symbols=symbols, start=window.start, end=window.end)
+    quality["source_outside_session_rows_filtered"] = source_outside_session_rows_filtered
     temporary = Path(tempfile.mkdtemp(prefix=".alpaca-iex-", dir=canonical)).resolve()
     try:
         data_file = temporary / "bars.parquet"
@@ -467,6 +506,45 @@ def verify_window_snapshot(snapshot_root: Path) -> dict[str, object]:
     if expected_name != f"alpaca-iex-1min-{identity_hash}":
         raise ValueError("snapshot manifest identity mismatch")
     return manifest
+
+
+def _verified_existing_window(
+    *,
+    root: Path,
+    window: AcquisitionWindow,
+    symbols: tuple[str, ...],
+) -> dict[str, object] | None:
+    """Reuse a current-format immutable snapshot without reloading staged bars."""
+    acquired = root.resolve() / "data" / "lake" / "acquired"
+    if not acquired.is_dir():
+        return None
+    candidates: list[tuple[datetime, dict[str, object]]] = []
+    for snapshot_root in acquired.iterdir():
+        if not snapshot_root.is_dir():
+            continue
+        try:
+            manifest = verify_window_snapshot(snapshot_root)
+            evidence = cast(
+                dict[str, object],
+                json.loads((snapshot_root / "quality-evidence.json").read_text("utf-8")),
+            )
+            quality = cast(dict[str, object], evidence["quality"])
+            manifest_window = cast(dict[str, object], manifest["window"])
+        except (OSError, KeyError, ValueError, json.JSONDecodeError):
+            continue
+        current_format = "source_outside_session_rows_filtered" in quality
+        matches = (
+            current_format
+            and manifest_window.get("label") == window.label
+            and manifest_window.get("start") == window.start.isoformat()
+            and manifest_window.get("end") == window.end.isoformat()
+            and tuple(cast(list[str], manifest.get("symbols", []))) == symbols
+        )
+        if matches:
+            candidates.append((datetime.fromisoformat(str(manifest["created_at"])), manifest))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: item[0])[1]
 
 
 def audit_acquisition_environment(
@@ -576,6 +654,46 @@ def _staged_chunk(
     return bars
 
 
+def _record_unavailable_window(
+    *,
+    root: Path,
+    window: AcquisitionWindow,
+    symbols: tuple[str, ...],
+) -> dict[str, object]:
+    """Write immutable evidence when Alpaca returns no rows for a complete window."""
+    payload = {
+        "schema_version": "1.0.0",
+        "provider": "alpaca",
+        "feed": "iex",
+        "bar_size": "1min",
+        "adjustment": "split",
+        "calendar": "XNYS",
+        "window": {
+            "label": window.label,
+            "start": window.start.isoformat(),
+            "end": window.end.isoformat(),
+            "blind_test_candidate": window.blind_test_candidate,
+        },
+        "symbols": list(symbols),
+        "row_count": 0,
+        "availability": "provider_returned_no_rows",
+        "no_fill_policy": True,
+    }
+    evidence_sha256 = hashlib.sha256(_canonical_json(payload).encode()).hexdigest()
+    record = {**payload, "evidence_sha256": evidence_sha256}
+    output_root = root.resolve() / "data" / "catalog" / "alpaca_iex_unavailable"
+    output_root.mkdir(parents=True, exist_ok=True)
+    output = output_root / f"{window.label}-{evidence_sha256[:16]}.json"
+    rendered = json.dumps(record, indent=2, sort_keys=True) + "\n"
+    if output.exists() and output.read_text("utf-8") != rendered:
+        raise ValueError("Alpaca unavailability evidence identity collision")
+    if not output.exists():
+        temporary = output.with_suffix(".tmp")
+        temporary.write_text(rendered, "utf-8")
+        temporary.replace(output)
+    return record
+
+
 def acquire_all_windows(
     *,
     root: Path,
@@ -587,6 +705,10 @@ def acquire_all_windows(
     through = latest_completed_session() if available_through is None else available_through
     manifests: list[dict[str, object]] = []
     for window in default_windows(through):
+        existing = _verified_existing_window(root=root, window=window, symbols=symbols)
+        if existing is not None:
+            manifests.append(existing)
+            continue
         frames = [
             _staged_chunk(
                 root=root,
@@ -600,12 +722,19 @@ def acquire_all_windows(
         bars = pd.concat(frames, ignore_index=True).sort_values(
             ["symbol", "timestamp"], kind="stable", ignore_index=True
         )
+        bars, source_outside_session_rows_filtered = restrict_to_xnys_regular_grid(bars)
+        if bars.empty:
+            manifests.append(
+                _record_unavailable_window(root=root, window=window, symbols=symbols)
+            )
+            continue
         manifests.append(
             publish_window_snapshot(
                 bars,
                 root=root,
                 window=window,
                 symbols=symbols,
+                source_outside_session_rows_filtered=source_outside_session_rows_filtered,
             )
         )
     return manifests

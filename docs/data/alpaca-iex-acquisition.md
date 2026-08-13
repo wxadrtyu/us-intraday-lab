@@ -35,4 +35,14 @@ $env:ALPACA_PAPER_SECRET_KEY = '<read-only market-data credential>'
 python scripts/acquire_alpaca_iex_history.py --root G:\us-intraday-lab
 ```
 
+若 Alpaca Basic/IEX 对较老日期返回空响应，不得制造空快照或用另一来源静默混合。当前免费补齐路径保持独立 provider/feed，并单独发布：
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python scripts/acquire_hf_gap_1min.py --root G:\us-intraday-lab --start-month 2018-10 --end-month 2020-12
+python scripts/publish_hf_gap_snapshots.py --root G:\us-intraday-lab --repo .
+```
+
+HF/Finnhub-derived 源只能标记为 `source-as-published; split-anomaly-gated`；它不能被描述为 Alpaca split-adjusted，也不能与 Alpaca 行拼成一个数据集。重复源记录按完整“标的 + 交易日”隔离，清单保存在质量证据中。
+
 脚本在任何下载前先输出只读审计（只报告凭据是否存在，不报告值）。可先运行 `--audit-only`。可用 `--available-through YYYY-MM-DD` 固定可复现的数据截止日，或用 `--symbols` 显式缩小/扩展标的。每月请求先写入带哈希的 staging chunk，失败重跑时复用已验证 chunk，再一次性校验并发布窗口快照。原始 Parquet、数据库和密钥都被 `.gitignore` 排除，不应提交。

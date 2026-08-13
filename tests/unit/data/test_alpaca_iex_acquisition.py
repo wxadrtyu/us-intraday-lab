@@ -161,3 +161,37 @@ def test_quality_blocks_rows_outside_an_early_close_grid() -> None:
             start=session,
             end=session,
         )
+
+
+def test_normalization_removes_rows_after_an_early_close() -> None:
+    session = date(2026, 11, 27)
+    source = _source_bars(session)
+    outside = source.iloc[[-1]].copy()
+    outside["timestamp"] = pd.Timestamp("2026-11-27T19:00:00Z")
+
+    bars = normalize_alpaca_bars(
+        pd.concat([source, outside], ignore_index=True),
+        ingested_at=datetime(2026, 11, 28, tzinfo=UTC),
+    )
+
+    assert len(bars) == len(expected_minute_index(session))
+    assert pd.Timestamp("2026-11-27T19:00:00Z") not in set(bars["timestamp"])
+
+
+def test_normalization_preserves_an_empty_provider_response_as_zero_rows() -> None:
+    bars = normalize_alpaca_bars(pd.DataFrame())
+
+    assert bars.empty
+    assert {
+        "symbol",
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "session_date",
+        "provider",
+        "feed",
+        "ingested_at",
+    } == set(bars.columns)
