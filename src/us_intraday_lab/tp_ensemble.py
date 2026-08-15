@@ -274,11 +274,14 @@ def evaluate_tp_ensemble(
     *,
     universe: tuple[str, ...],
     round_trip_cost: float,
+    expected_universe_size: int = 51,
 ) -> TpEnsembleEvaluation:
     """Evaluate the frozen strategy using only causal features and exact minute exits."""
 
-    if tuple(sorted(set(universe))) != universe or len(universe) != 51:
-        raise ValueError("v3 universe must contain 51 sorted unique symbols")
+    if expected_universe_size not in {50, 51}:
+        raise ValueError("expected universe size must be 50 or 51")
+    if tuple(sorted(set(universe))) != universe or len(universe) != expected_universe_size:
+        raise ValueError(f"universe must contain {expected_universe_size} sorted unique symbols")
     if not 0.0 <= round_trip_cost < 0.01:
         raise ValueError("round-trip cost is invalid")
     frame = frame.loc[frame["symbol"].isin(universe)].copy()

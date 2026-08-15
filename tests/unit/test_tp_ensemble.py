@@ -143,6 +143,36 @@ def test_dual_sleeve_prepares_once_and_composes_fixed_half_sleeves(
     assert first == second
 
 
+def test_dual_sleeve_accepts_predeclared_fifty_symbol_observable_universe(
+    tmp_path: Path,
+) -> None:
+    frame, benchmark, raw_path, universe = _fixture(tmp_path)
+    reduced = universe[:-1]
+
+    prepared = prepare_dual_sleeve(
+        frame,
+        benchmark,
+        (raw_path,),
+        universe=reduced,
+        round_trip_cost=0.0009,
+    )
+
+    assert prepared.symbols == reduced
+
+
+def test_dual_sleeve_rejects_unapproved_universe_size(tmp_path: Path) -> None:
+    frame, benchmark, raw_path, universe = _fixture(tmp_path)
+
+    with pytest.raises(ValueError, match="50 or 51"):
+        prepare_dual_sleeve(
+            frame,
+            benchmark,
+            (raw_path,),
+            universe=universe[:-2],
+            round_trip_cost=0.0009,
+        )
+
+
 def test_period_scope_normalizes_date_and_timestamp_values() -> None:
     sessions: tuple[object, ...] = (
         date(2026, 1, 2),

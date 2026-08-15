@@ -105,11 +105,19 @@ class DualSleeveShadowObservation:
     target_minimum_stock_minutes: int
     context_sessions: int
 
-    def as_record(self, parameters: DualSleeveParameters) -> dict[str, object]:
+    def as_record(
+        self,
+        parameters: DualSleeveParameters,
+        *,
+        provider: str = "alpaca",
+        feed: str = "iex",
+    ) -> dict[str, object]:
+        if not provider or not feed:
+            raise ValueError("research shadow provider metadata cannot be empty")
         return {
             "schema_version": "1.0.0",
-            "provider": "alpaca",
-            "feed": "iex",
+            "provider": provider,
+            "feed": feed,
             "session_date": self.session_date.isoformat(),
             "parameters": {
                 "stock_excess_floor": parameters.stock_excess_floor,
@@ -161,8 +169,8 @@ def evaluate_alpaca_dual_sleeve_session(
     required = {"symbol", "timestamp", "open", "high", "low", "close", "volume"}
     if not required.issubset(bars.columns):
         raise ValueError("research shadow bars have an invalid schema")
-    if tuple(sorted(set(universe))) != universe or len(universe) != 51:
-        raise ValueError("research shadow universe must contain 51 sorted symbols")
+    if tuple(sorted(set(universe))) != universe or len(universe) not in {50, 51}:
+        raise ValueError("research shadow universe must contain 50 or 51 sorted symbols")
     if not 0.0 <= round_trip_cost < 0.01:
         raise ValueError("research shadow round-trip cost is invalid")
     frame = bars.loc[:, list(required)].copy()

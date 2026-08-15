@@ -111,6 +111,29 @@ def test_alpaca_shadow_evaluation_is_long_only_exact_and_broker_free() -> None:
     assert all("order" not in key.lower() for key in record)
 
 
+def test_shadow_evaluation_supports_frozen_fifty_symbol_universe() -> None:
+    bars, universe, target = _bars()
+    reduced = universe[:-1]
+    bars = bars.loc[~bars["symbol"].eq(universe[-1])].copy()
+
+    observed = evaluate_alpaca_dual_sleeve_session(
+        bars,
+        session_date=target,
+        universe=reduced,
+        parameters=DualSleeveParameters(0.005, 0.7, 0.003, 300),
+        round_trip_cost=0.0009,
+    )
+    record = observed.as_record(
+        DualSleeveParameters(0.005, 0.7, 0.003, 300),
+        provider="twelve_data",
+        feed="minute",
+    )
+
+    assert observed.target_minimum_stock_minutes == 390
+    assert record["provider"] == "twelve_data"
+    assert record["feed"] == "minute"
+
+
 def test_alpaca_shadow_history_requires_dedicated_paper_data_credentials() -> None:
     with pytest.raises(RuntimeError, match="MARKET_DATA_CREDENTIAL_MISSING"):
         AlpacaIexHistory.from_environment(environ={})

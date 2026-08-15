@@ -91,8 +91,8 @@ def prepare_dual_sleeve(
 ) -> DualSleevePrepared:
     """Prepare invariant v4 features and exact outcomes once for all 36 variants."""
 
-    if tuple(sorted(set(universe))) != universe or len(universe) != 51:
-        raise ValueError("v4 universe must contain 51 sorted unique symbols")
+    if tuple(sorted(set(universe))) != universe or len(universe) not in {50, 51}:
+        raise ValueError("v4 universe must contain 50 or 51 sorted unique symbols")
     if not 0.0 <= round_trip_cost < 0.01:
         raise ValueError("round-trip cost is invalid")
     frame = frame.loc[frame["symbol"].isin(universe)].copy()
@@ -106,6 +106,7 @@ def prepare_dual_sleeve(
         TpEnsembleParameters(0.005, 0.6, 300),
         universe=universe,
         round_trip_cost=round_trip_cost,
+        expected_universe_size=len(universe),
     )
     day_open = _wide(frame, dates, universe, "day_open")
     close = _wide(frame, dates, universe, "close_45")

@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "twelvedata-dual-sleeve-v4-1",
+  "provenance": "ai",
+  "direction": "long_only",
+  "lifecycle_state": "research_candidate_reselection_required",
+  "universe": [
+    "AAPL", "ABBV", "ADBE", "AMD", "AMZN", "AVGO", "BA", "BAC",
+    "BRK.B", "CAT", "COP", "COST", "CRM", "CSCO", "CVX", "DIS", "GE",
+    "GOOGL", "GS", "HD", "JNJ", "JPM", "KO", "LIN", "LLY", "MA", "MCD",
+    "META", "MRK", "MS", "MSFT", "NFLX", "NKE", "NVDA", "ORCL", "PEP",
+    "PFE", "PG", "RTX", "SBUX", "T", "TMO", "TMUS", "TSLA", "UNH", "V",
+    "VZ", "WFC", "WMT", "XOM"
+  ],
+  "universe_change": {
+    "parent_proposal_id": "twelvedata-dual-sleeve-v4",
+    "excluded_symbols": ["BLK"],
+    "decision_uses_data_through": "2025-12-31",
+    "reason": "BLK structurally fails the frozen 385-minute observability floor",
+    "historical_fraction_sessions_at_least_385": {
+      "train_2020_2023": 0.005252100840336135,
+      "validation_2024": 0.0,
+      "research_2025": 0.176
+    }
+  },
+  "capital_contract": {
+    "maximum_gross_exposure": 1.0,
+    "stock_sleeve_weight": 0.5,
+    "spy_sleeve_weight": 0.5,
+    "unused_sleeve_stays_cash": true,
+    "simultaneous_sleeves_allowed": true
+  },
+  "stock_sleeve": {
+    "decision_minute": 45,
+    "entry_minute": 46,
+    "scheduled_exit_minute": 330,
+    "take_profit": 0.02,
+    "stock_count": 1,
+    "minimum_return_from_open": 0.003,
+    "minimum_cumulative_relative_volume": 1.5,
+    "minimum_return_over_spy_values": [0.005, 0.0075],
+    "minimum_opening_range_position_values": [0.6, 0.65, 0.7],
+    "minimum_spy_return": 0.0,
+    "maximum_spy_return": 0.015,
+    "require_above_causal_vwap": true
+  },
+  "spy_sleeve": {
+    "decision_minute": 30,
+    "entry_minute": 31,
+    "scheduled_exit_minute_values": [240, 300, 330],
+    "minimum_current_return_values": [0.002, 0.003],
+    "maximum_current_return": 0.04,
+    "require_positive_prior_rth_return": true
+  },
+  "variant_contract": {
+    "cartesian_product_size": 36,
+    "winner_ranking": [
+      "minimum_annualized_return_across_train_2024_2025_desc",
+      "combined_oos_annualized_return_desc",
+      "combined_oos_information_ratio_desc",
+      "variant_id_asc"
+    ]
+  },
+  "cost_contract": {
+    "round_trip_cost_base": 0.0006,
+    "round_trip_cost_1_5x": 0.0009,
+    "cost_applied_independently_to_each_active_sleeve": true
+  },
+  "hard_gates": {
+    "minimum_train_annualized_return": 0.08,
+    "minimum_combined_oos_annualized_return": 0.1,
+    "minimum_combined_oos_information_ratio": 0.5,
+    "maximum_combined_oos_drawdown": 0.08,
+    "minimum_combined_oos_profit_factor": 1.15,
+    "minimum_combined_oos_trades": 100,
+    "minimum_positive_fold_fraction": 0.6,
+    "combined_oos_fold_count": 5,
+    "minimum_family_survivors": 12,
+    "maximum_positive_symbol_concentration": 0.7,
+    "require_positive_2024_and_2025": true,
+    "require_start_date_stability": true,
+    "require_leave_one_symbol_out_stability": true,
+    "require_parameter_stability": true,
+    "null_test_repetitions": 500,
+    "null_test_percentile": 0.95,
+    "required_null_tests": [
+      "SESSION_SIGNAL_PERMUTATION",
+      "SESSION_CIRCULAR_SHIFT"
+    ]
+  },
+  "research_data": {
+    "train": {
+      "local_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/train.parquet",
+      "file_sha256": "1586255c4c8baebba1b26ba627d2f5aa2580c219f00f5a669e87ab6b999b8c2a",
+      "period": "2020-03-24/2023-12-29"
+    },
+    "validation_2024": {
+      "local_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/val.parquet",
+      "file_sha256": "dd9e466408ed9613e121bf012cad9c4d0923acd9fb4df049d2ca2062ccd61e2d",
+      "period": "2024-01-02/2024-12-31"
+    },
+    "research_2025": {
+      "local_file": "E:/us-intraday-lab-data/twelvedata-http/bars_1min/test-2025.parquet",
+      "file_sha256": "1911457e63d906e5b96829134b61df6aedef68e88fcaa3be8598cbe81df9d0a8",
+      "period": "2025-01-02/2025-12-31"
+    }
+  },
+  "forward_data_contract": {
+    "primary_provider": "twelve_data",
+    "cross_check_provider": "massive_sip",
+    "per_minute_provider_merge_forbidden": true,
+    "forward_fill_forbidden": true,
+    "target_spy_minutes": 390,
+    "minimum_target_stock_minutes": 385
+  },
+  "forward_contract": {
+    "status": "not_available",
+    "minimum_sessions": 120,
+    "must_start_after": "2026-08-14",
+    "must_be_predeclared_before_strategy_evaluation": true,
+    "forbid_reuse_of_2026_08_11_through_2026_08_14": true,
+    "paper_shadow_allowed_before_forward_pass": false
+  }
+}
