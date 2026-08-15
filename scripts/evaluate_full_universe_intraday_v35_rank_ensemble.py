@@ -149,7 +149,7 @@ def _fit_models(
         else:
             weights = np.full(len(selected), 1.0 / len(selected))
         score = np.einsum("saf,f,f->sa", (selected_matrix - mean) / scale, direction, weights)
-        score = np.where(finite, score, -np.inf)
+        score = np.where(np.isfinite(selected_matrix).all(axis=2), score, -np.inf)
         best = np.max(score, axis=1)
         threshold = float(np.quantile(best[validation & np.isfinite(best)], quantile))
         models.append(
@@ -168,11 +168,11 @@ def _fit_models(
 
 
 def _sleeve(cube: v34.Cube, model: RankModel, cost: float, delay: int) -> v12.ReturnStream:
-    matrix, _, finite = v34._matrix(cube, model.specification, model.factors)
+    matrix, _, _ = v34._matrix(cube, model.specification, model.factors)
     score = np.einsum(
         "saf,f,f->sa", (matrix - model.mean) / model.scale, model.direction, model.weights
     )
-    score = np.where(finite, score, -np.inf)
+    score = np.where(np.isfinite(matrix).all(axis=2), score, -np.inf)
     local = np.argmax(score, axis=1)
     assets = np.asarray(model.specification["assets"], dtype=int)
     selected = assets[local]

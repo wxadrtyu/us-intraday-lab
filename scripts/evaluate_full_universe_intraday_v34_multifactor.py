@@ -255,7 +255,8 @@ def _fit_models(
             standardized.T @ target,
         )
         prediction = np.einsum("saf,f->sa", (matrix - mean) / scale, coefficients)
-        prediction = np.where(finite, prediction, -np.inf)
+        signal_finite = np.isfinite(matrix).all(axis=2)
+        prediction = np.where(signal_finite, prediction, -np.inf)
         best = np.max(prediction, axis=1)
         threshold = float(np.quantile(best[validation & np.isfinite(best)], quantile))
         models.append(Model(specification, factors, mean, scale, coefficients, threshold))
@@ -263,9 +264,9 @@ def _fit_models(
 
 
 def _sleeve(cube: Cube, model: Model, cost: float, delay: int) -> v12.ReturnStream:
-    matrix, _, finite = _matrix(cube, model.specification, model.factors)
+    matrix, _, _ = _matrix(cube, model.specification, model.factors)
     prediction = np.einsum("saf,f->sa", (matrix - model.mean) / model.scale, model.coefficients)
-    prediction = np.where(finite, prediction, -np.inf)
+    prediction = np.where(np.isfinite(matrix).all(axis=2), prediction, -np.inf)
     local = np.argmax(prediction, axis=1)
     assets = np.asarray(model.specification["assets"], dtype=int)
     selected = assets[local]
@@ -275,13 +276,20 @@ def _sleeve(cube: Cube, model: Model, cost: float, delay: int) -> v12.ReturnStre
     active = np.isfinite(score) & (score >= model.threshold)
     active &= cube.first[cube.rows, entry, selected] <= entry * 5 + cube.boundary_tolerance
     active &= cube.first[cube.rows, exit_bar, selected] <= exit_bar * 5 + cube.boundary_tolerance
+    active &= np.isfinite(cube.opens[cube.rows, entry, selected])
+    active &= np.isfinite(cube.opens[cube.rows, exit_bar, selected])
+    active &= np.isfinite(cube.opens[:, entry, 0])
+    active &= np.isfinite(cube.opens[:, exit_bar, 0])
+    active &= cube.opens[cube.rows, entry, selected] > 0
+    active &= cube.opens[:, entry, 0] > 0
     values = np.zeros(len(cube.sessions))
     values[active] = (
         cube.opens[active, exit_bar, selected[active]] / cube.opens[active, entry, selected[active]]
         - 1.0
         - cost
     )
-    benchmark = np.where(active, cube.opens[:, exit_bar, 0] / cube.opens[:, entry, 0] - 1.0, 0.0)
+    benchmark = np.zeros(len(cube.sessions))
+    benchmark[active] = cube.opens[active, exit_bar, 0] / cube.opens[active, entry, 0] - 1.0
     return v12.ReturnStream(values, benchmark, active, active.astype(int))
 
 

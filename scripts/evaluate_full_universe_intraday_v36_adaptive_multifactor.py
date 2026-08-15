@@ -135,7 +135,7 @@ def _signal(
             continue
         choices = choices[np.argsort(reliability[choices])[-top_count:]]
         current_values = matrix[row][:, choices]
-        valid_assets = finite[row] & np.isfinite(current_values).all(axis=1)
+        valid_assets = np.isfinite(current_values).all(axis=1)
         if not valid_assets.any():
             continue
         direction = np.sign(second_ic[row, choices])

@@ -1,4 +1,4 @@
-# Full-data v34-v44 multi-factor research
+# Full-data v34-v45 multi-factor research
 
 Date: 2026-08-15
 
@@ -25,7 +25,10 @@ The observation pool and all broker/order surfaces remain unchanged.
   stress enters one additional five-minute bar later.
 - Missing entry/exit prices fail closed to cash. During this campaign the shared
   rank-ensemble execution helper was hardened to enforce finite, positive prices
-  in delay scenarios.
+  in delay scenarios. A later causal audit separated training-label availability
+  from signal-time availability: ranking may not use knowledge that a future exit
+  price will be missing. The v40-v45 headline figures below use corrected causal
+  execution artifacts.
 
 ## Factor pool
 
@@ -58,8 +61,9 @@ models but did not justify a single universal linear score.
 | v42 | causal 20/40/60-day volatility targets | 6,000 | two equivalent variants pass all core gates except multiplicity and pending focused stresses |
 | v43 | focused ablation, neighborhood, and start-date stress | 4 ablations and 243 planned neighbors | start dates 5/5 pass; strict neighborhood only 3/135 evaluated variants pass; multiplicity fails |
 | v44 | fixed-direction multi-horizon confirmation | 810 | zero eligible; averaging adjacent decision horizons does not reproduce the v42 edge |
+| v45 | first-crossing event trigger | 1,296 | six candidates pass all economic/history/2026 gates, but none passes global multiplicity |
 
-Total explicitly recorded parameter/portfolio cells in v34-v44 exceed 105,000.
+Total explicitly recorded parameter/portfolio cells in v34-v45 exceed 106,000.
 The individual scripts record exact elapsed time and evaluated/rejected counts in
 atomic JSON artifacts under `artifacts/accelerated_research`.
 
@@ -79,13 +83,13 @@ target. Gross exposure never exceeds one.
 
 | Period/scenario | Annualized return | Total return | MDD | IR | Trades |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2022-2023 train, standard | 27.69% | 62.57% | 13.11% | 1.31 | 110 |
-| 2024, standard | 32.79% | 32.79% | 13.28% | 1.24 | 70 |
+| 2022-2023 train, standard | 21.59% | 47.49% | 13.11% | 1.08 | 108 |
+| 2024, standard | 31.15% | 31.15% | 13.28% | 1.21 | 68 |
 | 2025, standard | 98.73% | 97.11% | 12.68% | 1.66 | 60 |
-| 2024-2025 OOS, standard | 62.25% | 161.73% | 13.28% | 1.45 | 130 |
-| 2024-2025 OOS, 18 bp | 54.96% | 138.87% | 13.84% | 1.30 | 130 |
-| 2024-2025 OOS, +5-minute delay | 59.98% | 154.51% | 15.46% | 1.42 | 123 |
-| 2018-2020 historical stress | 8.45% | 19.91% | 18.24% | 0.50 | 128 |
+| 2024-2025 OOS, standard | 61.24% | 158.50% | 13.28% | 1.44 | 128 |
+| 2024-2025 OOS, 18 bp | 54.13% | 136.35% | 13.84% | 1.29 | 128 |
+| 2024-2025 OOS, +5-minute delay | 61.54% | 159.47% | 15.28% | 1.46 | 125 |
+| 2018-2020 historical stress | 10.27% | 24.46% | 18.24% | 0.58 | 124 |
 | 2026 Q1 consumed diagnostic | 25.52% | 5.66% | 3.89% | 1.34 | 10 |
 | 2026 all consumed diagnostic | 43.38% | 24.45% | 9.05% | 1.60 | 54 |
 
@@ -109,6 +113,19 @@ does not pass the pre-existing global Bonferroni gate after the large correlated
 research family. The campaign does not waive or redefine that gate after seeing
 the result.
 
+## Event-trigger follow-up
+
+v45 replaces the fixed decision bar with the first score crossing over bars
+20/23/26/29, optionally requiring two consecutive confirmations. Six variants
+pass the standard, 18 bp, delay, fold, historical-MDD, and consumed-2026 gates.
+The representative `lev-v45e-0d302fbf92727a31` has 2024-2025 standard/18 bp/delay
+annualized returns of 60.47%/56.38%/57.03%. Its consumed-2026 diagnostic total
+return is 48.16%, with 5.53% MDD and 2.78 IR. However, 2024 contributes only
+13.46% standard annualized return while 2025 contributes 127.93%, historical
+2018-2020 annualized return is only 1.50%, and the 1,296-member family fails the
+global Bonferroni gate. It is therefore not approved despite materially reducing
+fixed-bar dependence.
+
 ## Next falsifiable directions
 
 - Seek a separately motivated interaction factor for intraday continuation after
@@ -123,3 +140,4 @@ the result.
 ## Revision log
 
 - 2026-08-15: initial v34-v44 multi-factor campaign report.
+- 2026-08-15: corrected signal-time availability and added causal v40-v45 reruns.

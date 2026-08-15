@@ -1,4 +1,4 @@
-"""Multi-horizon confirmation of the low-turnover four-factor signal."""
+"""First-crossing event trigger for the frozen four-factor hypothesis."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ import itertools
 import json
 import math
 import time
-from dataclasses import dataclass
 from pathlib import Path
 
 import evaluate_full_universe_intraday_v34_multifactor as v34
 import evaluate_full_universe_intraday_v42_multifactor_vol_target as v42
+import evaluate_full_universe_intraday_v44_multihorizon_confirmation as v44
 import numpy as np
 import search_full_universe_intraday_v12_robustness as v12
 import search_full_universe_intraday_v13_regime_rotation as v13
@@ -19,27 +19,13 @@ import search_full_universe_intraday_v15_prior5 as v15
 
 from us_intraday_lab.fast_intraday_research import metrics
 
-FACTORS = ("current_return", "volume_acceleration", "prior20_rank", "prior20_return")
-HORIZONS = ((20, 23), (17, 20, 23), (20, 23, 26), (23, 26), (17, 20, 23, 26))
+HORIZONS = ((17, 20, 23, 26), (20, 23, 26, 29), (17, 20, 23, 26, 29))
 EXITS = (69, 72, 75)
 WEIGHTINGS = ("equal", "reliability")
-THRESHOLDS = (0.25, 0.50, 0.75)
+THRESHOLDS = (0.25, 0.50, 0.75, 1.0)
+CONFIRMATIONS = (1, 2)
 TARGETS = (0.25, 0.30, 0.35)
 LOOKBACKS = (15, 20, 25)
-ASSETS = (3, 4)
-FROZEN_DIRECTION = np.array((1.0, -1.0, -1.0, -1.0))
-FROZEN_RELIABILITY = np.array(
-    (0.005062045102016475, 0.029985483037028183, 0.029948475740661222, 0.04944995965820357)
-)
-
-
-@dataclass(slots=True)
-class HorizonModel:
-    decision: int
-    mean: np.ndarray
-    scale: np.ndarray
-    direction: np.ndarray
-    reliability: np.ndarray
 
 
 def _observe(cube: v34.Cube, stream: v12.ReturnStream, full: bool = False):
@@ -57,89 +43,79 @@ def _observe(cube: v34.Cube, stream: v12.ReturnStream, full: bool = False):
     }
 
 
-def _fit(cube: v34.Cube, decisions: tuple[int, ...], exit_bar: int):
-    masks = cube.masks()
-    models = []
-    for decision in decisions:
-        specification = {
-            "name": "multihorizon",
-            "decision": decision,
-            "exit": exit_bar,
-            "assets": ASSETS,
-        }
-        matrix, _, finite = v34._matrix(cube, specification, FACTORS)
-        values = np.where((masks["train_2022_2023"][:, None] & finite)[:, :, None], matrix, np.nan)
-        mean = np.nanmean(values, axis=(0, 1))
-        scale = np.nanstd(values, axis=(0, 1))
-        scale[scale < 1e-8] = 1.0
-        models.append(
-            HorizonModel(
-                decision,
-                mean,
-                scale,
-                FROZEN_DIRECTION.copy(),
-                FROZEN_RELIABILITY.copy(),
-            )
-        )
-    return models
+def _score(cube: v34.Cube, model: v44.HorizonModel, exit_bar: int, weighting: str):
+    specification = {
+        "name": "event_trigger",
+        "decision": model.decision,
+        "exit": exit_bar,
+        "assets": v44.ASSETS,
+    }
+    matrix, _, _ = v34._matrix(cube, specification, v44.FACTORS)
+    weights = model.reliability.copy()
+    if weighting == "equal":
+        weights[:] = 1.0
+    weights /= weights.sum()
+    score = np.einsum(
+        "saf,f,f->sa",
+        (matrix - model.mean) / model.scale,
+        model.direction,
+        weights,
+    )
+    return np.where(np.isfinite(matrix).all(axis=2), score, -np.inf)
 
 
 def _stream(
     cube: v34.Cube,
-    models: list[HorizonModel],
+    models: list[v44.HorizonModel],
     exit_bar: int,
     weighting: str,
     threshold: float,
+    confirmations: int,
     cost: float,
     delay: int,
 ):
-    scores = []
-    valid = np.ones((len(cube.sessions), len(ASSETS)), dtype=bool)
+    selected = np.full(len(cube.sessions), -1, dtype=int)
+    entry = np.full(len(cube.sessions), -1, dtype=int)
+    previous_asset = np.full(len(cube.sessions), -1, dtype=int)
+    previous_above = np.zeros(len(cube.sessions), dtype=bool)
+    assets = np.asarray(v44.ASSETS)
     for model in models:
-        specification = {
-            "name": "multihorizon",
-            "decision": model.decision,
-            "exit": exit_bar,
-            "assets": ASSETS,
-        }
-        matrix, _, _ = v34._matrix(cube, specification, FACTORS)
-        weights = model.reliability.copy()
-        if weighting == "equal":
-            weights[:] = 1.0
-        weights /= weights.sum()
-        scores.append(
-            np.einsum(
-                "saf,f,f->sa",
-                (matrix - model.mean) / model.scale,
-                model.direction,
-                weights,
-            )
-        )
-        valid &= np.isfinite(matrix).all(axis=2)
-    score = np.mean(np.stack(scores), axis=0)
-    score = np.where(valid, score, -np.inf)
-    local = np.argmax(score, axis=1)
-    assets = np.asarray(ASSETS)
-    selected = assets[local]
-    value = score[cube.rows, local]
-    entry = max(model.decision for model in models) + 1 + delay
-    active = np.isfinite(value) & (value >= threshold)
-    active &= cube.first[cube.rows, entry, selected] <= entry * 5 + cube.boundary_tolerance
-    active &= cube.first[cube.rows, exit_bar, selected] <= exit_bar * 5 + cube.boundary_tolerance
-    active &= np.isfinite(cube.opens[cube.rows, entry, selected])
-    active &= np.isfinite(cube.opens[cube.rows, exit_bar, selected])
-    active &= np.isfinite(cube.opens[:, entry, 0])
+        score = _score(cube, model, exit_bar, weighting)
+        local = np.argmax(score, axis=1)
+        best_asset = assets[local]
+        best_score = score[cube.rows, local]
+        above = np.isfinite(best_score) & (best_score >= threshold)
+        trigger = (selected < 0) & above
+        if confirmations == 2:
+            trigger &= previous_above & (previous_asset == best_asset)
+        selected[trigger] = best_asset[trigger]
+        entry[trigger] = model.decision + 1 + delay
+        previous_asset = best_asset
+        previous_above = above
+    safe_asset = np.maximum(selected, 0)
+    safe_entry = np.maximum(entry, 0)
+    active = (selected >= 0) & (safe_entry < exit_bar)
+    active &= (
+        cube.first[cube.rows, safe_entry, safe_asset] <= safe_entry * 5 + cube.boundary_tolerance
+    )
+    active &= cube.first[cube.rows, exit_bar, safe_asset] <= exit_bar * 5 + cube.boundary_tolerance
+    active &= np.isfinite(cube.opens[cube.rows, safe_entry, safe_asset])
+    active &= np.isfinite(cube.opens[cube.rows, exit_bar, safe_asset])
+    active &= np.isfinite(cube.opens[cube.rows, safe_entry, 0])
     active &= np.isfinite(cube.opens[:, exit_bar, 0])
-    active &= cube.opens[cube.rows, entry, selected] > 0
-    active &= cube.opens[:, entry, 0] > 0
+    active &= cube.opens[cube.rows, safe_entry, safe_asset] > 0
+    active &= cube.opens[cube.rows, safe_entry, 0] > 0
     values = np.zeros(len(cube.sessions))
     values[active] = (
-        cube.opens[active, exit_bar, selected[active]] / cube.opens[active, entry, selected[active]]
+        cube.opens[active, exit_bar, safe_asset[active]]
+        / cube.opens[cube.rows[active], safe_entry[active], safe_asset[active]]
         - 1.0
         - cost
     )
     benchmark = np.zeros(len(cube.sessions))
-    benchmark[active] = cube.opens[active, exit_bar, 0] / cube.opens[active, entry, 0] - 1.0
+    benchmark[active] = (
+        cube.opens[active, exit_bar, 0] / cube.opens[cube.rows[active], safe_entry[active], 0] - 1.0
+    )
     return v12.ReturnStream(values, benchmark, active, active.astype(int))
 
 
@@ -170,14 +146,12 @@ def main() -> None:
     development = v34.Cube(args.root, "alpaca", 0)
     candidates = []
     planned = 0
-    rejected = 0
     for horizons, exit_bar in itertools.product(HORIZONS, EXITS):
-        models = _fit(development, horizons, exit_bar)
+        models = v44._fit(development, horizons, exit_bar)
         if models is None:
-            rejected += len(WEIGHTINGS) * len(THRESHOLDS) * len(TARGETS) * len(LOOKBACKS)
             continue
-        for weighting, threshold, target, lookback in itertools.product(
-            WEIGHTINGS, THRESHOLDS, TARGETS, LOOKBACKS
+        for weighting, threshold, confirmations, target, lookback in itertools.product(
+            WEIGHTINGS, THRESHOLDS, CONFIRMATIONS, TARGETS, LOOKBACKS
         ):
             planned += 1
             raw = (
@@ -187,6 +161,7 @@ def main() -> None:
                     exit_bar,
                     weighting,
                     threshold,
+                    confirmations,
                     v34.STANDARD_COST,
                     0,
                 ),
@@ -196,6 +171,7 @@ def main() -> None:
                     exit_bar,
                     weighting,
                     threshold,
+                    confirmations,
                     v34.STRESS_COST,
                     0,
                 ),
@@ -205,6 +181,7 @@ def main() -> None:
                     exit_bar,
                     weighting,
                     threshold,
+                    confirmations,
                     v34.STANDARD_COST,
                     1,
                 ),
@@ -217,14 +194,15 @@ def main() -> None:
                 "exit": exit_bar,
                 "weighting": weighting,
                 "score_threshold": threshold,
+                "confirmations": confirmations,
                 "target_volatility": target,
                 "lookback": lookback,
-                "factors": FACTORS,
+                "factors": v44.FACTORS,
             }
             candidates.append(
                 (
                     _rank(*observations),
-                    v12._identity(definition, "lev-v44h-"),
+                    v12._identity(definition, "lev-v45e-"),
                     definition,
                     models,
                     streams,
@@ -232,12 +210,12 @@ def main() -> None:
             )
     candidates.sort(key=lambda item: item[0], reverse=True)
 
-    # Freeze the complete small family before historical and consumed diagnostics.
+    # Freeze the small event-trigger family before historical and 2026 diagnostics.
     historical = v34.Cube(args.root, "historical", 0)
     folds = np.array_split(np.flatnonzero(development.masks()["development_all"]), 5)
     records = []
+    eligible = 0
     diagnostic_hits = 0
-    core_hits = 0
     for rank, candidate_id, definition, models, streams in candidates:
         standard, cost, delay = [_observe(development, stream, True) for stream in streams]
         historical_raw = _stream(
@@ -246,6 +224,7 @@ def main() -> None:
             int(definition["exit"]),
             str(definition["weighting"]),
             float(definition["score_threshold"]),
+            int(definition["confirmations"]),
             v34.STANDARD_COST,
             0,
         )
@@ -283,7 +262,7 @@ def main() -> None:
             "consumed_2026_mdd_below_20pct": float(consumed["max_drawdown"]) < 0.20,
             "consumed_2026_ir_at_least_1": float(consumed["information_ratio"]) >= 1.0,
         }
-        core_hits += int(all(gates.values()))
+        eligible += int(all(gates.values()))
         diagnostic_hits += int(
             gates["consumed_2026_total_above_20pct"]
             and gates["consumed_2026_mdd_below_20pct"]
@@ -305,16 +284,15 @@ def main() -> None:
     payload = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
-        "selection_contract": "small multi-horizon family ranked on 2022-2025 only",
+        "selection_contract": "small first-crossing family ranked on 2022-2025 only",
         "factor_version": v34.FACTOR_VERSION,
         "scan": {
-            "planned_trials": planned + rejected,
-            "evaluated_trials": planned,
-            "rejected_unstable_factors": rejected,
+            "planned_trials": planned,
+            "evaluated_trials": len(candidates),
             "elapsed_seconds": time.perf_counter() - started,
         },
         "diagnostic_hits": diagnostic_hits,
-        "eligible": core_hits,
+        "eligible": eligible,
         "records": records,
     }
     v12._atomic(args.output, payload)
