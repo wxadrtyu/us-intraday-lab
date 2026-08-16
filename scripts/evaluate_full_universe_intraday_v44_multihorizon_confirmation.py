@@ -40,6 +40,7 @@ class HorizonModel:
     scale: np.ndarray
     direction: np.ndarray
     reliability: np.ndarray
+    factors: tuple[str, ...] = FACTORS
 
 
 def _observe(cube: v34.Cube, stream: v12.ReturnStream, full: bool = False):
@@ -57,7 +58,14 @@ def _observe(cube: v34.Cube, stream: v12.ReturnStream, full: bool = False):
     }
 
 
-def _fit(cube: v34.Cube, decisions: tuple[int, ...], exit_bar: int):
+def _fit(
+    cube: v34.Cube,
+    decisions: tuple[int, ...],
+    exit_bar: int,
+    factors: tuple[str, ...] = FACTORS,
+    direction: np.ndarray = FROZEN_DIRECTION,
+    reliability: np.ndarray = FROZEN_RELIABILITY,
+):
     masks = cube.masks()
     models = []
     for decision in decisions:
@@ -67,7 +75,7 @@ def _fit(cube: v34.Cube, decisions: tuple[int, ...], exit_bar: int):
             "exit": exit_bar,
             "assets": ASSETS,
         }
-        matrix, _, finite = v34._matrix(cube, specification, FACTORS)
+        matrix, _, finite = v34._matrix(cube, specification, factors)
         values = np.where((masks["train_2022_2023"][:, None] & finite)[:, :, None], matrix, np.nan)
         mean = np.nanmean(values, axis=(0, 1))
         scale = np.nanstd(values, axis=(0, 1))
@@ -77,8 +85,9 @@ def _fit(cube: v34.Cube, decisions: tuple[int, ...], exit_bar: int):
                 decision,
                 mean,
                 scale,
-                FROZEN_DIRECTION.copy(),
-                FROZEN_RELIABILITY.copy(),
+                direction.copy(),
+                reliability.copy(),
+                factors,
             )
         )
     return models
@@ -102,7 +111,7 @@ def _stream(
             "exit": exit_bar,
             "assets": ASSETS,
         }
-        matrix, _, _ = v34._matrix(cube, specification, FACTORS)
+        matrix, _, _ = v34._matrix(cube, specification, model.factors)
         weights = model.reliability.copy()
         if weighting == "equal":
             weights[:] = 1.0

@@ -50,7 +50,7 @@ def _score(cube: v34.Cube, model: v44.HorizonModel, exit_bar: int, weighting: st
         "exit": exit_bar,
         "assets": v44.ASSETS,
     }
-    matrix, _, _ = v34._matrix(cube, specification, v44.FACTORS)
+    matrix, _, _ = v34._matrix(cube, specification, model.factors)
     weights = model.reliability.copy()
     if weighting == "equal":
         weights[:] = 1.0
@@ -73,11 +73,13 @@ def _stream(
     confirmations: int,
     cost: float,
     delay: int,
+    score_delta_floor: float | None = None,
 ):
     selected = np.full(len(cube.sessions), -1, dtype=int)
     entry = np.full(len(cube.sessions), -1, dtype=int)
     previous_asset = np.full(len(cube.sessions), -1, dtype=int)
     previous_above = np.zeros(len(cube.sessions), dtype=bool)
+    previous_score = None
     assets = np.asarray(v44.ASSETS)
     for model in models:
         score = _score(cube, model, exit_bar, weighting)
@@ -86,12 +88,27 @@ def _stream(
         best_score = score[cube.rows, local]
         above = np.isfinite(best_score) & (best_score >= threshold)
         trigger = (selected < 0) & above
+        if score_delta_floor is not None:
+            if previous_score is None:
+                trigger[:] = False
+            else:
+                prior_for_asset = previous_score[cube.rows, local]
+                delta_score = np.full(len(cube.sessions), np.nan)
+                finite_delta = np.isfinite(best_score) & np.isfinite(prior_for_asset)
+                np.subtract(
+                    best_score,
+                    prior_for_asset,
+                    out=delta_score,
+                    where=finite_delta,
+                )
+                trigger &= finite_delta & (delta_score >= score_delta_floor)
         if confirmations == 2:
             trigger &= previous_above & (previous_asset == best_asset)
         selected[trigger] = best_asset[trigger]
         entry[trigger] = model.decision + 1 + delay
         previous_asset = best_asset
         previous_above = above
+        previous_score = score
     safe_asset = np.maximum(selected, 0)
     safe_entry = np.maximum(entry, 0)
     active = (selected >= 0) & (safe_entry < exit_bar)
