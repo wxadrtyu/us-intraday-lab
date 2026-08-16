@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v247-inherited-exception-v1",
+  "candidate_id": "lev-v247-df683b8a37c927f6",
+  "scope": {
+    "assets": ["TQQQ", "SOXL"],
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "order_route": "FORBIDDEN"
+  },
+  "frozen_strategy": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "anchor_weight": 0.95,
+    "component_candidate_id": "lev-v118-5d4329ecaa7a2114",
+    "component_weight": 0.05,
+    "component": {
+      "engine": "ridge_dual_clock",
+      "decision_bar": 23,
+      "confirmation_bar": 20,
+      "exit_bar": 65,
+      "factors": [
+        "current_return",
+        "recent_return",
+        "signed_volume_imbalance",
+        "volume_acceleration",
+        "path_efficiency"
+      ],
+      "mean": [
+        -0.0010134654401263222,
+        0.0005197268917250488,
+        -0.035150778287138175,
+        -0.3606876629952821,
+        -0.0019137858280666342
+      ],
+      "scale": [
+        0.031849623316607685,
+        0.012246958169044392,
+        0.2735289328405527,
+        0.4505291561061858,
+        0.3104053610339678
+      ],
+      "coefficients": [
+        0.0005720636435718803,
+        -0.0001661007468131936,
+        -0.00045086124057231087,
+        -0.00029731729140655515,
+        -0.000006274777378043453
+      ],
+      "score_threshold": 0.00013627469771827725,
+      "volatility_lookback_sessions": 15,
+      "target_annualized_volatility": 0.30
+    }
+  },
+  "cost_contract": {
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "bar_minutes": 5
+  },
+  "forward_contract": {
+    "must_start_after": "2026-08-16",
+    "minimum_sessions": 120,
+    "parameters_must_remain_frozen": true,
+    "consumed_2026_may_rank_or_tune": false,
+    "consumed_2026_diagnostic_total_return_threshold": 0.05
+  },
+  "admission_exception": {
+    "authorized_by": "user",
+    "authorized_on": "2026-08-17",
+    "scope": "research-shadow-only",
+    "inherited_failed_gate": "v45 factory-native null tests",
+    "component_factory_null_passed": true,
+    "global_bonferroni_passed": false,
+    "does_not_reclassify_failed_gates_as_passed": true
+  }
+}
