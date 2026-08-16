@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "winner_id": "lev-v45e-0d302fbf92727a31",
+  "proposal_sha256": "d4789a950689e80719318ac4d68bd88add309b6bfbd451192740cbcc7e8f38c8",
+  "winner_parameters": {
+    "horizons": [20, 23, 26, 29],
+    "exit": 72,
+    "weighting": "reliability",
+    "score_threshold": 0.75,
+    "confirmations": 2,
+    "target_volatility": 0.35,
+    "lookback": 15,
+    "factors": [
+      "current_return",
+      "volume_acceleration",
+      "prior20_rank",
+      "prior20_return"
+    ]
+  },
+  "development_evidence": {
+    "oos_2024_2025": {
+      "annualized_return": 0.6047376282376049,
+      "max_drawdown": 0.12169838177004433,
+      "information_ratio": 1.4089622417933392
+    },
+    "cost_18bp_annualized_return": 0.5638034720615492,
+    "delay_5min_annualized_return": 0.5703331746721843,
+    "historical_2018_2020": {
+      "annualized_return": 0.014957714762320329,
+      "max_drawdown": 0.1778678854950192
+    },
+    "consumed_2026_total_return": 0.4816234180924648
+  },
+  "gate_state": {
+    "economic_cost_delay_history_folds_passed": true,
+    "consumed_2026_above_5pct": true,
+    "factory_null_passed": false,
+    "all_hard_gates_passed": false
+  },
+  "promotion_status": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION",
+  "exception_authority": {
+    "actor": "user",
+    "date": "2026-08-16",
+    "scope": "research-shadow-only",
+    "preserve_failed_null_label": true
+  },
+  "selection_sha256": "4a3321b920c233a49df22dc26518ed704bfaa028830703672c0f4e1c31e27532"
+}

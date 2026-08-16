@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v45-explicit-exception-v1",
+  "candidate_id": "lev-v45e-0d302fbf92727a31",
+  "scope": {
+    "assets": ["TQQQ", "SOXL"],
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "order_route": "FORBIDDEN"
+  },
+  "frozen_strategy": {
+    "factors": [
+      "current_return",
+      "volume_acceleration",
+      "prior20_rank",
+      "prior20_return"
+    ],
+    "factor_direction": [1.0, -1.0, -1.0, -1.0],
+    "factor_reliability": [
+      0.005062045102016475,
+      0.029985483037028183,
+      0.029948475740661222,
+      0.04944995965820357
+    ],
+    "horizons": [20, 23, 26, 29],
+    "exit_bar": 72,
+    "weighting": "reliability",
+    "score_threshold": 0.75,
+    "confirmations": 2,
+    "volatility_lookback_sessions": 15,
+    "target_annualized_volatility": 0.35,
+    "minimum_exposure": 0.0
+  },
+  "cost_contract": {
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "bar_minutes": 5
+  },
+  "forward_contract": {
+    "must_start_after": "2026-08-16",
+    "minimum_sessions": 120,
+    "parameters_must_remain_frozen": true,
+    "consumed_2026_may_rank_or_tune": false,
+    "consumed_2026_diagnostic_total_return_threshold": 0.05
+  },
+  "admission_exception": {
+    "authorized_by": "user",
+    "authorized_on": "2026-08-16",
+    "scope": "research-shadow-only",
+    "failed_gate": "factory-native null tests",
+    "observed_profit": 1.280567,
+    "session_signal_permutation_95pct": 1.326989,
+    "session_safe_timestamp_shift_95pct": 1.286955,
+    "does_not_reclassify_failed_gate_as_passed": true
+  }
+}

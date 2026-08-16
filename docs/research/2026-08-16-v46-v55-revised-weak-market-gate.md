@@ -84,3 +84,29 @@ Its economic, cost, latency, historical, and weak-market diagnostics are strong,
 predeclared factory-null gate fails. The next valid evidence is genuinely forward data under the
 unchanged gate, not more filters selected on the consumed history. All current observation-pool
 records remain unchanged.
+
+## User-authorized admission update
+
+After reviewing the failed-null distance, the user explicitly authorized v45 for a
+research-shadow exception on 2026-08-16 and requested that prospective validation and new-factor
+research proceed together. This does not change the null result or reclassify the candidate as a
+full hard-gate pass.
+
+- Campaign: `research-shadow-90b08a76631366856327b48d9d422c7b`
+- Earliest prospective session: 2026-08-17
+- Minimum prospective sessions: 120
+- Route: `FORBIDDEN`
+- Existing v4 and v4.1 campaigns: preserved unchanged
+- Pre-admission database backup:
+  `state/backups/research_shadow-pre-v45-20260816.sqlite3`
+
+The forward evaluator was independently implemented against Alpaca IEX minute history. On the
+2026-08-12 parity session it exactly reproduced the research engine's SOXL selection at bar 23,
+exposure `0.8191278411818549`, raw standard return `-0.015319115627574808`, and scaled return
+`-0.012548314112830567`.
+
+The first post-admission independent family, v56 breadth-stabilization reversal, evaluated 3,888
+cells in 66.80 seconds. It produced zero revised-gate hits. Its best development-ranked definition
+had 2024-2025 standard annualized return 4.38%, IR 0.88, five trades, historical annualized return
+-3.22%, and consumed-2026 total return +7.07%. The 2026 diagnostic passed, but the economic,
+fold, historical, and multiplicity gates failed, so v56 was falsified without null promotion.
