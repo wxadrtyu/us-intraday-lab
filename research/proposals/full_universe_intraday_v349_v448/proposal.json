@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v349-v448-preregistered",
+  "version_range": [349, 448],
+  "version_count": 100,
+  "research_classes": {
+    "admitted_strategy_state_enhancement": 50,
+    "independent_return_source": 50
+  },
+  "selection_boundary": {
+    "factor_and_parameter_selection": "2022-01-01 through 2025-12-31 only",
+    "consumed_2026_role": "diagnostic only after each three-record frontier freezes",
+    "consumed_2026_minimum_total_return": 0.05
+  },
+  "stress_contract": [
+    "9bp round trip",
+    "18bp round trip",
+    "9bp plus 5 minute entry delay",
+    "start date stress",
+    "parameter neighborhood",
+    "five chronological folds",
+    "independent 2018-2020 historical source",
+    "global Bonferroni over all prior and current cells",
+    "native factory null for every pre-null survivor"
+  ],
+  "global_comparison_contract": {
+    "prior_cells_v1_v348": 31510,
+    "new_cells_v349_v448": 2650,
+    "cumulative_cells": 34160
+  },
+  "version_identity": "Each version is one fixed economic state concept and causal clock, or one fixed factor mechanism and entry-exit schedule. Parameter cells inside a version never create new version numbers.",
+  "forbidden": [
+    "rerun v46-v348",
+    "use 2026 to rank factors or parameters",
+    "broker construction or order routes",
+    "cross-provider minute filling"
+  ]
+}
