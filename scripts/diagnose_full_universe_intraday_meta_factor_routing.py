@@ -1,4 +1,4 @@
-"""v349-v448: same-clock meta-factor routing over native-null components."""
+"""Unnumbered diagnostic: same-clock routing over native-null components."""
 
 from __future__ import annotations
 
@@ -267,14 +267,14 @@ def main() -> None:
         symbols=TQQQ_SOXL_SYMBOLS,
     )
     null_scoring = HoldingRuleScoringConfig(
-        scoring_id="v349-v448-meta-factor-null",
+        scoring_id="meta-factor-diagnostic-null",
         rule_version="same-clock-meta-factor-router-v1",
         cost_model_id="standard-9bp-v1",
         max_entries_per_session=1,
         max_concurrent_positions=1,
     )
     summaries, all_cells = [], []
-    version = 349
+    diagnostic_index = 1
     for decision, exit_bar in CLOCKS:
         clock_records = [
             record
@@ -290,7 +290,7 @@ def main() -> None:
         )
         for mode in MODES:
             for quantile in QUANTILES:
-                version_started = time.perf_counter()
+                diagnostic_started = time.perf_counter()
                 route = _route(development, development_cache, mode, quantile)
                 historical_route = _route(
                     historical,
@@ -349,7 +349,7 @@ def main() -> None:
                 adjusted_p = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * CUMULATIVE_CELLS)
                 gates["cumulative_bonferroni_5pct"] = adjusted_p < 0.05
                 definition = {
-                    "version": version,
+                    "diagnostic_index": diagnostic_index,
                     "strategy": "same_clock_meta_factor_router",
                     "decision": decision,
                     "exit": exit_bar,
@@ -360,11 +360,11 @@ def main() -> None:
                     "maximum_gross": 1.0,
                     "overnight": False,
                 }
-                candidate_id = f"lev-v{version}-" + campaign._identity(definition)[:16]
+                candidate_id = "diag-meta-" + campaign._identity(definition)[:16]
                 payload = {
                     "schema_version": "1.0.0",
                     "status": "COMPLETE",
-                    "version": version,
+                    "diagnostic_index": diagnostic_index,
                     "candidate_id": candidate_id,
                     "definition": definition,
                     "selection_contract": "component family representatives use training only; 2026 is diagnostic only",
@@ -383,17 +383,18 @@ def main() -> None:
                     },
                     "scan": {
                         "evaluated_cells": 1,
-                        "elapsed_seconds": time.perf_counter() - version_started,
+                        "elapsed_seconds": time.perf_counter() - diagnostic_started,
                     },
                 }
                 args.output_dir.mkdir(parents=True, exist_ok=True)
                 v12._atomic(
-                    args.output_dir / f"full-universe-intraday-v{version}-exact.json", payload
+                    args.output_dir / f"meta-factor-diagnostic-{diagnostic_index:03d}.json",
+                    payload,
                 )
                 all_cells.append(payload)
                 summaries.append(
                     {
-                        "version": version,
+                        "diagnostic_index": diagnostic_index,
                         "candidate_id": candidate_id,
                         "standard_oos": oos["annualized_return"],
                         "cost_oos": observations[1]["development_oos_2024_2025"][
@@ -408,16 +409,16 @@ def main() -> None:
                     }
                 )
                 print(
-                    f"v{version} {decision}/{exit_bar} {mode} q={quantile:.1f} "
+                    f"d{diagnostic_index:03d} {decision}/{exit_bar} {mode} q={quantile:.1f} "
                     f"oos={oos['annualized_return']:.3f} pre={pre_null} "
                     f"null={bool(null_payload and null_payload['passed'])}",
                     flush=True,
                 )
-                version += 1
-    if version != 449:
-        raise RuntimeError(f"campaign ended at unexpected version {version}")
+                diagnostic_index += 1
+    if diagnostic_index != 101:
+        raise RuntimeError(f"diagnostic ended at unexpected index {diagnostic_index}")
 
-    # Immediate version neighborhood within each clock/mode sequence.
+    # Immediate activation-quantile neighborhood within each clock/mode sequence.
     for index, payload in enumerate(all_cells):
         peers = [
             item
@@ -437,14 +438,14 @@ def main() -> None:
         payload["parameter_neighborhood_primary_share"] = share
         payload["gates"]["parameter_neighborhood_70pct_primary"] = share >= 0.70
         v12._atomic(
-            args.output_dir / f"full-universe-intraday-v{payload['version']}-exact.json",
+            args.output_dir / f"meta-factor-diagnostic-{payload['diagnostic_index']:03d}.json",
             payload,
         )
     summary = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
-        "versions": [349, 448],
-        "actual_versions": 100,
+        "scope": "unnumbered_meta_factor_diagnostic",
+        "diagnostics": 100,
         "evaluated_cells": 100,
         "elapsed_seconds": time.perf_counter() - started,
         "pre_null_passes": sum(item["pre_null_pass"] for item in summaries),

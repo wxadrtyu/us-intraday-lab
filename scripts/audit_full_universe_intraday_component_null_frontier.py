@@ -1,4 +1,4 @@
-"""Audit the full v59-v145 component frontier before v349+ portfolio search.
+"""Audit the full v59-v145 component frontier before later portfolio search.
 
 Selection is frozen on 2022-2025 development evidence.  Historical coverage and
 consumed 2026 are attached only after development selection; consumed 2026 is
@@ -124,7 +124,7 @@ def main() -> None:
         symbols=TQQQ_SOXL_SYMBOLS,
     )
     scoring = HoldingRuleScoringConfig(
-        scoring_id="v349-component-frontier-null",
+        scoring_id="component-frontier-null-v2",
         rule_version="development-selected-ridge-component-v2",
         cost_model_id="standard-9bp-v1",
         max_entries_per_session=1,

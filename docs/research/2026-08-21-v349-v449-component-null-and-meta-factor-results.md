@@ -24,13 +24,17 @@ No observation-pool row was added or changed in this stage.
 |---|---:|---:|---:|
 | Full component audit | 435 components x 8 anchored weights | 426 economically eligible | included below |
 | Factory-native component null | 426 components x 200 repetitions x 2 methods | 152 passes | 986.33 s |
-| v349-v448 meta-factor campaign | 100 actual versions / 100 routing cells | 0 pre-null passes | 7.52 s |
+| Official v349-v448 preregistered campaign | 100 actual versions / 2,650 cells | 0 pre-null passes | committed in `806843f` |
+| Unnumbered meta-factor diagnostic | 100 routing cells | 0 pre-null passes | 7.52 s |
 | v449 hardening | 4 adjacent weights | 1 usable inherited-exception candidate | 4.63 s |
 
-The 100 independent meta-factor versions used five causal decision/exit clocks, two routing
-mechanisms, and ten training-frozen activation quantiles. Every version's first binding failure
-was the standard 50% return/MDD/IR gate. The strongest was v384 at 39.37% annualized, so the
-same-clock meta-routing hypothesis is falsified at the current threshold.
+The official v349-v448 batch contains 50 state enhancements and 50 independent mechanisms; its
+300 frozen records produced no pre-null survivor. Separately, 100 explicitly unnumbered
+meta-factor diagnostics used five causal decision/exit clocks, two routing mechanisms, and ten
+training-frozen activation quantiles. Every diagnostic's first binding failure was the standard
+50% return/MDD/IR gate. The strongest reached 39.37% annualized, so the same-clock meta-routing
+hypothesis is falsified at the current threshold. These diagnostics do not claim or consume
+version numbers.
 
 ## v449 unified evidence
 
@@ -69,7 +73,8 @@ candidate enhancement, not a replacement for v247, and any admission must be add
 
 - Newly usable candidates: 1 (v449, inherited-exception class).
 - Newly admitted observation campaigns: 0 in this stage.
-- Rejected versions: 100 (v349-v448), all first failing the standard primary gate.
+- Rejected official versions: 100 (v349-v448); no frozen record passed all pre-null gates.
+- Rejected unnumbered diagnostics: 100; all first failed the standard primary gate.
 - Existing v4.1, v45, and v247 observation campaigns remain unchanged.
 - v449 is suitable for additive brokerless simulated observation only with the inherited-null and
   failed-Bonferroni labels preserved. It must not expose submit, cancel, credential, or order-route
