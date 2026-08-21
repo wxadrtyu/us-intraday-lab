@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "winner_id": "lev-v449-03e9e3f9c4b21390",
+  "proposal_sha256": "7cfbf7c7afeccdbe19a1b851576fbeb38dadb15f346f677aa3c7adab1710feaa",
+  "winner_parameters": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "anchor_weight": 0.95,
+    "component_candidate_id": "lev-v60-b528b229cefeace2",
+    "component_weight": 0.05,
+    "component_engine": "ridge_static",
+    "component_decision_bar": 23,
+    "component_exit_bar": 65,
+    "component_factors": ["current_return", "recent_return", "signed_volume_imbalance", "volume_acceleration", "path_efficiency"],
+    "component_score_threshold": 0.00013627469771827725,
+    "component_volatility_lookback_sessions": 15,
+    "component_target_annualized_volatility": 0.35
+  },
+  "development_evidence": {
+    "oos_2024_2025": {
+      "annualized_return": 0.6009374499217652,
+      "max_drawdown": 0.11588696809203003,
+      "information_ratio": 1.4332943064319128
+    },
+    "cost_18bp_annualized_return": 0.5556562255193027,
+    "delay_5min_annualized_return": 0.5696277339127089,
+    "historical_2018_2020": {
+      "annualized_return": 0.006782267622095439,
+      "max_drawdown": 0.18267835689796563
+    },
+    "consumed_2026q1_total_return": 0.10498640748397059,
+    "consumed_2026_total_return": 0.47446396148603576
+  },
+  "gate_state": {
+    "economic_cost_delay_history_folds_neighborhood_passed": true,
+    "consumed_2026_above_5pct": true,
+    "component_factory_null_passed": true,
+    "inherited_v45_factory_null_passed": false,
+    "global_bonferroni_passed": false,
+    "all_hard_gates_passed": false
+  },
+  "promotion_status": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION",
+  "exception_authority": {
+    "actor": "user",
+    "date": "2026-08-21",
+    "scope": "research-shadow-only",
+    "preserve_failed_null_labels": true
+  },
+  "selection_sha256": "6c637ef20b1ad98015685ee9eb1fa70875417125739f5c7826fc9763a1851b84"
+}
