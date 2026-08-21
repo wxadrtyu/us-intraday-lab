@@ -42,17 +42,20 @@ def main() -> None:
     parser.add_argument("--component", required=True, type=Path)
     parser.add_argument("--component-null", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--version", default=247, type=int)
+    parser.add_argument("--component-id", default=COMPONENT_CANDIDATE_ID)
+    parser.add_argument("--comparison-cells", default=v146.CUMULATIVE_COMPARISON_CELLS, type=int)
     args = parser.parse_args()
     started = time.perf_counter()
     source = json.loads(args.component.read_text(encoding="utf-8"))
     component = next(
-        record for record in source["records"] if record["candidate_id"] == COMPONENT_CANDIDATE_ID
+        record for record in source["records"] if record["candidate_id"] == args.component_id
     )
     null_source = json.loads(args.component_null.read_text(encoding="utf-8"))
     null_result = next(
         item
         for item in null_source["results"]
-        if item["component_candidate_id"] == COMPONENT_CANDIDATE_ID
+        if item["component_candidate_id"] == args.component_id
     )["component_factory_null"]
     development = v53.Cube(args.root, "alpaca", 0)
     historical = v53.Cube(args.root, "historical", 0)
@@ -133,10 +136,14 @@ def main() -> None:
         "component_factory_null": bool(null_result["passed"]),
     }
     definition = {
-        "version": 247,
-        "strategy": "v45_anchored_flow_persistence_ensemble",
+        "version": args.version,
+        "strategy": (
+            "v45_anchored_flow_persistence_ensemble"
+            if args.version == 247 and args.component_id == COMPONENT_CANDIDATE_ID
+            else "v45_anchored_native_null_component_ensemble"
+        ),
         "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
-        "component_candidate_id": COMPONENT_CANDIDATE_ID,
+        "component_candidate_id": args.component_id,
         "component_definition": component["definition"],
         "v45_weight": weight,
         "component_weight": 1.0 - weight,
@@ -146,16 +153,16 @@ def main() -> None:
     z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
     cumulative_bonferroni_p = min(
         1.0,
-        2.0 * v47._normal_tail(abs(z_score)) * v146.CUMULATIVE_COMPARISON_CELLS,
+        2.0 * v47._normal_tail(abs(z_score)) * args.comparison_cells,
     )
     payload = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
-        "version": 247,
-        "candidate_id": "lev-v247-" + v146.campaign._identity(definition)[:16],
+        "version": args.version,
+        "candidate_id": f"lev-v{args.version}-" + v146.campaign._identity(definition)[:16],
         "selection_contract": (
             "select the highest worst-case standard/cost/delay development return from the "
-            "pre-existing v238 weight neighborhood before attaching historical or consumed-2026"
+            "pre-existing weight neighborhood before attaching historical or consumed-2026"
         ),
         "definition": definition,
         "standard": standard,
@@ -168,7 +175,7 @@ def main() -> None:
         "component_factory_null": null_result,
         "multiple_comparison_pressure": {
             "reference": "cumulative two-sided Bonferroni",
-            "cells": v146.CUMULATIVE_COMPARISON_CELLS,
+            "cells": args.comparison_cells,
             "z_score": z_score,
             "adjusted_p": cumulative_bonferroni_p,
             "passed": cumulative_bonferroni_p < 0.05,
