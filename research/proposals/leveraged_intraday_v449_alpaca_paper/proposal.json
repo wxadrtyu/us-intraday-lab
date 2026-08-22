@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v449-alpaca-paper-v1",
+  "candidate_id": "lev-v449-03e9e3f9c4b21390",
+  "authorized_by": "user",
+  "authorized_on": "2026-08-22",
+  "environment": "paper",
+  "broker": {
+    "name": "alpaca",
+    "endpoint": "https://paper-api.alpaca.markets",
+    "live_endpoint_forbidden": true,
+    "credentials": ["ALPACA_PAPER_API_KEY", "ALPACA_PAPER_SECRET_KEY"],
+    "dedicated_account_required": true
+  },
+  "execution": {
+    "assets": ["TQQQ", "SOXL"],
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "cash_only": true,
+    "broker_margin_multiplier_ignored": true,
+    "overnight_positions": false,
+    "orders": "market_day",
+    "market_data_provider": "alpaca",
+    "market_data_feed": "iex",
+    "maximum_entry_lateness_seconds": 120,
+    "capital_buffer": 0.99,
+    "emergency_flatten_time_new_york": "15:45"
+  },
+  "frozen_strategy": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "anchor_weight": 0.95,
+    "component_candidate_id": "lev-v60-b528b229cefeace2",
+    "component_weight": 0.05,
+    "parameters_source": "research/proposals/leveraged_intraday_v449_exception/proposal.json"
+  },
+  "admission_labels": {
+    "user_authorized_paper_exception": true,
+    "inherited_v45_factory_null_passed": false,
+    "component_factory_null_passed": true,
+    "global_bonferroni_passed": false,
+    "all_hard_gates_passed": false,
+    "paper_results_do_not_reclassify_failed_gates": true
+  }
+}

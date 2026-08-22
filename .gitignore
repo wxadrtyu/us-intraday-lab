@@ -20,6 +20,7 @@ data/cache/
 data/lake/
 artifacts/
 reports/generated/
+state/paper/logs/
 *.db
 *.duckdb
 *.sqlite

@@ -21,6 +21,7 @@ from us_intraday_lab.contracts.orders import OrderSide, OrderStatus
 
 PaperOrderStatus = OrderStatus
 PaperSymbol = Literal["SPY", "QQQ", "IWM"]
+PaperTradableSymbol = Literal["SPY", "QQQ", "IWM", "TQQQ", "SOXL"]
 
 
 class _PaperModel(BaseModel):
@@ -117,7 +118,7 @@ class BrokerOrder(_PaperModel):
     environment: Literal["paper"] = "paper"
     broker_order_id: str = Field(min_length=1)
     client_order_id: str = Field(min_length=1)
-    symbol: PaperSymbol
+    symbol: PaperTradableSymbol
     side: OrderSide
     order_type: Literal["market", "limit"]
     status: PaperOrderStatus
@@ -149,7 +150,7 @@ class BrokerPosition(_PaperModel):
     schema_version: Literal["1.0.0"] = "1.0.0"
     environment: Literal["paper"] = "paper"
     asset_id: str = Field(min_length=1)
-    symbol: PaperSymbol
+    symbol: PaperTradableSymbol
     quantity: int = Field(gt=0)
     average_entry_price: float = Field(gt=0)
     market_value: float = Field(ge=0)

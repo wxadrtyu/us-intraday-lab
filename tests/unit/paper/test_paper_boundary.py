@@ -121,6 +121,9 @@ class _SdkClient:
     def get_order_by_id(self, order_id: str) -> SimpleNamespace:
         return next(item for item in self.orders if item.id == order_id)
 
+    def get_order_by_client_id(self, client_id: str) -> SimpleNamespace:
+        return next(item for item in self.orders if item.client_order_id == client_id)
+
 
 def _connect(
     account: SimpleNamespace | None = None,
@@ -244,6 +247,8 @@ def test_adapter_maps_only_the_minimal_paper_protocol_operations() -> None:
     submitted = broker.submit(_intent("new-intent"))
     assert submitted.client_order_id == "new-intent"
     assert client.submitted_requests[0].client_order_id == "new-intent"
+    assert broker.order(submitted.broker_order_id).client_order_id == "new-intent"
+    assert broker.order_by_client_id("new-intent") == submitted
     cancelled = broker.cancel(submitted.broker_order_id)
     assert cancelled.status == "cancelled"
     assert client.cancelled_order_ids == [submitted.broker_order_id]
@@ -400,7 +405,16 @@ def test_broker_protocol_has_no_arbitrary_request_or_endpoint_mutation() -> None
         for name, value in inspect.getmembers(PaperBroker)
         if callable(value) and not name.startswith("_")
     }
-    assert public == {"account", "clock", "open_orders", "positions", "submit", "cancel"}
+    assert public == {
+        "account",
+        "cancel",
+        "clock",
+        "open_orders",
+        "order",
+        "order_by_client_id",
+        "positions",
+        "submit",
+    }
     assert not hasattr(PaperBroker, "request")
     assert not hasattr(PaperBroker, "set_endpoint")
 

@@ -153,6 +153,16 @@ class FakePaperBroker:
         self._orders[current.client_order_id] = cancelled
         return cancelled
 
+    def order(self, broker_order_id: str) -> BrokerOrder:
+        self._require_connection()
+        return next(
+            item for item in self._orders.values() if item.broker_order_id == broker_order_id
+        )
+
+    def order_by_client_id(self, client_order_id: str) -> BrokerOrder | None:
+        self._require_connection()
+        return self._orders.get(client_order_id)
+
     def fill_delayed(self, client_order_id: str, *, price: float = 100.0) -> BrokerOrder:
         current = self._orders[client_order_id]
         filled = current.model_copy(

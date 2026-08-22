@@ -47,6 +47,8 @@ class _TradingClient(Protocol):
 
     def get_order_by_id(self, order_id: str) -> Any: ...
 
+    def get_order_by_client_id(self, client_id: str) -> Any: ...
+
 
 ClientFactory = Callable[..., _TradingClient]
 _BOUNDARY_TOKEN = object()
@@ -229,6 +231,23 @@ class AlpacaPaperBroker:
             raise ValueError("broker_order_id must be a non-empty string")
         self._client.cancel_order_by_id(broker_order_id)
         return self._map_order(self._client.get_order_by_id(broker_order_id))
+
+    def order(self, broker_order_id: str) -> BrokerOrder:
+        if type(broker_order_id) is not str or not broker_order_id:
+            raise ValueError("broker_order_id must be a non-empty string")
+        return self._map_order(self._client.get_order_by_id(broker_order_id))
+
+    def order_by_client_id(self, client_order_id: str) -> BrokerOrder | None:
+        if type(client_order_id) is not str or not client_order_id:
+            raise ValueError("client_order_id must be a non-empty string")
+        try:
+            raw = self._client.get_order_by_client_id(client_order_id)
+        except Exception as error:
+            status_code = getattr(error, "status_code", None)
+            if status_code == 404 or "order not found" in str(error).lower():
+                return None
+            raise
+        return self._map_order(raw)
 
     @staticmethod
     def _map_order(raw: Any) -> BrokerOrder:
