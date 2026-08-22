@@ -37,7 +37,8 @@ to relabel those tests as passing.
 - The paper runner is scheduled at 20:00 Asia/Shanghai on Monday through Friday. It uses Alpaca's
   market clock for the actual XNYS session. Independent 03:45 and 04:45 Asia/Shanghai safeguards on
   Tuesday through Saturday cover both US daylight and standard time and only act when New York time
-  is at least 15:40 and the market is open.
+  is at least 15:40 and the market is open. Tasks may wake the computer and run only in the current
+  interactive Windows user context so paper credentials are never embedded in task definitions.
 
 ## Validation before activation
 

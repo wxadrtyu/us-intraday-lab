@@ -9,7 +9,8 @@ $settings = New-ScheduledTaskSettingsSet `
     -MultipleInstances IgnoreNew `
     -RestartCount 3 `
     -RestartInterval (New-TimeSpan -Minutes 1) `
-    -StartWhenAvailable
+    -StartWhenAvailable `
+    -WakeToRun
 
 $runnerScript = Join-Path $repo "scripts\run_v449_alpaca_paper.ps1"
 $runnerAction = New-ScheduledTaskAction `
