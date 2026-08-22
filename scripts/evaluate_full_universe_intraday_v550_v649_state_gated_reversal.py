@@ -44,6 +44,7 @@ FAMILIES = (
 )
 SCHEDULES = ((32, 53), (35, 65), (41, 65), (41, 72), (47, 75))
 STATE_MODES = ("unfiltered", "orderly_rebound_cash_filter")
+DEVELOPMENT_NAMES = ("train_2022_2023", "2024", "2025")
 
 
 def specifications() -> list[tuple]:
@@ -53,6 +54,16 @@ def specifications() -> list[tuple]:
         for schedule in SCHEDULES
         for family in FAMILIES
     ]
+
+
+def _primary(observations: dict) -> bool:
+    oos = observations["development_oos_2024_2025"]
+    return (
+        float(oos["annualized_return"]) >= 0.50
+        and float(oos["max_drawdown"]) < 0.20
+        and float(oos["information_ratio"]) >= 1.0
+        and all(float(observations[name]["annualized_return"]) > 0 for name in DEVELOPMENT_NAMES)
+    )
 
 
 def _state_score(
@@ -157,7 +168,7 @@ def _cells(
                         "streams": streams,
                         "observations": observations,
                         "rank": prior.v47._rank(*observations),
-                        "primary": prior._primary_triplet(observations),
+                        "primary": all(_primary(item) for item in observations),
                     }
                 )
     return cells
@@ -240,9 +251,9 @@ def _record(
     z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
     bonferroni = min(1.0, 2.0 * prior.v47._normal_tail(abs(z_score)) * total_cells)
     gates = {
-        "standard_primary": prior.v13._primary(standard),
-        "cost_18bp_primary": prior.v13._primary(cost),
-        "delay_5min_primary": prior.v13._primary(delay),
+        "standard_primary": _primary(standard),
+        "cost_18bp_primary": _primary(cost),
+        "delay_5min_primary": _primary(delay),
         "four_of_five_positive_folds": sum(float(item["annualized_return"]) > 0 for item in folds) >= 4,
         "historical_positive_mdd_below_20pct": float(historical_obs["annualized_return"]) > 0 and float(historical_obs["max_drawdown"]) < 0.20,
         "parameter_neighborhood_70pct_primary": neighborhood >= 0.70,
