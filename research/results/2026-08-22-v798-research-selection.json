@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "lev-v798-d0612cdc630bb224",
+  "source_versions": [753, 854],
+  "selection_rule": "Lexicographically highest frozen 2022-2025 development_rank among pre-factory-null survivors.",
+  "definition": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "anchor_weight": 0.9,
+    "component_candidate_id": "lev-v60-b528b229cefeace2",
+    "component_weight": 0.1,
+    "routing_mode": "prior_close_orderly_market",
+    "state_quantile": 0.2,
+    "state_threshold": -0.7669704203418132,
+    "state_factors": [
+      "spy_current",
+      "sector_breadth",
+      "risk_asset_agreement",
+      "spy_volatility"
+    ]
+  },
+  "gate_state": {
+    "economic_cost_delay_history_folds_starts_passed": true,
+    "consumed_2026q1_above_5pct": true,
+    "consumed_2026_all_above_5pct": true,
+    "joint_neighborhood_passed": true,
+    "routed_component_factory_null_passed": true,
+    "inherited_v45_factory_null_passed": false,
+    "cumulative_bonferroni_passed": false,
+    "all_hard_gates_passed": false
+  },
+  "classification": "USABLE_INHERITED_EXCEPTION_REVIEW",
+  "paper_pool_status": "NOT_ADMITTED",
+  "order_route": "FORBIDDEN_UNTIL_SEPARATELY_AUTHORIZED"
+}
