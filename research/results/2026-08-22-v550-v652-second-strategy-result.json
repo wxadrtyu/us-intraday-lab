@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "versions": [550, 652],
+  "v550_v649": {
+    "completed_versions": 100,
+    "new_cells": 12800,
+    "elapsed_seconds": 142.8677075,
+    "pre_factory_null_hits": 0,
+    "admitted_candidates": 0,
+    "strongest_standalone_candidate_id": "lev-v580-f5b5ad34a7c7fd90",
+    "strongest_standard_oos_annualized_return": 0.477560796992628,
+    "strongest_consumed_2026_total_return": 0.0674676314878813
+  },
+  "v650": {
+    "candidate_id": "lev-v650-reversal-component",
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "component_candidate_id": "lev-v580-a8e415fa00879183",
+    "anchor_weight": 0.95,
+    "component_weight": 0.05,
+    "standard_oos_annualized_return": 0.5980029617632994,
+    "standard_oos_max_drawdown": 0.11690365521800705,
+    "standard_oos_information_ratio": 1.4168248729903983,
+    "cost_18bp_oos_annualized_return": 0.5555465562203838,
+    "delay_5min_oos_annualized_return": 0.563878803235216,
+    "historical_2018_2020_annualized_return": 0.013684459910700664,
+    "historical_2018_2020_max_drawdown": 0.1777201288783774,
+    "consumed_2026q1_total_return": 0.1100747027012976,
+    "consumed_2026_total_return": 0.4587992878994913,
+    "economic_gates_passed": true,
+    "global_bonferroni_passed": false,
+    "component_factory_null_passed": false,
+    "promotion_status": "REJECTED"
+  },
+  "v651_component_null": {
+    "observed_profit": 1.1791446630054396,
+    "session_signal_permutation_p95": 1.2950924970480264,
+    "session_safe_timestamp_shift_p95": 1.2729856112566784,
+    "repetitions": 200,
+    "seed": 20260822,
+    "passed": false,
+    "evidence_sha256": "8c2b4fecaf5224a836c7e3dd2745a6c3bf8504efeeb95d5513575caf32bfe59d"
+  },
+  "v652_frontier_null": {
+    "candidate_count": 3,
+    "passes": 0
+  },
+  "usable_strategy_count": 2,
+  "usable_strategy_ids": [
+    "lev-v449-03e9e3f9c4b21390",
+    "lev-v247-df683b8a37c927f6"
+  ],
+  "newly_admitted_count": 0
+}
