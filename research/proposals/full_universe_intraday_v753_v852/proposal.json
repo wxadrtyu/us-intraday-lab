@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v753-v852-dual-component-routing",
+  "version_range": [753, 852],
+  "version_count": 100,
+  "hypothesis": "The two separately validated v247 and v449 components can diversify one another when their combined weight and causal state routing are fixed around the common v45 anchor, improving weak-market and execution robustness without exceeding gross one.",
+  "ranking_boundary": "All weights, state concepts, clocks, quantiles and gates are frozen before evaluation. Ranking uses 2022-2025 only; 2018-2020 and consumed 2026 are attached after each frontier freezes.",
+  "version_grid": {
+    "component_total_weights": [0.02, 0.04, 0.06, 0.08, 0.1],
+    "v247_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": ["static", "prior_close_orderly_market", "bar17_orderly_market", "prior_close_orderly_growth"],
+    "state_quantiles": [0.2, 0.35, 0.5, 0.65]
+  },
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "required_stress": [
+    "2022-2023 training",
+    "2024",
+    "2025",
+    "2024-2025 OOS",
+    "18bp round trip",
+    "one additional 5-minute entry delay",
+    "start-date stress",
+    "five chronological folds",
+    "parameter neighborhood",
+    "independent 2018-2020 source",
+    "consumed 2026Q1 diagnostic",
+    "consumed 2026 all diagnostic",
+    "cumulative Bonferroni",
+    "native component null for pre-null survivors"
+  ],
+  "classification_boundary": "A survivor remains an inherited-v45 exception unless both inherited v45 and global multiple-comparison nulls pass; it cannot be called an independent alpha discovery."
+}
