@@ -49,9 +49,42 @@ def _load_or_fetch_bars(
     if path.exists():
         return pd.read_parquet(path)
     start, end = history_bounds(session_date)
-    bars = TwelveDataHistory.from_environment(requests_per_minute=8.0).fetch(
-        symbols=(*universe, "SPY"), start=start, end=end
-    )
+    symbols = (*universe, "SPY")
+    bars: pd.DataFrame | None = None
+    if directory.exists():
+        previous_paths = sorted(
+            (
+                candidate
+                for candidate in directory.glob("????-??-??.parquet")
+                if candidate.stem < session_date.isoformat()
+            ),
+            reverse=True,
+        )
+        for previous_path in previous_paths:
+            previous_date = date.fromisoformat(previous_path.stem)
+            previous = pd.read_parquet(previous_path)
+            if set(previous["symbol"].unique()) != set(symbols):
+                continue
+            previous_end = history_bounds(previous_date)[1]
+            if previous_end >= end:
+                continue
+            incremental = TwelveDataHistory.from_environment(requests_per_minute=8.0).fetch(
+                symbols=symbols,
+                start=previous_end,
+                end=end,
+            )
+            bars = pd.concat((previous, incremental), ignore_index=True)
+            bars = bars.drop_duplicates(["symbol", "timestamp"], keep="last")
+            timestamps = pd.to_datetime(bars["timestamp"], utc=True)
+            bars = bars.loc[(timestamps >= start) & (timestamps < end)].copy()
+            bars = bars.sort_values(["timestamp", "symbol"]).reset_index(drop=True)
+            break
+    if bars is None:
+        bars = TwelveDataHistory.from_environment(requests_per_minute=8.0).fetch(
+            symbols=symbols,
+            start=start,
+            end=end,
+        )
     directory.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     bars.to_parquet(temporary, index=False)
