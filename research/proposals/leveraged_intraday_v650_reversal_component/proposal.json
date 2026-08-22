@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v650-reversal-component",
+  "version": 650,
+  "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+  "component_source_version": 580,
+  "component_selection": "development-ranked frozen frontier leader from the preregistered v550-v649 campaign",
+  "component_mechanism": "prior-20-session weak asset plus short-horizon rebound and close-location confirmation",
+  "component_schedule": {"decision_bar": 41, "entry_bar": 42, "exit_bar": 72},
+  "weights": [0.05, 0.1, 0.15, 0.2],
+  "weight_ranking": "maximize the minimum 2024-2025 annualized return across 9bp, 18bp, and one-extra-bar delay",
+  "constraints": {"long_only": true, "maximum_gross": 1.0, "overnight_positions": false},
+  "validation": {
+    "consumed_2026_role": "diagnostic only after development weight selection",
+    "consumed_2026_minimum_total_return": 0.05,
+    "component_factory_null": "required",
+    "inherited_v45_failed_null_label": "must remain visible",
+    "global_bonferroni_label": "must remain visible"
+  }
+}
