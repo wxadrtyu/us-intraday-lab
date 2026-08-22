@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v853-routed-component-null",
+  "source_versions": [753, 852],
+  "selection_rule": "Lexicographically maximize the frozen development_rank among pre-factory-null survivors; consumed 2026 is excluded.",
+  "expected_candidate_id": "lev-v798-d0612cdc630bb224",
+  "null_methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_SAFE_TIMESTAMP_SHIFT"],
+  "repetitions": 200,
+  "percentile": 0.95,
+  "seed": 20260822,
+  "routing_contract": "Restrict the opportunity universe to sessions allowed by the selected causal prior-close state before applying either null.",
+  "classification_boundary": "Passing the routed component null does not repair the inherited v45 factory-null or cumulative Bonferroni failures."
+}
