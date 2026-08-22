@@ -125,3 +125,51 @@ def test_ledger_rejects_updates_and_deletes(tmp_path) -> None:
         ledger._connection.execute("UPDATE events SET event_type='X'")
     with pytest.raises(Exception, match="EVENTS_APPEND_ONLY"):
         ledger._connection.execute("DELETE FROM events")
+
+
+def test_two_strategy_pool_respects_account_level_gross_and_reconciles(tmp_path) -> None:
+    broker = FakePaperBroker(now=NOW)
+    ledger = V449PaperLedger(tmp_path / "pool.sqlite3")
+    v247 = V449PaperController(
+        broker=broker,
+        ledger=ledger,
+        candidate_id="lev-v247-df683b8a37c927f6",
+        strategy_code="v247",
+        account_fraction=0.5,
+        managed_strategy_codes=("v247", "v449"),
+    )
+    v449 = V449PaperController(
+        broker=broker,
+        ledger=ledger,
+        strategy_code="v449",
+        account_fraction=0.5,
+        managed_strategy_codes=("v247", "v449"),
+    )
+    for _ in range(4):
+        broker.queue_submit_behavior(SubmitBehavior.FILL)
+
+    v247.enter(
+        session_date=SESSION, signal=_signal("component", 0.05), reference_price=100.0, now=NOW
+    )
+    v449.enter(
+        session_date=SESSION, signal=_signal("component", 0.05), reference_price=100.0, now=NOW
+    )
+    v247.enter(
+        session_date=SESSION, signal=_signal("anchor", 0.95), reference_price=100.0, now=NOW
+    )
+    v449.enter(
+        session_date=SESSION, signal=_signal("anchor", 0.95), reference_price=100.0, now=NOW
+    )
+
+    assert sum(position.quantity * 100.0 for position in broker.positions()) <= 25_000 * 0.99
+    v449.startup_check(SESSION)
+
+
+def test_pool_allocation_rejects_invalid_fraction(tmp_path) -> None:
+    broker = FakePaperBroker(now=NOW)
+    with pytest.raises(ValueError, match="PAPER_ACCOUNT_FRACTION_OUT_OF_RANGE"):
+        V449PaperController(
+            broker=broker,
+            ledger=V449PaperLedger(tmp_path / "pool.sqlite3"),
+            account_fraction=1.01,
+        )

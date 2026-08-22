@@ -184,15 +184,31 @@ def signals_at(bars: pd.DataFrame, *, session_date: date, decision_bar: int) -> 
 
 
 class V449PaperController:
-    """Idempotent cash-only order controller for a dedicated Alpaca paper account."""
+    """Idempotent cash-only controller used by one strategy allocation in a paper pool."""
 
-    def __init__(self, *, broker: PaperBroker, ledger: V449PaperLedger) -> None:
+    def __init__(
+        self,
+        *,
+        broker: PaperBroker,
+        ledger: V449PaperLedger,
+        candidate_id: str = CANDIDATE_ID,
+        strategy_code: str = "v449",
+        account_fraction: float = 1.0,
+        managed_strategy_codes: tuple[str, ...] | None = None,
+    ) -> None:
+        if not 0.0 < account_fraction <= 1.0:
+            raise ValueError("PAPER_ACCOUNT_FRACTION_OUT_OF_RANGE")
+        if not strategy_code or not strategy_code.isalnum():
+            raise ValueError("PAPER_STRATEGY_CODE_INVALID")
         self.broker = broker
         self.ledger = ledger
+        self.candidate_id = candidate_id
+        self.strategy_code = strategy_code
+        self.account_fraction = account_fraction
+        self.managed_strategy_codes = managed_strategy_codes or (strategy_code,)
 
-    @staticmethod
-    def client_order_id(session_date: date, sleeve: str, action: str) -> str:
-        return f"v449-{session_date:%Y%m%d}-{sleeve[0]}-{action}"
+    def client_order_id(self, session_date: date, sleeve: str, action: str) -> str:
+        return f"{self.strategy_code}-{session_date:%Y%m%d}-{sleeve[0]}-{action}"
 
     def startup_check(self, session_date: date) -> None:
         account = self.broker.account()
@@ -203,11 +219,14 @@ class V449PaperController:
                 event_type="ACCOUNT_BOUNDARY",
                 payload={"cash_only": True, "broker_multiplier_ignored": account.multiplier},
             )
-        session_prefix = f"v449-{session_date:%Y%m%d}-"
+        session_prefixes = tuple(
+            f"{strategy_code}-{session_date:%Y%m%d}-"
+            for strategy_code in self.managed_strategy_codes
+        )
         foreign_orders = [
             item
             for item in self.broker.open_orders()
-            if not item.client_order_id.startswith(session_prefix)
+            if not item.client_order_id.startswith(session_prefixes)
         ]
         foreign_positions = [
             item for item in self.broker.positions() if item.symbol not in STRATEGY_ASSETS
@@ -225,19 +244,17 @@ class V449PaperController:
             )
             raise RuntimeError("DEDICATED_ACCOUNT_CONTAMINATED")
         expected: dict[str, int] = {}
-        for sleeve in ("component", "anchor"):
-            entry = self.broker.order_by_client_id(
-                self.client_order_id(session_date, sleeve, "entry")
-            )
-            exit_order = self.broker.order_by_client_id(
-                self.client_order_id(session_date, sleeve, "exit")
-            )
-            if entry is not None:
-                expected[entry.symbol] = expected.get(entry.symbol, 0) + entry.filled_quantity
-            if exit_order is not None:
-                expected[exit_order.symbol] = (
-                    expected.get(exit_order.symbol, 0) - exit_order.filled_quantity
-                )
+        for strategy_code in self.managed_strategy_codes:
+            for sleeve in ("component", "anchor"):
+                prefix = f"{strategy_code}-{session_date:%Y%m%d}-{sleeve[0]}"
+                entry = self.broker.order_by_client_id(f"{prefix}-entry")
+                exit_order = self.broker.order_by_client_id(f"{prefix}-exit")
+                if entry is not None:
+                    expected[entry.symbol] = expected.get(entry.symbol, 0) + entry.filled_quantity
+                if exit_order is not None:
+                    expected[exit_order.symbol] = (
+                        expected.get(exit_order.symbol, 0) - exit_order.filled_quantity
+                    )
         expected = {symbol: quantity for symbol, quantity in expected.items() if quantity > 0}
         observed = {
             item.symbol: item.quantity
@@ -287,7 +304,13 @@ class V449PaperController:
         if self.broker.order_by_client_id(client_id) is not None:
             return None
         account = self.broker.account()
-        target = account.equity * signal.weight * signal.exposure * CAPITAL_BUFFER
+        target = (
+            account.equity
+            * self.account_fraction
+            * signal.weight
+            * signal.exposure
+            * CAPITAL_BUFFER
+        )
         target = min(target, account.cash * CAPITAL_BUFFER)
         quantity = int(target // reference_price)
         if quantity < 1:
@@ -300,8 +323,8 @@ class V449PaperController:
             return None
         intent = OrderIntent(
             schema_version="1.0.0",
-            run_id=f"v449-{session_date:%Y%m%d}",
-            strategy_id=CANDIDATE_ID,
+            run_id=f"{self.strategy_code}-{session_date:%Y%m%d}",
+            strategy_id=self.candidate_id,
             symbol=signal.symbol,
             session=session_date,
             side="buy",
@@ -329,8 +352,8 @@ class V449PaperController:
             return None
         intent = OrderIntent(
             schema_version="1.0.0",
-            run_id=f"v449-{session_date:%Y%m%d}",
-            strategy_id=CANDIDATE_ID,
+            run_id=f"{self.strategy_code}-{session_date:%Y%m%d}",
+            strategy_id=self.candidate_id,
             symbol=entry.symbol,
             session=session_date,
             side="sell",
@@ -345,21 +368,23 @@ class V449PaperController:
 
     def emergency_flatten(self, *, session_date: date, now: datetime) -> tuple[BrokerOrder, ...]:
         for order in self.broker.open_orders():
-            if order.client_order_id.startswith(f"v449-{session_date:%Y%m%d}-"):
+            if order.client_order_id.startswith(
+                tuple(f"{code}-{session_date:%Y%m%d}-" for code in self.managed_strategy_codes)
+            ):
                 self.broker.cancel(order.broker_order_id)
         results = []
         for position in self.broker.positions():
             if position.symbol not in STRATEGY_ASSETS:
                 raise RuntimeError("EMERGENCY_CLOSE_FOREIGN_POSITION_BLOCKED")
-            client_id = f"v449-{session_date:%Y%m%d}-z-flat-{position.symbol.lower()}"
+            client_id = f"{self.strategy_code}-{session_date:%Y%m%d}-z-flat-{position.symbol.lower()}"
             existing = self.broker.order_by_client_id(client_id)
             if existing is not None:
                 results.append(existing)
                 continue
             intent = OrderIntent(
                 schema_version="1.0.0",
-                run_id=f"v449-{session_date:%Y%m%d}",
-                strategy_id=CANDIDATE_ID,
+                run_id=f"{self.strategy_code}-{session_date:%Y%m%d}",
+                strategy_id=self.candidate_id,
                 symbol=position.symbol,
                 session=session_date,
                 side="sell",

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "authorized_by": "user",
+  "authorized_at": "2026-08-22",
+  "environment": "alpaca_paper_only",
+  "endpoint": "https://paper-api.alpaca.markets",
+  "members": [
+    {
+      "candidate_id": "lev-v247-df683b8a37c927f6",
+      "account_fraction": 0.5,
+      "failed_gate_labels_preserved": true
+    },
+    {
+      "candidate_id": "lev-v449-03e9e3f9c4b21390",
+      "account_fraction": 0.5,
+      "failed_gate_labels_preserved": true
+    }
+  ],
+  "portfolio_contract": {
+    "long_only": true,
+    "maximum_gross": 0.99,
+    "overnight": false,
+    "shared_anchor_aggregate_weight": 0.95,
+    "v247_component_aggregate_weight": 0.025,
+    "v449_component_aggregate_weight": 0.025
+  },
+  "prior_observation_records_mutated": false,
+  "real_money_route_available": false
+}

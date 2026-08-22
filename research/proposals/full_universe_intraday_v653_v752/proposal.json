@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v653-v752-cross-section-contraction",
+  "version_range": [653, 752],
+  "version_count": 100,
+  "hypothesis": "Cross-sectional leadership that emerges from intraday volatility contraction or a failed-breakout reclaim is transferable only in orderly broad-market states; otherwise the strategy remains in cash.",
+  "version_identity": "Ten frozen three-factor mechanisms times five frozen entry-exit schedules times two frozen state modes.",
+  "factor_selection_boundary": "Factor identities, signs, schedules, grids, state coefficients, and stress gates were frozen before any v653-v752 result was generated.",
+  "ranking_boundary": "2022-2023 training plus 2024-2025 development only; 2018-2020 and consumed 2026 are attached after each three-record frontier freezes.",
+  "assets": ["TQQQ", "SOXL"],
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026_minimum_total_return": 0.05
+  },
+  "scan": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookback_sessions": [15, 25],
+    "state_quantiles_when_filtered": [0.3, 0.5, 0.7],
+    "planned_cells": 12800,
+    "prior_comparison_cells": 53194,
+    "cumulative_comparison_cells": 65994
+  },
+  "required_stress": [
+    "2022-2023 training",
+    "2024",
+    "2025",
+    "2024-2025 OOS",
+    "consumed 2026Q1 diagnostic",
+    "consumed 2026 all diagnostic",
+    "18bp round trip",
+    "one additional 5-minute entry delay",
+    "start-date stress",
+    "five chronological folds",
+    "parameter neighborhood",
+    "independent 2018-2020 source",
+    "cumulative Bonferroni",
+    "native factory null for pre-null survivors"
+  ]
+}

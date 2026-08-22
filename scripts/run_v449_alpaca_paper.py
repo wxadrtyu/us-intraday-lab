@@ -1,4 +1,4 @@
-"""Run one real Alpaca Paper Trading session for frozen candidate v449."""
+"""Run the frozen v247/v449 allocation on one Alpaca Paper account."""
 
 from __future__ import annotations
 
@@ -12,6 +12,13 @@ from pathlib import Path
 import pandas as pd
 
 from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker
+from us_intraday_lab.paper.pool import (
+    POOL_ALLOCATIONS,
+    V247_ID,
+    V449_ID,
+    v247_signals_at,
+    validate_pool_allocations,
+)
 from us_intraday_lab.paper.v449 import (
     COMPONENT_EXIT,
     EXIT_BAR,
@@ -30,7 +37,7 @@ MAX_ENTRY_LATENESS = timedelta(minutes=2)
 
 def _args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ledger", type=Path, default=Path("state/paper/v449_alpaca.sqlite3"))
+    parser.add_argument("--ledger", type=Path, default=Path("state/paper/v247_v449_pool.sqlite3"))
     parser.add_argument("--preflight", action="store_true")
     return parser.parse_args()
 
@@ -85,9 +92,27 @@ def _fetch_until_complete(
 
 def main() -> int:
     arguments = _args()
+    validate_pool_allocations()
     broker = AlpacaPaperBroker.from_environment()
     ledger = V449PaperLedger(arguments.ledger.resolve())
-    controller = V449PaperController(broker=broker, ledger=ledger)
+    controllers = {
+        "v247": V449PaperController(
+            broker=broker,
+            ledger=ledger,
+            candidate_id=V247_ID,
+            strategy_code="v247",
+            account_fraction=POOL_ALLOCATIONS[V247_ID],
+            managed_strategy_codes=("v247", "v449"),
+        ),
+        "v449": V449PaperController(
+            broker=broker,
+            ledger=ledger,
+            candidate_id=V449_ID,
+            strategy_code="v449",
+            account_fraction=POOL_ALLOCATIONS[V449_ID],
+            managed_strategy_codes=("v247", "v449"),
+        ),
+    }
     clock = broker.clock()
     if arguments.preflight:
         print(
@@ -106,7 +131,7 @@ def main() -> int:
         print({"status": "SKIPPED", "reason": "NEXT_OPEN_MORE_THAN_10_HOURS_AWAY"})
         return 0
     session_date = opening.astimezone(NEW_YORK).date()
-    controller.startup_check(session_date)
+    controllers["v449"].startup_check(session_date)
     history = AlpacaIexHistory.from_environment()
     bars: pd.DataFrame | None = None
     for decision in ENTRY_DECISIONS:
@@ -128,7 +153,12 @@ def main() -> int:
                 through_bar=decision,
                 deadline=eligible + MAX_ENTRY_LATENESS,
             )
-            signals = signals_at(bars, session_date=session_date, decision_bar=decision)
+            strategy_signals = {
+                "v247": v247_signals_at(
+                    bars, session_date=session_date, decision_bar=decision
+                ),
+                "v449": signals_at(bars, session_date=session_date, decision_bar=decision),
+            }
         except Exception as error:  # noqa: BLE001 - keep timed exits alive after data failure
             ledger.append(
                 event_key=f"{session_date}:decision-{decision}:data-incident",
@@ -142,50 +172,53 @@ def main() -> int:
                 },
             )
             continue
-        for signal in signals:
-            signal_key = f"{session_date}:{signal.sleeve}:signal"
-            ledger.append(
-                event_key=signal_key,
-                session_date=session_date,
-                event_type="SIGNAL",
-                payload={
-                    "candidate_id": "lev-v449-03e9e3f9c4b21390",
-                    "symbol": signal.symbol,
-                    "decision_bar": signal.decision_bar,
-                    "exit_bar": signal.exit_bar,
-                    "weight": signal.weight,
-                    "exposure": signal.exposure,
-                },
-            )
-            symbol_rows = bars.loc[bars["symbol"] == signal.symbol]
-            localized = pd.to_datetime(symbol_rows["timestamp"], utc=True).dt.tz_convert(NEW_YORK)
-            target = symbol_rows.loc[
-                (localized.dt.date == session_date)
-                & (((localized.dt.hour - 9) * 60 + localized.dt.minute - 30) <= decision * 5 + 4)
-            ]
-            try:
-                controller.enter(
-                    session_date=session_date,
-                    signal=signal,
-                    reference_price=float(target.iloc[-1]["close"]),
-                    now=datetime.now(UTC),
-                )
-            except Exception as error:  # noqa: BLE001 - uncertain submit is reconciled by ID
+        for strategy_code, signals in strategy_signals.items():
+            for signal in signals:
+                signal_key = f"{session_date}:{strategy_code}:{signal.sleeve}:signal"
                 ledger.append(
-                    event_key=f"{session_date}:{signal.sleeve}:entry-incident",
+                    event_key=signal_key,
                     session_date=session_date,
-                    event_type="INCIDENT",
+                    event_type="SIGNAL",
                     payload={
-                        "reason": "ENTRY_SUBMISSION_UNCERTAIN",
-                        "error_type": type(error).__name__,
-                        "error": str(error)[:300],
+                        "candidate_id": controllers[strategy_code].candidate_id,
+                        "account_fraction": controllers[strategy_code].account_fraction,
+                        "symbol": signal.symbol,
+                        "decision_bar": signal.decision_bar,
+                        "exit_bar": signal.exit_bar,
+                        "weight": signal.weight,
+                        "exposure": signal.exposure,
                     },
                 )
+                symbol_rows = bars.loc[bars["symbol"] == signal.symbol]
+                localized = pd.to_datetime(symbol_rows["timestamp"], utc=True).dt.tz_convert(NEW_YORK)
+                target = symbol_rows.loc[
+                    (localized.dt.date == session_date)
+                    & (((localized.dt.hour - 9) * 60 + localized.dt.minute - 30) <= decision * 5 + 4)
+                ]
+                try:
+                    controllers[strategy_code].enter(
+                        session_date=session_date,
+                        signal=signal,
+                        reference_price=float(target.iloc[-1]["close"]),
+                        now=datetime.now(UTC),
+                    )
+                except Exception as error:  # noqa: BLE001 - uncertain submit is reconciled by ID
+                    ledger.append(
+                        event_key=f"{session_date}:{strategy_code}:{signal.sleeve}:entry-incident",
+                        session_date=session_date,
+                        event_type="INCIDENT",
+                        payload={
+                            "reason": "ENTRY_SUBMISSION_UNCERTAIN",
+                            "error_type": type(error).__name__,
+                            "error": str(error)[:300],
+                        },
+                    )
     wait_until(ny_bar_time(session_date, COMPONENT_EXIT))
     try:
-        controller.exit_sleeve(
-            session_date=session_date, sleeve="component", now=datetime.now(UTC)
-        )
+        for controller in controllers.values():
+            controller.exit_sleeve(
+                session_date=session_date, sleeve="component", now=datetime.now(UTC)
+            )
     except Exception as error:  # noqa: BLE001 - anchor exit and closeout must still run
         ledger.append(
             event_key=f"{session_date}:component:exit-incident",
@@ -195,7 +228,10 @@ def main() -> int:
         )
     wait_until(ny_bar_time(session_date, EXIT_BAR))
     try:
-        controller.exit_sleeve(session_date=session_date, sleeve="anchor", now=datetime.now(UTC))
+        for controller in controllers.values():
+            controller.exit_sleeve(
+                session_date=session_date, sleeve="anchor", now=datetime.now(UTC)
+            )
     except Exception as error:  # noqa: BLE001 - emergency closeout must still run
         ledger.append(
             event_key=f"{session_date}:anchor:exit-incident",
@@ -204,10 +240,10 @@ def main() -> int:
             payload={"reason": "ANCHOR_EXIT_FAILURE", "error": str(error)[:300]},
         )
     wait_until(datetime.combine(session_date, wall_time(15, 45), NEW_YORK))
-    controller.emergency_flatten(session_date=session_date, now=datetime.now(UTC))
+    controllers["v449"].emergency_flatten(session_date=session_date, now=datetime.now(UTC))
     remaining = broker.positions()
     if remaining:
-        raise RuntimeError("V449_CLOSEOUT_POSITION_REMAINS")
+        raise RuntimeError("PAPER_POOL_CLOSEOUT_POSITION_REMAINS")
     print({"status": "CLOSED", "session_date": session_date.isoformat()})
     return 0
 
