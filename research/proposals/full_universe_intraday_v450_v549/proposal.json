@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v450-v549-preregistered",
+  "version_range": [450, 549],
+  "version_count": 100,
+  "research_classes": {
+    "admitted_strategy_state_enhancement": 50,
+    "independent_return_source": 50
+  },
+  "selection_boundary": {
+    "factor_and_parameter_selection": "2022-01-01 through 2025-12-31 only",
+    "consumed_2026_role": "diagnostic only after each three-record frontier freezes",
+    "consumed_2026_minimum_total_return": 0.05
+  },
+  "stress_contract": [
+    "9bp round trip",
+    "18bp round trip",
+    "9bp plus 5 minute entry delay",
+    "start date stress",
+    "parameter neighborhood",
+    "five chronological folds",
+    "independent 2018-2020 historical source",
+    "global Bonferroni over all scanned cells",
+    "native factory null for every pre-null survivor"
+  ],
+  "global_comparison_contract": {
+    "prior_cells_through_v449_and_diagnostics": 37744,
+    "new_cells_v450_v549": 2650,
+    "cumulative_cells": 40394
+  },
+  "version_identity": "Each version is one fixed causal state hypothesis and clock or one fixed independent factor mechanism and schedule; within-version parameter cells do not create versions.",
+  "forbidden": [
+    "rerun v46-v449",
+    "use 2026 for selection",
+    "broker or order routes",
+    "cross-provider minute filling"
+  ]
+}
