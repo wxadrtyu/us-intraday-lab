@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v854-v798-joint-neighborhood",
+  "candidate_id": "lev-v798-d0612cdc630bb224",
+  "component_total_weights": [0.08, 0.09, 0.1],
+  "v247_component_shares": [0.0, 0.1, 0.25],
+  "state_quantiles": [0.1, 0.2, 0.3, 0.35],
+  "planned_cells": 36,
+  "pass_threshold": 0.7,
+  "cell_gate": "Standard, 18bp and delay primary gates; positive 2018-2020 with MDD below 20%; consumed 2026Q1 and all each above 5%.",
+  "ranking_boundary": "No parameter is reselected. The exact v798 definition remains frozen regardless of neighborhood results."
+}
