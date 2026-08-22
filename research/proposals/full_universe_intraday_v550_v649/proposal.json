@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v550-v649-state-gated-reversal",
+  "version_range": [550, 649],
+  "version_count": 100,
+  "hypothesis": "A low-frequency afternoon rebound in the weaker leveraged ETF transfers across regimes only when a causal broad-market cash filter excludes disorderly states.",
+  "version_identity": "Ten fixed multifactor mechanisms times five fixed entry-exit schedules times two fixed state modes.",
+  "factor_selection_boundary": "Factors, signs, schedules, grids, and state coefficients frozen before running v550-v649.",
+  "ranking_boundary": "2022-2023 training plus 2024-2025 development only; 2018-2020 and consumed 2026 attached after each three-record frontier freezes.",
+  "assets": ["TQQQ", "SOXL"],
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026_minimum_total_return": 0.05
+  },
+  "scan": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookback_sessions": [15, 25],
+    "state_quantiles_when_filtered": [0.3, 0.5, 0.7],
+    "planned_cells": 12800,
+    "prior_comparison_cells": 40394,
+    "cumulative_comparison_cells": 53194
+  },
+  "required_stress": [
+    "2022-2023 training",
+    "2024",
+    "2025",
+    "2024-2025 OOS",
+    "consumed 2026Q1 diagnostic",
+    "consumed 2026 all diagnostic",
+    "18bp round trip",
+    "one additional 5-minute entry delay",
+    "start-date stress",
+    "five chronological folds",
+    "parameter neighborhood",
+    "independent 2018-2020 source",
+    "cumulative Bonferroni",
+    "native factory null for pre-null survivors"
+  ]
+}
