@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v652-reversal-frontier-null",
+  "version": 652,
+  "source_version": 580,
+  "scope": "Run the identical factory-native null on all three development-frozen v580 frontier records.",
+  "selection_rule": "A record is eligible only if it already passed the v650 ensemble economic contract and independently passes both null distributions.",
+  "forbidden": ["change signal factors", "change score threshold", "change schedule", "use 2026 to rank records"]
+}
