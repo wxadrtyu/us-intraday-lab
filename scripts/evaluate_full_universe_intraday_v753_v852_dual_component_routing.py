@@ -139,7 +139,16 @@ def _blend(
 
 
 def _primary(observations: dict) -> bool:
-    return prior.v13._primary(observations)
+    oos = observations["development_oos_2024_2025"]
+    return (
+        float(oos["annualized_return"]) >= 0.50
+        and float(oos["max_drawdown"]) < 0.20
+        and float(oos["information_ratio"]) >= 1.0
+        and all(
+            float(observations[name]["annualized_return"]) > 0
+            for name in ("train_2022_2023", "2024", "2025")
+        )
+    )
 
 
 def _record(
@@ -291,7 +300,9 @@ def main() -> None:
                     total_weight=total_weight,
                     v247_share=v247_share,
                 )
-                observations = tuple(prior.v47._observe(development, stream) for stream in streams)
+                observations = tuple(
+                    prior.v47._observe(development, stream, True) for stream in streams
+                )
                 definition = {
                     "routing_mode": name,
                     "state_clock": clock,
