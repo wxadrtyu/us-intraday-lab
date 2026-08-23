@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1057-v1156-dynamic-sleeve-substitution",
+  "version_range": [1057, 1156],
+  "version_count": 100,
+  "hypothesis": "Replacing a small v45 sleeve with a validated component only in supportive prior-close multi-factor states, while restoring that sleeve to v45 otherwise, can improve return or risk without the persistent cash drag of v798/v925.",
+  "version_grid": {
+    "substitution_weights": [0.02, 0.04, 0.06, 0.08, 0.1],
+    "v247_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": [
+      "prior_close_orderly_substitution",
+      "prior_close_low_dispersion_substitution",
+      "prior_close_defensive_substitution",
+      "prior_close_growth_substitution"
+    ],
+    "state_quantiles": [0.1, 0.2, 0.3, 0.4]
+  },
+  "structural_change": "On blocked sessions the component sleeve is reallocated to the frozen v45 anchor, not cash; gross remains at most one.",
+  "ranking_boundary": "Factors, signs, weights, clocks, quantiles and gates are frozen before evaluation. Ranking uses 2022-2025 only; historical and consumed 2026 are attached after frontier freeze.",
+  "planned_cells": 400,
+  "prior_comparison_cells": 67155,
+  "cumulative_comparison_cells": 67555,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject a candidate if any standard, cost, delay, historical, fold, start-date, neighborhood or consumed-2026 gate fails. Full admission also requires inherited-anchor and cumulative multiple-comparison nulls.",
+  "classification_boundary": "Every survivor remains an inherited-v45 exception unless the inherited anchor and global multiple-comparison nulls independently pass."
+}

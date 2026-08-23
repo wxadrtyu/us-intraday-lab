@@ -28,6 +28,7 @@ COMPONENT_IDS = {
     "v449": "lev-v60-b528b229cefeace2",
 }
 ROUTE_ANCHOR = False
+REALLOCATE_TO_ANCHOR_WHEN_BLOCKED = False
 ROUTING_MODES = (
     ("static", None, {}),
     (
@@ -125,10 +126,17 @@ def _blend(
     *,
     total_weight: float,
     v247_share: float,
+    allowed: np.ndarray | None = None,
 ) -> prior.v12.ReturnStream:
-    anchor_weight = 1.0 - total_weight
-    v247_weight = total_weight * v247_share
-    v449_weight = total_weight * (1.0 - v247_share)
+    if REALLOCATE_TO_ANCHOR_WHEN_BLOCKED:
+        if allowed is None:
+            raise RuntimeError("REALLOCATION_REQUIRES_ALLOWED_MASK")
+        routed_weight = np.where(allowed, total_weight, 0.0)
+    else:
+        routed_weight = total_weight
+    anchor_weight = 1.0 - routed_weight
+    v247_weight = routed_weight * v247_share
+    v449_weight = routed_weight * (1.0 - v247_share)
     return prior.v12.ReturnStream(
         anchor_weight * anchor.values + v247_weight * v247.values + v449_weight * v449.values,
         anchor_weight * anchor.benchmark
@@ -286,6 +294,7 @@ def main() -> None:
                         _route(v449, dev_allowed),
                         total_weight=total_weight,
                         v247_share=v247_share,
+                        allowed=dev_allowed,
                     )
                     for anchor, v247, v449 in zip(
                         anchor_development,
@@ -302,6 +311,7 @@ def main() -> None:
                     _route(component_historical["v449"], hist_allowed),
                     total_weight=total_weight,
                     v247_share=v247_share,
+                    allowed=hist_allowed,
                 )
                 observations = tuple(
                     prior.v47._observe(development, stream, True) for stream in streams
@@ -315,6 +325,11 @@ def main() -> None:
                     "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
                     "anchor_weight": 1.0 - total_weight,
                     **({"anchor_state_routed": True} if ROUTE_ANCHOR else {}),
+                    **(
+                        {"blocked_component_reallocation": "anchor"}
+                        if REALLOCATE_TO_ANCHOR_WHEN_BLOCKED
+                        else {}
+                    ),
                     "v247_component_id": COMPONENT_IDS["v247"],
                     "v247_component_weight": total_weight * v247_share,
                     "v449_component_id": COMPONENT_IDS["v449"],
