@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v957-v1056-portfolio-cash-routing",
+  "version_range": [957, 1056],
+  "version_count": 100,
+  "hypothesis": "Prior-close multi-factor cash states applied to the entire portfolio, including the inherited v45 anchor, can improve historical transfer and drawdown robustness more than routing only a small component sleeve.",
+  "version_grid": {
+    "component_total_weights": [0.05, 0.1, 0.15, 0.2, 0.25],
+    "v247_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": [
+      "prior_close_trend_breadth_cash",
+      "prior_close_low_dispersion_cash",
+      "prior_close_defensive_resilience_cash",
+      "prior_close_cross_asset_confirmation_cash"
+    ],
+    "state_quantiles": [0.1, 0.2, 0.3, 0.4]
+  },
+  "structural_change": "The same causally lagged state gate masks the v45 anchor and both optional components; rejected sessions hold cash.",
+  "ranking_boundary": "Factors, signs, weights, clocks, quantiles and gates are frozen before evaluation. Ranking uses 2022-2025 only; historical and consumed 2026 are attached after frontier freeze.",
+  "planned_cells": 400,
+  "prior_comparison_cells": 66755,
+  "cumulative_comparison_cells": 67155,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject a candidate if any standard, cost, delay, historical, fold, start-date, neighborhood or consumed-2026 gate fails. Full admission also requires inherited-anchor and cumulative multiple-comparison nulls.",
+  "classification_boundary": "Every survivor remains an inherited-v45 exception unless the inherited anchor and global multiple-comparison nulls independently pass."
+}

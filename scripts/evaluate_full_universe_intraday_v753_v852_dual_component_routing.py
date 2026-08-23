@@ -27,6 +27,7 @@ COMPONENT_IDS = {
     "v247": "lev-v118-5d4329ecaa7a2114",
     "v449": "lev-v60-b528b229cefeace2",
 }
+ROUTE_ANCHOR = False
 ROUTING_MODES = (
     ("static", None, {}),
     (
@@ -280,7 +281,7 @@ def main() -> None:
             for state_index, (threshold, dev_allowed, hist_allowed) in enumerate(state_options):
                 streams = tuple(
                     _blend(
-                        anchor,
+                        _route(anchor, dev_allowed) if ROUTE_ANCHOR else anchor,
                         _route(v247, dev_allowed),
                         _route(v449, dev_allowed),
                         total_weight=total_weight,
@@ -294,7 +295,9 @@ def main() -> None:
                     )
                 )
                 historical_stream = _blend(
-                    anchor_historical,
+                    _route(anchor_historical, hist_allowed)
+                    if ROUTE_ANCHOR
+                    else anchor_historical,
                     _route(component_historical["v247"], hist_allowed),
                     _route(component_historical["v449"], hist_allowed),
                     total_weight=total_weight,
@@ -311,6 +314,7 @@ def main() -> None:
                     "state_threshold": threshold,
                     "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
                     "anchor_weight": 1.0 - total_weight,
+                    **({"anchor_state_routed": True} if ROUTE_ANCHOR else {}),
                     "v247_component_id": COMPONENT_IDS["v247"],
                     "v247_component_weight": total_weight * v247_share,
                     "v449_component_id": COMPONENT_IDS["v449"],
