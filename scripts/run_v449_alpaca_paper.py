@@ -1,4 +1,4 @@
-"""Run the frozen v247/v449 allocation on one Alpaca Paper account."""
+"""Run the frozen v247/v449/v798 allocation on one Alpaca Paper account."""
 
 from __future__ import annotations
 
@@ -16,7 +16,9 @@ from us_intraday_lab.paper.pool import (
     POOL_ALLOCATIONS,
     V247_ID,
     V449_ID,
+    V798_ID,
     v247_signals_at,
+    v798_signals_at,
     validate_pool_allocations,
 )
 from us_intraday_lab.paper.v449 import (
@@ -102,7 +104,7 @@ def main() -> int:
             candidate_id=V247_ID,
             strategy_code="v247",
             account_fraction=POOL_ALLOCATIONS[V247_ID],
-            managed_strategy_codes=("v247", "v449"),
+            managed_strategy_codes=("v247", "v449", "v798"),
         ),
         "v449": V449PaperController(
             broker=broker,
@@ -110,7 +112,15 @@ def main() -> int:
             candidate_id=V449_ID,
             strategy_code="v449",
             account_fraction=POOL_ALLOCATIONS[V449_ID],
-            managed_strategy_codes=("v247", "v449"),
+            managed_strategy_codes=("v247", "v449", "v798"),
+        ),
+        "v798": V449PaperController(
+            broker=broker,
+            ledger=ledger,
+            candidate_id=V798_ID,
+            strategy_code="v798",
+            account_fraction=POOL_ALLOCATIONS[V798_ID],
+            managed_strategy_codes=("v247", "v449", "v798"),
         ),
     }
     clock = broker.clock()
@@ -158,6 +168,9 @@ def main() -> int:
                     bars, session_date=session_date, decision_bar=decision
                 ),
                 "v449": signals_at(bars, session_date=session_date, decision_bar=decision),
+                "v798": v798_signals_at(
+                    bars, session_date=session_date, decision_bar=decision
+                ),
             }
         except Exception as error:  # noqa: BLE001 - keep timed exits alive after data failure
             ledger.append(

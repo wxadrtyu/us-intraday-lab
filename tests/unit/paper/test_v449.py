@@ -1,9 +1,20 @@
 from datetime import UTC, date, datetime
 
+import pandas as pd
 import pytest
 
 from tests.fakes.broker import FakePaperBroker, SubmitBehavior
+from us_intraday_lab.paper.pool import (
+    POOL_ALLOCATIONS,
+    V247_ID,
+    V449_ID,
+    V798_ID,
+    V798_STATE_THRESHOLD,
+    v798_state_score,
+    validate_pool_allocations,
+)
 from us_intraday_lab.paper.v449 import SleeveSignal, V449PaperController, V449PaperLedger
+from us_intraday_lab.v45_research_shadow import SYMBOLS
 
 SESSION = date(2026, 8, 24)
 NOW = datetime(2026, 8, 24, 15, 30, tzinfo=UTC)
@@ -173,3 +184,92 @@ def test_pool_allocation_rejects_invalid_fraction(tmp_path) -> None:
             ledger=V449PaperLedger(tmp_path / "pool.sqlite3"),
             account_fraction=1.01,
         )
+
+
+def _state_bars(*, omit_last_xly_minute: bool = False) -> pd.DataFrame:
+    rows = []
+    prior = pd.Timestamp("2026-08-21 13:30:00", tz="UTC")
+    for symbol in SYMBOLS:
+        for minute in range(390):
+            if omit_last_xly_minute and symbol == "XLY" and minute == 389:
+                continue
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "timestamp": prior + pd.Timedelta(minutes=minute),
+                    "open": 100.0,
+                    "high": 100.02,
+                    "low": 99.99,
+                    "close": 100.01,
+                    "volume": 1000.0,
+                }
+            )
+    rows.append(
+        {
+            "symbol": "SPY",
+            "timestamp": pd.Timestamp("2026-08-24 13:30:00", tz="UTC"),
+            "open": 100.0,
+            "high": 100.0,
+            "low": 100.0,
+            "close": 100.0,
+            "volume": 1000.0,
+        }
+    )
+    return pd.DataFrame(rows)
+
+
+def test_v798_prior_close_state_is_causal_and_matches_sparse_sector_semantics() -> None:
+    score = v798_state_score(_state_bars(), session_date=SESSION)
+    assert score > V798_STATE_THRESHOLD
+    sparse_score = v798_state_score(
+        _state_bars(omit_last_xly_minute=True), session_date=SESSION
+    )
+    assert sparse_score < score
+
+
+def test_three_member_pool_allocations_are_exact() -> None:
+    validate_pool_allocations()
+    assert set(POOL_ALLOCATIONS) == {V247_ID, V449_ID, V798_ID}
+    assert sum(POOL_ALLOCATIONS.values()) == pytest.approx(1.0)
+
+
+def test_three_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:
+    broker = FakePaperBroker(now=NOW)
+    ledger = V449PaperLedger(tmp_path / "three-member-pool.sqlite3")
+    definitions = (
+        ("v247", V247_ID, 0.95, 0.05),
+        ("v449", V449_ID, 0.95, 0.05),
+        ("v798", V798_ID, 0.90, 0.10),
+    )
+    controllers = []
+    for strategy_code, candidate_id, _, _ in definitions:
+        controllers.append(
+            V449PaperController(
+                broker=broker,
+                ledger=ledger,
+                candidate_id=candidate_id,
+                strategy_code=strategy_code,
+                account_fraction=POOL_ALLOCATIONS[candidate_id],
+                managed_strategy_codes=("v247", "v449", "v798"),
+            )
+        )
+    for _ in range(6):
+        broker.queue_submit_behavior(SubmitBehavior.FILL)
+    for controller, (_, _, anchor_weight, component_weight) in zip(
+        controllers, definitions, strict=True
+    ):
+        controller.enter(
+            session_date=SESSION,
+            signal=_signal("component", component_weight),
+            reference_price=100.0,
+            now=NOW,
+        )
+        controller.enter(
+            session_date=SESSION,
+            signal=_signal("anchor", anchor_weight),
+            reference_price=100.0,
+            now=NOW,
+        )
+    notional = sum(position.quantity * 100.0 for position in broker.positions())
+    assert notional <= 25_000 * 0.99
+    controllers[0].startup_check(SESSION)

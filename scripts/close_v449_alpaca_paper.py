@@ -1,4 +1,4 @@
-"""Independent late-session v247/v449 Alpaca paper closeout safeguard."""
+"""Independent late-session v247/v449/v798 Alpaca paper closeout safeguard."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def main() -> int:
         broker=broker,
         ledger=ledger,
         strategy_code="pool",
-        managed_strategy_codes=("v247", "v449", "pool"),
+        managed_strategy_codes=("v247", "v449", "v798", "pool"),
     )
     controller.emergency_flatten(session_date=local.date(), now=now)
     if broker.positions():
