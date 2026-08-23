@@ -44,9 +44,16 @@ def main() -> None:
         name: anchored._component_streams(historical, record)[0]
         for name, record in records.items()
     }
-    definition = (
-        json.loads(args.source.read_text(encoding="utf-8"))["records"][0]["definition"]
+    source_record = (
+        json.loads(args.source.read_text(encoding="utf-8"))["records"][0]
         if args.source is not None
+        else None
+    )
+    if source_record is not None and source_record["candidate_id"] != args.candidate:
+        raise RuntimeError("JOINT_NEIGHBORHOOD_CANDIDATE_MISMATCH")
+    definition = (
+        source_record["definition"]
+        if source_record is not None
         else {
             "state_clock": "prior_close",
             "state_coefficients": campaign.ROUTING_MODES[1][2],

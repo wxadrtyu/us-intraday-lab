@@ -20,6 +20,7 @@ from us_intraday_lab.validation.null_tests import (
 )
 from us_intraday_lab.validation.stability import TQQQ_SOXL_SYMBOLS
 
+
 def _selected(source_dir: Path, *, first: int, last: int, expected: str) -> dict:
     records = []
     for version in range(first, last + 1):
