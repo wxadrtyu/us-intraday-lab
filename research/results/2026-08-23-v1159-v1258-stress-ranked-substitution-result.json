@@ -1,0 +1,1021 @@
+{
+  "completed_versions": 100,
+  "cumulative_comparison_cells": 67955,
+  "elapsed_seconds": 6.855035299999997,
+  "planned_new_cells": 400,
+  "planned_versions": 100,
+  "pre_factory_null_hits": 288,
+  "rejected_frontier_records": 12,
+  "rejection_reason_counts": {
+    "cumulative_bonferroni_5pct": 300,
+    "historical_positive_mdd_below_20pct": 12
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [
+    1159,
+    1258
+  ],
+  "versions": [
+    {
+      "best_candidate_id": "lev-v1159-73501f3912beb91e",
+      "best_consumed_2026_total_return": 0.471805018860068,
+      "best_consumed_2026q1_total_return": 0.0986250519421874,
+      "best_oos_annualized_return": 0.6032350241081987,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1159
+    },
+    {
+      "best_candidate_id": "lev-v1160-caae7c59edc8281f",
+      "best_consumed_2026_total_return": 0.4705823065124157,
+      "best_consumed_2026q1_total_return": 0.09842030979753358,
+      "best_oos_annualized_return": 0.6025491167026149,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.08, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1160
+    },
+    {
+      "best_candidate_id": "lev-v1161-68c3bc8e8b8d5df0",
+      "best_consumed_2026_total_return": 0.46874956916982846,
+      "best_consumed_2026q1_total_return": 0.09811307073817033,
+      "best_oos_annualized_return": 0.60151953788776,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1161
+    },
+    {
+      "best_candidate_id": "lev-v1162-89247598d0f7d5a0",
+      "best_consumed_2026_total_return": 0.46569855512161884,
+      "best_consumed_2026q1_total_return": 0.09760067008895112,
+      "best_oos_annualized_return": 0.5998016666867994,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1162
+    },
+    {
+      "best_candidate_id": "lev-v1163-ddcb8b2b55749099",
+      "best_consumed_2026_total_return": 0.46265197367406175,
+      "best_consumed_2026q1_total_return": 0.09708785004970122,
+      "best_oos_annualized_return": 0.5980814243146693,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1163
+    },
+    {
+      "best_candidate_id": "lev-v1164-559f7b06fabe64a9",
+      "best_consumed_2026_total_return": 0.46932086604292267,
+      "best_consumed_2026q1_total_return": 0.09564444648122117,
+      "best_oos_annualized_return": 0.6028080088725372,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1164
+    },
+    {
+      "best_candidate_id": "lev-v1165-134e3a2f00b0855d",
+      "best_consumed_2026_total_return": 0.4677962061651024,
+      "best_consumed_2026q1_total_return": 0.09538953056840471,
+      "best_oos_annualized_return": 0.6019521781416615,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.10, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1165
+    },
+    {
+      "best_candidate_id": "lev-v1166-5964ef870b160128",
+      "best_consumed_2026_total_return": 0.46551128941835396,
+      "best_consumed_2026q1_total_return": 0.09500696067245085,
+      "best_oos_annualized_return": 0.6006673071941182,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1166
+    },
+    {
+      "best_candidate_id": "lev-v1167-1b0881cd6dce9c86",
+      "best_consumed_2026_total_return": 0.4617086198772675,
+      "best_consumed_2026q1_total_return": 0.09436882149844639,
+      "best_oos_annualized_return": 0.5985228704274093,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1167
+    },
+    {
+      "best_candidate_id": "lev-v1168-c56a657bf02b1ba6",
+      "best_consumed_2026_total_return": 0.45791285150868566,
+      "best_consumed_2026q1_total_return": 0.09373002906654904,
+      "best_oos_annualized_return": 0.5963747255588256,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1168
+    },
+    {
+      "best_candidate_id": "lev-v1169-99662b22f4d38130",
+      "best_consumed_2026_total_return": 0.46682502079507815,
+      "best_consumed_2026q1_total_return": 0.09266786226437529,
+      "best_oos_annualized_return": 0.6023603883377802,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.12, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 1169
+    },
+    {
+      "best_candidate_id": "lev-v1170-ce5637a97e6e74a2",
+      "best_consumed_2026_total_return": 0.4649999140312686,
+      "best_consumed_2026q1_total_return": 0.09236317365674851,
+      "best_oos_annualized_return": 0.6013352659477325,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.12, v247_share=0.10",
+      "pre_factory_null_hits": 2,
+      "version": 1170
+    },
+    {
+      "best_candidate_id": "lev-v1171-2498b56fb225021e",
+      "best_consumed_2026_total_return": 0.4622652291756433,
+      "best_consumed_2026q1_total_return": 0.09190585933194306,
+      "best_oos_annualized_return": 0.5997959576479543,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.12, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1171
+    },
+    {
+      "best_candidate_id": "lev-v1172-133d69dd69785f83",
+      "best_consumed_2026_total_return": 0.45771534977482164,
+      "best_consumed_2026q1_total_return": 0.09114291845340428,
+      "best_oos_annualized_return": 0.5972261361746496,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.12, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1172
+    },
+    {
+      "best_candidate_id": "lev-v1173-371641842b3d6856",
+      "best_consumed_2026_total_return": 0.45317537242881567,
+      "best_consumed_2026q1_total_return": 0.09037903981353512,
+      "best_oos_annualized_return": 0.5946509705760092,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.12, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1173
+    },
+    {
+      "best_candidate_id": "lev-v1174-0125d29609388023",
+      "best_consumed_2026_total_return": 0.46431754793819247,
+      "best_consumed_2026q1_total_return": 0.0896953077238054,
+      "best_oos_annualized_return": 0.601892133380844,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.14, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 1174
+    },
+    {
+      "best_candidate_id": "lev-v1175-19ed58c9c2850c4d",
+      "best_consumed_2026_total_return": 0.4621934990231651,
+      "best_consumed_2026q1_total_return": 0.08934124568530333,
+      "best_oos_annualized_return": 0.6006983560600612,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.14, v247_share=0.10",
+      "pre_factory_null_hits": 2,
+      "version": 1175
+    },
+    {
+      "best_candidate_id": "lev-v1176-f098a532cb813a67",
+      "best_consumed_2026_total_return": 0.45901146183595687,
+      "best_consumed_2026q1_total_return": 0.08880977076785546,
+      "best_oos_annualized_return": 0.5989054719765325,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.14, v247_share=0.25",
+      "pre_factory_null_hits": 2,
+      "version": 1176
+    },
+    {
+      "best_candidate_id": "lev-v1177-a234e9b1a2d6a824",
+      "best_consumed_2026_total_return": 0.45371882113002804,
+      "best_consumed_2026q1_total_return": 0.08792296110195674,
+      "best_oos_annualized_return": 0.5959114565233299,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.14, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1177
+    },
+    {
+      "best_candidate_id": "lev-v1178-76e610c5c875ae5c",
+      "best_consumed_2026_total_return": 0.44843960976046593,
+      "best_consumed_2026q1_total_return": 0.08703487901840301,
+      "best_oos_annualized_return": 0.5929101611527998,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.14, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1178
+    },
+    {
+      "best_candidate_id": "lev-v1179-2055dd2fe6cd8ef1",
+      "best_consumed_2026_total_return": 0.46179851253854043,
+      "best_consumed_2026q1_total_return": 0.0867267912356553,
+      "best_oos_annualized_return": 0.6014032152714248,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.16, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 1179
+    },
+    {
+      "best_candidate_id": "lev-v1180-2dc9f7aaae5dc469",
+      "best_consumed_2026_total_return": 0.459377030228989,
+      "best_consumed_2026q1_total_return": 0.08632375322509267,
+      "best_oos_annualized_return": 0.6000414247725732,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.16, v247_share=0.10",
+      "pre_factory_null_hits": 2,
+      "version": 1180
+    },
+    {
+      "best_candidate_id": "lev-v1181-10a5e36b4cb35ee0",
+      "best_consumed_2026_total_return": 0.45575006086714365,
+      "best_consumed_2026q1_total_return": 0.08571869898554696,
+      "best_oos_annualized_return": 0.5979958332107214,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.16, v247_share=0.25",
+      "pre_factory_null_hits": 2,
+      "version": 1181
+    },
+    {
+      "best_candidate_id": "lev-v1182-ee8afc16df4fdfd3",
+      "best_consumed_2026_total_return": 0.44971911016640487,
+      "best_consumed_2026q1_total_return": 0.0847089495545772,
+      "best_oos_annualized_return": 0.5945788243050778,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.16, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1182
+    },
+    {
+      "best_candidate_id": "lev-v1183-c70925a854149979",
+      "best_consumed_2026_total_return": 0.44370563658229134,
+      "best_consumed_2026q1_total_return": 0.08369754337737167,
+      "best_oos_annualized_return": 0.5911522992706746,
+      "cells": 4,
+      "hypothesis": "bar17_growth_leadership_substitution: component_total=0.16, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1183
+    },
+    {
+      "best_candidate_id": "lev-v1184-c197bc8e3be5f3da",
+      "best_consumed_2026_total_return": 0.47418265594504594,
+      "best_consumed_2026q1_total_return": 0.09834669688311548,
+      "best_oos_annualized_return": 0.6207471983891502,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1184
+    },
+    {
+      "best_candidate_id": "lev-v1185-dcebc0d4c846d002",
+      "best_consumed_2026_total_return": 0.4729779200090958,
+      "best_consumed_2026q1_total_return": 0.09815642262335089,
+      "best_oos_annualized_return": 0.619450087809714,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.08, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1185
+    },
+    {
+      "best_candidate_id": "lev-v1186-175601d24ac0bda6",
+      "best_consumed_2026_total_return": 0.47117207976272324,
+      "best_consumed_2026q1_total_return": 0.0978708696820525,
+      "best_oos_annualized_return": 0.617504395536483,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1186
+    },
+    {
+      "best_candidate_id": "lev-v1187-22223e553dc5eb8a",
+      "best_consumed_2026_total_return": 0.4779166421376766,
+      "best_consumed_2026q1_total_return": 0.1020743495300469,
+      "best_oos_annualized_return": 0.6141419356433313,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1187
+    },
+    {
+      "best_candidate_id": "lev-v1188-ab54c535594c294a",
+      "best_consumed_2026_total_return": 0.47538033665888757,
+      "best_consumed_2026q1_total_return": 0.10172484079455635,
+      "best_oos_annualized_return": 0.6115617095201507,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1188
+    },
+    {
+      "best_candidate_id": "lev-v1189-b0ca0c854d9b492d",
+      "best_consumed_2026_total_return": 0.4722880348960439,
+      "best_consumed_2026q1_total_return": 0.09529740531697617,
+      "best_oos_annualized_return": 0.6247296804515032,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1189
+    },
+    {
+      "best_candidate_id": "lev-v1190-5433afd734872f0d",
+      "best_consumed_2026_total_return": 0.4707852165254549,
+      "best_consumed_2026q1_total_return": 0.0950605488350027,
+      "best_oos_annualized_return": 0.6231071390680623,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.10, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1190
+    },
+    {
+      "best_candidate_id": "lev-v1191-e59c21320130a0cb",
+      "best_consumed_2026_total_return": 0.4685329575223336,
+      "best_consumed_2026q1_total_return": 0.09470504362433729,
+      "best_oos_annualized_return": 0.6206732750592501,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1191
+    },
+    {
+      "best_candidate_id": "lev-v1192-1418bb6c46592cfb",
+      "best_consumed_2026_total_return": 0.4769584266037372,
+      "best_consumed_2026q1_total_return": 0.09994861021076917,
+      "best_oos_annualized_return": 0.6164711537957253,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1192
+    },
+    {
+      "best_candidate_id": "lev-v1193-bdd0ce7e321afd41",
+      "best_consumed_2026_total_return": 0.4737919228813723,
+      "best_consumed_2026q1_total_return": 0.09951289600326074,
+      "best_oos_annualized_return": 0.6132435256717483,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1193
+    },
+    {
+      "best_candidate_id": "lev-v1194-2cd25e12622e88ce",
+      "best_consumed_2026_total_return": 0.47037974133857774,
+      "best_consumed_2026q1_total_return": 0.09225249477387698,
+      "best_oos_annualized_return": 0.6287039754713297,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.12, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1194
+    },
+    {
+      "best_candidate_id": "lev-v1195-bc3101165e22b4a7",
+      "best_consumed_2026_total_return": 0.4685800928467456,
+      "best_consumed_2026q1_total_return": 0.09196944686375996,
+      "best_oos_annualized_return": 0.6267555684639943,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.12, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1195
+    },
+    {
+      "best_candidate_id": "lev-v1196-4c9fbef04bd3f535",
+      "best_consumed_2026_total_return": 0.46588344630588563,
+      "best_consumed_2026q1_total_return": 0.09154455848316867,
+      "best_oos_annualized_return": 0.6238328677255616,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.12, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1196
+    },
+    {
+      "best_candidate_id": "lev-v1197-6abe27cd3027046f",
+      "best_consumed_2026_total_return": 0.4759876340982767,
+      "best_consumed_2026q1_total_return": 0.09782390566789134,
+      "best_oos_annualized_return": 0.6187915289520067,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.12, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1197
+    },
+    {
+      "best_candidate_id": "lev-v1198-b452f65b1f74a9e0",
+      "best_consumed_2026_total_return": 0.47219251119131944,
+      "best_consumed_2026q1_total_return": 0.09730245243447322,
+      "best_oos_annualized_return": 0.6149155867900591,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.12, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1198
+    },
+    {
+      "best_candidate_id": "lev-v1199-412979c216c23205",
+      "best_consumed_2026_total_return": 0.4684578257352021,
+      "best_consumed_2026q1_total_return": 0.08921197303935813,
+      "best_oos_annualized_return": 0.6326699718689508,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.14, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1199
+    },
+    {
+      "best_candidate_id": "lev-v1200-cde95631f6ab8664",
+      "best_consumed_2026_total_return": 0.46636260517512285,
+      "best_consumed_2026q1_total_return": 0.08888312263213693,
+      "best_oos_annualized_return": 0.6303952777554047,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.14, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1200
+    },
+    {
+      "best_candidate_id": "lev-v1201-b8618dd64ddd4d43",
+      "best_consumed_2026_total_return": 0.4632236095002047,
+      "best_consumed_2026q1_total_return": 0.08838941754912222,
+      "best_oos_annualized_return": 0.6269830926640261,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.14, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1201
+    },
+    {
+      "best_candidate_id": "lev-v1202-79296cf990b0580a",
+      "best_consumed_2026_total_return": 0.4750042809367041,
+      "best_consumed_2026q1_total_return": 0.0957002428253857,
+      "best_oos_annualized_return": 0.6211030115145189,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.14, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1202
+    },
+    {
+      "best_candidate_id": "lev-v1203-c866c7fd51138bc0",
+      "best_consumed_2026_total_return": 0.47058213170126506,
+      "best_consumed_2026q1_total_return": 0.09509351589211867,
+      "best_oos_annualized_return": 0.61657785642557,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.14, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1203
+    },
+    {
+      "best_candidate_id": "lev-v1204-35870076ec7721f4",
+      "best_consumed_2026_total_return": 0.4665223388963269,
+      "best_consumed_2026q1_total_return": 0.08617584784060672,
+      "best_oos_annualized_return": 0.6366275579836158,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.16, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1204
+    },
+    {
+      "best_candidate_id": "lev-v1205-e917e34673ce916c",
+      "best_consumed_2026_total_return": 0.46413280999908246,
+      "best_consumed_2026q1_total_return": 0.08580158200913957,
+      "best_oos_annualized_return": 0.6340261686843864,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.16, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1205
+    },
+    {
+      "best_candidate_id": "lev-v1206-f6b4c0503e36e7e6",
+      "best_consumed_2026_total_return": 0.4605535106846361,
+      "best_consumed_2026q1_total_return": 0.08523962406586749,
+      "best_oos_annualized_return": 0.6301238690630748,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.16, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1206
+    },
+    {
+      "best_candidate_id": "lev-v1207-b60d2605913f0395",
+      "best_consumed_2026_total_return": 0.4740083837151112,
+      "best_consumed_2026q1_total_return": 0.0935776285937211,
+      "best_oos_annualized_return": 0.6234055519797737,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.16, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1207
+    },
+    {
+      "best_candidate_id": "lev-v1208-426c06d9a9d1d763",
+      "best_consumed_2026_total_return": 0.4689608147424742,
+      "best_consumed_2026q1_total_return": 0.09288609216621535,
+      "best_oos_annualized_return": 0.6182302982638685,
+      "cells": 4,
+      "hypothesis": "bar17_low_dispersion_breakout_substitution: component_total=0.16, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1208
+    },
+    {
+      "best_candidate_id": "lev-v1209-e78ab91f97ad8a82",
+      "best_consumed_2026_total_return": 0.47447411478768187,
+      "best_consumed_2026q1_total_return": 0.10116531914554128,
+      "best_oos_annualized_return": 0.608610954283539,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1209
+    },
+    {
+      "best_candidate_id": "lev-v1210-c25ed04aded8c975",
+      "best_consumed_2026_total_return": 0.4735055370188799,
+      "best_consumed_2026q1_total_return": 0.10096010359118801,
+      "best_oos_annualized_return": 0.6078653070377087,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.08, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1210
+    },
+    {
+      "best_candidate_id": "lev-v1211-27ccbfbad802ab06",
+      "best_consumed_2026_total_return": 0.4720533346008646,
+      "best_consumed_2026q1_total_return": 0.10065215412630102,
+      "best_oos_annualized_return": 0.6067457955634148,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1211
+    },
+    {
+      "best_candidate_id": "lev-v1212-ba9b28d2b73f8c89",
+      "best_consumed_2026_total_return": 0.4696347687779787,
+      "best_consumed_2026q1_total_return": 0.1001385686920071,
+      "best_oos_annualized_return": 0.6048771787314378,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1212
+    },
+    {
+      "best_candidate_id": "lev-v1213-4ba15d6d7867c3d4",
+      "best_consumed_2026_total_return": 0.4672184177791727,
+      "best_consumed_2026q1_total_return": 0.09962456289795862,
+      "best_oos_annualized_return": 0.6030051235968912,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1213
+    },
+    {
+      "best_candidate_id": "lev-v1214-20dada49c303d09b",
+      "best_consumed_2026_total_return": 0.4726589324759889,
+      "best_consumed_2026q1_total_return": 0.09881255693887803,
+      "best_oos_annualized_return": 0.6095372316322076,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1214
+    },
+    {
+      "best_candidate_id": "lev-v1215-9aa0f283ae732c6c",
+      "best_consumed_2026_total_return": 0.47145072229091234,
+      "best_consumed_2026q1_total_return": 0.0985569039240104,
+      "best_oos_annualized_return": 0.608606987453725,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.10, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1215
+    },
+    {
+      "best_candidate_id": "lev-v1216-8c1253042d50ce52",
+      "best_consumed_2026_total_return": 0.46963944144932657,
+      "best_consumed_2026q1_total_return": 0.0981732278081584,
+      "best_oos_annualized_return": 0.6072099882904614,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1216
+    },
+    {
+      "best_candidate_id": "lev-v1217-8badd0c4d833c3a1",
+      "best_consumed_2026_total_return": 0.4666233990268127,
+      "best_consumed_2026q1_total_return": 0.09753324342296565,
+      "best_oos_annualized_return": 0.6048773226294053,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1217
+    },
+    {
+      "best_candidate_id": "lev-v1218-f612ffab62d481e7",
+      "best_consumed_2026_total_return": 0.46361080611038274,
+      "best_consumed_2026q1_total_return": 0.09689260389095256,
+      "best_oos_annualized_return": 0.6025392733592965,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1218
+    },
+    {
+      "best_candidate_id": "lev-v1219-df58fb242ecd076c",
+      "best_consumed_2026_total_return": 0.47083269814569473,
+      "best_consumed_2026q1_total_return": 0.09646093274204959,
+      "best_oos_annualized_return": 0.6104466155989656,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.12, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1219
+    },
+    {
+      "best_candidate_id": "lev-v1220-f13a7363d87f2f3a",
+      "best_consumed_2026_total_return": 0.46938586692960516,
+      "best_consumed_2026q1_total_return": 0.09615518644305698,
+      "best_oos_annualized_return": 0.6093325164948311,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.12, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1220
+    },
+    {
+      "best_candidate_id": "lev-v1221-0c90a3d22c5d0a39",
+      "best_consumed_2026_total_return": 0.4672171047539815,
+      "best_consumed_2026q1_total_return": 0.09569628460430946,
+      "best_oos_annualized_return": 0.607659006474212,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.12, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1221
+    },
+    {
+      "best_candidate_id": "lev-v1222-739d3d00f66bfbe0",
+      "best_consumed_2026_total_return": 0.46360646103101844,
+      "best_consumed_2026q1_total_return": 0.09493069526449416,
+      "best_oos_annualized_return": 0.6048635618706073,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.12, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1222
+    },
+    {
+      "best_candidate_id": "lev-v1223-bf9fef32a42fb2d2",
+      "best_consumed_2026_total_return": 0.4600007685408354,
+      "best_consumed_2026q1_total_return": 0.09416416490801649,
+      "best_oos_annualized_return": 0.6020603487138905,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.12, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1223
+    },
+    {
+      "best_candidate_id": "lev-v1224-5b2135fca4d7032e",
+      "best_consumed_2026_total_return": 0.46899545746202076,
+      "best_consumed_2026q1_total_return": 0.09411045812422514,
+      "best_oos_annualized_return": 0.6113390711133877,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.14, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 1224
+    },
+    {
+      "best_candidate_id": "lev-v1225-6b54d1ccb0fddc05",
+      "best_consumed_2026_total_return": 0.46731101981193235,
+      "best_consumed_2026q1_total_return": 0.09375496152218865,
+      "best_oos_annualized_return": 0.6100418670629411,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.14, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1225
+    },
+    {
+      "best_candidate_id": "lev-v1226-ae40ca455c65dfe3",
+      "best_consumed_2026_total_return": 0.46478637738805184,
+      "best_consumed_2026q1_total_return": 0.09322133321224779,
+      "best_oos_annualized_return": 0.6080928333208595,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.14, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1226
+    },
+    {
+      "best_candidate_id": "lev-v1227-c66ffcd752374a25",
+      "best_consumed_2026_total_return": 0.46058401215896816,
+      "best_consumed_2026q1_total_return": 0.0923309304336486,
+      "best_oos_annualized_return": 0.6048358934272642,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.14, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1227
+    },
+    {
+      "best_candidate_id": "lev-v1228-321e47c96c58461d",
+      "best_consumed_2026_total_return": 0.45638836426702634,
+      "best_consumed_2026q1_total_return": 0.09143925008190013,
+      "best_oos_annualized_return": 0.601568357761957,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.14, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1228
+    },
+    {
+      "best_candidate_id": "lev-v1229-68d5fc03ffffb179",
+      "best_consumed_2026_total_return": 0.46714725630313314,
+      "best_consumed_2026q1_total_return": 0.09176114462402696,
+      "best_oos_annualized_return": 0.6122145635582878,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.16, v247_share=0.00",
+      "pre_factory_null_hits": 1,
+      "version": 1229
+    },
+    {
+      "best_candidate_id": "lev-v1230-3002ac7c5180b662",
+      "best_consumed_2026_total_return": 0.4652262299845229,
+      "best_consumed_2026q1_total_return": 0.09135623950593486,
+      "best_oos_annualized_return": 0.6107350124808273,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.16, v247_share=0.10",
+      "pre_factory_null_hits": 2,
+      "version": 1230
+    },
+    {
+      "best_candidate_id": "lev-v1231-1b414d23fb46fc65",
+      "best_consumed_2026_total_return": 0.46234731233026105,
+      "best_consumed_2026q1_total_return": 0.09074838230166371,
+      "best_oos_annualized_return": 0.6085114524133866,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.16, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1231
+    },
+    {
+      "best_candidate_id": "lev-v1232-603c913e5b14b49a",
+      "best_consumed_2026_total_return": 0.45755610978007066,
+      "best_consumed_2026q1_total_return": 0.08973395512141069,
+      "best_oos_annualized_return": 0.6047943145894119,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.16, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1232
+    },
+    {
+      "best_candidate_id": "lev-v1233-e3c1e19ded6d0dd6",
+      "best_consumed_2026_total_return": 0.4527736523855419,
+      "best_consumed_2026q1_total_return": 0.08871786351990507,
+      "best_oos_annualized_return": 0.6010633088843218,
+      "cells": 4,
+      "hypothesis": "bar17_risk_asset_confirmation_substitution: component_total=0.16, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1233
+    },
+    {
+      "best_candidate_id": "lev-v1234-6fb9e1edaee560f9",
+      "best_consumed_2026_total_return": 0.46304685002425905,
+      "best_consumed_2026q1_total_return": 0.10789088960056659,
+      "best_oos_annualized_return": 0.6204864508977677,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1234
+    },
+    {
+      "best_candidate_id": "lev-v1235-daaa2d7152b029c4",
+      "best_consumed_2026_total_return": 0.4622427413310102,
+      "best_consumed_2026q1_total_return": 0.10757084327885758,
+      "best_oos_annualized_return": 0.6198119627884833,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.08, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1235
+    },
+    {
+      "best_candidate_id": "lev-v1236-4215b2e5fc1ea718",
+      "best_consumed_2026_total_return": 0.4610369091940181,
+      "best_consumed_2026q1_total_return": 0.10709069175621999,
+      "best_oos_annualized_return": 0.6187989960722537,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1236
+    },
+    {
+      "best_candidate_id": "lev-v1237-44bfa7d2f19fd112",
+      "best_consumed_2026_total_return": 0.45902807218468933,
+      "best_consumed_2026q1_total_return": 0.10629022073281313,
+      "best_oos_annualized_return": 0.6171074364652025,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1237
+    },
+    {
+      "best_candidate_id": "lev-v1238-487fb349c6264f8c",
+      "best_consumed_2026_total_return": 0.45702034051581597,
+      "best_consumed_2026q1_total_return": 0.10548947707021661,
+      "best_oos_annualized_return": 0.6154117915542985,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1238
+    },
+    {
+      "best_candidate_id": "lev-v1239-62b8ac7f71a86b3a",
+      "best_consumed_2026_total_return": 0.4584062317483071,
+      "best_consumed_2026q1_total_return": 0.10721150814266522,
+      "best_oos_annualized_return": 0.6243934607929171,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1239
+    },
+    {
+      "best_candidate_id": "lev-v1240-f34ef295cd375f52",
+      "best_consumed_2026_total_return": 0.45740519325642803,
+      "best_consumed_2026q1_total_return": 0.10681211394466517,
+      "best_oos_annualized_return": 0.6235505925625462,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.10, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1240
+    },
+    {
+      "best_candidate_id": "lev-v1241-d31d477907d9f35f",
+      "best_consumed_2026_total_return": 0.4559041494395615,
+      "best_consumed_2026q1_total_return": 0.10621289440798498,
+      "best_oos_annualized_return": 0.6222843510189038,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1241
+    },
+    {
+      "best_candidate_id": "lev-v1242-7261a5597d70f972",
+      "best_consumed_2026_total_return": 0.4534037817803618,
+      "best_consumed_2026q1_total_return": 0.1052138537689804,
+      "best_oos_annualized_return": 0.6201687975996568,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1242
+    },
+    {
+      "best_candidate_id": "lev-v1243-50cae5f6dc5a51da",
+      "best_consumed_2026_total_return": 0.45090513172864566,
+      "best_consumed_2026q1_total_return": 0.10421438727840426,
+      "best_oos_annualized_return": 0.6180468386669078,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1243
+    },
+    {
+      "best_candidate_id": "lev-v1244-8c3641d64f8ddc08",
+      "best_consumed_2026_total_return": 0.45376716474666723,
+      "best_consumed_2026q1_total_return": 0.10653004377205177,
+      "best_oos_annualized_return": 0.6282881649645089,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.12, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1244
+    },
+    {
+      "best_candidate_id": "lev-v1245-3fe643d06cb08c08",
+      "best_consumed_2026_total_return": 0.4525708261093031,
+      "best_consumed_2026q1_total_return": 0.10605156691374118,
+      "best_oos_annualized_return": 0.6272770353759856,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.12, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1245
+    },
+    {
+      "best_candidate_id": "lev-v1246-5983acd39cf20e1a",
+      "best_consumed_2026_total_return": 0.45077705373204857,
+      "best_consumed_2026q1_total_return": 0.10533366688708856,
+      "best_oos_annualized_return": 0.6257575338234915,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.12, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1246
+    },
+    {
+      "best_candidate_id": "lev-v1247-dfc5bdfb174d7193",
+      "best_consumed_2026_total_return": 0.4477893973680309,
+      "best_consumed_2026q1_total_return": 0.1041366751731041,
+      "best_oos_annualized_return": 0.6232175806982074,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.12, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1247
+    },
+    {
+      "best_candidate_id": "lev-v1248-2d643585824aa5a8",
+      "best_consumed_2026_total_return": 0.4448042007487918,
+      "best_consumed_2026q1_total_return": 0.10293907044634332,
+      "best_oos_annualized_return": 0.6206683716343595,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.12, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1248
+    },
+    {
+      "best_candidate_id": "lev-v1249-5b765dcd0bcc13cf",
+      "best_consumed_2026_total_return": 0.4491297194774184,
+      "best_consumed_2026q1_total_return": 0.10584650003552931,
+      "best_oos_annualized_return": 0.6321704498126479,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.14, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1249
+    },
+    {
+      "best_candidate_id": "lev-v1250-46c94a34bd796cc6",
+      "best_consumed_2026_total_return": 0.44773970565069,
+      "best_consumed_2026q1_total_return": 0.10528920559755894,
+      "best_oos_annualized_return": 0.630991188667243,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.14, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1250
+    },
+    {
+      "best_candidate_id": "lev-v1251-2f97aab63d9eee64",
+      "best_consumed_2026_total_return": 0.44565568005885847,
+      "best_consumed_2026q1_total_return": 0.10445301239051785,
+      "best_oos_annualized_return": 0.6292184560081651,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.14, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1251
+    },
+    {
+      "best_candidate_id": "lev-v1252-de04c9f6786acc7f",
+      "best_consumed_2026_total_return": 0.44218496210907254,
+      "best_consumed_2026q1_total_return": 0.10305868778021465,
+      "best_oos_annualized_return": 0.6262537151762246,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.14, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1252
+    },
+    {
+      "best_candidate_id": "lev-v1253-6295b31dd2ded8a1",
+      "best_consumed_2026_total_return": 0.43871757369020603,
+      "best_consumed_2026q1_total_return": 0.10166352908413012,
+      "best_oos_annualized_return": 0.6232763324390456,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.14, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1253
+    },
+    {
+      "best_candidate_id": "lev-v1254-de6c18bd7658f359",
+      "best_consumed_2026_total_return": 0.44449396615044856,
+      "best_consumed_2026q1_total_return": 0.10516088048705008,
+      "best_oos_annualized_return": 0.6360402018063578,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.16, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 1254
+    },
+    {
+      "best_candidate_id": "lev-v1255-b9db709456c43185",
+      "best_consumed_2026_total_return": 0.44291189736615855,
+      "best_consumed_2026q1_total_return": 0.10452503341332386,
+      "best_oos_annualized_return": 0.634692949964555,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.16, v247_share=0.10",
+      "pre_factory_null_hits": 3,
+      "version": 1255
+    },
+    {
+      "best_candidate_id": "lev-v1256-392a4c1f972d6469",
+      "best_consumed_2026_total_return": 0.44054008609686823,
+      "best_consumed_2026q1_total_return": 0.10357093411916374,
+      "best_oos_annualized_return": 0.6326670292093837,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.16, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 1256
+    },
+    {
+      "best_candidate_id": "lev-v1257-48f397206697c712",
+      "best_consumed_2026_total_return": 0.4365905188109249,
+      "best_consumed_2026q1_total_return": 0.10197989442684796,
+      "best_oos_annualized_return": 0.62927713059535,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.16, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 1257
+    },
+    {
+      "best_candidate_id": "lev-v1258-b69d0d31817961cd",
+      "best_consumed_2026_total_return": 0.4326452762864801,
+      "best_consumed_2026q1_total_return": 0.10038776570148644,
+      "best_oos_annualized_return": 0.6258706632448665,
+      "cells": 4,
+      "hypothesis": "prior_close_volatility_contraction_substitution: component_total=0.16, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 1258
+    }
+  ]
+}

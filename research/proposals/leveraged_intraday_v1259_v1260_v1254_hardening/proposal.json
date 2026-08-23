@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v1259-v1260-v1254-hardening",
+  "candidate_id": "lev-v1254-de6c18bd7658f359",
+  "selection_rule": "Highest frozen stress-floor development_rank among v1159-v1258 pre-null survivors.",
+  "v1259": {
+    "test": "state-routed v449 component native null",
+    "methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_SAFE_TIMESTAMP_SHIFT"],
+    "repetitions": 200,
+    "percentile": 0.95,
+    "seed": 20260823
+  },
+  "v1260": {
+    "test": "joint substitution-weight, component-split and state-quantile neighborhood with blocked component weight restored to v45",
+    "substitution_weights": [0.14, 0.16, 0.18],
+    "v247_component_shares": [0.0, 0.1, 0.25],
+    "state_quantiles": [0.35, 0.45, 0.55, 0.65],
+    "planned_cells": 36,
+    "minimum_pass_share": 0.7
+  },
+  "classification_boundary": "Passing v1259-v1260 does not repair inherited v45 or global Bonferroni failures."
+}

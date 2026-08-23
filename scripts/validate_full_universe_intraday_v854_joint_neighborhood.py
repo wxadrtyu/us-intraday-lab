@@ -26,6 +26,9 @@ def main() -> None:
     parser.add_argument("--source", type=Path)
     parser.add_argument("--candidate", default="lev-v798-d0612cdc630bb224")
     parser.add_argument("--validation-version", type=int, default=854)
+    parser.add_argument("--total-weights", type=float, nargs="+", default=TOTAL_WEIGHTS)
+    parser.add_argument("--v247-shares", type=float, nargs="+", default=V247_SHARES)
+    parser.add_argument("--state-quantiles", type=float, nargs="+", default=STATE_QUANTILES)
     args = parser.parse_args()
     started = time.perf_counter()
     development = prior.v53.Cube(args.root, "alpaca", 0)
@@ -75,7 +78,7 @@ def main() -> None:
     finite_train = dev_score[train & np.isfinite(dev_score)]
     cells = []
     for total_weight, share, quantile in itertools.product(
-        TOTAL_WEIGHTS, V247_SHARES, STATE_QUANTILES
+        args.total_weights, args.v247_shares, args.state_quantiles
     ):
         threshold = float(np.quantile(finite_train, quantile))
         dev_allowed = np.isfinite(dev_score) & (dev_score >= threshold)
