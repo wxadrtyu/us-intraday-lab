@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v1157-v1158-v1102-hardening",
+  "candidate_id": "lev-v1102-b4e2a7c1b73a5b95",
+  "selection_rule": "Lexicographically highest frozen development_rank among v1057-v1156 pre-null survivors.",
+  "v1157": {
+    "test": "state-routed v449 component native null",
+    "methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_SAFE_TIMESTAMP_SHIFT"],
+    "repetitions": 200,
+    "percentile": 0.95,
+    "seed": 20260823
+  },
+  "v1158": {
+    "test": "joint substitution-weight, component-split and state-quantile neighborhood with blocked component weight restored to v45",
+    "substitution_weights": [0.08, 0.09, 0.1],
+    "v247_component_shares": [0.0, 0.1, 0.25],
+    "state_quantiles": [0.1, 0.2, 0.3, 0.35],
+    "planned_cells": 36,
+    "minimum_pass_share": 0.7
+  },
+  "classification_boundary": "Passing v1157-v1158 does not repair inherited v45 or global Bonferroni failures."
+}

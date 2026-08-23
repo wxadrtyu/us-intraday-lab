@@ -59,6 +59,9 @@ def main() -> None:
             "state_coefficients": campaign.ROUTING_MODES[1][2],
         }
     )
+    campaign.REALLOCATE_TO_ANCHOR_WHEN_BLOCKED = (
+        definition.get("blocked_component_reallocation") == "anchor"
+    )
     coefficients = dict(definition["state_coefficients"])
     train = development.masks()["train_2022_2023"]
     dev_matrix = prior._state_matrix(development, str(definition["state_clock"]))
@@ -84,6 +87,7 @@ def main() -> None:
                 campaign._route(v449, dev_allowed),
                 total_weight=total_weight,
                 v247_share=share,
+                allowed=dev_allowed,
             )
             for anchor, v247, v449 in zip(
                 anchor_dev, component_dev["v247"], component_dev["v449"], strict=True
@@ -96,6 +100,7 @@ def main() -> None:
             campaign._route(component_hist["v449"], hist_allowed),
             total_weight=total_weight,
             v247_share=share,
+            allowed=hist_allowed,
         )
         historical_obs = prior.v47._observe(historical, historical_stream, True)[
             "historical_2018_2020"
