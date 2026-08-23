@@ -29,6 +29,7 @@ COMPONENT_IDS = {
 }
 ROUTE_ANCHOR = False
 REALLOCATE_TO_ANCHOR_WHEN_BLOCKED = False
+RANK_MODE = "legacy"
 ROUTING_MODES = (
     ("static", None, {}),
     (
@@ -157,6 +158,23 @@ def _primary(observations: dict) -> bool:
             float(observations[name]["annualized_return"]) > 0
             for name in ("train_2022_2023", "2024", "2025")
         )
+    )
+
+
+def _rank(observations: tuple[dict, dict, dict]) -> tuple[float, ...]:
+    if RANK_MODE == "legacy":
+        return prior.v47._rank(*observations)
+    if RANK_MODE != "stress_floor":
+        raise RuntimeError(f"UNKNOWN_RANK_MODE:{RANK_MODE}")
+    oos = [item["development_oos_2024_2025"] for item in observations]
+    return (
+        min(float(item["annualized_return"]) for item in oos),
+        -max(float(item["max_drawdown"]) for item in oos),
+        min(float(item["information_ratio"]) for item in oos),
+        min(
+            float(observations[0][name]["annualized_return"])
+            for name in ("train_2022_2023", "2024", "2025")
+        ),
     )
 
 
@@ -330,6 +348,7 @@ def main() -> None:
                         if REALLOCATE_TO_ANCHOR_WHEN_BLOCKED
                         else {}
                     ),
+                    **({"development_rank_mode": RANK_MODE} if RANK_MODE != "legacy" else {}),
                     "v247_component_id": COMPONENT_IDS["v247"],
                     "v247_component_weight": total_weight * v247_share,
                     "v449_component_id": COMPONENT_IDS["v449"],
@@ -343,7 +362,7 @@ def main() -> None:
                         "streams": streams,
                         "historical_stream": historical_stream,
                         "observations": observations,
-                        "rank": prior.v47._rank(*observations),
+                        "rank": _rank(observations),
                     }
                 )
             cells.sort(key=lambda item: item["rank"], reverse=True)
