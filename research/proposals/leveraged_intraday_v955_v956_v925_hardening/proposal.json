@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v955-v956-v925-hardening",
+  "candidate_id": "lev-v925-ab69d3ff58fe564c",
+  "selection_rule": "Lexicographically highest frozen development_rank among v855-v954 pre-null survivors.",
+  "v955": {
+    "test": "state-routed v449 component native null",
+    "methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_SAFE_TIMESTAMP_SHIFT"],
+    "repetitions": 200,
+    "percentile": 0.95,
+    "seed": 20260823
+  },
+  "v956": {
+    "test": "joint total-weight, component-split and state-quantile neighborhood",
+    "planned_cells": 36,
+    "minimum_pass_share": 0.7
+  },
+  "classification_boundary": "Passing v955-v956 does not repair inherited v45 or global Bonferroni failures."
+}

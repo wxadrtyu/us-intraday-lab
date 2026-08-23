@@ -23,6 +23,9 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--component-dir", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--source", type=Path)
+    parser.add_argument("--candidate", default="lev-v798-d0612cdc630bb224")
+    parser.add_argument("--validation-version", type=int, default=854)
     args = parser.parse_args()
     started = time.perf_counter()
     development = prior.v53.Cube(args.root, "alpaca", 0)
@@ -41,10 +44,18 @@ def main() -> None:
         name: anchored._component_streams(historical, record)[0]
         for name, record in records.items()
     }
-    coefficients = dict(campaign.ROUTING_MODES[1][2])
+    definition = (
+        json.loads(args.source.read_text(encoding="utf-8"))["records"][0]["definition"]
+        if args.source is not None
+        else {
+            "state_clock": "prior_close",
+            "state_coefficients": campaign.ROUTING_MODES[1][2],
+        }
+    )
+    coefficients = dict(definition["state_coefficients"])
     train = development.masks()["train_2022_2023"]
-    dev_matrix = prior._state_matrix(development, "prior_close")
-    hist_matrix = prior._state_matrix(historical, "prior_close")
+    dev_matrix = prior._state_matrix(development, str(definition["state_clock"]))
+    hist_matrix = prior._state_matrix(historical, str(definition["state_clock"]))
     means = {name: float(np.nanmean(dev_matrix[name][train])) for name in coefficients}
     scales = {
         name: max(1e-8, float(np.nanstd(dev_matrix[name][train]))) for name in coefficients
@@ -130,8 +141,8 @@ def main() -> None:
     payload = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
-        "version": 854,
-        "candidate_id": "lev-v798-d0612cdc630bb224",
+        "version": args.validation_version,
+        "candidate_id": args.candidate,
         "evaluated_cells": len(cells),
         "passed_cells": sum(cell["passed"] for cell in cells),
         "joint_neighborhood_pass_share": pass_share,

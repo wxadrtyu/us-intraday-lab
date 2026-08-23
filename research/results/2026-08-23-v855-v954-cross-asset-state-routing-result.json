@@ -1,0 +1,1021 @@
+{
+  "completed_versions": 100,
+  "cumulative_comparison_cells": 66755,
+  "elapsed_seconds": 6.747680699991179,
+  "planned_new_cells": 400,
+  "planned_versions": 100,
+  "pre_factory_null_hits": 291,
+  "rejected_frontier_records": 9,
+  "rejection_reason_counts": {
+    "cumulative_bonferroni_5pct": 300,
+    "historical_positive_mdd_below_20pct": 9
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [
+    855,
+    954
+  ],
+  "versions": [
+    {
+      "best_candidate_id": "lev-v855-be5fd6bfc492476e",
+      "best_consumed_2026_total_return": 0.47789971859627345,
+      "best_consumed_2026q1_total_return": 0.10935129581972713,
+      "best_oos_annualized_return": 0.5972146876856572,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.02, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 855
+    },
+    {
+      "best_candidate_id": "lev-v856-9574f39c888c5540",
+      "best_consumed_2026_total_return": 0.4766450871447623,
+      "best_consumed_2026q1_total_return": 0.10919038668723902,
+      "best_oos_annualized_return": 0.5965721342981121,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.02, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 856
+    },
+    {
+      "best_candidate_id": "lev-v857-687b6a4c4120762c",
+      "best_consumed_2026_total_return": 0.4753912039400936,
+      "best_consumed_2026q1_total_return": 0.10902944173938289,
+      "best_oos_annualized_return": 0.5959294104830879,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.02, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 857
+    },
+    {
+      "best_candidate_id": "lev-v858-823a1f1c29eb6d7a",
+      "best_consumed_2026_total_return": 0.47413806873438125,
+      "best_consumed_2026q1_total_return": 0.10886846098510117,
+      "best_oos_annualized_return": 0.5952865166896093,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.02, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 858
+    },
+    {
+      "best_candidate_id": "lev-v859-35b356f8d17f53e9",
+      "best_consumed_2026_total_return": 0.47288568127970754,
+      "best_consumed_2026q1_total_return": 0.10870744443333713,
+      "best_oos_annualized_return": 0.5946434533664959,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.02, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 859
+    },
+    {
+      "best_candidate_id": "lev-v860-e4d4e8e3a3cd6f20",
+      "best_consumed_2026_total_return": 0.4741600620958262,
+      "best_consumed_2026q1_total_return": 0.10811273020155432,
+      "best_oos_annualized_return": 0.5896618796567354,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.04, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 860
+    },
+    {
+      "best_candidate_id": "lev-v861-8fdb578d8a73f4cc",
+      "best_consumed_2026_total_return": 0.47166047656545307,
+      "best_consumed_2026q1_total_return": 0.10779170796065318,
+      "best_oos_annualized_return": 0.5883854553116723,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.04, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 861
+    },
+    {
+      "best_candidate_id": "lev-v862-02b224fd9b36b0d6",
+      "best_consumed_2026_total_return": 0.4691638690992761,
+      "best_consumed_2026q1_total_return": 0.10747054259411337,
+      "best_oos_annualized_return": 0.5871083488769566,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.04, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 862
+    },
+    {
+      "best_candidate_id": "lev-v863-b15d20fe44e2d55a",
+      "best_consumed_2026_total_return": 0.46667023772677174,
+      "best_consumed_2026q1_total_return": 0.1071492341732938,
+      "best_oos_annualized_return": 0.5858305639274446,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.04, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 863
+    },
+    {
+      "best_candidate_id": "lev-v864-43284f6b2e908fc6",
+      "best_consumed_2026_total_return": 0.46417958047697905,
+      "best_consumed_2026q1_total_return": 0.10682778276959026,
+      "best_oos_annualized_return": 0.5845521040347987,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.04, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 864
+    },
+    {
+      "best_candidate_id": "lev-v865-62a0df4dfe3d1bf6",
+      "best_consumed_2026_total_return": 0.47040459621420627,
+      "best_consumed_2026q1_total_return": 0.10687182804473871,
+      "best_oos_annualized_return": 0.5820795405742027,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.06, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 865
+    },
+    {
+      "best_candidate_id": "lev-v866-48915c2b70143888",
+      "best_consumed_2026_total_return": 0.46666973666409683,
+      "best_consumed_2026q1_total_return": 0.10639148759219941,
+      "best_oos_annualized_return": 0.580177924715733,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.06, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 866
+    },
+    {
+      "best_candidate_id": "lev-v867-9e3476c5fa79de39",
+      "best_consumed_2026_total_return": 0.4629415442475904,
+      "best_consumed_2026q1_total_return": 0.1059108254134975,
+      "best_oos_annualized_return": 0.5782747734098772,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.06, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 867
+    },
+    {
+      "best_candidate_id": "lev-v868-287852232320b5ca",
+      "best_consumed_2026_total_return": 0.4592200123564534,
+      "best_consumed_2026q1_total_return": 0.10542984174888859,
+      "best_oos_annualized_return": 0.5763700986631068,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.06, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 868
+    },
+    {
+      "best_candidate_id": "lev-v869-ab0ff0fabb39d209",
+      "best_consumed_2026_total_return": 0.45550513438031537,
+      "best_consumed_2026q1_total_return": 0.1049485368388281,
+      "best_oos_annualized_return": 0.574463912465824,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.06, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 869
+    },
+    {
+      "best_candidate_id": "lev-v870-b529e81643b875d2",
+      "best_consumed_2026_total_return": 0.46663346895912805,
+      "best_consumed_2026q1_total_return": 0.10562859863740637,
+      "best_oos_annualized_return": 0.5744680064572509,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 870
+    },
+    {
+      "best_candidate_id": "lev-v871-01e5824059ad58ca",
+      "best_consumed_2026_total_return": 0.46167301760845336,
+      "best_consumed_2026q1_total_return": 0.10498973373699894,
+      "best_oos_annualized_return": 0.5719498747692335,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 871
+    },
+    {
+      "best_candidate_id": "lev-v872-e223c4646ce764e0",
+      "best_consumed_2026_total_return": 0.45672435948374135,
+      "best_consumed_2026q1_total_return": 0.10435029742550239,
+      "best_oos_annualized_return": 0.5694290122647094,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 872
+    },
+    {
+      "best_candidate_id": "lev-v873-2eaefdf25085da86",
+      "best_consumed_2026_total_return": 0.4517874790209253,
+      "best_consumed_2026q1_total_return": 0.10371029027103895,
+      "best_oos_annualized_return": 0.5669054472639206,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 873
+    },
+    {
+      "best_candidate_id": "lev-v874-ee2e0700972b1f5e",
+      "best_consumed_2026_total_return": 0.4468623606491873,
+      "best_consumed_2026q1_total_return": 0.10306971284237232,
+      "best_oos_annualized_return": 0.5643792080367027,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.08, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 874
+    },
+    {
+      "best_candidate_id": "lev-v875-272841bc0cb9c426",
+      "best_consumed_2026_total_return": 0.4628468287144567,
+      "best_consumed_2026q1_total_return": 0.10438305127687664,
+      "best_oos_annualized_return": 0.5668276128709078,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 875
+    },
+    {
+      "best_candidate_id": "lev-v876-e9b47269ee996b70",
+      "best_consumed_2026_total_return": 0.4566704694177892,
+      "best_consumed_2026q1_total_return": 0.10358645455368354,
+      "best_oos_annualized_return": 0.5637016365086678,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 876
+    },
+    {
+      "best_candidate_id": "lev-v877-e4e8018322674ca3",
+      "best_consumed_2026_total_return": 0.45051244432387083,
+      "best_consumed_2026q1_total_return": 0.10278896585711839,
+      "best_oos_annualized_return": 0.5605713917785762,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 877
+    },
+    {
+      "best_candidate_id": "lev-v878-3118fe040b5349db",
+      "best_consumed_2026_total_return": 0.4443727232284782,
+      "best_consumed_2026q1_total_return": 0.10199058629411972,
+      "best_oos_annualized_return": 0.5574369337202454,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 878
+    },
+    {
+      "best_candidate_id": "lev-v879-17dc3972569d7664",
+      "best_consumed_2026_total_return": 0.4382512759109076,
+      "best_consumed_2026q1_total_return": 0.10119131697319483,
+      "best_oos_annualized_return": 0.5542983172510332,
+      "cells": 4,
+      "hypothesis": "prior_close_defensive_resilience: component_total=0.10, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 879
+    },
+    {
+      "best_candidate_id": "lev-v880-486cb7dae3445161",
+      "best_consumed_2026_total_return": 0.47493010827279214,
+      "best_consumed_2026q1_total_return": 0.10764254658096539,
+      "best_oos_annualized_return": 0.6002290898555549,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.02, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 880
+    },
+    {
+      "best_candidate_id": "lev-v881-db5f7e6b48fc3138",
+      "best_consumed_2026_total_return": 0.4742806170060685,
+      "best_consumed_2026q1_total_return": 0.10751304200222567,
+      "best_oos_annualized_return": 0.5997822038550835,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.02, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 881
+    },
+    {
+      "best_candidate_id": "lev-v882-7080d832977e1692",
+      "best_consumed_2026_total_return": 0.4736312989098601,
+      "best_consumed_2026q1_total_return": 0.10738351096379017,
+      "best_oos_annualized_return": 0.5993351812157461,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.02, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 882
+    },
+    {
+      "best_candidate_id": "lev-v883-4a95a17e8202afef",
+      "best_consumed_2026_total_return": 0.4738275540793071,
+      "best_consumed_2026q1_total_return": 0.10728279051009681,
+      "best_oos_annualized_return": 0.5996111677349834,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.02, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 883
+    },
+    {
+      "best_candidate_id": "lev-v884-f6da66f10b553b28",
+      "best_consumed_2026_total_return": 0.4723837827491344,
+      "best_consumed_2026q1_total_return": 0.10704052503791694,
+      "best_oos_annualized_return": 0.5989528795458283,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.02, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 884
+    },
+    {
+      "best_candidate_id": "lev-v885-80aa1c5b0ea170a5",
+      "best_consumed_2026_total_return": 0.4682489908368579,
+      "best_consumed_2026q1_total_return": 0.10470129735492639,
+      "best_oos_annualized_return": 0.5956991767108664,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.04, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 885
+    },
+    {
+      "best_candidate_id": "lev-v886-9617fda9cf4b5246",
+      "best_consumed_2026_total_return": 0.4669570393347675,
+      "best_consumed_2026q1_total_return": 0.10444328132024805,
+      "best_oos_annualized_return": 0.5948091675617548,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.04, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 886
+    },
+    {
+      "best_candidate_id": "lev-v887-4cb3e96a3f6bed86",
+      "best_consumed_2026_total_return": 0.4656657760745122,
+      "best_consumed_2026q1_total_return": 0.10418515976672404,
+      "best_oos_annualized_return": 0.5939186118571547,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.04, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 887
+    },
+    {
+      "best_candidate_id": "lev-v888-d0a16880c9e95937",
+      "best_consumed_2026_total_return": 0.46605626060499494,
+      "best_consumed_2026q1_total_return": 0.10398441238600387,
+      "best_oos_annualized_return": 0.5944676016573773,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.04, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 888
+    },
+    {
+      "best_candidate_id": "lev-v889-0c647e2acecd97d7",
+      "best_consumed_2026_total_return": 0.4631857336734717,
+      "best_consumed_2026q1_total_return": 0.10350143052127758,
+      "best_oos_annualized_return": 0.5931548653467249,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.04, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 889
+    },
+    {
+      "best_candidate_id": "lev-v890-8db5c298fabd234c",
+      "best_consumed_2026_total_return": 0.4615801640178292,
+      "best_consumed_2026q1_total_return": 0.10176377706405937,
+      "best_oos_annualized_return": 0.5911480990576758,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.06, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 890
+    },
+    {
+      "best_candidate_id": "lev-v891-f0367483fc936d02",
+      "best_consumed_2026_total_return": 0.45965274923783017,
+      "best_consumed_2026q1_total_return": 0.10137823841057103,
+      "best_oos_annualized_return": 0.5898187333489848,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.06, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 891
+    },
+    {
+      "best_candidate_id": "lev-v892-7754c63a121ca6b9",
+      "best_consumed_2026_total_return": 0.457726873056707,
+      "best_consumed_2026q1_total_return": 0.10099246305812337,
+      "best_oos_annualized_return": 0.5884881379239495,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.06, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 892
+    },
+    {
+      "best_candidate_id": "lev-v893-e9d2e02aedb71ec5",
+      "best_consumed_2026_total_return": 0.45830957031164443,
+      "best_consumed_2026q1_total_return": 0.10069237965421429,
+      "best_oos_annualized_return": 0.589307148955865,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.06, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 893
+    },
+    {
+      "best_candidate_id": "lev-v894-bef9f08624c74d1d",
+      "best_consumed_2026_total_return": 0.4540292002013311,
+      "best_consumed_2026q1_total_return": 0.09997022530516197,
+      "best_oos_annualized_return": 0.5873438242842126,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.06, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 894
+    },
+    {
+      "best_candidate_id": "lev-v895-c3f28cd4e3f5ad0b",
+      "best_consumed_2026_total_return": 0.4549237252222831,
+      "best_consumed_2026q1_total_return": 0.09882999477570276,
+      "best_oos_annualized_return": 0.5865760674552396,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 895
+    },
+    {
+      "best_candidate_id": "lev-v896-7fd93ed6232b050b",
+      "best_consumed_2026_total_return": 0.4523678099814241,
+      "best_consumed_2026q1_total_return": 0.09831791806423396,
+      "best_oos_annualized_return": 0.5848111151947495,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 896
+    },
+    {
+      "best_candidate_id": "lev-v897-58a8a6b97d82caa7",
+      "best_consumed_2026_total_return": 0.44981461242727727,
+      "best_consumed_2026q1_total_return": 0.0978054218293185,
+      "best_oos_annualized_return": 0.5830439768910263,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 897
+    },
+    {
+      "best_candidate_id": "lev-v898-47b7b83fc4b386f9",
+      "best_consumed_2026_total_return": 0.45058751496266636,
+      "best_consumed_2026q1_total_return": 0.09740669068775354,
+      "best_oos_annualized_return": 0.584130028480331,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 898
+    },
+    {
+      "best_candidate_id": "lev-v899-084a95c082de7eee",
+      "best_consumed_2026_total_return": 0.4449141109061534,
+      "best_consumed_2026q1_total_return": 0.09644690259701849,
+      "best_oos_annualized_return": 0.581519994576112,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.08, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 899
+    },
+    {
+      "best_candidate_id": "lev-v900-436ce88df898f7e5",
+      "best_consumed_2026_total_return": 0.44827977102976835,
+      "best_consumed_2026q1_total_return": 0.09589995950282781,
+      "best_oos_annualized_return": 0.5819832927582425,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 1,
+      "version": 900
+    },
+    {
+      "best_candidate_id": "lev-v901-b7d4a60f2e690ab0",
+      "best_consumed_2026_total_return": 0.4451022839403509,
+      "best_consumed_2026q1_total_return": 0.09526232502728438,
+      "best_oos_annualized_return": 0.5797865270553546,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 2,
+      "version": 901
+    },
+    {
+      "best_candidate_id": "lev-v902-4690bdac2dfa0e0b",
+      "best_consumed_2026_total_return": 0.4419290158614513,
+      "best_consumed_2026q1_total_return": 0.0946240370341358,
+      "best_oos_annualized_return": 0.5775863459391304,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 2,
+      "version": 902
+    },
+    {
+      "best_candidate_id": "lev-v903-15e7558071103683",
+      "best_consumed_2026_total_return": 0.44289012544600603,
+      "best_consumed_2026q1_total_return": 0.09412734382666899,
+      "best_oos_annualized_return": 0.5789364589711983,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 903
+    },
+    {
+      "best_candidate_id": "lev-v904-dd85be807e0b45ab",
+      "best_consumed_2026_total_return": 0.4358403936062927,
+      "best_consumed_2026q1_total_return": 0.09293145557718319,
+      "best_oos_annualized_return": 0.5756836140061039,
+      "cells": 4,
+      "hypothesis": "bar17_growth_breadth: component_total=0.10, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 904
+    },
+    {
+      "best_candidate_id": "lev-v905-603725eb483f01f0",
+      "best_consumed_2026_total_return": 0.4725349952261606,
+      "best_consumed_2026q1_total_return": 0.10727549775158596,
+      "best_oos_annualized_return": 0.5978451334729205,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.02, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 905
+    },
+    {
+      "best_candidate_id": "lev-v906-1a8dcfe8ae6e8e3d",
+      "best_consumed_2026_total_return": 0.47185026817743214,
+      "best_consumed_2026q1_total_return": 0.10714737641315342,
+      "best_oos_annualized_return": 0.597288508818612,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.02, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 906
+    },
+    {
+      "best_candidate_id": "lev-v907-c4f2e3b19394355f",
+      "best_consumed_2026_total_return": 0.4711657200358139,
+      "best_consumed_2026q1_total_return": 0.10701921180497687,
+      "best_oos_annualized_return": 0.5967316759673242,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.02, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 907
+    },
+    {
+      "best_candidate_id": "lev-v908-9f34a8d4a5035e25",
+      "best_consumed_2026_total_return": 0.4704813508184882,
+      "best_consumed_2026q1_total_return": 0.10689100393217288,
+      "best_oos_annualized_return": 0.5961746353129367,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.02, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 908
+    },
+    {
+      "best_candidate_id": "lev-v909-44fcd4ff539c1d4a",
+      "best_consumed_2026_total_return": 0.46861038113339015,
+      "best_consumed_2026q1_total_return": 0.10637884699823785,
+      "best_oos_annualized_return": 0.5939687823694855,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.02, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 909
+    },
+    {
+      "best_candidate_id": "lev-v910-9d0c300d55c8eac0",
+      "best_consumed_2026_total_return": 0.4634752533666249,
+      "best_consumed_2026q1_total_return": 0.10396625475668508,
+      "best_oos_annualized_return": 0.5909155335274674,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.04, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 910
+    },
+    {
+      "best_candidate_id": "lev-v911-909dacaaadf6f279",
+      "best_consumed_2026_total_return": 0.4621155743336165,
+      "best_consumed_2026q1_total_return": 0.10371119790974115,
+      "best_oos_annualized_return": 0.5898095467503086,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.04, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 911
+    },
+    {
+      "best_candidate_id": "lev-v912-abc1353e98e838d2",
+      "best_consumed_2026_total_return": 0.4607566048830334,
+      "best_consumed_2026q1_total_return": 0.10345596851975336,
+      "best_oos_annualized_return": 0.5887027277024475,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.04, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 912
+    },
+    {
+      "best_candidate_id": "lev-v913-92ab170a24eb3f30",
+      "best_consumed_2026_total_return": 0.459398345151943,
+      "best_consumed_2026q1_total_return": 0.10320056662744448,
+      "best_oos_annualized_return": 0.5875950795208555,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.04, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 913
+    },
+    {
+      "best_candidate_id": "lev-v914-6360d5b052a8b8c1",
+      "best_consumed_2026_total_return": 0.4556854807690416,
+      "best_consumed_2026q1_total_return": 0.10218087477612459,
+      "best_oos_annualized_return": 0.5832109853895702,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.04, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 914
+    },
+    {
+      "best_candidate_id": "lev-v915-2b91f804efc20916",
+      "best_consumed_2026_total_return": 0.45444430827857696,
+      "best_consumed_2026q1_total_return": 0.10065980915784634,
+      "best_oos_annualized_return": 0.583949148109689,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.06, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 915
+    },
+    {
+      "best_candidate_id": "lev-v916-2df38459b9fda86b",
+      "best_consumed_2026_total_return": 0.45241938456149566,
+      "best_consumed_2026q1_total_return": 0.10027899725638334,
+      "best_oos_annualized_return": 0.5823010675164333,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.06, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 916
+    },
+    {
+      "best_candidate_id": "lev-v917-f85fb574ce756c4d",
+      "best_consumed_2026_total_return": 0.4503960438859633,
+      "best_consumed_2026q1_total_return": 0.099897798337655,
+      "best_oos_annualized_return": 0.5806511155823029,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.06, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 917
+    },
+    {
+      "best_candidate_id": "lev-v918-e6653b31cea6b441",
+      "best_consumed_2026_total_return": 0.4483742867132776,
+      "best_consumed_2026q1_total_return": 0.09951621253842324,
+      "best_oos_annualized_return": 0.5789993028470033,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.06, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 918
+    },
+    {
+      "best_candidate_id": "lev-v919-d1198797fd88338d",
+      "best_consumed_2026_total_return": 0.4428483537008463,
+      "best_consumed_2026q1_total_return": 0.09799358645267908,
+      "best_oos_annualized_return": 0.5724645708784277,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.06, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 919
+    },
+    {
+      "best_candidate_id": "lev-v920-205f69e5e24b9fe2",
+      "best_consumed_2026_total_return": 0.4454422739526962,
+      "best_consumed_2026q1_total_return": 0.09735618340381702,
+      "best_oos_annualized_return": 0.576946297191752,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 920
+    },
+    {
+      "best_candidate_id": "lev-v921-8aab854db3788704",
+      "best_consumed_2026_total_return": 0.4427617451082184,
+      "best_consumed_2026q1_total_return": 0.09685079153156018,
+      "best_oos_annualized_return": 0.5747633961221603,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 921
+    },
+    {
+      "best_candidate_id": "lev-v922-4e9b3ce4ba42c56b",
+      "best_consumed_2026_total_return": 0.4400840066761782,
+      "best_consumed_2026q1_total_return": 0.09634471376783882,
+      "best_oos_annualized_return": 0.5725771706647742,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 922
+    },
+    {
+      "best_candidate_id": "lev-v923-8dca0a8f6d947f09",
+      "best_consumed_2026_total_return": 0.43740905974693667,
+      "best_consumed_2026q1_total_return": 0.09583795043521026,
+      "best_oos_annualized_return": 0.5703876456893002,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 923
+    },
+    {
+      "best_candidate_id": "lev-v924-8b13b281ba4c6ff9",
+      "best_consumed_2026_total_return": 0.4300986361794221,
+      "best_consumed_2026q1_total_return": 0.09381696950445506,
+      "best_oos_annualized_return": 0.5617298690250774,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.08, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 924
+    },
+    {
+      "best_candidate_id": "lev-v925-ab69d3ff58fe564c",
+      "best_consumed_2026_total_return": 0.4364692626077815,
+      "best_consumed_2026q1_total_return": 0.09405539986978306,
+      "best_oos_annualized_return": 0.5699073009560078,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 925
+    },
+    {
+      "best_candidate_id": "lev-v926-12d678bbcaec365a",
+      "best_consumed_2026_total_return": 0.43314270047409376,
+      "best_consumed_2026q1_total_return": 0.0934265977459201,
+      "best_oos_annualized_return": 0.5671968570447521,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 926
+    },
+    {
+      "best_candidate_id": "lev-v927-b14936ac4364f015",
+      "best_consumed_2026_total_return": 0.42982046127527873,
+      "best_consumed_2026q1_total_return": 0.0927967272556458,
+      "best_oos_annualized_return": 0.5644812228811598,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 927
+    },
+    {
+      "best_candidate_id": "lev-v928-2f6eb04cd9f86eec",
+      "best_consumed_2026_total_return": 0.42650254713483426,
+      "best_consumed_2026q1_total_return": 0.09216578902581452,
+      "best_oos_annualized_return": 0.5617604468166588,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 928
+    },
+    {
+      "best_candidate_id": "lev-v929-14de7a98c386207b",
+      "best_consumed_2026_total_return": 0.4174359640243337,
+      "best_consumed_2026q1_total_return": 0.08965101138606735,
+      "best_oos_annualized_return": 0.5510072066050655,
+      "cells": 4,
+      "hypothesis": "prior_close_low_dispersion_alignment: component_total=0.10, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 929
+    },
+    {
+      "best_candidate_id": "lev-v930-9c215b47079339ce",
+      "best_consumed_2026_total_return": 0.47530616229391587,
+      "best_consumed_2026q1_total_return": 0.10805552029677945,
+      "best_oos_annualized_return": 0.6002417780920748,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.02, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 930
+    },
+    {
+      "best_candidate_id": "lev-v931-2a2af9583252a995",
+      "best_consumed_2026_total_return": 0.47461762589290224,
+      "best_consumed_2026q1_total_return": 0.1078947991138759,
+      "best_oos_annualized_return": 0.5998761984486305,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.02, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 931
+    },
+    {
+      "best_candidate_id": "lev-v932-4d0d62be7d0951f3",
+      "best_consumed_2026_total_return": 0.4739292744463497,
+      "best_consumed_2026q1_total_return": 0.10773404215743798,
+      "best_oos_annualized_return": 0.599510336961375,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.02, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 932
+    },
+    {
+      "best_candidate_id": "lev-v933-2025920adf35b0de",
+      "best_consumed_2026_total_return": 0.4732411079665535,
+      "best_consumed_2026q1_total_return": 0.10757324943639901,
+      "best_oos_annualized_return": 0.5991441939069024,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.02, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 933
+    },
+    {
+      "best_candidate_id": "lev-v934-b19b37638dc8ef4c",
+      "best_consumed_2026_total_return": 0.47255312646576675,
+      "best_consumed_2026q1_total_return": 0.10741242095969028,
+      "best_oos_annualized_return": 0.5987777695618006,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.02, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 934
+    },
+    {
+      "best_candidate_id": "lev-v935-1634167b9c61bcd7",
+      "best_consumed_2026_total_return": 0.4689970546316016,
+      "best_consumed_2026q1_total_return": 0.10552478996504089,
+      "best_oos_annualized_return": 0.5957185106153406,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.04, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 935
+    },
+    {
+      "best_candidate_id": "lev-v936-8c84edd48ad5aa34",
+      "best_consumed_2026_total_return": 0.4676272318394865,
+      "best_consumed_2026q1_total_return": 0.10520451745505688,
+      "best_oos_annualized_return": 0.5949912644467219,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.04, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 936
+    },
+    {
+      "best_candidate_id": "lev-v937-70e356a26014e05c",
+      "best_consumed_2026_total_return": 0.46625814401322896,
+      "best_consumed_2026q1_total_return": 0.10488410215369814,
+      "best_oos_annualized_return": 0.5942628921151203,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.04, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 937
+    },
+    {
+      "best_candidate_id": "lev-v938-0df19d2817cd5cdc",
+      "best_consumed_2026_total_return": 0.46488979125129437,
+      "best_consumed_2026q1_total_return": 0.10456354413215485,
+      "best_oos_annualized_return": 0.5935333958271425,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.04, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 938
+    },
+    {
+      "best_candidate_id": "lev-v939-70244c6e513131e5",
+      "best_consumed_2026_total_return": 0.4635221736516446,
+      "best_consumed_2026q1_total_return": 0.10424284346165691,
+      "best_oos_annualized_return": 0.5928027777892524,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.04, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 939
+    },
+    {
+      "best_candidate_id": "lev-v940-0adf5aec94c6061a",
+      "best_consumed_2026_total_return": 0.4626962117237299,
+      "best_consumed_2026q1_total_return": 0.10299533977464925,
+      "best_oos_annualized_return": 0.5911680822014693,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.06, v247_share=0.00",
+      "pre_factory_null_hits": 3,
+      "version": 940
+    },
+    {
+      "best_candidate_id": "lev-v941-8892e09b0c2168a3",
+      "best_consumed_2026_total_return": 0.46065232083990915,
+      "best_consumed_2026q1_total_return": 0.10251668157120442,
+      "best_oos_annualized_return": 0.5900830822977692,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.06, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 941
+    },
+    {
+      "best_candidate_id": "lev-v942-c4186f5261ca3208",
+      "best_consumed_2026_total_return": 0.4586100727619169,
+      "best_consumed_2026q1_total_return": 0.102037702768347,
+      "best_oos_annualized_return": 0.588995551320088,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.06, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 942
+    },
+    {
+      "best_candidate_id": "lev-v943-20dd5dcf07b15cff",
+      "best_consumed_2026_total_return": 0.4565694678224934,
+      "best_consumed_2026q1_total_return": 0.10155840360548929,
+      "best_oos_annualized_return": 0.5879054966948565,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.06, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 943
+    },
+    {
+      "best_candidate_id": "lev-v944-7ffd6e7235836fc5",
+      "best_consumed_2026_total_return": 0.45453050635193226,
+      "best_consumed_2026q1_total_return": 0.10107878432224782,
+      "best_oos_annualized_return": 0.586812925847785,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.06, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 944
+    },
+    {
+      "best_candidate_id": "lev-v945-54acfa3a8c76ce27",
+      "best_consumed_2026_total_return": 0.4564037494277762,
+      "best_consumed_2026q1_total_return": 0.10046718483138362,
+      "best_oos_annualized_return": 0.5865907501066301,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.08, v247_share=0.00",
+      "pre_factory_null_hits": 2,
+      "version": 945
+    },
+    {
+      "best_candidate_id": "lev-v946-24e5ef85673c0d94",
+      "best_consumed_2026_total_return": 0.45369297692488475,
+      "best_consumed_2026q1_total_return": 0.09983130234850845,
+      "best_oos_annualized_return": 0.585151908523281,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.08, v247_share=0.25",
+      "pre_factory_null_hits": 3,
+      "version": 946
+    },
+    {
+      "best_candidate_id": "lev-v947-33087195ad2c8b3c",
+      "best_consumed_2026_total_return": 0.45098510573406103,
+      "best_consumed_2026q1_total_return": 0.09919485112206683,
+      "best_oos_annualized_return": 0.5837085723331283,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.08, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 947
+    },
+    {
+      "best_candidate_id": "lev-v948-6a0e9a7de6937eb5",
+      "best_consumed_2026_total_return": 0.4482801366450404,
+      "best_consumed_2026q1_total_return": 0.09855783171752908,
+      "best_oos_annualized_return": 0.5822607590898827,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.08, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 948
+    },
+    {
+      "best_candidate_id": "lev-v949-97f5403fb8bbed1f",
+      "best_consumed_2026_total_return": 0.44557807043985065,
+      "best_consumed_2026q1_total_return": 0.09792024470100325,
+      "best_oos_annualized_return": 0.5808084863450269,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.08, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 949
+    },
+    {
+      "best_candidate_id": "lev-v950-b6f7e3fa6f9a4d81",
+      "best_consumed_2026_total_return": 0.45011978283849685,
+      "best_consumed_2026q1_total_return": 0.09794034019726872,
+      "best_oos_annualized_return": 0.5819867724317018,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.10, v247_share=0.00",
+      "pre_factory_null_hits": 1,
+      "version": 950
+    },
+    {
+      "best_candidate_id": "lev-v951-37d4c79397eacb4b",
+      "best_consumed_2026_total_return": 0.4467492832486506,
+      "best_consumed_2026q1_total_return": 0.09714839063207803,
+      "best_oos_annualized_return": 0.58019800008522,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.10, v247_share=0.25",
+      "pre_factory_null_hits": 2,
+      "version": 951
+    },
+    {
+      "best_candidate_id": "lev-v952-8d3a9abe12e6bbb1",
+      "best_consumed_2026_total_return": 0.4433832870470369,
+      "best_consumed_2026q1_total_return": 0.0963555542970782,
+      "best_oos_annualized_return": 0.5784022130332729,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.10, v247_share=0.50",
+      "pre_factory_null_hits": 3,
+      "version": 952
+    },
+    {
+      "best_candidate_id": "lev-v953-d64c7b96984017f0",
+      "best_consumed_2026_total_return": 0.4400217957779693,
+      "best_consumed_2026q1_total_return": 0.09556183229275028,
+      "best_oos_annualized_return": 0.5765994454630341,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.10, v247_share=0.75",
+      "pre_factory_null_hits": 3,
+      "version": 953
+    },
+    {
+      "best_candidate_id": "lev-v954-0f439d3473978559",
+      "best_consumed_2026_total_return": 0.43666481096705523,
+      "best_consumed_2026q1_total_return": 0.09476722572113494,
+      "best_oos_annualized_return": 0.5747897315562955,
+      "cells": 4,
+      "hypothesis": "bar17_reflation_confirmation: component_total=0.10, v247_share=1.00",
+      "pre_factory_null_hits": 3,
+      "version": 954
+    }
+  ]
+}

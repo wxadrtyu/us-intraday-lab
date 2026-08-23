@@ -20,12 +20,9 @@ from us_intraday_lab.validation.null_tests import (
 )
 from us_intraday_lab.validation.stability import TQQQ_SOXL_SYMBOLS
 
-EXPECTED_CANDIDATE_ID = "lev-v798-d0612cdc630bb224"
-
-
-def _selected(source_dir: Path) -> dict:
+def _selected(source_dir: Path, *, first: int, last: int, expected: str) -> dict:
     records = []
-    for version in range(campaign.FIRST_VERSION, campaign.LAST_VERSION + 1):
+    for version in range(first, last + 1):
         payload = json.loads(
             (source_dir / f"full-universe-intraday-v{version}-exact.json").read_text(
                 encoding="utf-8"
@@ -33,7 +30,7 @@ def _selected(source_dir: Path) -> dict:
         )
         records.extend(record for record in payload["records"] if record["pre_factory_null_pass"])
     selected = max(records, key=lambda record: tuple(record["development_rank"]))
-    if selected["candidate_id"] != EXPECTED_CANDIDATE_ID:
+    if selected["candidate_id"] != expected:
         raise RuntimeError("V853_FROZEN_SELECTION_MISMATCH")
     return selected
 
@@ -44,9 +41,19 @@ def main() -> None:
     parser.add_argument("--source-dir", required=True, type=Path)
     parser.add_argument("--component-dir", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--first-version", type=int, default=campaign.FIRST_VERSION)
+    parser.add_argument("--last-version", type=int, default=campaign.LAST_VERSION)
+    parser.add_argument("--expected", default="lev-v798-d0612cdc630bb224")
+    parser.add_argument("--validation-version", type=int, default=853)
+    parser.add_argument("--seed", type=int, default=20_260_822)
     args = parser.parse_args()
     started = time.perf_counter()
-    selected = _selected(args.source_dir)
+    selected = _selected(
+        args.source_dir,
+        first=args.first_version,
+        last=args.last_version,
+        expected=args.expected,
+    )
     definition = selected["definition"]
     cube = prior.v53.Cube(args.root, "alpaca", 0)
     matrix = prior._state_matrix(cube, str(definition["state_clock"]))
@@ -68,14 +75,14 @@ def main() -> None:
     result = run_null_tests(
         opportunities,
         config=NullTestConfig(
-            seed=20_260_822,
+            seed=args.seed,
             repetitions=200,
             percentile=0.95,
             symbols=TQQQ_SOXL_SYMBOLS,
         ),
         scoring_config=HoldingRuleScoringConfig(
-            scoring_id="v853-routed-component-null",
-            rule_version="v798-prior-close-routed-v60-component-v1",
+            scoring_id=f"v{args.validation_version}-routed-component-null",
+            rule_version=f"{selected['candidate_id']}-routed-v60-component-v1",
             cost_model_id="standard-9bp-v1",
             max_entries_per_session=1,
             max_concurrent_positions=1,
@@ -84,7 +91,7 @@ def main() -> None:
     payload = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
-        "version": 853,
+        "version": args.validation_version,
         "candidate_id": selected["candidate_id"],
         "component_candidate_id": definition["v449_component_id"],
         "allowed_development_sessions": len(allowed_sessions),
