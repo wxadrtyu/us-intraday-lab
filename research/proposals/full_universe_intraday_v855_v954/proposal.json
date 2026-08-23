@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v855-v954-cross-asset-state-routing",
+  "version_range": [855, 954],
+  "version_count": 100,
+  "hypothesis": "Cross-asset leadership and dispersion states can route the validated v247/v449 components around the frozen v45 anchor more robustly than the broad orderly-market state used by v798.",
+  "version_grid": {
+    "component_total_weights": [0.02, 0.04, 0.06, 0.08, 0.1],
+    "v247_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": [
+      "prior_close_defensive_resilience",
+      "bar17_growth_breadth",
+      "prior_close_low_dispersion_alignment",
+      "bar17_reflation_confirmation"
+    ],
+    "state_quantiles": [0.2, 0.35, 0.5, 0.65]
+  },
+  "ranking_boundary": "Factors, signs, weights, clocks, quantiles and gates are frozen before evaluation. Ranking uses 2022-2025 only; historical and consumed 2026 are attached after frontier freeze.",
+  "planned_cells": 400,
+  "prior_comparison_cells": 66355,
+  "cumulative_comparison_cells": 66755,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "classification_boundary": "Every survivor remains an inherited-v45 exception unless the inherited anchor and global multiple-comparison nulls independently pass."
+}
