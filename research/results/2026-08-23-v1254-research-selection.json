@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "lev-v1254-de6c18bd7658f359",
+  "source_versions": [1159, 1260],
+  "selection_rule": "Highest frozen stress-floor development_rank among v1159-v1258 pre-factory-null survivors.",
+  "definition": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "default_anchor_weight": 1.0,
+    "allowed_state_anchor_weight": 0.84,
+    "component_candidate_id": "lev-v60-b528b229cefeace2",
+    "allowed_state_component_weight": 0.16,
+    "blocked_component_reallocation": "anchor",
+    "routing_mode": "prior_close_volatility_contraction_substitution",
+    "state_quantile": 0.45,
+    "state_threshold": -0.08095885648451538,
+    "state_factors": [
+      "sector_breadth",
+      "risk_asset_agreement",
+      "sector_dispersion",
+      "spy_volatility"
+    ],
+    "development_rank_mode": "stress_floor"
+  },
+  "gate_state": {
+    "economic_cost_delay_history_folds_starts_passed": true,
+    "consumed_2026q1_above_5pct": true,
+    "consumed_2026_all_above_5pct": true,
+    "joint_neighborhood_passed": true,
+    "routed_component_factory_null_passed": true,
+    "inherited_v45_factory_null_passed": false,
+    "cumulative_bonferroni_passed": false,
+    "all_hard_gates_passed": false
+  },
+  "classification": "USABLE_INHERITED_EXCEPTION_REVIEW",
+  "paper_pool_status": "NOT_ADMITTED",
+  "order_route": "FORBIDDEN_UNTIL_SEPARATELY_AUTHORIZED"
+}

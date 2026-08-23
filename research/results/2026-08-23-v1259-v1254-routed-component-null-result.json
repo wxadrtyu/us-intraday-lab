@@ -1,0 +1,35 @@
+{
+  "allowed_development_sessions": 897,
+  "candidate_id": "lev-v1254-de6c18bd7658f359",
+  "component_candidate_id": "lev-v60-b528b229cefeace2",
+  "cumulative_bonferroni_passed": false,
+  "elapsed_seconds": 4.383883700000013,
+  "inherited_v45_factory_null_passed": false,
+  "routed_component_factory_null": {
+    "distributions": [
+      {
+        "maximum": 0.803768933422132,
+        "mean": 0.4958765450278581,
+        "method": "SESSION_SIGNAL_PERMUTATION",
+        "percentile_threshold": 0.6583918979269673
+      },
+      {
+        "maximum": 0.7519870687631481,
+        "mean": 0.43878938551328106,
+        "method": "SESSION_SAFE_TIMESTAMP_SHIFT",
+        "percentile_threshold": 0.6266811158563
+      }
+    ],
+    "evidence_sha256": "2b571c9cac0c2b1f1dfe2a5620f97042d86822bf4dfc397a5a77344801a9f05c",
+    "observed_accepted_entries": 200,
+    "observed_profit": 0.7821453850465994,
+    "passed": true,
+    "percentile": 0.95,
+    "reason_code": "PASSED_NULL_TEST",
+    "repetitions": 200,
+    "seed": 20260823
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version": 1259
+}
