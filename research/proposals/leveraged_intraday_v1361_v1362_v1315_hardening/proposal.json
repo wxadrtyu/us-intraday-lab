@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v1361-v1362-v1315-hardening",
+  "candidate_id": "lev-v1315-b6edb535dc9901a6",
+  "selection_rule": "Highest frozen stress-floor development_rank among v1261-v1360 pre-null survivors.",
+  "v1361": {
+    "test": "bar17-state-routed v580 afternoon reversal component native null",
+    "methods": ["SESSION_SIGNAL_PERMUTATION", "SESSION_SAFE_TIMESTAMP_SHIFT"],
+    "repetitions": 200,
+    "percentile": 0.95,
+    "seed": 20260825
+  },
+  "v1362": {
+    "test": "joint substitution-weight, reversal-share and state-quantile neighborhood with blocked component weight restored to v45",
+    "substitution_weights": [0.01, 0.02, 0.03],
+    "reversal_component_shares": [0.75, 0.9, 1.0],
+    "state_quantiles": [0.5, 0.6, 0.65, 0.7],
+    "planned_cells": 36,
+    "minimum_pass_share": 0.7
+  },
+  "classification_boundary": "Passing v1361-v1362 cannot repair the inherited v45 or cumulative Bonferroni failures and does not authorize Paper admission."
+}

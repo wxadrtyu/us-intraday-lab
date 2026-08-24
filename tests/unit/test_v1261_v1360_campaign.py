@@ -36,3 +36,18 @@ def test_v1261_campaign_uses_distinct_component_labels_and_ids() -> None:
         "reversal": "lev-v580-a8e415fa00879183",
         "continuation": "lev-v60-b528b229cefeace2",
     }
+
+
+def test_v1361_v1362_hardening_is_frozen_before_validation() -> None:
+    proposal = json.loads(
+        (
+            Path(__file__).parents[2]
+            / "research"
+            / "proposals"
+            / "leveraged_intraday_v1361_v1362_v1315_hardening"
+            / "proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["candidate_id"] == "lev-v1315-b6edb535dc9901a6"
+    assert proposal["v1361"]["repetitions"] == 200
+    assert proposal["v1362"]["planned_cells"] == 36

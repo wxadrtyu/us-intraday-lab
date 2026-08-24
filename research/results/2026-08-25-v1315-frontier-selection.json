@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "lev-v1315-b6edb535dc9901a6",
+  "source_versions": [1261, 1360],
+  "selection_rule": "Highest frozen stress-floor development_rank among v1261-v1360 pre-factory-null survivors.",
+  "definition": {
+    "anchor_candidate_id": "lev-v45e-0d302fbf92727a31",
+    "default_anchor_weight": 1.0,
+    "allowed_state_anchor_weight": 0.98,
+    "reversal_component_id": "lev-v580-a8e415fa00879183",
+    "allowed_state_reversal_weight": 0.02,
+    "continuation_component_weight": 0.0,
+    "blocked_component_reallocation": "anchor",
+    "routing_mode": "bar17_broad_selloff_reversal_substitution",
+    "state_quantile": 0.65,
+    "state_threshold": 0.4229690460068107,
+    "state_factors": [
+      "spy_current",
+      "qqq_current",
+      "sector_breadth",
+      "risk_asset_agreement"
+    ],
+    "development_rank_mode": "stress_floor"
+  },
+  "frontier_metrics": {
+    "standard_oos_annualized_return": 0.6048286159003455,
+    "standard_oos_max_drawdown": 0.12125687120363882,
+    "standard_oos_information_ratio": 1.4103997692026349,
+    "cost_18bp_oos_annualized_return": 0.5636980411758536,
+    "delay_5min_oos_annualized_return": 0.5716096428244131,
+    "consumed_2026q1_total_return": 0.11065006583747494,
+    "consumed_2026_all_total_return": 0.47925693654079193,
+    "historical_2018_2020_annualized_return": 0.014004398948788577,
+    "historical_2018_2020_max_drawdown": 0.1782972565609925,
+    "neighbor_primary_share": 1.0
+  },
+  "gate_state_before_hardening": {
+    "economic_cost_delay_history_folds_starts_passed": true,
+    "consumed_2026q1_above_5pct": true,
+    "consumed_2026_all_above_5pct": true,
+    "cumulative_bonferroni_passed": false,
+    "inherited_v45_factory_null_passed": false
+  },
+  "classification": "FROZEN_FRONTIER_PENDING_V1361_V1362",
+  "paper_pool_status": "NOT_ADMITTED",
+  "order_route": "FORBIDDEN_UNTIL_SEPARATELY_AUTHORIZED"
+}
