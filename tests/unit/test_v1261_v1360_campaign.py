@@ -51,3 +51,19 @@ def test_v1361_v1362_hardening_is_frozen_before_validation() -> None:
     assert proposal["candidate_id"] == "lev-v1315-b6edb535dc9901a6"
     assert proposal["v1361"]["repetitions"] == 200
     assert proposal["v1362"]["planned_cells"] == 36
+
+
+def test_v1363_campaign_freezes_one_hundred_opening_versions() -> None:
+    proposal = json.loads(
+        (
+            Path(__file__).parents[2]
+            / "research"
+            / "proposals"
+            / "full_universe_intraday_v1363_v1462"
+            / "proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["version_range"] == [1363, 1462]
+    assert proposal["version_count"] == 100
+    assert proposal["planned_cells"] == 12_800
+    assert proposal["cumulative_comparison_cells"] == 81_155

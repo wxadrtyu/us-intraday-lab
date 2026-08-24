@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1363-v1462-opening-gap-multifactor",
+  "version_range": [1363, 1462],
+  "version_count": 100,
+  "hypothesis": "Opening gaps combined with early VWAP, relative-strength, path, flow, rank and volatility confirmation can provide a low-turnover long-only return source whose entry and exit occur before the frozen v45 morning-momentum window.",
+  "factor_families": [
+    "opening_gap_down_vwap_reclaim",
+    "opening_gap_down_range_recovery",
+    "opening_gap_follow_confirmation",
+    "opening_prior_weak_gap_rebound",
+    "opening_rank_laggard_reclaim",
+    "opening_relative_strength_flow",
+    "opening_low_volatility_breakout",
+    "opening_flow_persistence",
+    "opening_residual_reclaim",
+    "opening_risk_adjusted_reacceleration"
+  ],
+  "schedules": [[5, 20], [8, 23], [11, 29], [14, 35], [17, 41]],
+  "state_modes": ["unfiltered", "orderly_rebound_cash_filter"],
+  "cell_grid": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookbacks": [15, 25],
+    "state_quantiles": [0.3, 0.5, 0.7]
+  },
+  "ranking_boundary": "Factors, signs, schedules, costs, state filter and gates are frozen before evaluation. Stress-floor ranking uses 2022-2025 only; 2018-2020 history and consumed 2026 diagnostics are attached after each frontier freezes.",
+  "planned_cells": 12800,
+  "prior_comparison_cells": 68355,
+  "cumulative_comparison_cells": 81155,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject any frontier record that fails standard, 18 bp, one-bar delay, historical transfer, chronological folds, start dates, 70% local neighborhood, or consumed-2026 gates. Full admission also requires a separately preregistered native null and cumulative multiple-comparison review.",
+  "classification_boundary": "No result changes the existing Paper pool without separate user authorization."
+}
