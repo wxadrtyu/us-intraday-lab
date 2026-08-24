@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1261-v1360-stress-reversal-substitution",
+  "version_range": [1261, 1360],
+  "version_count": 100,
+  "hypothesis": "A small, independently timed afternoon reversal sleeve can improve the frozen v45 anchor when routed only by causal multi-factor stress or cross-sectional-dislocation states, while returning blocked weight to the anchor instead of cash.",
+  "components": {
+    "anchor": "lev-v45e-0d302fbf92727a31",
+    "reversal": "lev-v580-a8e415fa00879183",
+    "continuation": "lev-v60-b528b229cefeace2"
+  },
+  "version_grid": {
+    "substitution_weights": [0.02, 0.04, 0.06, 0.08, 0.1],
+    "reversal_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": [
+      "prior_close_disorderly_reversal_substitution",
+      "prior_close_defensive_rotation_reversal_substitution",
+      "bar17_broad_selloff_reversal_substitution",
+      "bar17_cross_section_dislocation_reversal_substitution"
+    ],
+    "state_quantiles": [0.2, 0.35, 0.5, 0.65]
+  },
+  "state_factor_families": {
+    "prior_close_disorderly": ["sector_breadth", "risk_asset_agreement", "sector_dispersion", "spy_volatility"],
+    "prior_close_defensive_rotation": ["spy_current", "iwm_current", "cyclical_minus_defensive", "spy_volatility"],
+    "bar17_broad_selloff": ["spy_current", "qqq_current", "sector_breadth", "risk_asset_agreement"],
+    "bar17_cross_section_dislocation": ["sector_breadth", "sector_dispersion", "tech_minus_market", "spy_volatility"]
+  },
+  "ranking_boundary": "All factors, signs, clocks, weights, component shares, quantiles and gates are frozen before evaluation. Stress-floor ranking uses 2022-2025 only; 2018-2020 history and consumed 2026 diagnostics are attached after each frontier freezes.",
+  "planned_cells": 400,
+  "prior_comparison_cells": 67955,
+  "cumulative_comparison_cells": 68355,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject any frontier record that fails standard, 18 bp, one-bar delay, historical transfer, chronological folds, start dates, 70% parameter neighborhood, or either consumed-2026 diagnostic gate. No candidate is admitted without a separately preregistered component-native null and global multiple-comparison review.",
+  "classification_boundary": "Passing economic gates cannot repair the inherited v45 factory-null failure or cumulative Bonferroni failure; existing Paper membership remains unchanged unless separately authorized."
+}

@@ -27,6 +27,8 @@ COMPONENT_IDS = {
     "v247": "lev-v118-5d4329ecaa7a2114",
     "v449": "lev-v60-b528b229cefeace2",
 }
+FIRST_COMPONENT_NAME = "v247"
+SECOND_COMPONENT_NAME = "v449"
 ROUTE_ANCHOR = False
 REALLOCATE_TO_ANCHOR_WHEN_BLOCKED = False
 RANK_MODE = "legacy"
@@ -71,11 +73,14 @@ def _atomic(path: Path, payload: dict) -> None:
 
 def _component_record(source_dir: Path, candidate_id: str) -> dict:
     version = int(candidate_id.split("-")[1][1:])
-    payload = json.loads(
-        (source_dir / f"full-universe-intraday-v{version}-exact.json").read_text(
-            encoding="utf-8"
-        )
-    )
+    filename = f"full-universe-intraday-v{version}-exact.json"
+    path = source_dir / filename
+    if not path.exists():
+        matches = list(source_dir.rglob(filename))
+        if len(matches) != 1:
+            raise RuntimeError(f"FROZEN_COMPONENT_SOURCE_AMBIGUOUS:{candidate_id}:{len(matches)}")
+        path = matches[0]
+    payload = json.loads(path.read_text(encoding="utf-8"))
     for record in payload["records"]:
         if record["candidate_id"] == candidate_id:
             return record
@@ -279,6 +284,8 @@ def main() -> None:
         name: _component_record(args.source_dir, candidate_id)
         for name, candidate_id in COMPONENT_IDS.items()
     }
+    if set(COMPONENT_IDS) != {FIRST_COMPONENT_NAME, SECOND_COMPONENT_NAME}:
+        raise RuntimeError("COMPONENT_NAME_ID_MISMATCH")
     component_development = {
         name: anchored._component_streams(development, record)
         for name, record in component_records.items()
@@ -316,8 +323,8 @@ def main() -> None:
                     )
                     for anchor, v247, v449 in zip(
                         anchor_development,
-                        component_development["v247"],
-                        component_development["v449"],
+                        component_development[FIRST_COMPONENT_NAME],
+                        component_development[SECOND_COMPONENT_NAME],
                         strict=True,
                     )
                 )
@@ -325,8 +332,8 @@ def main() -> None:
                     _route(anchor_historical, hist_allowed)
                     if ROUTE_ANCHOR
                     else anchor_historical,
-                    _route(component_historical["v247"], hist_allowed),
-                    _route(component_historical["v449"], hist_allowed),
+                    _route(component_historical[FIRST_COMPONENT_NAME], hist_allowed),
+                    _route(component_historical[SECOND_COMPONENT_NAME], hist_allowed),
                     total_weight=total_weight,
                     v247_share=v247_share,
                     allowed=hist_allowed,
@@ -349,10 +356,15 @@ def main() -> None:
                         else {}
                     ),
                     **({"development_rank_mode": RANK_MODE} if RANK_MODE != "legacy" else {}),
-                    "v247_component_id": COMPONENT_IDS["v247"],
-                    "v247_component_weight": total_weight * v247_share,
-                    "v449_component_id": COMPONENT_IDS["v449"],
-                    "v449_component_weight": total_weight * (1.0 - v247_share),
+                    f"{FIRST_COMPONENT_NAME}_component_id": COMPONENT_IDS[
+                        FIRST_COMPONENT_NAME
+                    ],
+                    f"{FIRST_COMPONENT_NAME}_component_weight": total_weight * v247_share,
+                    f"{SECOND_COMPONENT_NAME}_component_id": COMPONENT_IDS[
+                        SECOND_COMPONENT_NAME
+                    ],
+                    f"{SECOND_COMPONENT_NAME}_component_weight": total_weight
+                    * (1.0 - v247_share),
                     "maximum_gross": 1.0,
                 }
                 cells.append(
@@ -375,7 +387,8 @@ def main() -> None:
                 "status": "COMPLETE",
                 "version": version,
                 "economic_hypothesis": (
-                    f"{name}: component_total={total_weight:.2f}, v247_share={v247_share:.2f}"
+                    f"{name}: component_total={total_weight:.2f}, "
+                    f"{FIRST_COMPONENT_NAME}_share={v247_share:.2f}"
                 ),
                 "scan": {
                     "evaluated_cells": len(cells),
