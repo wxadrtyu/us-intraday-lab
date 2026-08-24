@@ -67,7 +67,17 @@ def _atomic(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    for attempt in range(6):
+        try:
+            temporary.replace(path)
+            return
+        except PermissionError:
+            if attempt == 5:
+                raise
+            # Windows indexers and virus scanners can briefly retain a read
+            # handle on the destination.  Retrying the same atomic replace
+            # preserves the checkpoint contract without recomputing a version.
+            time.sleep(0.05 * (2**attempt))
 
 
 def _identity(value: object, prefix: str = "lev-v12-") -> str:
