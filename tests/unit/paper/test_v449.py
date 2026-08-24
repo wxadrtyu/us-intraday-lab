@@ -10,7 +10,10 @@ from us_intraday_lab.paper.pool import (
     V449_ID,
     V798_ID,
     V798_STATE_THRESHOLD,
+    V1254_ID,
+    V1254_STATE_THRESHOLD,
     v798_state_score,
+    v1254_state_score,
     validate_pool_allocations,
 )
 from us_intraday_lab.paper.v449 import SleeveSignal, V449PaperController, V449PaperLedger
@@ -227,19 +230,29 @@ def test_v798_prior_close_state_is_causal_and_matches_sparse_sector_semantics() 
     assert sparse_score < score
 
 
-def test_three_member_pool_allocations_are_exact() -> None:
+def test_v1254_prior_close_state_is_finite_and_uses_sector_dispersion() -> None:
+    score = v1254_state_score(_state_bars(), session_date=SESSION)
+    sparse_score = v1254_state_score(
+        _state_bars(omit_last_xly_minute=True), session_date=SESSION
+    )
+    assert score > V1254_STATE_THRESHOLD
+    assert sparse_score != score
+
+
+def test_four_member_pool_allocations_are_exact() -> None:
     validate_pool_allocations()
-    assert set(POOL_ALLOCATIONS) == {V247_ID, V449_ID, V798_ID}
+    assert set(POOL_ALLOCATIONS) == {V247_ID, V449_ID, V798_ID, V1254_ID}
     assert sum(POOL_ALLOCATIONS.values()) == pytest.approx(1.0)
 
 
-def test_three_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:
+def test_four_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:
     broker = FakePaperBroker(now=NOW)
-    ledger = V449PaperLedger(tmp_path / "three-member-pool.sqlite3")
+    ledger = V449PaperLedger(tmp_path / "four-member-pool.sqlite3")
     definitions = (
         ("v247", V247_ID, 0.95, 0.05),
         ("v449", V449_ID, 0.95, 0.05),
         ("v798", V798_ID, 0.90, 0.10),
+        ("v1254", V1254_ID, 0.84, 0.16),
     )
     controllers = []
     for strategy_code, candidate_id, _, _ in definitions:
@@ -250,10 +263,10 @@ def test_three_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None
                 candidate_id=candidate_id,
                 strategy_code=strategy_code,
                 account_fraction=POOL_ALLOCATIONS[candidate_id],
-                managed_strategy_codes=("v247", "v449", "v798"),
+                managed_strategy_codes=("v247", "v449", "v798", "v1254"),
             )
         )
-    for _ in range(6):
+    for _ in range(8):
         broker.queue_submit_behavior(SubmitBehavior.FILL)
     for controller, (_, _, anchor_weight, component_weight) in zip(
         controllers, definitions, strict=True
