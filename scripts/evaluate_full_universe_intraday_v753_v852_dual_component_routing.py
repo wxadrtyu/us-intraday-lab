@@ -12,6 +12,7 @@ from pathlib import Path
 
 import evaluate_full_universe_intraday_v146_v245_anchored_ensembles as anchored
 import evaluate_full_universe_intraday_v248_v347_mechanism_campaign as prior
+import evaluate_full_universe_intraday_v550_v649_state_gated_reversal as reversal
 import numpy as np
 import pandas as pd
 
@@ -85,6 +86,61 @@ def _component_record(source_dir: Path, candidate_id: str) -> dict:
         if record["candidate_id"] == candidate_id:
             return record
     raise RuntimeError(f"FROZEN_COMPONENT_NOT_FOUND:{candidate_id}")
+
+
+def _component_streams(cube: prior.v53.Cube, record: dict) -> tuple[prior.v12.ReturnStream, ...]:
+    model = record["model"]
+    if "negative_coefficients" in model:
+        return anchored._component_streams(cube, record)
+    parameters = record["definition"]
+    required = {"factors", "directions", "decision", "exit", "score_threshold"}
+    if not required.issubset(parameters) or not {"mean", "scale"}.issubset(model):
+        raise RuntimeError(f"UNSUPPORTED_FROZEN_COMPONENT:{record['candidate_id']}")
+    raw = (
+        prior._rule_raw(
+            cube,
+            parameters,
+            np.asarray(model["mean"]),
+            np.asarray(model["scale"]),
+            float(parameters["score_threshold"]),
+            prior.v34.STANDARD_COST,
+            0,
+        ),
+        prior._rule_raw(
+            cube,
+            parameters,
+            np.asarray(model["mean"]),
+            np.asarray(model["scale"]),
+            float(parameters["score_threshold"]),
+            prior.v34.STRESS_COST,
+            0,
+        ),
+        prior._rule_raw(
+            cube,
+            parameters,
+            np.asarray(model["mean"]),
+            np.asarray(model["scale"]),
+            float(parameters["score_threshold"]),
+            prior.v34.STANDARD_COST,
+            1,
+        ),
+    )
+    if parameters.get("state_mode") != "unfiltered":
+        state_score = reversal._state_score(
+            cube,
+            int(parameters["decision"]),
+            model["state_means"],
+            model["state_scales"],
+        )
+        allowed = np.isfinite(state_score) & (
+            state_score >= float(parameters["state_threshold"])
+        )
+        raw = tuple(prior._mask_stream(stream, allowed) for stream in raw)
+    return reversal._scale(
+        raw,
+        float(parameters["target_volatility"]),
+        int(parameters["lookback"]),
+    )
 
 
 def _state_allowed(
@@ -287,11 +343,11 @@ def main() -> None:
     if set(COMPONENT_IDS) != {FIRST_COMPONENT_NAME, SECOND_COMPONENT_NAME}:
         raise RuntimeError("COMPONENT_NAME_ID_MISMATCH")
     component_development = {
-        name: anchored._component_streams(development, record)
+        name: _component_streams(development, record)
         for name, record in component_records.items()
     }
     component_historical = {
-        name: anchored._component_streams(historical, record)[0]
+        name: _component_streams(historical, record)[0]
         for name, record in component_records.items()
     }
     specifications = list(itertools.product(ROUTING_MODES, TOTAL_WEIGHTS, V247_SHARES))
