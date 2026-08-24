@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1463-v1562-intraday-path-multifactor",
+  "version_range": [1463, 1562],
+  "version_count": 100,
+  "hypothesis": "Causal intraday path transitions combining drawdown depth, recovery from the low, range position, short-window volatility or volume contraction, and return reacceleration can provide a low-turnover long-only afternoon source distinct from opening-gap and morning-momentum families.",
+  "new_factors": [
+    "drawdown_from_high",
+    "rebound_from_low",
+    "intraday_range_position",
+    "recent_volatility_ratio",
+    "recent_volume_ratio",
+    "return_acceleration"
+  ],
+  "factor_families": [
+    "deep_drawdown_low_recovery",
+    "failed_breakdown_reclaim",
+    "high_hold_flow_continuation",
+    "volatility_contraction_breakout",
+    "volume_contraction_reacceleration",
+    "quiet_pullback_reclaim",
+    "range_recovery_with_flow",
+    "relative_laggard_path_turn",
+    "compressed_rank_leadership",
+    "vwap_path_reacceleration"
+  ],
+  "schedules": [[23, 47], [29, 53], [35, 59], [41, 65], [47, 71]],
+  "state_modes": ["unfiltered", "orderly_rebound_cash_filter"],
+  "cell_grid": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookbacks": [15, 25],
+    "state_quantiles": [0.3, 0.5, 0.7]
+  },
+  "ranking_boundary": "Factors, formulas, signs, schedules, costs, state filter and gates are frozen before evaluation. Stress-floor ranking uses 2022-2025 only; 2018-2020 history and consumed 2026 diagnostics are attached after each frontier freezes.",
+  "planned_cells": 12800,
+  "prior_comparison_cells": 81155,
+  "cumulative_comparison_cells": 93955,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject any frontier record that fails standard, 18 bp, one-bar delay, historical transfer, chronological folds, start dates, 70% local neighborhood, or consumed-2026 gates. Full admission also requires a separately preregistered native null and cumulative multiple-comparison review.",
+  "classification_boundary": "No result changes the existing Paper pool without separate user authorization."
+}

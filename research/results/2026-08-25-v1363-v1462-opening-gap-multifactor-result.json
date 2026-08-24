@@ -1,0 +1,927 @@
+{
+  "completed_versions": 100,
+  "cumulative_comparison_cells": 81155,
+  "elapsed_seconds": 145.84374939999543,
+  "planned_new_cells": 12800,
+  "planned_versions": 100,
+  "pre_factory_null_hits": 0,
+  "rejected_frontier_records": 300,
+  "rejection_reason_counts": {
+    "consumed_2026_total_above_5pct": 166,
+    "cost_18bp_primary": 300,
+    "cumulative_bonferroni_5pct": 300,
+    "delay_5min_primary": 300,
+    "four_of_five_positive_folds": 241,
+    "historical_positive_mdd_below_20pct": 280,
+    "parameter_neighborhood_70pct_primary": 300,
+    "standard_primary": 300
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [
+    1363,
+    1462
+  ],
+  "versions": [
+    {
+      "best_candidate_id": "lev-v1363-991c3b49f1dbef59",
+      "best_consumed_2026_total_return": -0.07813130958707593,
+      "best_oos_annualized_return": -0.01925719350972499,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1363
+    },
+    {
+      "best_candidate_id": "lev-v1364-418a4344a8efb911",
+      "best_consumed_2026_total_return": -0.21127755055696573,
+      "best_oos_annualized_return": 0.0018689924040169448,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_range_recovery over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1364
+    },
+    {
+      "best_candidate_id": "lev-v1365-f62f0e15a56bc9e4",
+      "best_consumed_2026_total_return": 0.2738826719225558,
+      "best_oos_annualized_return": -0.014073054459756151,
+      "cells": 64,
+      "hypothesis": "opening_gap_follow_confirmation over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1365
+    },
+    {
+      "best_candidate_id": "lev-v1366-523fc5b1dcefd5a6",
+      "best_consumed_2026_total_return": 0.06517339388424093,
+      "best_oos_annualized_return": 0.0074248108905501375,
+      "cells": 64,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1366
+    },
+    {
+      "best_candidate_id": "lev-v1367-f0e93cb4efae38a1",
+      "best_consumed_2026_total_return": -0.024991636111780013,
+      "best_oos_annualized_return": -0.22234659049929417,
+      "cells": 64,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1367
+    },
+    {
+      "best_candidate_id": "lev-v1368-2940a9b480e260d8",
+      "best_consumed_2026_total_return": -0.00014375730359117433,
+      "best_oos_annualized_return": 0.08633098099463066,
+      "cells": 64,
+      "hypothesis": "opening_relative_strength_flow over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1368
+    },
+    {
+      "best_candidate_id": "lev-v1369-98fa87b7b5537a29",
+      "best_consumed_2026_total_return": 0.11604987516528187,
+      "best_oos_annualized_return": -0.09410145101129674,
+      "cells": 64,
+      "hypothesis": "opening_low_volatility_breakout over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1369
+    },
+    {
+      "best_candidate_id": "lev-v1370-bd9f2c149c9fd000",
+      "best_consumed_2026_total_return": -0.13630973810824,
+      "best_oos_annualized_return": 0.030308487048048782,
+      "cells": 64,
+      "hypothesis": "opening_flow_persistence over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1370
+    },
+    {
+      "best_candidate_id": "lev-v1371-7d44b8d695c9f719",
+      "best_consumed_2026_total_return": -0.12515807518918054,
+      "best_oos_annualized_return": -0.09881319593904803,
+      "cells": 64,
+      "hypothesis": "opening_residual_reclaim over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1371
+    },
+    {
+      "best_candidate_id": "lev-v1372-f5ff745b903e7a2f",
+      "best_consumed_2026_total_return": 0.0828280179853007,
+      "best_oos_annualized_return": -0.13450495834197285,
+      "cells": 64,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (5, 20) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1372
+    },
+    {
+      "best_candidate_id": "lev-v1373-1f821c70e9a8a425",
+      "best_consumed_2026_total_return": -0.2358029505677367,
+      "best_oos_annualized_return": -0.09411197277584304,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1373
+    },
+    {
+      "best_candidate_id": "lev-v1374-4f84e5de20a5e5d1",
+      "best_consumed_2026_total_return": 0.007703809112203919,
+      "best_oos_annualized_return": -0.09584217296793374,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_range_recovery over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1374
+    },
+    {
+      "best_candidate_id": "lev-v1375-835dd24daa2346ef",
+      "best_consumed_2026_total_return": 0.729558677274798,
+      "best_oos_annualized_return": -0.1285683754665855,
+      "cells": 64,
+      "hypothesis": "opening_gap_follow_confirmation over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1375
+    },
+    {
+      "best_candidate_id": "lev-v1376-d4855c13a6ec4209",
+      "best_consumed_2026_total_return": -0.06678727646912996,
+      "best_oos_annualized_return": -0.0683894730572826,
+      "cells": 64,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1376
+    },
+    {
+      "best_candidate_id": "lev-v1377-00dd1e5a9553ebc1",
+      "best_consumed_2026_total_return": -0.11183502840803072,
+      "best_oos_annualized_return": -0.0412043931594287,
+      "cells": 64,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1377
+    },
+    {
+      "best_candidate_id": "lev-v1378-fe5908cc2a2ccb0b",
+      "best_consumed_2026_total_return": 0.07555021216649571,
+      "best_oos_annualized_return": -0.08622875872745306,
+      "cells": 64,
+      "hypothesis": "opening_relative_strength_flow over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1378
+    },
+    {
+      "best_candidate_id": "lev-v1379-3af24900c9f8f516",
+      "best_consumed_2026_total_return": 0.03634296206171728,
+      "best_oos_annualized_return": -0.11975454881861236,
+      "cells": 64,
+      "hypothesis": "opening_low_volatility_breakout over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1379
+    },
+    {
+      "best_candidate_id": "lev-v1380-ed19921fc46d2e11",
+      "best_consumed_2026_total_return": 0.008672122233915891,
+      "best_oos_annualized_return": -0.0369153463795211,
+      "cells": 64,
+      "hypothesis": "opening_flow_persistence over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1380
+    },
+    {
+      "best_candidate_id": "lev-v1381-6f542897ed10e513",
+      "best_consumed_2026_total_return": -0.19902149026781657,
+      "best_oos_annualized_return": -0.06566042745055634,
+      "cells": 64,
+      "hypothesis": "opening_residual_reclaim over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1381
+    },
+    {
+      "best_candidate_id": "lev-v1382-a26217d27c57e20b",
+      "best_consumed_2026_total_return": -0.03336963893437905,
+      "best_oos_annualized_return": -0.13342374898634157,
+      "cells": 64,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (8, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1382
+    },
+    {
+      "best_candidate_id": "lev-v1383-75eef27192eadce0",
+      "best_consumed_2026_total_return": -0.15360358277925923,
+      "best_oos_annualized_return": -0.022834131945491443,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1383
+    },
+    {
+      "best_candidate_id": "lev-v1384-acfe979f3ed7e20d",
+      "best_consumed_2026_total_return": -0.07102556842224972,
+      "best_oos_annualized_return": -0.0016860620372731727,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_range_recovery over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1384
+    },
+    {
+      "best_candidate_id": "lev-v1385-c97410743471d604",
+      "best_consumed_2026_total_return": 0.009827824628379833,
+      "best_oos_annualized_return": 0.08910928736011692,
+      "cells": 64,
+      "hypothesis": "opening_gap_follow_confirmation over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1385
+    },
+    {
+      "best_candidate_id": "lev-v1386-5a57bb1c6cf6081c",
+      "best_consumed_2026_total_return": -0.02449778888894938,
+      "best_oos_annualized_return": -0.08009239886010189,
+      "cells": 64,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1386
+    },
+    {
+      "best_candidate_id": "lev-v1387-1a38442fb7590641",
+      "best_consumed_2026_total_return": -0.1258454337793079,
+      "best_oos_annualized_return": -0.1151944996887333,
+      "cells": 64,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1387
+    },
+    {
+      "best_candidate_id": "lev-v1388-884a1e417d9dcb3b",
+      "best_consumed_2026_total_return": -0.06671878074557358,
+      "best_oos_annualized_return": 0.13870023701610434,
+      "cells": 64,
+      "hypothesis": "opening_relative_strength_flow over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1388
+    },
+    {
+      "best_candidate_id": "lev-v1389-f141688d8873c947",
+      "best_consumed_2026_total_return": 0.1185790756199323,
+      "best_oos_annualized_return": -0.10411395536295165,
+      "cells": 64,
+      "hypothesis": "opening_low_volatility_breakout over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1389
+    },
+    {
+      "best_candidate_id": "lev-v1390-2808cf2cbabf870c",
+      "best_consumed_2026_total_return": -0.055327111126905804,
+      "best_oos_annualized_return": 0.00046381336275413965,
+      "cells": 64,
+      "hypothesis": "opening_flow_persistence over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1390
+    },
+    {
+      "best_candidate_id": "lev-v1391-c03a4f1ad09a7c56",
+      "best_consumed_2026_total_return": -0.11902463688721765,
+      "best_oos_annualized_return": -0.13360976988974183,
+      "cells": 64,
+      "hypothesis": "opening_residual_reclaim over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1391
+    },
+    {
+      "best_candidate_id": "lev-v1392-9fcd2ba4098e3675",
+      "best_consumed_2026_total_return": -0.10896261443870447,
+      "best_oos_annualized_return": -0.11690218840076072,
+      "cells": 64,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (11, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1392
+    },
+    {
+      "best_candidate_id": "lev-v1393-b88a07ee0aac036d",
+      "best_consumed_2026_total_return": 0.15381286981337605,
+      "best_oos_annualized_return": -0.16212357486685625,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1393
+    },
+    {
+      "best_candidate_id": "lev-v1394-78d9da095dd7fa22",
+      "best_consumed_2026_total_return": 0.1633416209962677,
+      "best_oos_annualized_return": -0.09836232175367554,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_range_recovery over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1394
+    },
+    {
+      "best_candidate_id": "lev-v1395-189d67e13cf67a50",
+      "best_consumed_2026_total_return": 0.18151696108883808,
+      "best_oos_annualized_return": -0.0857312400630813,
+      "cells": 64,
+      "hypothesis": "opening_gap_follow_confirmation over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1395
+    },
+    {
+      "best_candidate_id": "lev-v1396-4c351cff26c3ebfc",
+      "best_consumed_2026_total_return": 0.2476907529735617,
+      "best_oos_annualized_return": -0.1548543797334565,
+      "cells": 64,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1396
+    },
+    {
+      "best_candidate_id": "lev-v1397-4c31f36efa41dbf9",
+      "best_consumed_2026_total_return": 0.1761221493008749,
+      "best_oos_annualized_return": -0.2603737831248337,
+      "cells": 64,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1397
+    },
+    {
+      "best_candidate_id": "lev-v1398-6776ae760a70e162",
+      "best_consumed_2026_total_return": 0.08595828324794064,
+      "best_oos_annualized_return": -0.0362429009293741,
+      "cells": 64,
+      "hypothesis": "opening_relative_strength_flow over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1398
+    },
+    {
+      "best_candidate_id": "lev-v1399-53455f3ad06e82d5",
+      "best_consumed_2026_total_return": 0.014859488461821835,
+      "best_oos_annualized_return": -0.21159551630226747,
+      "cells": 64,
+      "hypothesis": "opening_low_volatility_breakout over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1399
+    },
+    {
+      "best_candidate_id": "lev-v1400-36b6c0aec08edfcb",
+      "best_consumed_2026_total_return": 0.29245116012213046,
+      "best_oos_annualized_return": -0.14758799136876044,
+      "cells": 64,
+      "hypothesis": "opening_flow_persistence over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1400
+    },
+    {
+      "best_candidate_id": "lev-v1401-374b62f10e02d2ca",
+      "best_consumed_2026_total_return": -0.02643110987352537,
+      "best_oos_annualized_return": -0.27616888285362373,
+      "cells": 64,
+      "hypothesis": "opening_residual_reclaim over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1401
+    },
+    {
+      "best_candidate_id": "lev-v1402-13c56c51dbf9134e",
+      "best_consumed_2026_total_return": 0.14882832460675854,
+      "best_oos_annualized_return": -0.21520225495460776,
+      "cells": 64,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (14, 35) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1402
+    },
+    {
+      "best_candidate_id": "lev-v1403-68274067fe7f6412",
+      "best_consumed_2026_total_return": 0.12498329242222272,
+      "best_oos_annualized_return": 0.18375993325580264,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1403
+    },
+    {
+      "best_candidate_id": "lev-v1404-105abab99c8d66d2",
+      "best_consumed_2026_total_return": 0.05848506267630493,
+      "best_oos_annualized_return": -0.004121454300857641,
+      "cells": 64,
+      "hypothesis": "opening_gap_down_range_recovery over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1404
+    },
+    {
+      "best_candidate_id": "lev-v1405-de1a727a717c818c",
+      "best_consumed_2026_total_return": 0.41788236663488165,
+      "best_oos_annualized_return": 0.3468738784552021,
+      "cells": 64,
+      "hypothesis": "opening_gap_follow_confirmation over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1405
+    },
+    {
+      "best_candidate_id": "lev-v1406-f63d69d30bfeac5a",
+      "best_consumed_2026_total_return": 0.27139917499524335,
+      "best_oos_annualized_return": -0.02154737725093614,
+      "cells": 64,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1406
+    },
+    {
+      "best_candidate_id": "lev-v1407-d14e662ce2916b62",
+      "best_consumed_2026_total_return": 0.08096693534094257,
+      "best_oos_annualized_return": 0.02990039850999815,
+      "cells": 64,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1407
+    },
+    {
+      "best_candidate_id": "lev-v1408-3fbf765b1f8dab64",
+      "best_consumed_2026_total_return": 0.4744449587353987,
+      "best_oos_annualized_return": 0.25625728994127894,
+      "cells": 64,
+      "hypothesis": "opening_relative_strength_flow over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1408
+    },
+    {
+      "best_candidate_id": "lev-v1409-7618308491233742",
+      "best_consumed_2026_total_return": 0.04853778631337469,
+      "best_oos_annualized_return": 0.03424276234651957,
+      "cells": 64,
+      "hypothesis": "opening_low_volatility_breakout over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1409
+    },
+    {
+      "best_candidate_id": "lev-v1410-6dffdd8cdf1ab864",
+      "best_consumed_2026_total_return": 0.21867610114464986,
+      "best_oos_annualized_return": 0.17195187991819538,
+      "cells": 64,
+      "hypothesis": "opening_flow_persistence over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1410
+    },
+    {
+      "best_candidate_id": "lev-v1411-eb2ebd5e8f02c50f",
+      "best_consumed_2026_total_return": -0.1878320474777755,
+      "best_oos_annualized_return": 0.003944506213544363,
+      "cells": 64,
+      "hypothesis": "opening_residual_reclaim over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1411
+    },
+    {
+      "best_candidate_id": "lev-v1412-279768e7d2d440a8",
+      "best_consumed_2026_total_return": -0.03154997128626169,
+      "best_oos_annualized_return": 0.09636062360245479,
+      "cells": 64,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (17, 41) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 1412
+    },
+    {
+      "best_candidate_id": "lev-v1413-67ed69038eaffc6a",
+      "best_consumed_2026_total_return": -0.05919713240062974,
+      "best_oos_annualized_return": 0.05008815788657106,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1413
+    },
+    {
+      "best_candidate_id": "lev-v1414-a65c1464dc01919f",
+      "best_consumed_2026_total_return": -0.09744474788142643,
+      "best_oos_annualized_return": 0.04471839879691708,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_range_recovery over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1414
+    },
+    {
+      "best_candidate_id": "lev-v1415-13dfe6d142c4c6ca",
+      "best_consumed_2026_total_return": 0.04526684756075605,
+      "best_oos_annualized_return": 0.10811064878188281,
+      "cells": 192,
+      "hypothesis": "opening_gap_follow_confirmation over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1415
+    },
+    {
+      "best_candidate_id": "lev-v1416-3ecda5f154056375",
+      "best_consumed_2026_total_return": -0.09575461152910636,
+      "best_oos_annualized_return": 0.09150447714027576,
+      "cells": 192,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1416
+    },
+    {
+      "best_candidate_id": "lev-v1417-2563e8b120db58df",
+      "best_consumed_2026_total_return": 0.036395703657882805,
+      "best_oos_annualized_return": -0.057852875267763615,
+      "cells": 192,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1417
+    },
+    {
+      "best_candidate_id": "lev-v1418-dfedf9ef40dd41b8",
+      "best_consumed_2026_total_return": 0.015580756533858597,
+      "best_oos_annualized_return": 0.12180219976499673,
+      "cells": 192,
+      "hypothesis": "opening_relative_strength_flow over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1418
+    },
+    {
+      "best_candidate_id": "lev-v1419-514c31209855b196",
+      "best_consumed_2026_total_return": 0.019820657179143497,
+      "best_oos_annualized_return": -0.04800324005603562,
+      "cells": 192,
+      "hypothesis": "opening_low_volatility_breakout over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1419
+    },
+    {
+      "best_candidate_id": "lev-v1420-5756705e260bbd6f",
+      "best_consumed_2026_total_return": -0.19062511062908416,
+      "best_oos_annualized_return": 0.020027770566278358,
+      "cells": 192,
+      "hypothesis": "opening_flow_persistence over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1420
+    },
+    {
+      "best_candidate_id": "lev-v1421-d04aff58c817e868",
+      "best_consumed_2026_total_return": -0.0602249606875207,
+      "best_oos_annualized_return": 0.009203885383804788,
+      "cells": 192,
+      "hypothesis": "opening_residual_reclaim over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1421
+    },
+    {
+      "best_candidate_id": "lev-v1422-f93951fcefcf32e0",
+      "best_consumed_2026_total_return": 0.01342702320195066,
+      "best_oos_annualized_return": -0.06822679435935408,
+      "cells": 192,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (5, 20) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1422
+    },
+    {
+      "best_candidate_id": "lev-v1423-d80a9ef99be743b5",
+      "best_consumed_2026_total_return": -0.17760418135497436,
+      "best_oos_annualized_return": -0.06802934890723666,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1423
+    },
+    {
+      "best_candidate_id": "lev-v1424-971c1fde88b14b31",
+      "best_consumed_2026_total_return": -0.0816517958525419,
+      "best_oos_annualized_return": -0.04728204894887511,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_range_recovery over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1424
+    },
+    {
+      "best_candidate_id": "lev-v1425-7c8caa646af1fe4b",
+      "best_consumed_2026_total_return": 0.2678473573078235,
+      "best_oos_annualized_return": -0.021099563035021585,
+      "cells": 192,
+      "hypothesis": "opening_gap_follow_confirmation over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1425
+    },
+    {
+      "best_candidate_id": "lev-v1426-bd9b030646aaa76d",
+      "best_consumed_2026_total_return": -0.3060008001472009,
+      "best_oos_annualized_return": -0.034042393958695905,
+      "cells": 192,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1426
+    },
+    {
+      "best_candidate_id": "lev-v1427-2c931f169e734c36",
+      "best_consumed_2026_total_return": -0.0162623110090111,
+      "best_oos_annualized_return": -0.015410662463563485,
+      "cells": 192,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1427
+    },
+    {
+      "best_candidate_id": "lev-v1428-e30b0633932a3025",
+      "best_consumed_2026_total_return": -0.032797611895787226,
+      "best_oos_annualized_return": 0.021133983072538776,
+      "cells": 192,
+      "hypothesis": "opening_relative_strength_flow over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1428
+    },
+    {
+      "best_candidate_id": "lev-v1429-17ce25b7c5fc351a",
+      "best_consumed_2026_total_return": -0.10185987190627899,
+      "best_oos_annualized_return": -0.007310571252431619,
+      "cells": 192,
+      "hypothesis": "opening_low_volatility_breakout over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1429
+    },
+    {
+      "best_candidate_id": "lev-v1430-a2b705646d46cf7e",
+      "best_consumed_2026_total_return": -0.05687262550571648,
+      "best_oos_annualized_return": 0.02768410006960753,
+      "cells": 192,
+      "hypothesis": "opening_flow_persistence over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1430
+    },
+    {
+      "best_candidate_id": "lev-v1431-00920190fad18993",
+      "best_consumed_2026_total_return": -0.19262159972643833,
+      "best_oos_annualized_return": 0.021101163801608758,
+      "cells": 192,
+      "hypothesis": "opening_residual_reclaim over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1431
+    },
+    {
+      "best_candidate_id": "lev-v1432-899129843774e075",
+      "best_consumed_2026_total_return": -0.048355843572397306,
+      "best_oos_annualized_return": -0.11011740427380234,
+      "cells": 192,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (8, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1432
+    },
+    {
+      "best_candidate_id": "lev-v1433-a0a1aa257d02ba0e",
+      "best_consumed_2026_total_return": 0.026064196047062005,
+      "best_oos_annualized_return": 0.05615860780225179,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1433
+    },
+    {
+      "best_candidate_id": "lev-v1434-6b636b9b61eedb7b",
+      "best_consumed_2026_total_return": 0.02518854181666197,
+      "best_oos_annualized_return": 0.08253577449326999,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_range_recovery over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1434
+    },
+    {
+      "best_candidate_id": "lev-v1435-0c4a67f456dbcd2e",
+      "best_consumed_2026_total_return": 0.1819061737362917,
+      "best_oos_annualized_return": 0.18086111560678653,
+      "cells": 192,
+      "hypothesis": "opening_gap_follow_confirmation over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1435
+    },
+    {
+      "best_candidate_id": "lev-v1436-9ee7049658f6ff25",
+      "best_consumed_2026_total_return": 0.058393451045811284,
+      "best_oos_annualized_return": -0.02788753852730641,
+      "cells": 192,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1436
+    },
+    {
+      "best_candidate_id": "lev-v1437-7c72217b05a2adce",
+      "best_consumed_2026_total_return": -0.06513431052069407,
+      "best_oos_annualized_return": -0.02809511905100448,
+      "cells": 192,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1437
+    },
+    {
+      "best_candidate_id": "lev-v1438-629e290c28c39cfb",
+      "best_consumed_2026_total_return": 0.11451819729900325,
+      "best_oos_annualized_return": 0.13705965499643202,
+      "cells": 192,
+      "hypothesis": "opening_relative_strength_flow over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1438
+    },
+    {
+      "best_candidate_id": "lev-v1439-3c692faa32ce1336",
+      "best_consumed_2026_total_return": 0.15677927221880572,
+      "best_oos_annualized_return": 0.025656649876775628,
+      "cells": 192,
+      "hypothesis": "opening_low_volatility_breakout over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1439
+    },
+    {
+      "best_candidate_id": "lev-v1440-c2c29fe3671b077e",
+      "best_consumed_2026_total_return": 0.23431267556475066,
+      "best_oos_annualized_return": 0.061361905108877624,
+      "cells": 192,
+      "hypothesis": "opening_flow_persistence over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1440
+    },
+    {
+      "best_candidate_id": "lev-v1441-68aa08381cbba8c2",
+      "best_consumed_2026_total_return": 0.13535743635625175,
+      "best_oos_annualized_return": -0.06705220122891509,
+      "cells": 192,
+      "hypothesis": "opening_residual_reclaim over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1441
+    },
+    {
+      "best_candidate_id": "lev-v1442-93e1b686a7a5ce49",
+      "best_consumed_2026_total_return": 0.09221526180897688,
+      "best_oos_annualized_return": 0.008553024289691624,
+      "cells": 192,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (11, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1442
+    },
+    {
+      "best_candidate_id": "lev-v1443-560897f2c56db3e1",
+      "best_consumed_2026_total_return": 0.0643732024321948,
+      "best_oos_annualized_return": -0.11574365517741114,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1443
+    },
+    {
+      "best_candidate_id": "lev-v1444-e555f8dd211fd1bc",
+      "best_consumed_2026_total_return": 0.25105082572749304,
+      "best_oos_annualized_return": -0.08983203631817116,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_range_recovery over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1444
+    },
+    {
+      "best_candidate_id": "lev-v1445-8048db56b05da105",
+      "best_consumed_2026_total_return": 0.16062801355845813,
+      "best_oos_annualized_return": 0.01044141307225499,
+      "cells": 192,
+      "hypothesis": "opening_gap_follow_confirmation over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1445
+    },
+    {
+      "best_candidate_id": "lev-v1446-bae3303206489b36",
+      "best_consumed_2026_total_return": 0.05558095522758433,
+      "best_oos_annualized_return": -0.0373695062176419,
+      "cells": 192,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1446
+    },
+    {
+      "best_candidate_id": "lev-v1447-27a48d5ff80607df",
+      "best_consumed_2026_total_return": 0.13231424339547493,
+      "best_oos_annualized_return": -0.11384162997606007,
+      "cells": 192,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1447
+    },
+    {
+      "best_candidate_id": "lev-v1448-20b9bde9ea622a3e",
+      "best_consumed_2026_total_return": 0.058485625320857215,
+      "best_oos_annualized_return": -0.018513715436800693,
+      "cells": 192,
+      "hypothesis": "opening_relative_strength_flow over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1448
+    },
+    {
+      "best_candidate_id": "lev-v1449-eb183bc97e23fbda",
+      "best_consumed_2026_total_return": 0.09280626526821578,
+      "best_oos_annualized_return": -0.12875396463976696,
+      "cells": 192,
+      "hypothesis": "opening_low_volatility_breakout over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1449
+    },
+    {
+      "best_candidate_id": "lev-v1450-92f8be64153737f1",
+      "best_consumed_2026_total_return": 0.13568574466059458,
+      "best_oos_annualized_return": -0.05960726883767764,
+      "cells": 192,
+      "hypothesis": "opening_flow_persistence over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1450
+    },
+    {
+      "best_candidate_id": "lev-v1451-9bf680c848903e4b",
+      "best_consumed_2026_total_return": 0.1783823457487641,
+      "best_oos_annualized_return": -0.147952731503588,
+      "cells": 192,
+      "hypothesis": "opening_residual_reclaim over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1451
+    },
+    {
+      "best_candidate_id": "lev-v1452-cd88b50c109736de",
+      "best_consumed_2026_total_return": -0.006752892939464461,
+      "best_oos_annualized_return": -0.11628144711129584,
+      "cells": 192,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (14, 35) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1452
+    },
+    {
+      "best_candidate_id": "lev-v1453-7be2ddb5dcc922c0",
+      "best_consumed_2026_total_return": 0.17021179129600106,
+      "best_oos_annualized_return": 0.017236195658314912,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_vwap_reclaim over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1453
+    },
+    {
+      "best_candidate_id": "lev-v1454-927434d0a37c4675",
+      "best_consumed_2026_total_return": 0.21707943549726139,
+      "best_oos_annualized_return": 0.02506535314900793,
+      "cells": 192,
+      "hypothesis": "opening_gap_down_range_recovery over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1454
+    },
+    {
+      "best_candidate_id": "lev-v1455-b02612fe57859061",
+      "best_consumed_2026_total_return": 0.18667235495832557,
+      "best_oos_annualized_return": 0.10626485963000754,
+      "cells": 192,
+      "hypothesis": "opening_gap_follow_confirmation over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1455
+    },
+    {
+      "best_candidate_id": "lev-v1456-b96c112d41803096",
+      "best_consumed_2026_total_return": 0.20870807299720662,
+      "best_oos_annualized_return": 0.051072937398483065,
+      "cells": 192,
+      "hypothesis": "opening_prior_weak_gap_rebound over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1456
+    },
+    {
+      "best_candidate_id": "lev-v1457-cc941b44bacfd50f",
+      "best_consumed_2026_total_return": 0.2292900157328539,
+      "best_oos_annualized_return": 0.08973096885144671,
+      "cells": 192,
+      "hypothesis": "opening_rank_laggard_reclaim over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1457
+    },
+    {
+      "best_candidate_id": "lev-v1458-556d00d70b7966dc",
+      "best_consumed_2026_total_return": 0.09596179931290227,
+      "best_oos_annualized_return": 0.12239230901960485,
+      "cells": 192,
+      "hypothesis": "opening_relative_strength_flow over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1458
+    },
+    {
+      "best_candidate_id": "lev-v1459-dd9935d1ba027282",
+      "best_consumed_2026_total_return": 0.04853778631337469,
+      "best_oos_annualized_return": 0.0331279635151851,
+      "cells": 192,
+      "hypothesis": "opening_low_volatility_breakout over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1459
+    },
+    {
+      "best_candidate_id": "lev-v1460-159c2acb51d4a531",
+      "best_consumed_2026_total_return": 0.25271132526378914,
+      "best_oos_annualized_return": 0.14167911680451972,
+      "cells": 192,
+      "hypothesis": "opening_flow_persistence over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1460
+    },
+    {
+      "best_candidate_id": "lev-v1461-6a4fe9418df087f2",
+      "best_consumed_2026_total_return": 0.21592345261767631,
+      "best_oos_annualized_return": 0.007542537696457963,
+      "cells": 192,
+      "hypothesis": "opening_residual_reclaim over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1461
+    },
+    {
+      "best_candidate_id": "lev-v1462-f4c2ec0a10fbdb41",
+      "best_consumed_2026_total_return": -0.03859181437713166,
+      "best_oos_annualized_return": 0.09280502912095967,
+      "cells": 192,
+      "hypothesis": "opening_risk_adjusted_reacceleration over bars (17, 41) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 1462
+    }
+  ]
+}

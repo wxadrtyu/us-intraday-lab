@@ -67,3 +67,21 @@ def test_v1363_campaign_freezes_one_hundred_opening_versions() -> None:
     assert proposal["version_count"] == 100
     assert proposal["planned_cells"] == 12_800
     assert proposal["cumulative_comparison_cells"] == 81_155
+
+
+def test_v1463_campaign_freezes_new_intraday_path_factors() -> None:
+    proposal = json.loads(
+        (
+            Path(__file__).parents[2]
+            / "research"
+            / "proposals"
+            / "full_universe_intraday_v1463_v1562"
+            / "proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["version_range"] == [1463, 1562]
+    assert proposal["version_count"] == 100
+    assert len(proposal["new_factors"]) == 6
+    assert len(proposal["factor_families"]) == 10
+    assert proposal["planned_cells"] == 12_800
+    assert proposal["cumulative_comparison_cells"] == 93_955
