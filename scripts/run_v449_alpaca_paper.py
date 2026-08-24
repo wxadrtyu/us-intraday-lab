@@ -33,7 +33,7 @@ from us_intraday_lab.paper.v449 import (
     wait_until,
 )
 from us_intraday_lab.research_shadow_alpaca import NEW_YORK, AlpacaIexHistory
-from us_intraday_lab.v45_research_shadow import SYMBOLS
+from us_intraday_lab.v45_research_shadow import ASSETS, SYMBOLS
 
 ENTRY_DECISIONS = (23, 26, 29)
 MAX_ENTRY_LATENESS = timedelta(minutes=2)
@@ -47,15 +47,27 @@ def _args() -> argparse.Namespace:
 
 
 def _target_complete(frame: pd.DataFrame, session_date: date, through_bar: int) -> bool:
+    """Match the frozen research engine's sparse-IEX five-minute semantics.
+
+    Alpaca IEX omits one-minute bars when no eligible IEX trade occurred.  The
+    frozen factors aggregate the available trades in each five-minute bucket,
+    so requiring every one-minute row for every context ETF rejects otherwise
+    evaluable signals.  Current-session decisions only consume TQQQ and SOXL;
+    prior-close state inputs for the remaining symbols come from earlier
+    sessions.  Keep missing minutes missing and require one real observation in
+    every closed decision bucket for each traded asset.
+    """
     localized = pd.to_datetime(frame["timestamp"], utc=True).dt.tz_convert(NEW_YORK)
     target = frame.loc[localized.dt.date == session_date].copy()
     target["minute"] = (localized.loc[target.index].dt.hour - 9) * 60 + localized.loc[
         target.index
     ].dt.minute - 30
-    required = set(range((through_bar + 1) * 5))
+    target = target.loc[target["minute"].between(0, through_bar * 5 + 4)]
+    target["bar"] = (target["minute"] // 5).astype(int)
+    required = set(range(through_bar + 1))
     return all(
-        required.issubset(set(target.loc[target["symbol"] == symbol, "minute"].astype(int)))
-        for symbol in SYMBOLS
+        required.issubset(set(target.loc[target["symbol"] == symbol, "bar"].astype(int)))
+        for symbol in ASSETS
     )
 
 
