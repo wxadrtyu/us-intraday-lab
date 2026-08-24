@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "status": "FROZEN_FOR_HARDENING",
+  "candidate_id": "lev-v1589-cdec7ceb171c7587",
+  "selection_rule": "Highest frozen stress-floor development rank among v1563-v1662 pre-null survivors with strictly positive path-component weight; consumed 2026 was not used.",
+  "definition": {
+    "anchor_weight": 0.98,
+    "path_turn_component_weight": 0.005,
+    "continuation_component_weight": 0.015,
+    "routing_mode": "prior_close_defensive_path_substitution",
+    "state_clock": "prior_close",
+    "state_quantile": 0.35,
+    "state_threshold": -0.3358925322318232
+  },
+  "evidence": {
+    "train_2022_2023_annualized_return": 0.10081069202407655,
+    "2024_annualized_return": 0.13598304814248574,
+    "2025_annualized_return": 1.2701077712549278,
+    "oos_2024_2025_annualized_return": 0.6025402254609113,
+    "oos_max_drawdown": 0.11947275426181303,
+    "oos_information_ratio": 1.4163192786257337,
+    "oos_18bp_annualized_return": 0.5607293078933946,
+    "oos_delay_annualized_return": 0.5689714289387682,
+    "consumed_2026q1_total_return": 0.1094529521595522,
+    "consumed_2026_all_total_return": 0.48243678734976525,
+    "historical_2018_2020_annualized_return": 0.01303895592440485,
+    "historical_2018_2020_max_drawdown": 0.17911794713727225,
+    "neighbor_primary_share": 1.0
+  },
+  "inherited_v45_factory_null_passed": false,
+  "cumulative_bonferroni_passed": false
+}

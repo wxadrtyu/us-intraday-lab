@@ -111,3 +111,19 @@ def test_v1563_campaign_freezes_rejected_path_component_routing() -> None:
     assert proposal["cumulative_comparison_cells"] == 94_355
     assert proposal["components"]["path_turn"] == selection["candidate_id"]
     assert selection["standalone_gate_result"] == "REJECTED"
+
+
+def test_v1663_hardening_requires_positive_path_weight() -> None:
+    proposal = json.loads(
+        (
+            Path(__file__).parents[2]
+            / "research"
+            / "proposals"
+            / "leveraged_intraday_v1663_v1664_v1589_hardening"
+            / "proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["candidate_id"] == "lev-v1589-cdec7ceb171c7587"
+    assert "strictly positive" in proposal["selection_rule"]
+    assert proposal["v1663"]["repetitions"] == 200
+    assert proposal["v1664"]["minimum_pass_share"] == 0.7

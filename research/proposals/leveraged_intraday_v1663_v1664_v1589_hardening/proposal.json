@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "leveraged-intraday-v1663-v1664-v1589-hardening",
+  "candidate_id": "lev-v1589-cdec7ceb171c7587",
+  "selection_rule": "Highest frozen stress-floor development rank among v1563-v1662 pre-null survivors with strictly positive v1500 path-component weight; consumed 2026 was not used.",
+  "v1663": {
+    "test": "native session-signal permutation and session-safe timestamp-shift null for the routed v1500 path component",
+    "seed": 20260825,
+    "repetitions": 200,
+    "percentile": 0.95
+  },
+  "v1664": {
+    "test": "conditional joint neighborhood only if v1663 passes",
+    "axes": ["component_total_weight", "path_component_share", "state_quantile"],
+    "minimum_pass_share": 0.7
+  },
+  "decision_rule": "Reject v1589 if v1663 fails. Run v1664 only after a v1663 pass. Even both passes do not erase the inherited v45 null failure or cumulative Bonferroni failure, and Paper admission requires separate user authorization."
+}
