@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1563-v1662-path-component-routing",
+  "version_range": [1563, 1662],
+  "version_count": 100,
+  "hypothesis": "The frozen v1500 relative-laggard path-turn rule may be useful only as a small stress-state component around the frozen v45 anchor, with v60 continuation retained as a competing component and blocked weight returned to the anchor.",
+  "components": {
+    "anchor": "lev-v45e-0d302fbf92727a31",
+    "path_turn": "lev-v1500-7374c951787a0721",
+    "continuation": "lev-v60-b528b229cefeace2"
+  },
+  "standalone_path_component_status": "REJECTED; selected only by highest 2024-2025 annualized return in the frozen v1463-v1562 frontier, without using 2026, and tested here solely as a small routed component.",
+  "version_grid": {
+    "substitution_weights": [0.02, 0.04, 0.06, 0.08, 0.1],
+    "path_component_shares": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "routing_modes": [
+      "prior_close_disorderly_path_substitution",
+      "prior_close_defensive_path_substitution",
+      "bar17_broad_selloff_path_substitution",
+      "bar17_cross_section_dislocation_path_substitution"
+    ],
+    "state_quantiles": [0.2, 0.35, 0.5, 0.65]
+  },
+  "ranking_boundary": "All clocks, state factors, signs, weights, shares, quantiles and gates are frozen before evaluation. Stress-floor ranking uses 2022-2025 only; 2018-2020 history and consumed 2026 diagnostics are attached after each frontier freezes.",
+  "planned_cells": 400,
+  "prior_comparison_cells": 93955,
+  "cumulative_comparison_cells": 94355,
+  "constraints": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "standard_round_trip_cost": 0.0009,
+    "stress_round_trip_cost": 0.0018,
+    "latency_stress_bars": 1,
+    "consumed_2026q1_minimum_total_return": 0.05,
+    "consumed_2026_all_minimum_total_return": 0.05
+  },
+  "falsification": "Reject any candidate that fails the unchanged standard, 18 bp, one-bar delay, history, folds, start dates, neighborhood or consumed-2026 gates. Promotion additionally requires a separately preregistered routed path-component native null and cumulative multiplicity review.",
+  "classification_boundary": "No result changes the existing Paper pool without separate user authorization."
+}

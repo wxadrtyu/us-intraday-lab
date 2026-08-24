@@ -16,8 +16,10 @@ class IntradayPathCube(campaign.prior.v53.Cube):
 
         closes = self.closes[:, : decision + 1, :]
         current = closes[:, -1, :]
-        high = np.nanmax(closes, axis=1)
-        low = np.nanmin(closes, axis=1)
+        finite_close = np.isfinite(closes)
+        valid_path = finite_close.any(axis=1)
+        high = np.where(valid_path, np.where(finite_close, closes, -np.inf).max(axis=1), np.nan)
+        low = np.where(valid_path, np.where(finite_close, closes, np.inf).min(axis=1), np.nan)
         drawdown = np.divide(current, high, out=np.full_like(current, np.nan), where=high > 0) - 1.0
         rebound = np.divide(current, low, out=np.full_like(current, np.nan), where=low > 0) - 1.0
         span = high - low

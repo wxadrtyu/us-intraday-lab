@@ -85,3 +85,29 @@ def test_v1463_campaign_freezes_new_intraday_path_factors() -> None:
     assert len(proposal["factor_families"]) == 10
     assert proposal["planned_cells"] == 12_800
     assert proposal["cumulative_comparison_cells"] == 93_955
+
+
+def test_v1563_campaign_freezes_rejected_path_component_routing() -> None:
+    root = Path(__file__).parents[2]
+    proposal = json.loads(
+        (
+            root
+            / "research"
+            / "proposals"
+            / "full_universe_intraday_v1563_v1662"
+            / "proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    selection = json.loads(
+        (
+            root
+            / "research"
+            / "results"
+            / "2026-08-25-v1500-path-component-selection.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["version_range"] == [1563, 1662]
+    assert proposal["planned_cells"] == 400
+    assert proposal["cumulative_comparison_cells"] == 94_355
+    assert proposal["components"]["path_turn"] == selection["candidate_id"]
+    assert selection["standalone_gate_result"] == "REJECTED"

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "status": "FROZEN_REJECTED_STANDALONE_COMPONENT_FOR_ROUTING_TEST_ONLY",
+  "candidate_id": "lev-v1500-7374c951787a0721",
+  "selection_rule": "Highest 2024-2025 annualized return among the 300 frozen v1463-v1562 frontier records; consumed 2026 was not used.",
+  "definition": {
+    "mechanism": "relative_laggard_path_turn",
+    "decision": 41,
+    "exit": 65,
+    "factors": ["relative_return", "rebound_from_low", "return_acceleration"],
+    "directions": [-1, 1, 1],
+    "confirmations": 2,
+    "score_quantile": 0.3,
+    "score_threshold": -0.19901808969550666,
+    "target_volatility": 0.45,
+    "lookback": 25,
+    "state_mode": "unfiltered"
+  },
+  "evidence": {
+    "train_2022_2023_annualized_return": -0.013844880977305851,
+    "2024_annualized_return": -0.0068040382761002105,
+    "2025_annualized_return": 0.8111274286872174,
+    "oos_2024_2025_annualized_return": 0.33878487304667915,
+    "oos_18bp_annualized_return": 0.25290691469563664,
+    "oos_delay_annualized_return": 0.26364048970873877,
+    "consumed_2026q1_total_return": 0.05841147641004407,
+    "consumed_2026_all_total_return": 0.17279776796788204,
+    "historical_2018_2020_annualized_return": -0.1882511577564333,
+    "historical_2018_2020_max_drawdown": 0.43386296141233227,
+    "neighbor_primary_share": 0.0
+  },
+  "standalone_gate_result": "REJECTED"
+}
