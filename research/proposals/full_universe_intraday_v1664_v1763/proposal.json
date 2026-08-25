@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v1664-v1763-preregistered",
+  "version_range": [1664, 1763],
+  "version_count": 100,
+  "research_classes": {"admitted_strategy_state_enhancement": 50, "independent_return_source": 50},
+  "selection_boundary": {
+    "factor_and_parameter_selection": "2022-2025 only",
+    "consumed_2026_role": "diagnostic after frontier freeze only",
+    "consumed_2026_minimum_total_return": 0.05
+  },
+  "stress_contract": ["9bp", "18bp", "9bp plus 5 minute delay", "start dates", "parameter neighborhood", "five folds", "independent 2018-2020", "global Bonferroni", "native factory null for pre-null survivors"],
+  "global_comparison_contract": {"prior_cells_through_v1663": 94355, "new_cells": 2650, "cumulative_cells": 97005},
+  "forbidden": ["rerun v46-v1663", "2026 selection", "broker or orders", "cross-provider minute filling"]
+}
