@@ -1,4 +1,4 @@
-"""Run the frozen v247/v449/v798/v1254 allocation on one Alpaca Paper account."""
+"""Run active frozen pool members; historical strategy definitions stay available."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import pandas as pd
 
 from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker
 from us_intraday_lab.paper.pool import (
+    MANAGED_STRATEGY_CODES,
     POOL_ALLOCATIONS,
     V247_ID,
     V449_ID,
@@ -106,45 +107,45 @@ def _fetch_until_complete(
     raise RuntimeError(f"IEX_TARGET_BARS_INCOMPLETE_THROUGH_{through_bar}")
 
 
+def _pool_controllers(broker, ledger) -> dict[str, V449PaperController]:
+    validate_pool_allocations()
+    identities = {"v247": V247_ID, "v449": V449_ID, "v798": V798_ID, "v1254": V1254_ID}
+    return {
+        code: V449PaperController(
+            broker=broker,
+            ledger=ledger,
+            candidate_id=candidate_id,
+            strategy_code=code,
+            account_fraction=POOL_ALLOCATIONS[candidate_id],
+            managed_strategy_codes=MANAGED_STRATEGY_CODES,
+        )
+        for code, candidate_id in identities.items()
+        if candidate_id in POOL_ALLOCATIONS
+    }
+
+
+def _pool_signals(bars, *, session_date: date, decision_bar: int) -> dict:
+    validate_pool_allocations()
+    evaluators = {
+        "v247": (V247_ID, v247_signals_at),
+        "v449": (V449_ID, signals_at),
+        "v798": (V798_ID, v798_signals_at),
+        "v1254": (V1254_ID, v1254_signals_at),
+    }
+    return {
+        code: evaluate(bars, session_date=session_date, decision_bar=decision_bar)
+        for code, (candidate_id, evaluate) in evaluators.items()
+        if candidate_id in POOL_ALLOCATIONS
+    }
+
+
 def main() -> int:
     arguments = _args()
     validate_pool_allocations()
     broker = AlpacaPaperBroker.from_environment()
     ledger = V449PaperLedger(arguments.ledger.resolve())
-    controllers = {
-        "v247": V449PaperController(
-            broker=broker,
-            ledger=ledger,
-            candidate_id=V247_ID,
-            strategy_code="v247",
-            account_fraction=POOL_ALLOCATIONS[V247_ID],
-            managed_strategy_codes=("v247", "v449", "v798", "v1254"),
-        ),
-        "v449": V449PaperController(
-            broker=broker,
-            ledger=ledger,
-            candidate_id=V449_ID,
-            strategy_code="v449",
-            account_fraction=POOL_ALLOCATIONS[V449_ID],
-            managed_strategy_codes=("v247", "v449", "v798", "v1254"),
-        ),
-        "v798": V449PaperController(
-            broker=broker,
-            ledger=ledger,
-            candidate_id=V798_ID,
-            strategy_code="v798",
-            account_fraction=POOL_ALLOCATIONS[V798_ID],
-            managed_strategy_codes=("v247", "v449", "v798", "v1254"),
-        ),
-        "v1254": V449PaperController(
-            broker=broker,
-            ledger=ledger,
-            candidate_id=V1254_ID,
-            strategy_code="v1254",
-            account_fraction=POOL_ALLOCATIONS[V1254_ID],
-            managed_strategy_codes=("v247", "v449", "v798", "v1254"),
-        ),
-    }
+    controllers = _pool_controllers(broker, ledger)
+    safety_controller = next(iter(controllers.values()))
     clock = broker.clock()
     if arguments.preflight:
         print(
@@ -154,6 +155,8 @@ def main() -> int:
                 "next_open": clock.next_open.isoformat(),
                 "positions": len(broker.positions()),
                 "open_orders": len(broker.open_orders()),
+                "active_strategies": list(controllers),
+                "account_fractions": POOL_ALLOCATIONS,
             }
         )
         return 0
@@ -163,7 +166,7 @@ def main() -> int:
         print({"status": "SKIPPED", "reason": "NEXT_OPEN_MORE_THAN_10_HOURS_AWAY"})
         return 0
     session_date = opening.astimezone(NEW_YORK).date()
-    controllers["v449"].startup_check(session_date)
+    safety_controller.startup_check(session_date)
     history = AlpacaIexHistory.from_environment()
     bars: pd.DataFrame | None = None
     for decision in ENTRY_DECISIONS:
@@ -185,18 +188,9 @@ def main() -> int:
                 through_bar=decision,
                 deadline=eligible + MAX_ENTRY_LATENESS,
             )
-            strategy_signals = {
-                "v247": v247_signals_at(
-                    bars, session_date=session_date, decision_bar=decision
-                ),
-                "v449": signals_at(bars, session_date=session_date, decision_bar=decision),
-                "v798": v798_signals_at(
-                    bars, session_date=session_date, decision_bar=decision
-                ),
-                "v1254": v1254_signals_at(
-                    bars, session_date=session_date, decision_bar=decision
-                ),
-            }
+            strategy_signals = _pool_signals(
+                bars, session_date=session_date, decision_bar=decision
+            )
         except Exception as error:  # noqa: BLE001 - keep timed exits alive after data failure
             ledger.append(
                 event_key=f"{session_date}:decision-{decision}:data-incident",
@@ -278,7 +272,7 @@ def main() -> int:
             payload={"reason": "ANCHOR_EXIT_FAILURE", "error": str(error)[:300]},
         )
     wait_until(datetime.combine(session_date, wall_time(15, 45), NEW_YORK))
-    controllers["v449"].emergency_flatten(session_date=session_date, now=datetime.now(UTC))
+    safety_controller.emergency_flatten(session_date=session_date, now=datetime.now(UTC))
     remaining = broker.positions()
     if remaining:
         raise RuntimeError("PAPER_POOL_CLOSEOUT_POSITION_REMAINS")

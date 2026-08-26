@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "authorized_by": "user",
+  "effective_first_session": "2026-08-26",
+  "environment": "alpaca_paper_only",
+  "action": "CONSOLIDATE_HOMOGENEOUS_EXECUTION_FAMILY",
+  "selection_rule": "Retain the already admitted candidate with the highest minimum 2024-2025 annualized return across 9bp, 18bp and +5-minute delay, subject to existing historical, fold, neighborhood and routed-component-null gates. Neither 2026 nor last night's PnL selects the winner.",
+  "active_members": [{"candidate_id": "lev-v1254-de6c18bd7658f359", "account_fraction": 1.0}],
+  "retired_execution_members": [
+    {"candidate_id": "lev-v247-df683b8a37c927f6", "status": "RETIRED_DUPLICATE_FAMILY"},
+    {"candidate_id": "lev-v449-03e9e3f9c4b21390", "status": "RETIRED_DUPLICATE_FAMILY"},
+    {"candidate_id": "lev-v798-d0612cdc630bb224", "status": "RETIRED_DUPLICATE_FAMILY"}
+  ],
+  "risk_boundary": {
+    "maximum_gross": 0.99,
+    "same_total_account_budget": true,
+    "strategy_signal_parameters_unchanged": true,
+    "execution_times_unchanged": true,
+    "deduplication_is_not_a_concentration_limit": true,
+    "inherited_v45_factory_null_passed": false,
+    "cumulative_bonferroni_passed": false
+  },
+  "migration_checks": {
+    "positions": 0,
+    "open_orders": 0,
+    "prior_ledger_events_preserved": 50,
+    "ledger_backup": "state/backups/paper-pre-consolidation-20260826.sqlite3",
+    "ledger_backup_sha256": "88396434071321dbebd7d07d95289b2bd597f1ee4a6b874bdb43c8258ece01ce",
+    "task_xml_backup_directory": "state/backups/v1254-task-consolidation-20260826-121904",
+    "factor_parity_sessions": 5,
+    "factor_parity_max_abs_error": 1.1102230246251565e-16
+  },
+  "schedule": {
+    "entry_task": "USIntradayLab-V1254-AlpacaPaper",
+    "closeout_task": "USIntradayLab-V1254-AlpacaPaper-Closeout",
+    "next_entry_start_local": "2026-08-26T20:00:00+08:00",
+    "entry_decision_bars": [23, 26, 29],
+    "component_exit_bar": 65,
+    "anchor_exit_bar": 72,
+    "closeout_local_times": ["03:45", "04:45"]
+  },
+  "history_policy": "Prior activation records, strategy definitions, research-shadow records, task XML and Paper ledger events are retained. Old execution tasks are disabled, not deleted."
+}

@@ -6,6 +6,7 @@ from datetime import UTC, datetime, time
 from pathlib import Path
 
 from us_intraday_lab.paper.alpaca_paper import AlpacaPaperBroker
+from us_intraday_lab.paper.pool import MANAGED_STRATEGY_CODES
 from us_intraday_lab.paper.v449 import V449PaperController, V449PaperLedger
 from us_intraday_lab.research_shadow_alpaca import NEW_YORK
 
@@ -21,7 +22,7 @@ def main() -> int:
         broker=broker,
         ledger=ledger,
         strategy_code="pool",
-        managed_strategy_codes=("v247", "v449", "v798", "v1254", "pool"),
+        managed_strategy_codes=MANAGED_STRATEGY_CODES,
     )
     controller.emergency_flatten(session_date=local.date(), now=now)
     if broker.positions():

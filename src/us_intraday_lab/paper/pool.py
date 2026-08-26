@@ -1,4 +1,4 @@
-"""Frozen v247/v449/v798/v1254 account-level Alpaca Paper allocation."""
+"""Frozen strategy definitions and the user-consolidated v1254 Paper allocation."""
 
 from __future__ import annotations
 
@@ -35,12 +35,14 @@ V247_ID = "lev-v247-df683b8a37c927f6"
 V449_ID = "lev-v449-03e9e3f9c4b21390"
 V798_ID = "lev-v798-d0612cdc630bb224"
 V1254_ID = "lev-v1254-de6c18bd7658f359"
-POOL_ALLOCATIONS = {
+LEGACY_FOUR_MEMBER_ALLOCATIONS = {
     V247_ID: 0.25,
     V449_ID: 0.25,
     V798_ID: 0.25,
     V1254_ID: 0.25,
 }
+POOL_ALLOCATIONS = {V1254_ID: 1.0}
+MANAGED_STRATEGY_CODES = ("v247", "v449", "v798", "v1254", "pool")
 ANCHOR_WEIGHT = 0.95
 V247_TARGET_VOLATILITY = 0.30
 V798_ANCHOR_WEIGHT = 0.90
@@ -301,7 +303,7 @@ def v1254_signals_at(
 
 
 def validate_pool_allocations() -> None:
-    if set(POOL_ALLOCATIONS) != {V247_ID, V449_ID, V798_ID, V1254_ID}:
+    if set(POOL_ALLOCATIONS) != {V1254_ID}:
         raise ValueError("PAPER_POOL_MEMBERSHIP_MISMATCH")
     if not np.isclose(sum(POOL_ALLOCATIONS.values()), 1.0):
         raise ValueError("PAPER_POOL_ALLOCATION_SUM_MISMATCH")

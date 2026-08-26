@@ -5,6 +5,7 @@ import pytest
 
 from tests.fakes.broker import FakePaperBroker, SubmitBehavior
 from us_intraday_lab.paper.pool import (
+    LEGACY_FOUR_MEMBER_ALLOCATIONS,
     POOL_ALLOCATIONS,
     V247_ID,
     V449_ID,
@@ -239,9 +240,9 @@ def test_v1254_prior_close_state_is_finite_and_uses_sector_dispersion() -> None:
     assert sparse_score != score
 
 
-def test_four_member_pool_allocations_are_exact() -> None:
+def test_consolidated_pool_allocations_are_exact() -> None:
     validate_pool_allocations()
-    assert set(POOL_ALLOCATIONS) == {V247_ID, V449_ID, V798_ID, V1254_ID}
+    assert POOL_ALLOCATIONS == {V1254_ID: 1.0}
     assert sum(POOL_ALLOCATIONS.values()) == pytest.approx(1.0)
 
 
@@ -262,7 +263,7 @@ def test_four_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:
                 ledger=ledger,
                 candidate_id=candidate_id,
                 strategy_code=strategy_code,
-                account_fraction=POOL_ALLOCATIONS[candidate_id],
+                account_fraction=LEGACY_FOUR_MEMBER_ALLOCATIONS[candidate_id],
                 managed_strategy_codes=("v247", "v449", "v798", "v1254"),
             )
         )
