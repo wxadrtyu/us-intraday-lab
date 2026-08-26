@@ -83,3 +83,15 @@ def test_invalid_gross_budget_rejected_and_tail_loss_defined():
         )
     assert risk.tail_loss(np.array([-0.1] + [0.0] * 19)) == 0.1
     assert risk.tail_loss(np.ones(20)) == 0
+
+
+def test_common_availability_does_not_credit_missing_data_for_improvement():
+    audit = importlib.import_module("validate_v1965_common_availability")
+    original = stream(0.01)
+    original.values[:] = [-0.1, 0.01, -0.02, 0.01]
+    valid = np.array([False, True, True, True])
+    candidate = risk.scaled(original, valid.astype(float))
+    result = audit.paired_risk(original, candidate, valid, np.ones(4, dtype=bool))
+    assert result["mdd_reduction"] == 0
+    assert result["tail_loss_reduction"] == 0
+    assert result["passed"] is False

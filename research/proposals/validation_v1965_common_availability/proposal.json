@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "validation_version": 1965,
+  "kind": "Post-selection falsification diagnostic, not a new strategy or a rescan",
+  "source_contract_id": "4b87541a43b329f3",
+  "frozen_candidates": ["risk-v1944-b143471bb093cfa5", "risk-v1894-684ed95107b3e9cf", "risk-v1941-d230dcf6cfea997c", "risk-v1894-bf4c3f3666fb55fc", "risk-v1951-5fba87add2483572", "risk-v1953-75b0ce72d9f47548", "risk-v1951-b4c55dcd37aac03f", "risk-v1953-3272547753354f93"],
+  "problem": "A state-availability cash rule can remove losing sessions from the candidate but not the baseline. Isolate that effect before crediting the economic risk overlay.",
+  "test": "Apply exactly the candidate's finite-state mask to frozen v1254, without changing baseline size, dates, fills or costs. Compare candidate MDD and daily expected-shortfall loss to this common-availability baseline in 2024-2025 separately for 9bp, 18bp and one-bar delay. Retain the already frozen 20% MDD and 15% tail-loss reduction thresholds. No parameter reranking or refit.",
+  "decision": "A failed paired comparison invalidates risk-improvement attribution; preserve original records but do not advance it to native overlay null or execution. Global and inherited-anchor failures remain.",
+  "comparison_cells_unchanged": 111005,
+  "execution_changes": false
+}
