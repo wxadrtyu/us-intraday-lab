@@ -1,0 +1,2086 @@
+{
+  "best_after_correlation_gate": {
+    "admitted": false,
+    "all_reference_gates_pass": false,
+    "all_scenario_folds": {
+      "cost_18bp": [
+        {
+          "annualized_return": -0.003014704750458619,
+          "information_ratio": 0.3549063194894611,
+          "max_drawdown": 0.011008881711494833,
+          "profit_factor": 0.7883643701090304,
+          "total_return": -0.002405320361270946,
+          "trades": 4
+        },
+        {
+          "annualized_return": -0.0098122944621849,
+          "information_ratio": -1.1197014527469284,
+          "max_drawdown": 0.007834274680183495,
+          "profit_factor": 0,
+          "total_return": -0.007834274680183495,
+          "trades": 1
+        },
+        {
+          "annualized_return": -0.003225038412772885,
+          "information_ratio": -1.5335962912273908,
+          "max_drawdown": 0.003999874292897609,
+          "profit_factor": 0.3613233626459243,
+          "total_return": -0.00256040707366767,
+          "trades": 2
+        },
+        {
+          "annualized_return": -0.0001652176473005973,
+          "information_ratio": -1.1224972160321822,
+          "max_drawdown": 0.00013112735224729555,
+          "profit_factor": 0,
+          "total_return": -0.00013112735224729555,
+          "trades": 1
+        },
+        {
+          "annualized_return": -0.0012980147361161265,
+          "information_ratio": 0.1857380149507956,
+          "max_drawdown": 0.00502788509023222,
+          "profit_factor": 0.8586750991927427,
+          "total_return": -0.0010303084601943624,
+          "trades": 6
+        }
+      ],
+      "delay_5min_9bp": [
+        {
+          "annualized_return": 0.006627256987157049,
+          "information_ratio": 1.3717272607357511,
+          "max_drawdown": 0.008202946361118069,
+          "profit_factor": 1.65024121494738,
+          "total_return": 0.005282490897881242,
+          "trades": 5
+        },
+        {
+          "annualized_return": -0.008649968352746562,
+          "information_ratio": -1.5747332039903381,
+          "max_drawdown": 0.006905439544373171,
+          "profit_factor": 0,
+          "total_return": -0.006905439544373171,
+          "trades": 2
+        },
+        {
+          "annualized_return": -0.003312099946088609,
+          "information_ratio": -1.4860871290228022,
+          "max_drawdown": 0.004039717425431744,
+          "profit_factor": 0.35049159027843596,
+          "total_return": -0.0026295502240412105,
+          "trades": 2
+        },
+        {
+          "annualized_return": -0.0050804898394012366,
+          "information_ratio": -1.916433724693906,
+          "max_drawdown": 0.004034252677626471,
+          "profit_factor": 0.1803557172419965,
+          "total_return": -0.004034252677626471,
+          "trades": 4
+        },
+        {
+          "annualized_return": 0.009366008994730501,
+          "information_ratio": 0.9005387919486129,
+          "max_drawdown": 0.0033496461622211093,
+          "profit_factor": 2.5777751400431783,
+          "total_return": 0.007426184294651694,
+          "trades": 6
+        }
+      ],
+      "standard": [
+        {
+          "annualized_return": 0.0014960653370299504,
+          "information_ratio": 1.1312794462914433,
+          "max_drawdown": 0.009700603469952274,
+          "profit_factor": 1.1308374903353484,
+          "total_return": 0.0011931096682304965,
+          "trades": 4
+        },
+        {
+          "annualized_return": -0.008686056227471095,
+          "information_ratio": -1.1197014527469284,
+          "max_drawdown": 0.006934274680183483,
+          "profit_factor": 0,
+          "total_return": -0.006934274680183483,
+          "trades": 1
+        },
+        {
+          "annualized_return": -0.0009598941575416076,
+          "information_ratio": -1.4871977593807335,
+          "max_drawdown": 0.0030998742928975975,
+          "profit_factor": 0.7565623015888624,
+          "total_return": -0.0007618962373043825,
+          "trades": 2
+        },
+        {
+          "annualized_return": 0.0009688763506612297,
+          "information_ratio": 1.1224972160321824,
+          "max_drawdown": 0,
+          "profit_factor": "Infinity",
+          "total_return": 0.0007688726477528274,
+          "trades": 1
+        },
+        {
+          "annualized_return": 0.00551844270050883,
+          "information_ratio": 1.1855814361947794,
+          "max_drawdown": 0.0031799196923810724,
+          "profit_factor": 1.9844292822475205,
+          "total_return": 0.004377228296658986,
+          "trades": 6
+        }
+      ]
+    },
+    "all_scenario_start_dates": {
+      "cost_18bp": {
+        "2022-01-01": {
+          "annualized_return": -0.003514518094195229,
+          "information_ratio": -0.5266228471298507,
+          "max_drawdown": 0.014179743674364809,
+          "profit_factor": 0.5400106838877305,
+          "total_return": -0.013901477224455894,
+          "trades": 14
+        },
+        "2023-01-01": {
+          "annualized_return": -0.0038817660394855347,
+          "information_ratio": -0.7525823660596553,
+          "max_drawdown": 0.011802812859184386,
+          "profit_factor": 0.3969804437200731,
+          "total_return": -0.011523875475507261,
+          "trades": 10
+        },
+        "2024-01-01": {
+          "annualized_return": 0.0001419696345525967,
+          "information_ratio": -0.24199534321999333,
+          "max_drawdown": 0.005027885090232442,
+          "profit_factor": 1.0415067236053848,
+          "total_return": 0.00028226895128491414,
+          "trades": 8
+        }
+      },
+      "delay_5min_9bp": {
+        "2022-01-01": {
+          "annualized_return": -0.00023574682442784045,
+          "information_ratio": -0.5033509546545007,
+          "max_drawdown": 0.013512690942702799,
+          "profit_factor": 0.9719206827354193,
+          "total_return": -0.0009370454853825372,
+          "trades": 19
+        },
+        "2023-01-01": {
+          "annualized_return": -0.00208029684188471,
+          "information_ratio": -0.8666635723306286,
+          "max_drawdown": 0.013512690942702799,
+          "profit_factor": 0.7016503131047169,
+          "total_return": -0.00618685438130806,
+          "trades": 14
+        },
+        "2024-01-01": {
+          "annualized_return": 0.0024027767802152766,
+          "information_ratio": -0.5006836160717244,
+          "max_drawdown": 0.00403425267762636,
+          "profit_factor": 1.4996840552387323,
+          "total_return": 0.004782619670989696,
+          "trades": 11
+        }
+      },
+      "standard": {
+        "2022-01-01": {
+          "annualized_return": -0.0003500133390029747,
+          "information_ratio": 0.08659326810399398,
+          "max_drawdown": 0.01001265359326009,
+          "profit_factor": 0.947818491108216,
+          "total_return": -0.0013909949905627217,
+          "trades": 14
+        },
+        "2023-01-01": {
+          "annualized_return": -0.0008668134126266214,
+          "information_ratio": -0.2169530016859188,
+          "max_drawdown": 0.01001265359326009,
+          "profit_factor": 0.8253097209229431,
+          "total_return": -0.002581025212658239,
+          "trades": 10
+        },
+        "2024-01-01": {
+          "annualized_return": 0.0037688535889641717,
+          "information_ratio": 0.5962045000923699,
+          "max_drawdown": 0.0031799196923810724,
+          "profit_factor": 2.6830022286374993,
+          "total_return": 0.007506791281298719,
+          "trades": 8
+        }
+      }
+    },
+    "candidate_id": "sector-v1827-bf2d6db4ad3c58f8",
+    "cost_18bp": {
+      "2024": {
+        "annualized_return": 0.001313931165875859,
+        "information_ratio": -1.191073168054351,
+        "max_drawdown": 0.00013112735224740657,
+        "profit_factor": 11.021712898963953,
+        "total_return": 0.001313931165875859,
+        "trades": 2
+      },
+      "2025": {
+        "annualized_return": -0.0010427153411014523,
+        "information_ratio": 0.16654242009834366,
+        "max_drawdown": 0.00502788509023222,
+        "profit_factor": 0.8586750991927427,
+        "total_return": -0.0010303084601943624,
+        "trades": 6
+      },
+      "consumed_2026_all": {
+        "annualized_return": -0.0058825835155976725,
+        "information_ratio": -0.66025419724345,
+        "max_drawdown": 0.004911683786443688,
+        "profit_factor": 0.3691525462914532,
+        "total_return": -0.0035757068486320653,
+        "trades": 8
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": -0.005346819475678499,
+        "information_ratio": 0.7482020573970587,
+        "max_drawdown": 0.0032934859853415155,
+        "profit_factor": 0.4071246776851179,
+        "total_return": -0.001955336501728744,
+        "trades": 5
+      },
+      "consumed_2026q1": {
+        "annualized_return": -0.006690075294211284,
+        "information_ratio": -3.191693187681386,
+        "max_drawdown": 0.0023725255110632615,
+        "profit_factor": 0.3163892388336663,
+        "total_return": -0.001623544923554543,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": -0.003514518094195229,
+        "information_ratio": -0.5266228471298507,
+        "max_drawdown": 0.014179743674364809,
+        "profit_factor": 0.5400106838877305,
+        "total_return": -0.013901477224455894,
+        "trades": 14
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.0001419696345525967,
+        "information_ratio": -0.24199534321999333,
+        "max_drawdown": 0.005027885090232442,
+        "profit_factor": 1.0415067236053848,
+        "total_return": 0.00028226895128491414,
+        "trades": 8
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.006588332016613463,
+        "information_ratio": -0.5685238946338838,
+        "max_drawdown": 0.020597285585743697,
+        "profit_factor": 0.3318160027379847,
+        "total_return": -0.019557913720861575,
+        "trades": 10
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.007157637818283602,
+        "information_ratio": -0.738922573825724,
+        "max_drawdown": 0.014179743674364809,
+        "profit_factor": 0.38001946704396583,
+        "total_return": -0.014179743674364809,
+        "trades": 6
+      }
+    },
+    "definition": {
+      "anchor": null,
+      "assets": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "confirmations": 2,
+      "decision": 29,
+      "directions": [
+        1,
+        -1,
+        1
+      ],
+      "exit": 53,
+      "factors": [
+        "sector_rank",
+        "recent_volatility_ratio",
+        "return_acceleration"
+      ],
+      "lookback": 15,
+      "maximum_gross": 1,
+      "mechanism": "sector_leader_contraction",
+      "rank_mode": "stress_floor",
+      "score_quantile": 0.4,
+      "score_threshold": 0.5639324061963715,
+      "state_mode": "orderly_rebound_cash_filter",
+      "state_quantile": 0.7,
+      "state_threshold": 0.5155062245214481,
+      "symbols": [
+        "XLB",
+        "XLC",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "target_volatility": 0.3,
+      "version": 1827
+    },
+    "delay_5min_9bp": {
+      "2024": {
+        "annualized_return": -0.0026240777387704917,
+        "information_ratio": -1.9468314005240777,
+        "max_drawdown": 0.00403425267762636,
+        "profit_factor": 0.4680152775189297,
+        "total_return": -0.0026240777387704917,
+        "trades": 5
+      },
+      "2025": {
+        "annualized_return": 0.007515991796136934,
+        "information_ratio": 0.8072242727865862,
+        "max_drawdown": 0.0033496461622211093,
+        "profit_factor": 2.5777751400431783,
+        "total_return": 0.007426184294651694,
+        "trades": 6
+      },
+      "consumed_2026_all": {
+        "annualized_return": 0.006359344895456642,
+        "information_ratio": 0.6828669142973599,
+        "max_drawdown": 0.002389086148370745,
+        "profit_factor": 2.044745712017107,
+        "total_return": 0.0038562219818911725,
+        "trades": 8
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": 0.008039690656639564,
+        "information_ratio": 1.4216494888763558,
+        "max_drawdown": 0.002389086148370634,
+        "profit_factor": 2.226712504239894,
+        "total_return": 0.0029276665406203772,
+        "trades": 5
+      },
+      "consumed_2026q1": {
+        "annualized_return": 0.00383034939868665,
+        "information_ratio": -1.734078521368989,
+        "max_drawdown": 0.001304203718674235,
+        "profit_factor": 1.7112431525348888,
+        "total_return": 0.000925844876205062,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": -0.00023574682442784045,
+        "information_ratio": -0.5033509546545007,
+        "max_drawdown": 0.013512690942702799,
+        "profit_factor": 0.9719206827354193,
+        "total_return": -0.0009370454853825372,
+        "trades": 19
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.0024027767802152766,
+        "information_ratio": -0.5006836160717244,
+        "max_drawdown": 0.00403425267762636,
+        "profit_factor": 1.4996840552387323,
+        "total_return": 0.004782619670989696,
+        "trades": 11
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.0031714083734090126,
+        "information_ratio": -0.42803121174638614,
+        "max_drawdown": 0.010917260945347285,
+        "profit_factor": 0.5985602532674944,
+        "total_return": -0.009446626599042274,
+        "trades": 11
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.0028673253098300266,
+        "information_ratio": -0.5158396143579611,
+        "max_drawdown": 0.010917260945347285,
+        "profit_factor": 0.7065769833158022,
+        "total_return": -0.005692440379039598,
+        "trades": 8
+      }
+    },
+    "development_folds": [
+      {
+        "annualized_return": 0.0014960653370299504,
+        "information_ratio": 1.1312794462914433,
+        "max_drawdown": 0.009700603469952274,
+        "profit_factor": 1.1308374903353484,
+        "total_return": 0.0011931096682304965,
+        "trades": 4
+      },
+      {
+        "annualized_return": -0.008686056227471095,
+        "information_ratio": -1.1197014527469284,
+        "max_drawdown": 0.006934274680183483,
+        "profit_factor": 0,
+        "total_return": -0.006934274680183483,
+        "trades": 1
+      },
+      {
+        "annualized_return": -0.0009598941575416076,
+        "information_ratio": -1.4871977593807335,
+        "max_drawdown": 0.0030998742928975975,
+        "profit_factor": 0.7565623015888624,
+        "total_return": -0.0007618962373043825,
+        "trades": 2
+      },
+      {
+        "annualized_return": 0.0009688763506612297,
+        "information_ratio": 1.1224972160321824,
+        "max_drawdown": 0,
+        "profit_factor": "Infinity",
+        "total_return": 0.0007688726477528274,
+        "trades": 1
+      },
+      {
+        "annualized_return": 0.00551844270050883,
+        "information_ratio": 1.1855814361947794,
+        "max_drawdown": 0.0031799196923810724,
+        "profit_factor": 1.9844292822475205,
+        "total_return": 0.004377228296658986,
+        "trades": 6
+      }
+    ],
+    "development_rank": [
+      0.0001419696345525967,
+      -0.005027885090232442,
+      -0.5006836160717244,
+      -0.004451978900973708
+    ],
+    "gates": {
+      "all_scenario_four_positive_folds": false,
+      "all_scenario_start_dates_positive": false,
+      "consumed_2026_total_above_5pct": false,
+      "consumed_2026q1_total_above_5pct": false,
+      "cost_18bp_primary": false,
+      "cumulative_bonferroni_5pct": false,
+      "delay_5min_primary": false,
+      "four_of_five_positive_folds": false,
+      "historical_positive_mdd_below_20pct": false,
+      "independent_from_v1254_correlation": true,
+      "parameter_neighborhood_70pct_primary": false,
+      "standard_primary": false
+    },
+    "historical_2018_2020": {
+      "annualized_return": -0.022825619693569887,
+      "information_ratio": -0.6446200871212769,
+      "max_drawdown": 0.06651308956066548,
+      "profit_factor": 0.38710616937269476,
+      "total_return": -0.0503653727963006,
+      "trades": 23
+    },
+    "historical_stress": {
+      "cost_18bp": {
+        "annualized_return": -0.03184638421344399,
+        "information_ratio": -1.027561630217613,
+        "max_drawdown": 0.08073397733497145,
+        "profit_factor": 0.27037655430746343,
+        "total_return": -0.06987366352559266,
+        "trades": 23
+      },
+      "delay_5min_9bp": {
+        "annualized_return": -0.020094515122236478,
+        "information_ratio": -0.6576324953585043,
+        "max_drawdown": 0.059140550716778706,
+        "profit_factor": 0.41483126022627975,
+        "total_return": -0.044414888882317594,
+        "trades": 23
+      },
+      "standard": {
+        "annualized_return": -0.022825619693569887,
+        "information_ratio": -0.6446200871212769,
+        "max_drawdown": 0.06651308956066548,
+        "profit_factor": 0.38710616937269476,
+        "total_return": -0.0503653727963006,
+        "trades": 23
+      }
+    },
+    "model": {
+      "mean": [
+        0.5728621291448517,
+        0.23871540624350124,
+        0.00002482959837564362
+      ],
+      "scale": [
+        0.2862596188926306,
+        0.11645512949280223,
+        0.0006064121708059351
+      ],
+      "state_means": {
+        "risk_asset_agreement": 0.5003326679973386,
+        "sector_breadth": 0.32008709853021233,
+        "spy_current": 0.00023661104598643435,
+        "spy_volatility": 0.005883704339353471
+      },
+      "state_scales": {
+        "risk_asset_agreement": 0.4246897556520268,
+        "sector_breadth": 0.2153382540749132,
+        "spy_current": 0.006731926840026669,
+        "spy_volatility": 0.0027557968258975643
+      }
+    },
+    "multiple_comparison": {
+      "bonferroni_p": 1,
+      "total_cells": 109805,
+      "z_score": 0.10622823675230861
+    },
+    "native_factory_null_status": "NOT_RUN_PRE_NULL_FAILED",
+    "neighbor_primary_share": 0,
+    "pre_factory_null_pass": false,
+    "standard": {
+      "2024": {
+        "annualized_return": 0.003115923874485782,
+        "information_ratio": -0.7236997913256754,
+        "max_drawdown": 0,
+        "profit_factor": "Infinity",
+        "total_return": 0.003115923874485782,
+        "trades": 2
+      },
+      "2025": {
+        "annualized_return": 0.004430082632046917,
+        "information_ratio": 1.0624828450418011,
+        "max_drawdown": 0.0031799196923810724,
+        "profit_factor": 1.9844292822475205,
+        "total_return": 0.004377228296658986,
+        "trades": 6
+      },
+      "consumed_2026_all": {
+        "annualized_return": 0.005976639091387126,
+        "information_ratio": 0.9003621590103303,
+        "max_drawdown": 0.0014725255110632496,
+        "profit_factor": 2.509439439182881,
+        "total_return": 0.0036244255127919622,
+        "trades": 8
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": 0.006988512567515759,
+        "information_ratio": 1.9890143071760253,
+        "max_drawdown": 0.0009280946226891684,
+        "profit_factor": 3.7426887481702162,
+        "total_return": 0.0025457228017347067,
+        "trades": 5
+      },
+      "consumed_2026q1": {
+        "annualized_return": 0.004452457674128496,
+        "information_ratio": -2.460649751497434,
+        "max_drawdown": 0.0014725255110632496,
+        "profit_factor": 1.7321543982739296,
+        "total_return": 0.0010759636059718414,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": -0.0003500133390029747,
+        "information_ratio": 0.08659326810399398,
+        "max_drawdown": 0.01001265359326009,
+        "profit_factor": 0.947818491108216,
+        "total_return": -0.0013909949905627217,
+        "trades": 14
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.0037688535889641717,
+        "information_ratio": 0.5962045000923699,
+        "max_drawdown": 0.0031799196923810724,
+        "profit_factor": 2.6830022286374993,
+        "total_return": 0.007506791281298719,
+        "trades": 8
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.003587100956781275,
+        "information_ratio": -0.008544294004608134,
+        "max_drawdown": 0.013824377237532937,
+        "profit_factor": 0.5644624210994444,
+        "total_return": -0.010680424606973382,
+        "trades": 10
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.004451978900973708,
+        "information_ratio": -0.3131953614977464,
+        "max_drawdown": 0.01001265359326009,
+        "profit_factor": 0.5558623607954962,
+        "total_return": -0.008831490118836327,
+        "trades": 6
+      }
+    },
+    "start_date_stress": {
+      "2022-01-01": {
+        "annualized_return": -0.0003500133390029747,
+        "information_ratio": 0.08659326810399398,
+        "max_drawdown": 0.01001265359326009,
+        "profit_factor": 0.947818491108216,
+        "total_return": -0.0013909949905627217,
+        "trades": 14
+      },
+      "2023-01-01": {
+        "annualized_return": -0.0008668134126266214,
+        "information_ratio": -0.2169530016859188,
+        "max_drawdown": 0.01001265359326009,
+        "profit_factor": 0.8253097209229431,
+        "total_return": -0.002581025212658239,
+        "trades": 10
+      },
+      "2024-01-01": {
+        "annualized_return": 0.0037688535889641717,
+        "information_ratio": 0.5962045000923699,
+        "max_drawdown": 0.0031799196923810724,
+        "profit_factor": 2.6830022286374993,
+        "total_return": 0.007506791281298719,
+        "trades": 8
+      }
+    },
+    "v1254_daily_return_correlation": {
+      "2024": 0.021196919969200964,
+      "2025": -0.0069210991344370466,
+      "development_oos_2024_2025": -0.0034296847348733775
+    }
+  },
+  "best_by_development_rank": {
+    "admitted": false,
+    "all_reference_gates_pass": false,
+    "all_scenario_folds": {
+      "cost_18bp": [
+        {
+          "annualized_return": -0.013513451917459562,
+          "information_ratio": -0.7045427798191851,
+          "max_drawdown": 0.016256078197147805,
+          "profit_factor": 0.6235343216932603,
+          "total_return": -0.010793406066666122,
+          "trades": 6
+        },
+        {
+          "annualized_return": -0.021637430847695205,
+          "information_ratio": -1.0802165209519996,
+          "max_drawdown": 0.019045743561324158,
+          "profit_factor": 0.09297318339688722,
+          "total_return": -0.01729654600127639,
+          "trades": 5
+        },
+        {
+          "annualized_return": -0.0017194480149691493,
+          "information_ratio": -1.5959695453586606,
+          "max_drawdown": 0.004648389682154308,
+          "profit_factor": 0.7083031982301147,
+          "total_return": -0.0013648835412248816,
+          "trades": 4
+        },
+        {
+          "annualized_return": -0.0021635158821547984,
+          "information_ratio": 0.2231606136708689,
+          "max_drawdown": 0.007269513228380209,
+          "profit_factor": 0.766658728568161,
+          "total_return": -0.0017174597163414074,
+          "trades": 5
+        },
+        {
+          "annualized_return": 0.11308645389395355,
+          "information_ratio": 0.5669742251356321,
+          "max_drawdown": 0.018255482912020726,
+          "profit_factor": 4.381466080128376,
+          "total_return": 0.08874881772076826,
+          "trades": 12
+        }
+      ],
+      "delay_5min_9bp": [
+        {
+          "annualized_return": 0.005237581007707881,
+          "information_ratio": 0.5078049250794853,
+          "max_drawdown": 0.016907645442599373,
+          "profit_factor": 1.2321613404139904,
+          "total_return": 0.004175384912548985,
+          "trades": 6
+        },
+        {
+          "annualized_return": -0.02290784978395677,
+          "information_ratio": -1.086442421034471,
+          "max_drawdown": 0.0209414559869332,
+          "profit_factor": 0.1271433887414325,
+          "total_return": -0.018314486094234916,
+          "trades": 5
+        },
+        {
+          "annualized_return": -0.0038915228697355975,
+          "information_ratio": -1.8199044731344651,
+          "max_drawdown": 0.005527162263097685,
+          "profit_factor": 0.44288654026049973,
+          "total_return": -0.003089752215142405,
+          "trades": 3
+        },
+        {
+          "annualized_return": -0.002758952151525773,
+          "information_ratio": 0.7318330002778468,
+          "max_drawdown": 0.0050437012428159456,
+          "profit_factor": 0.7523907709644037,
+          "total_return": -0.002190268547879737,
+          "trades": 6
+        },
+        {
+          "annualized_return": 0.11121123182950687,
+          "information_ratio": 1.1599631403093684,
+          "max_drawdown": 0.012864504331174365,
+          "profit_factor": 5.075258076237747,
+          "total_return": 0.08729283409328725,
+          "trades": 11
+        }
+      ],
+      "standard": [
+        {
+          "annualized_return": -0.006802723033705327,
+          "information_ratio": -0.048721371217891836,
+          "max_drawdown": 0.013723585810162975,
+          "profit_factor": 0.8026776245315173,
+          "total_return": -0.005429726776453703,
+          "trades": 6
+        },
+        {
+          "annualized_return": -0.01608519949508702,
+          "information_ratio": -0.549324126940138,
+          "max_drawdown": 0.015492470490564236,
+          "profit_factor": 0.172226081433002,
+          "total_return": -0.012850880102562301,
+          "trades": 5
+        },
+        {
+          "annualized_return": 0.0028185536703317915,
+          "information_ratio": -1.1498976432681107,
+          "max_drawdown": 0.0028517679114359318,
+          "profit_factor": 1.78587489350557,
+          "total_return": 0.0022362975821905717,
+          "trades": 4
+        },
+        {
+          "annualized_return": 0.003509704163672689,
+          "information_ratio": 0.8660595004225922,
+          "max_drawdown": 0.004598147993076451,
+          "profit_factor": 1.6083626681696706,
+          "total_return": 0.002784472259273141,
+          "trades": 5
+        },
+        {
+          "annualized_return": 0.12822667278509137,
+          "information_ratio": 1.055606270395534,
+          "max_drawdown": 0.012925717198117415,
+          "profit_factor": 6.144052489054948,
+          "total_return": 0.10048572873709416,
+          "trades": 12
+        }
+      ]
+    },
+    "all_scenario_start_dates": {
+      "cost_18bp": {
+        "2022-01-01": {
+          "annualized_return": 0.01358283967671814,
+          "information_ratio": -0.1740028346247772,
+          "max_drawdown": 0.03624897328166632,
+          "profit_factor": 1.6818021592956625,
+          "total_return": 0.05510939653220559,
+          "trades": 32
+        },
+        "2023-01-01": {
+          "annualized_return": 0.026063042565366734,
+          "information_ratio": 0.06834072949520513,
+          "max_drawdown": 0.018255482912020615,
+          "profit_factor": 2.7868992073787577,
+          "total_return": 0.07969335446640224,
+          "trades": 24
+        },
+        "2024-01-01": {
+          "annualized_return": 0.04035393984929847,
+          "information_ratio": 0.2242914584692403,
+          "max_drawdown": 0.018255482912020837,
+          "profit_factor": 3.165127700559404,
+          "total_return": 0.08182669865565861,
+          "trades": 19
+        }
+      },
+      "delay_5min_9bp": {
+        "2022-01-01": {
+          "annualized_return": 0.01624807017629415,
+          "information_ratio": 0.2401617608758065,
+          "max_drawdown": 0.025442812409758542,
+          "profit_factor": 1.9041762816287544,
+          "total_return": 0.06618428075672167,
+          "trades": 31
+        },
+        "2023-01-01": {
+          "annualized_return": 0.024111383906629813,
+          "information_ratio": 0.33917468562526226,
+          "max_drawdown": 0.012864504331174365,
+          "profit_factor": 2.6392415859671305,
+          "total_return": 0.07358461630384694,
+          "trades": 23
+        },
+        "2024-01-01": {
+          "annualized_return": 0.03894452155764583,
+          "information_ratio": 0.6093674417423492,
+          "max_drawdown": 0.012864504331174254,
+          "profit_factor": 3.235811927974,
+          "total_return": 0.0789148896089662,
+          "trades": 19
+        }
+      },
+      "standard": {
+        "2022-01-01": {
+          "annualized_return": 0.020936329879350346,
+          "information_ratio": 0.3339016082080295,
+          "max_drawdown": 0.027933908516857953,
+          "profit_factor": 2.2665851165092925,
+          "total_return": 0.08587636344448901,
+          "trades": 32
+        },
+        "2023-01-01": {
+          "annualized_return": 0.03350095114066054,
+          "information_ratio": 0.5380871493653134,
+          "max_drawdown": 0.012925717198117637,
+          "profit_factor": 4.193441978046227,
+          "total_return": 0.10318588345715463,
+          "trades": 24
+        },
+        "2024-01-01": {
+          "annualized_return": 0.049301456989786274,
+          "information_ratio": 0.6961930769560586,
+          "max_drawdown": 0.012925717198117082,
+          "profit_factor": 4.719304191860461,
+          "total_return": 0.1004029322397686,
+          "trades": 19
+        }
+      }
+    },
+    "candidate_id": "sector-v1837-ef36cd7aca0962bc",
+    "cost_18bp": {
+      "2024": {
+        "annualized_return": -0.0023587558106424877,
+        "information_ratio": 0.0030148712410973276,
+        "max_drawdown": 0.004648389682154308,
+        "profit_factor": 0.7042972520622484,
+        "total_return": -0.0023587558106424877,
+        "trades": 6
+      },
+      "2025": {
+        "annualized_return": 0.08544343220430761,
+        "information_ratio": 0.3312059779740257,
+        "max_drawdown": 0.018255482912020837,
+        "profit_factor": 3.805289363750701,
+        "total_return": 0.08438449688866512,
+        "trades": 13
+      },
+      "consumed_2026_all": {
+        "annualized_return": -0.06072455890056028,
+        "information_ratio": -2.834065627904327,
+        "max_drawdown": 0.03797057618165822,
+        "profit_factor": 0.09374915084935787,
+        "total_return": -0.037321119318491025,
+        "trades": 12
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": -0.0883002746330015,
+        "information_ratio": -3.057339905835227,
+        "max_drawdown": 0.033186447942611386,
+        "profit_factor": 0.08802829684647177,
+        "total_return": -0.033186447942611386,
+        "trades": 9
+      },
+      "consumed_2026q1": {
+        "annualized_return": -0.017549321688053565,
+        "information_ratio": -3.5188796697844142,
+        "max_drawdown": 0.004948346275107651,
+        "profit_factor": 0.13634303884117213,
+        "total_return": -0.004276596420355272,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": 0.01358283967671814,
+        "information_ratio": -0.1740028346247772,
+        "max_drawdown": 0.03624897328166632,
+        "profit_factor": 1.6818021592956625,
+        "total_return": 0.05510939653220559,
+        "trades": 32
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.04035393984929847,
+        "information_ratio": 0.2242914584692403,
+        "max_drawdown": 0.018255482912020837,
+        "profit_factor": 3.165127700559404,
+        "total_return": 0.08182669865565861,
+        "trades": 19
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.010805055932039842,
+        "information_ratio": -0.8484456550540019,
+        "max_drawdown": 0.05188004903369581,
+        "profit_factor": 0.5951208197772073,
+        "total_return": -0.0319409890511807,
+        "trades": 26
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.012499368209305861,
+        "information_ratio": -0.9220002958213962,
+        "max_drawdown": 0.03499221266181629,
+        "profit_factor": 0.47821073350178117,
+        "total_return": -0.024696471400320386,
+        "trades": 13
+      }
+    },
+    "definition": {
+      "anchor": null,
+      "assets": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "confirmations": 2,
+      "decision": 35,
+      "directions": [
+        1,
+        -1,
+        1
+      ],
+      "exit": 59,
+      "factors": [
+        "sector_rank",
+        "recent_volatility_ratio",
+        "return_acceleration"
+      ],
+      "lookback": 25,
+      "maximum_gross": 1,
+      "mechanism": "sector_leader_contraction",
+      "rank_mode": "stress_floor",
+      "score_quantile": 0.5,
+      "score_threshold": 0.6014648258926688,
+      "state_mode": "orderly_rebound_cash_filter",
+      "state_quantile": 0.5,
+      "state_threshold": 0.012135571806003775,
+      "symbols": [
+        "XLB",
+        "XLC",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "target_volatility": 0.35,
+      "version": 1837
+    },
+    "delay_5min_9bp": {
+      "2024": {
+        "annualized_return": -0.004898097546638169,
+        "information_ratio": 0.037678611555475056,
+        "max_drawdown": 0.006603323473248102,
+        "profit_factor": 0.5745172340140998,
+        "total_return": -0.004898097546638169,
+        "trades": 7
+      },
+      "2025": {
+        "annualized_return": 0.08528239514151936,
+        "information_ratio": 0.9094625086693526,
+        "max_drawdown": 0.012864504331174698,
+        "profit_factor": 4.4881538823466975,
+        "total_return": 0.08422553202739147,
+        "trades": 12
+      },
+      "consumed_2026_all": {
+        "annualized_return": -0.03523913311987592,
+        "information_ratio": -2.281441359376189,
+        "max_drawdown": 0.02317133357961776,
+        "profit_factor": 0.17583056263557464,
+        "total_return": -0.021545760219677135,
+        "trades": 11
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": -0.054069814042455366,
+        "information_ratio": -2.4427587096266627,
+        "max_drawdown": 0.020088961475858813,
+        "profit_factor": 0.12794913402335895,
+        "total_return": -0.020088961475858813,
+        "trades": 8
+      },
+      "consumed_2026q1": {
+        "annualized_return": -0.00612735006103271,
+        "information_ratio": -3.4059145826305897,
+        "max_drawdown": 0.0031455632017385327,
+        "profit_factor": 0.5288498505753652,
+        "total_return": -0.0014866642853746947,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": 0.01624807017629415,
+        "information_ratio": 0.2401617608758065,
+        "max_drawdown": 0.025442812409758542,
+        "profit_factor": 1.9041762816287544,
+        "total_return": 0.06618428075672167,
+        "trades": 31
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.03894452155764583,
+        "information_ratio": 0.6093674417423492,
+        "max_drawdown": 0.012864504331174254,
+        "profit_factor": 3.235811927974,
+        "total_return": 0.0789148896089662,
+        "trades": 19
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.0028645651963380425,
+        "information_ratio": -0.29659747994841895,
+        "max_drawdown": 0.030566538139179533,
+        "profit_factor": 0.8754935664601172,
+        "total_return": -0.00853524305424902,
+        "trades": 26
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.005952561751162322,
+        "information_ratio": -0.40941492284309483,
+        "max_drawdown": 0.022898201693862363,
+        "profit_factor": 0.7105699754189344,
+        "total_return": -0.011799456078373516,
+        "trades": 12
+      }
+    },
+    "development_folds": [
+      {
+        "annualized_return": -0.006802723033705327,
+        "information_ratio": -0.048721371217891836,
+        "max_drawdown": 0.013723585810162975,
+        "profit_factor": 0.8026776245315173,
+        "total_return": -0.005429726776453703,
+        "trades": 6
+      },
+      {
+        "annualized_return": -0.01608519949508702,
+        "information_ratio": -0.549324126940138,
+        "max_drawdown": 0.015492470490564236,
+        "profit_factor": 0.172226081433002,
+        "total_return": -0.012850880102562301,
+        "trades": 5
+      },
+      {
+        "annualized_return": 0.0028185536703317915,
+        "information_ratio": -1.1498976432681107,
+        "max_drawdown": 0.0028517679114359318,
+        "profit_factor": 1.78587489350557,
+        "total_return": 0.0022362975821905717,
+        "trades": 4
+      },
+      {
+        "annualized_return": 0.003509704163672689,
+        "information_ratio": 0.8660595004225922,
+        "max_drawdown": 0.004598147993076451,
+        "profit_factor": 1.6083626681696706,
+        "total_return": 0.002784472259273141,
+        "trades": 5
+      },
+      {
+        "annualized_return": 0.12822667278509137,
+        "information_ratio": 1.055606270395534,
+        "max_drawdown": 0.012925717198117415,
+        "profit_factor": 6.144052489054948,
+        "total_return": 0.10048572873709416,
+        "trades": 12
+      }
+    ],
+    "development_rank": [
+      0.03894452155764583,
+      -0.018255482912020837,
+      0.2242914584692403,
+      -0.006662020028374571
+    ],
+    "gates": {
+      "all_scenario_four_positive_folds": false,
+      "all_scenario_start_dates_positive": true,
+      "consumed_2026_total_above_5pct": false,
+      "consumed_2026q1_total_above_5pct": false,
+      "cost_18bp_primary": false,
+      "cumulative_bonferroni_5pct": false,
+      "delay_5min_primary": false,
+      "four_of_five_positive_folds": false,
+      "historical_positive_mdd_below_20pct": true,
+      "independent_from_v1254_correlation": false,
+      "parameter_neighborhood_70pct_primary": false,
+      "standard_primary": false
+    },
+    "historical_2018_2020": {
+      "annualized_return": 0.005713467255766824,
+      "information_ratio": -0.7664752641671266,
+      "max_drawdown": 0.017978603835305584,
+      "profit_factor": 1.29365474008984,
+      "total_return": 0.012832531794675806,
+      "trades": 32
+    },
+    "historical_stress": {
+      "cost_18bp": {
+        "annualized_return": -0.007146060243788943,
+        "information_ratio": -1.7890100283853876,
+        "max_drawdown": 0.03286177144612079,
+        "profit_factor": 0.7516993557368297,
+        "total_return": -0.015922852032732804,
+        "trades": 32
+      },
+      "delay_5min_9bp": {
+        "annualized_return": 0.008088229245493794,
+        "information_ratio": -0.4883618053498834,
+        "max_drawdown": 0.01808523341439061,
+        "profit_factor": 1.4949908702462562,
+        "total_return": 0.0181929232873983,
+        "trades": 32
+      },
+      "standard": {
+        "annualized_return": 0.005713467255766824,
+        "information_ratio": -0.7664752641671266,
+        "max_drawdown": 0.017978603835305584,
+        "profit_factor": 1.29365474008984,
+        "total_return": 0.012832531794675806,
+        "trades": 32
+      }
+    },
+    "model": {
+      "mean": [
+        0.5764652014652014,
+        0.2028873151607679,
+        0.000030631397064823694
+      ],
+      "scale": [
+        0.2861221386702128,
+        0.10401609222674499,
+        0.0005610029828068892
+      ],
+      "state_means": {
+        "risk_asset_agreement": 0.4750499001996008,
+        "sector_breadth": 0.2968608238069316,
+        "spy_current": 0.00003779391985707765,
+        "spy_volatility": 0.006207671402852501
+      },
+      "state_scales": {
+        "risk_asset_agreement": 0.4171004033281692,
+        "sector_breadth": 0.20835601030387807,
+        "spy_current": 0.006957117802434666,
+        "spy_volatility": 0.0029241484715641923
+      }
+    },
+    "multiple_comparison": {
+      "bonferroni_p": 1,
+      "total_cells": 109805,
+      "z_score": 0.19116405328505257
+    },
+    "native_factory_null_status": "NOT_RUN_PRE_NULL_FAILED",
+    "neighbor_primary_share": 0,
+    "pre_factory_null_pass": false,
+    "standard": {
+      "2024": {
+        "annualized_return": 0.003042787776718292,
+        "information_ratio": 0.7190094924208437,
+        "max_drawdown": 0.002851767911436154,
+        "profit_factor": 1.702684969656966,
+        "total_return": 0.003042787776718292,
+        "trades": 6
+      },
+      "2025": {
+        "annualized_return": 0.09828994021721593,
+        "information_ratio": 0.8088327567239072,
+        "max_drawdown": 0.012925717198117304,
+        "profit_factor": 5.299364385133108,
+        "total_return": 0.09706479688553715,
+        "trades": 13
+      },
+      "consumed_2026_all": {
+        "annualized_return": -0.0438206077320773,
+        "information_ratio": -2.2434431838395574,
+        "max_drawdown": 0.028539386473806605,
+        "profit_factor": 0.17868546757158857,
+        "total_return": -0.026839163010747624,
+        "trades": 12
+      },
+      "consumed_2026_apr_aug": {
+        "annualized_return": -0.06777788041277844,
+        "information_ratio": -2.454366667713694,
+        "max_drawdown": 0.025297313207782057,
+        "profit_factor": 0.13973227840225821,
+        "total_return": -0.025297313207782057,
+        "trades": 9
+      },
+      "consumed_2026q1": {
+        "annualized_return": -0.006518759314194766,
+        "information_ratio": -3.4272925131456082,
+        "max_drawdown": 0.0033262176353430206,
+        "profit_factor": 0.5260921450920267,
+        "total_return": -0.0015818667824132326,
+        "trades": 3
+      },
+      "development_all": {
+        "annualized_return": 0.020936329879350346,
+        "information_ratio": 0.3339016082080295,
+        "max_drawdown": 0.027933908516857953,
+        "profit_factor": 2.2665851165092925,
+        "total_return": 0.08587636344448901,
+        "trades": 32
+      },
+      "development_oos_2024_2025": {
+        "annualized_return": 0.049301456989786274,
+        "information_ratio": 0.6961930769560586,
+        "max_drawdown": 0.012925717198117082,
+        "profit_factor": 4.719304191860461,
+        "total_return": 0.1004029322397686,
+        "trades": 19
+      },
+      "train_2021_2023": {
+        "annualized_return": -0.0030218150169902813,
+        "information_ratio": -0.2583864608057462,
+        "max_drawdown": 0.034620575073318394,
+        "profit_factor": 0.8707970008341636,
+        "total_return": -0.009002375079673719,
+        "trades": 26
+      },
+      "train_2022_2023": {
+        "annualized_return": -0.006662020028374571,
+        "information_ratio": -0.33164943201812197,
+        "max_drawdown": 0.027933908516857953,
+        "profit_factor": 0.6899970673768954,
+        "total_return": -0.013201136029065141,
+        "trades": 13
+      }
+    },
+    "start_date_stress": {
+      "2022-01-01": {
+        "annualized_return": 0.020936329879350346,
+        "information_ratio": 0.3339016082080295,
+        "max_drawdown": 0.027933908516857953,
+        "profit_factor": 2.2665851165092925,
+        "total_return": 0.08587636344448901,
+        "trades": 32
+      },
+      "2023-01-01": {
+        "annualized_return": 0.03350095114066054,
+        "information_ratio": 0.5380871493653134,
+        "max_drawdown": 0.012925717198117637,
+        "profit_factor": 4.193441978046227,
+        "total_return": 0.10318588345715463,
+        "trades": 24
+      },
+      "2024-01-01": {
+        "annualized_return": 0.049301456989786274,
+        "information_ratio": 0.6961930769560586,
+        "max_drawdown": 0.012925717198117082,
+        "profit_factor": 4.719304191860461,
+        "total_return": 0.1004029322397686,
+        "trades": 19
+      }
+    },
+    "v1254_daily_return_correlation": {
+      "2024": 0.0026993954181838936,
+      "2025": 0.906541779632232,
+      "development_oos_2024_2025": 0.8666742246920031
+    }
+  },
+  "decision": "REJECT_ALL_NO_NEW_ADMISSIONS",
+  "evidence": {
+    "baseline_factor_audit_sha256": "174ef9ad29623ea37e4459651759588e622dcb1eaab10fdd0aa8e9b2355dd50b",
+    "checkpoints": [
+      {
+        "elapsed_seconds": 0.986087099998258,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1765-exact.json",
+        "sha256": "e3cadfe4b137d354cd18ca3097ec8b4f0f5282b082995306c0d6a31288a51eb2",
+        "version": 1765
+      },
+      {
+        "elapsed_seconds": 1.2385808000108227,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1766-exact.json",
+        "sha256": "35bcb8ed438b3a8d634f5e0e4a60e29467ca46952410bb80c8ff7ec3b634774c",
+        "version": 1766
+      },
+      {
+        "elapsed_seconds": 2.491206600010628,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1767-exact.json",
+        "sha256": "a82d905c26db1e7399efd12cad3f37e1899d17ad39e9bc35a7be4a08083c27c5",
+        "version": 1767
+      },
+      {
+        "elapsed_seconds": 2.442941899993457,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1768-exact.json",
+        "sha256": "e98ad5bfdf527bb65b408b9cd82aec1f92987686112e2b90fefc0d57c1cbed1b",
+        "version": 1768
+      },
+      {
+        "elapsed_seconds": 2.4956947000173386,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1769-exact.json",
+        "sha256": "2b239f2bd43d8d28b2589e65a6566195720b3342f6c45da46fb57cc6af47b561",
+        "version": 1769
+      },
+      {
+        "elapsed_seconds": 2.5158522999845445,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1770-exact.json",
+        "sha256": "4e08bc49bc86ed6c6dc6cd2b22a5a7f00f8ae7e01a10e9a2d351a29736af6c7c",
+        "version": 1770
+      },
+      {
+        "elapsed_seconds": 2.5328871999809053,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1771-exact.json",
+        "sha256": "e24076c6969bf5e42d0ba20935201701c760741f6e0f5147d401d689c71b11d2",
+        "version": 1771
+      },
+      {
+        "elapsed_seconds": 2.5428803999966476,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1772-exact.json",
+        "sha256": "c7159d4f98ceabc0241cc437ceba707a94e911a316d772e44fa16a4fa917e01a",
+        "version": 1772
+      },
+      {
+        "elapsed_seconds": 2.5531644000147935,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1773-exact.json",
+        "sha256": "bbb4c6e3580ce376656675c554685d00a5ac5c8acd846a791e957c89be36718e",
+        "version": 1773
+      },
+      {
+        "elapsed_seconds": 2.4826211000035983,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1774-exact.json",
+        "sha256": "d2977ede73d34a94b362f5c088b63a59f62e425f11753a729097fbc441b0c63f",
+        "version": 1774
+      },
+      {
+        "elapsed_seconds": 2.856869600014761,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1775-exact.json",
+        "sha256": "a7ccbb30985c6200b952a23278c74b52df5d0a9887eb6bb72d25c5cc0764fc81",
+        "version": 1775
+      },
+      {
+        "elapsed_seconds": 2.5351920999819413,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1776-exact.json",
+        "sha256": "fc4a10d6e33f80fa58121bf66ba9b9940fdf99c7ec9ceea267240bc7f92ecdc2",
+        "version": 1776
+      },
+      {
+        "elapsed_seconds": 2.485087500012014,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1777-exact.json",
+        "sha256": "3e346febe178a414818531eff9ce9ce20b53b93ac7c1e32484932eff0c101f36",
+        "version": 1777
+      },
+      {
+        "elapsed_seconds": 2.4639739000122063,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1778-exact.json",
+        "sha256": "e08ac07b8424e541f6df9e7c04add8787dc9e194552df218efa0a943e1507176",
+        "version": 1778
+      },
+      {
+        "elapsed_seconds": 2.5012287000135984,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1779-exact.json",
+        "sha256": "545524536cd51307dc9ea75be0ecd22c9a0569a819cd19a3ae50a09f4198c382",
+        "version": 1779
+      },
+      {
+        "elapsed_seconds": 2.532357400021283,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1780-exact.json",
+        "sha256": "b685767e5c304bcaea9262f9ca2879d58a2bf8f9a74f395bfaefd42c1a83c3ce",
+        "version": 1780
+      },
+      {
+        "elapsed_seconds": 2.532329900015611,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1781-exact.json",
+        "sha256": "7732f39b88cafae249813ab015821bbb7d8398bf5e006a56e029533c00683db7",
+        "version": 1781
+      },
+      {
+        "elapsed_seconds": 2.5599938000086695,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1782-exact.json",
+        "sha256": "8b4be5f761fdf9db9d4d7bcb93dbefdc6eb2c57a97c21de22c232db1d756eb3b",
+        "version": 1782
+      },
+      {
+        "elapsed_seconds": 2.558016499999212,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1783-exact.json",
+        "sha256": "e9d8b3dfd8f00570b57ce9545a914ae41038426c4eba5353a69c2c081fc6d0a7",
+        "version": 1783
+      },
+      {
+        "elapsed_seconds": 2.4760263000207487,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1784-exact.json",
+        "sha256": "fb306827a8c0c7bb03b735ba54ba6412c20ee0b538542be6bece99305796e92e",
+        "version": 1784
+      },
+      {
+        "elapsed_seconds": 3.2724041000183206,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1785-exact.json",
+        "sha256": "8dde872a8787a67e758f58da03495cb7f871759855dd6f360d4f653b03375187",
+        "version": 1785
+      },
+      {
+        "elapsed_seconds": 2.5490084000048228,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1786-exact.json",
+        "sha256": "7f2c269a3383fd634cab73dbc7cfe98eac2bf3b291baa8b3cf22f1a8f4ff2fe3",
+        "version": 1786
+      },
+      {
+        "elapsed_seconds": 2.50754120000056,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1787-exact.json",
+        "sha256": "25d13952a43817e4ef0e2acaee302254d8d7b13d78c60c1dd9e97ec32dc4b99a",
+        "version": 1787
+      },
+      {
+        "elapsed_seconds": 2.468108300003223,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1788-exact.json",
+        "sha256": "bc9238129436b440c6cfcb46de85bcf38ce393c135da32d699dffc88f0180cac",
+        "version": 1788
+      },
+      {
+        "elapsed_seconds": 2.50636180001311,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1789-exact.json",
+        "sha256": "21f29636c48f3e1b3b39c120b830d55dc7d9d7f3bd1c6894da4283abfac4205c",
+        "version": 1789
+      },
+      {
+        "elapsed_seconds": 2.5490696000051685,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1790-exact.json",
+        "sha256": "ae9ed7de618db62dbf20ddbfb669944053f4ab3bb6ddcefedbbebbb0965147ce",
+        "version": 1790
+      },
+      {
+        "elapsed_seconds": 2.628424599999562,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1791-exact.json",
+        "sha256": "81369435c44d9bb6adb29d9bc0b093530142409454c4a9095dd7f739637dd4e6",
+        "version": 1791
+      },
+      {
+        "elapsed_seconds": 2.626644200005103,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1792-exact.json",
+        "sha256": "ef0a59bef836ac38a07ae43105d957661d74628eb24bdad3966c839ffee55399",
+        "version": 1792
+      },
+      {
+        "elapsed_seconds": 2.608332600007998,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1793-exact.json",
+        "sha256": "ab30e2d73d1c6cdf1f64a99dd68561e047468d075e2018c58e5690d7f7ac5bae",
+        "version": 1793
+      },
+      {
+        "elapsed_seconds": 2.5785925000091083,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1794-exact.json",
+        "sha256": "1ef79e2ec4e08e8942bfb390994b8b7825c2c8ef877f676393759de1af7ec851",
+        "version": 1794
+      },
+      {
+        "elapsed_seconds": 3.3195249999989755,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1795-exact.json",
+        "sha256": "73256491e101858f8c214a9ebdd87ee72ba9afbb3b9eff1cbba8dd2d3c6ee4df",
+        "version": 1795
+      },
+      {
+        "elapsed_seconds": 2.572137200011639,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1796-exact.json",
+        "sha256": "c1856079f4603648be0df1bcec25144f8fb00144f97592b159fd878c60fa8a4b",
+        "version": 1796
+      },
+      {
+        "elapsed_seconds": 2.590076799999224,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1797-exact.json",
+        "sha256": "1a9cbb886dcd09de2bd8212decd6193b1657283beb8d9d7f21ab73a11ab9a7a3",
+        "version": 1797
+      },
+      {
+        "elapsed_seconds": 2.4804192000010516,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1798-exact.json",
+        "sha256": "4faf0a14ba0f58c31160340a0efc3abbafa04a8b823fd66b578e834a9fc9e137",
+        "version": 1798
+      },
+      {
+        "elapsed_seconds": 2.537502499995753,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1799-exact.json",
+        "sha256": "16e4e5c3328c8d5e430cb71c323dd2b64e150b8851f27162beefa779cc1c5e26",
+        "version": 1799
+      },
+      {
+        "elapsed_seconds": 2.5629497000190895,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1800-exact.json",
+        "sha256": "9ff2dca0a69790c83c7003f7705af6b3b929dcd11a3a7365e54d887409249798",
+        "version": 1800
+      },
+      {
+        "elapsed_seconds": 2.5984210999740753,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1801-exact.json",
+        "sha256": "77a554e26e803803da3edee3dfc1fc818ce60072300d2adfc4ee949d9bb8e3b1",
+        "version": 1801
+      },
+      {
+        "elapsed_seconds": 2.597105900000315,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1802-exact.json",
+        "sha256": "365c3b6a7a2102e9b58b2163431b7f4be5885a2a940b12b5df51556b4af20b89",
+        "version": 1802
+      },
+      {
+        "elapsed_seconds": 2.6425285000004806,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1803-exact.json",
+        "sha256": "6fb7f9ed4f76073776ff6282726c21c1a31137138ce87e168bde03bdc1c9c509",
+        "version": 1803
+      },
+      {
+        "elapsed_seconds": 2.4911805000156164,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1804-exact.json",
+        "sha256": "504eb181c0e79782a9bb7eb42f9b8697e066164851a0356a76a1f7be21fbe2ff",
+        "version": 1804
+      },
+      {
+        "elapsed_seconds": 3.319038499990711,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1805-exact.json",
+        "sha256": "483dc2983273ba0e5237813acb591dffbdda02ab2e8b2a3f5946a604d1d43bf9",
+        "version": 1805
+      },
+      {
+        "elapsed_seconds": 2.5645082000119146,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1806-exact.json",
+        "sha256": "cbeaa70324a7bfa87d508ab85cdc86bb29b728aa4f9396aa8c9dec3ef1ea9b73",
+        "version": 1806
+      },
+      {
+        "elapsed_seconds": 2.555918700003531,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1807-exact.json",
+        "sha256": "bdfe2790d72613c0b62756af6e537ad01765dbf5303edb3d71b70f1ba16ca17c",
+        "version": 1807
+      },
+      {
+        "elapsed_seconds": 2.4878326000180095,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1808-exact.json",
+        "sha256": "8232383e4d0593a08030aeea9faafdf83754b64e50784547e9439c20102a2089",
+        "version": 1808
+      },
+      {
+        "elapsed_seconds": 2.5211743999971077,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1809-exact.json",
+        "sha256": "74ab1b731eb27323909180009b404518bfac78357e39c72ac9ca004ee81e0507",
+        "version": 1809
+      },
+      {
+        "elapsed_seconds": 2.548145900014788,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1810-exact.json",
+        "sha256": "d89f0a9e9961d574bb46c04f8ecfc827741e9dfd7278e6eebac5ff3b4611ab83",
+        "version": 1810
+      },
+      {
+        "elapsed_seconds": 2.579194899997674,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1811-exact.json",
+        "sha256": "a2954217db97c74a2f48da449a89dac223f09d62452a0258746f9be66d2e2ecc",
+        "version": 1811
+      },
+      {
+        "elapsed_seconds": 2.570518799999263,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1812-exact.json",
+        "sha256": "3d02e729538ec8545cb63814608cba55fb9acf116aa473f665503186c85d9cc6",
+        "version": 1812
+      },
+      {
+        "elapsed_seconds": 2.5522912000014912,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1813-exact.json",
+        "sha256": "c2de7657e5c153bd2a24a810c50713b4006ccba87368978bfd0468138bef9ddb",
+        "version": 1813
+      },
+      {
+        "elapsed_seconds": 2.496484800009057,
+        "evaluated_cells": 64,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1814-exact.json",
+        "sha256": "7ffb6172b4a1268c5f9424dab360ea2178d85ef844152080e5abad840a28ff26",
+        "version": 1814
+      },
+      {
+        "elapsed_seconds": 7.257191699987743,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1815-exact.json",
+        "sha256": "c968ec4b35c5ed3e6b88177addc29e1976446e775cef43c5fa8809ca6b4a65e9",
+        "version": 1815
+      },
+      {
+        "elapsed_seconds": 7.120086099981563,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1816-exact.json",
+        "sha256": "f3c134210af47b0eeceae373dc7d75bf85e158e74cce09a48a3e0cb1f179f380",
+        "version": 1816
+      },
+      {
+        "elapsed_seconds": 6.8133826999983285,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1817-exact.json",
+        "sha256": "76f148894ce6fa0d0c798864e919e1a732fe5b49a5686663d8dd6d7609b0e0b3",
+        "version": 1817
+      },
+      {
+        "elapsed_seconds": 6.8477044999890495,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1818-exact.json",
+        "sha256": "e2644fc3cef0f46e2a5b0dcfa1d21ef9f8668e194a73df1d5c0ac66448f42bd3",
+        "version": 1818
+      },
+      {
+        "elapsed_seconds": 6.909482399991248,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1819-exact.json",
+        "sha256": "0f3d2a3043c34d96f294a68b12f702771c2b1e1aa12461e31fc5c5e26bf0c454",
+        "version": 1819
+      },
+      {
+        "elapsed_seconds": 7.0425475999945775,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1820-exact.json",
+        "sha256": "bc56bcdda1992a69a728cc0e75ba61c4a0792a81fa300dc9206403962b8c8f7d",
+        "version": 1820
+      },
+      {
+        "elapsed_seconds": 7.149552199989557,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1821-exact.json",
+        "sha256": "e5c93600e674d18b15f40b2852f84b9a8989e85489a67350c49035c11e43feb2",
+        "version": 1821
+      },
+      {
+        "elapsed_seconds": 7.234757800004445,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1822-exact.json",
+        "sha256": "0f6e0c0ce3cd863170693ed0306ff4a617f4811b500b10976a9432ef32d2c81f",
+        "version": 1822
+      },
+      {
+        "elapsed_seconds": 7.125804699986475,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1823-exact.json",
+        "sha256": "f58ee4e167eb683b75e5408be06fb546fd1265ce72ec00063cc39e5b95375e6f",
+        "version": 1823
+      },
+      {
+        "elapsed_seconds": 6.937662399985129,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1824-exact.json",
+        "sha256": "6a3a548f1414964fbb55ae9061b4c01a197cc095ece35a5cbb4ffea9f27e3d81",
+        "version": 1824
+      },
+      {
+        "elapsed_seconds": 7.177499100012938,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1825-exact.json",
+        "sha256": "3a41948c39ff5572f736c0db12c499a696e72fb12eeb6f5ca2ec0b59803aa9ea",
+        "version": 1825
+      },
+      {
+        "elapsed_seconds": 7.096915200003423,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1826-exact.json",
+        "sha256": "550409e1f39bf3028016f246959f515f0cb6a2c7713b631cda1e211d75a6eb37",
+        "version": 1826
+      },
+      {
+        "elapsed_seconds": 6.792342699976871,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1827-exact.json",
+        "sha256": "9627e7b1ce76108638ab9f92dea3a5d8cef2be965f3a40fa5dff54cac320a825",
+        "version": 1827
+      },
+      {
+        "elapsed_seconds": 6.829719899978954,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1828-exact.json",
+        "sha256": "43380a934200f840588a36d50e5ea9bd6ed6bfdf0166e287cca9f1a9206da7be",
+        "version": 1828
+      },
+      {
+        "elapsed_seconds": 6.840322700008983,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1829-exact.json",
+        "sha256": "0ab9be6327594b4fbbd233ff88ee26cc387f8ad7f18fcd2324ba971e0fd215f0",
+        "version": 1829
+      },
+      {
+        "elapsed_seconds": 7.0305591999785975,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1830-exact.json",
+        "sha256": "376913057ad2610c5b96dd2625ded5fe23f0a3d6cf7fd83c879985c4d36989ca",
+        "version": 1830
+      },
+      {
+        "elapsed_seconds": 7.090083200018853,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1831-exact.json",
+        "sha256": "b5bed4a49ec2c114432dc25c300f36bb196469bbc724c54fb11356d93d0e1625",
+        "version": 1831
+      },
+      {
+        "elapsed_seconds": 7.144005100009963,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1832-exact.json",
+        "sha256": "5a620e48f358220569e7ce2c3982de147e8bf89769214db3ff40461dc7e149d1",
+        "version": 1832
+      },
+      {
+        "elapsed_seconds": 7.12177050000173,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1833-exact.json",
+        "sha256": "3a27a74f2c2a17e8a9f6f668f64efc4261c1f25c8748ab10105b45599efc4d2e",
+        "version": 1833
+      },
+      {
+        "elapsed_seconds": 6.942576500005089,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1834-exact.json",
+        "sha256": "212acb0e36f28967a06b6915ff4465b52e77a8cd8ca2969cf45d4f9236d6c6c5",
+        "version": 1834
+      },
+      {
+        "elapsed_seconds": 7.243236100010108,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1835-exact.json",
+        "sha256": "c3a437f4c41f5080a951c1f37c13e78a004d6ffe87cf2375459d2e1d0656178c",
+        "version": 1835
+      },
+      {
+        "elapsed_seconds": 7.146648699999787,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1836-exact.json",
+        "sha256": "46a358b2cbcc8f36ba5de1feafac4e14782c928695cfbd2d164e7b40c8d93aeb",
+        "version": 1836
+      },
+      {
+        "elapsed_seconds": 6.8777980000013486,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1837-exact.json",
+        "sha256": "f95ee2b246556ee99f2fe9863a5580b85550416ae5b78eb2cd6c9c54585e6499",
+        "version": 1837
+      },
+      {
+        "elapsed_seconds": 6.9132059999974445,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1838-exact.json",
+        "sha256": "3d64f2ea3c3bf2174f3a0b975ce22fb91fa776660d5a47825565d0e43ebb54ef",
+        "version": 1838
+      },
+      {
+        "elapsed_seconds": 6.917174799978966,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1839-exact.json",
+        "sha256": "ee9d37ff61670f9b5954475cc00ebb322ffb32cc809d6ae3b7a4a087af772db6",
+        "version": 1839
+      },
+      {
+        "elapsed_seconds": 7.090510699985316,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1840-exact.json",
+        "sha256": "b311cb1bf6f404ee1c6f02e710d7e97d981563fb79e310dfcf530ea364b48b2b",
+        "version": 1840
+      },
+      {
+        "elapsed_seconds": 7.204252199997427,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1841-exact.json",
+        "sha256": "8c5a7cf7bf5b38278fd9b43a29ca9d2073f18f2368eb8081a724680f62f30e88",
+        "version": 1841
+      },
+      {
+        "elapsed_seconds": 7.187235699995654,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1842-exact.json",
+        "sha256": "fc767e7eeb5e8f83d9c409cc729834055c50c5375b2b56f887692dd06139b3d5",
+        "version": 1842
+      },
+      {
+        "elapsed_seconds": 7.18153549998533,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1843-exact.json",
+        "sha256": "c51bd00d8b06c1d702d7c249c7658cdca400b61321d32a7fc664832e415cb5fd",
+        "version": 1843
+      },
+      {
+        "elapsed_seconds": 6.916208999988157,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1844-exact.json",
+        "sha256": "04b72eb27fa4c0c1e912affc40fb32e70984dc49642613104f993b910e0437ab",
+        "version": 1844
+      },
+      {
+        "elapsed_seconds": 7.202817299985327,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1845-exact.json",
+        "sha256": "85015f7fb516772efc85c573820e0cc4434ca2f36944669ed8c90cec0ad8b8a9",
+        "version": 1845
+      },
+      {
+        "elapsed_seconds": 7.1430627000227105,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1846-exact.json",
+        "sha256": "504862f2eaebf9f8aadeaab7b9739e6c1793e8adbf8a4118b64d7be345014aca",
+        "version": 1846
+      },
+      {
+        "elapsed_seconds": 6.883396500023082,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1847-exact.json",
+        "sha256": "c1df4c0a08494c0a450388745f2001c75d86ee825033d94ca8b3a15d06ae40e5",
+        "version": 1847
+      },
+      {
+        "elapsed_seconds": 6.877822000009473,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1848-exact.json",
+        "sha256": "a6e3ed54cdf69afab03359e76b480a64d982df432e045a20c7a69ee830362c6d",
+        "version": 1848
+      },
+      {
+        "elapsed_seconds": 6.888339199998882,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1849-exact.json",
+        "sha256": "09cdf699385fc93678fd6f3518a5ca97d80ed9dca24ee94c6f2ad81e789ba140",
+        "version": 1849
+      },
+      {
+        "elapsed_seconds": 7.078900900000008,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1850-exact.json",
+        "sha256": "d3f4612cc100a33a4764da77c1ce82eaa3ddf8bf7ac10c287acf99b3e95980bf",
+        "version": 1850
+      },
+      {
+        "elapsed_seconds": 7.1988674000022,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1851-exact.json",
+        "sha256": "136ef956cdbddab48e74b5cd2f38d83bbcfaac685bca8fd8d7a354bba26f6dd2",
+        "version": 1851
+      },
+      {
+        "elapsed_seconds": 7.209485700004734,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1852-exact.json",
+        "sha256": "1ee6792702fea9dd226ec0a16a4ee0c6639ada2984ac23a9a801c9d754eb8951",
+        "version": 1852
+      },
+      {
+        "elapsed_seconds": 7.2016075999999885,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1853-exact.json",
+        "sha256": "d26f2be37ea3e6d8f4cf9aa86315e7aca28bad0f0852ad7f506451070f776400",
+        "version": 1853
+      },
+      {
+        "elapsed_seconds": 6.960183399991365,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1854-exact.json",
+        "sha256": "c8ebe39cb80a3900fdbf886905b9b9d7e4d8a257f07e59b854b44cb6d51f5c53",
+        "version": 1854
+      },
+      {
+        "elapsed_seconds": 7.221056100010173,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1855-exact.json",
+        "sha256": "7f649cf3ba50aea7d5c54936456bfc421f10a1b7b4232b68dca638e89687c94a",
+        "version": 1855
+      },
+      {
+        "elapsed_seconds": 7.110341100022197,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1856-exact.json",
+        "sha256": "1fa50657c2c001fdea6d5007b95d54e291abfc8089e560c30eb7c8e145c3c8f9",
+        "version": 1856
+      },
+      {
+        "elapsed_seconds": 6.950616899994202,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1857-exact.json",
+        "sha256": "a2ca5cb0a0af617febef361b795db8d7621ee55338b27f025cefc0fe94358afc",
+        "version": 1857
+      },
+      {
+        "elapsed_seconds": 6.917733700014651,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1858-exact.json",
+        "sha256": "e1298ea788537db906b6d1ea20418570b87b922cd3295d73d49350485bac6780",
+        "version": 1858
+      },
+      {
+        "elapsed_seconds": 6.89665659997263,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1859-exact.json",
+        "sha256": "cafe15879b871be7f900addb8071d051d52289918334e7025b14014da8f29fe6",
+        "version": 1859
+      },
+      {
+        "elapsed_seconds": 7.120945800008485,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1860-exact.json",
+        "sha256": "4d23665286e3874504f1295d94cd9840a6d433fc997751b92ebd85b7a143ba28",
+        "version": 1860
+      },
+      {
+        "elapsed_seconds": 7.178780900023412,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1861-exact.json",
+        "sha256": "ea653528047a30edd5caccf005b94d4dd4e49e3327f2f46f46a06e741001e8d5",
+        "version": 1861
+      },
+      {
+        "elapsed_seconds": 7.191455700027291,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1862-exact.json",
+        "sha256": "74af3b5c6f513a76fa7d4cb78b5da09f09befa54950963dfd450b4b5de2a900c",
+        "version": 1862
+      },
+      {
+        "elapsed_seconds": 7.1317295000189915,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1863-exact.json",
+        "sha256": "1259a525b1f3ae6cdd44ee02a62485d3879777ec586ebe71662a77200de0b7de",
+        "version": 1863
+      },
+      {
+        "elapsed_seconds": 6.950925699988147,
+        "evaluated_cells": 192,
+        "file": "artifacts/research/v1765_v1864/full-universe-intraday-v1864-exact.json",
+        "sha256": "dc6967a6290f4245cbb9e0591839a1346c3350b077814271be57485cff618dd7",
+        "version": 1864
+      }
+    ],
+    "contract": {
+      "alpaca_manifests": {
+        "alpaca-iex-1min-37291f29e2057075b207579edf6d244b": "210930aa0c37e281463f85fc31913cab25fbf685b473fc7b9fe1d3e00ba1f719",
+        "alpaca-iex-1min-55ea51fc2f7e7ff2e8065e4bf321b6d0": "d64fd6fb360efa2192a0e85995dcbbb37308f979707f7f89f684966f490d2186",
+        "alpaca-iex-1min-b96642524b1a51aa2b9574335ca591b9": "77beb8fedcc00bc41509ca5a53f1dea7b936aa4060102847071f7720322e32e0",
+        "alpaca-iex-1min-c399960d655fe2a36dfc2e51fbcc9259": "0b0f370cbf89650b3e11922aef7a6faf4d4402dac5cd8b1e2823024f7170612e",
+        "alpaca-iex-1min-ccf623196d5fae6171b7ca5ef036d665": "b2a163eaa031f6d60a9dbb7bcdd8d73d32e08cab69be89beb9ea9ed05c89f7f2",
+        "alpaca-iex-1min-dd31d6bae8aff19bf41d956330801680": "cce66813e3beb7c85ef007f9b99a454abbcc33b78510f10f541bf6e72050c820",
+        "alpaca-iex-1min-e44ab643818a7efc0da7a09f348d1fdc": "2047911532fddc3af4a3974c65d016ebe6886db6e551036386549cfaed2cd989"
+      },
+      "code": {
+        "analyze_full_universe_intraday_v34_factors.py": "4ce43dbac556f782bb0490675d1a8866cd0b832f8db3524c90341d525e2d3ca1",
+        "analyze_full_universe_intraday_v53_cross_asset_factors.py": "c2a4fcbf7428bc37670354a38514a9cd06380696acb07157f281e8a080141bb5",
+        "evaluate_full_universe_intraday_v1463_v1562_intraday_path_multifactor.py": "9d5d137eb10c93285dd2733bb3d8692fc3156ea8045110dee63b07059a5e4387",
+        "evaluate_full_universe_intraday_v146_v245_anchored_ensembles.py": "762a1517a2a5df6ec1b3a514a70244e1c9d0a0bec0f92e4b640157cc039c99bd",
+        "evaluate_full_universe_intraday_v1765_v1864_sector_rotation.py": "38b90eba73208bf7808efb9c4f7d451258ae3af0f8993c811279a73a742b0ef5",
+        "evaluate_full_universe_intraday_v248_v347_mechanism_campaign.py": "803f5ae9707fc23fd1a57abb4ebb4ba59f39ad74eae4e07f34fdc317d352018f",
+        "evaluate_full_universe_intraday_v34_multifactor.py": "69772969f662f10a7310dd3f77e92203f3dfcd44e17a54eaa59ccd905bac0d93",
+        "evaluate_full_universe_intraday_v35_rank_ensemble.py": "ba7fd81422d2d8b80bd15d4b3aed3e910925864a7139430b86dc0095d48dc274",
+        "evaluate_full_universe_intraday_v37_stable_factor_vote.py": "1a5b9b5fb090d91b4482cc02d2b3e0cea2a21511ecbaf238897adb43cf28990e",
+        "evaluate_full_universe_intraday_v38_multifactor_sleeve_beam.py": "482421dd50198d4181aacda7308f57235af54fc485cc7734231b166521e27d8f",
+        "evaluate_full_universe_intraday_v39_multifactor_regime_gate.py": "90721c8eb5127609c2faefe045a71a10139500130d9e704c38359158fdea8043",
+        "evaluate_full_universe_intraday_v42_multifactor_vol_target.py": "ef61040b38b6406013e757b2fbc763d6c3152c7a6ecbe1f7779a324846ecdf9a",
+        "evaluate_full_universe_intraday_v44_multihorizon_confirmation.py": "c8ab68fa17c59993b8f320be2bb434871ec78c5d180f6cf02560198b4a6803a4",
+        "evaluate_full_universe_intraday_v45_event_trigger_multifactor.py": "6cb58c9b23bc6104de15bae891283be67ad1f06af5f844568901c691c1c11774",
+        "evaluate_full_universe_intraday_v47_score_slope.py": "996bf4bd24981d1336addca9df4315774665b259a8cd73c89faf134e42fe455a",
+        "evaluate_full_universe_intraday_v550_v649_state_gated_reversal.py": "7c880a95d28a6b9de535abd29a743612652e5c67b371f1087fbadfbd06d73c76",
+        "evaluate_full_universe_intraday_v57_hundred_round_multifactor.py": "95f6813df3a147ebe379c4aea53a5ad607bfdcd6363cf692a195891e1fb2139c",
+        "evaluate_full_universe_intraday_v59_v145_version_campaign.py": "3799631ea0a1a82d00b55641fecedd09d6bc857735d75540e464c59d9cc49dad",
+        "fast_intraday_research.py": "85e29c2f7d0c3c966ee21795e66f7a516ae370178e4be0c2fbbf3240a92ed6cd",
+        "search_full_universe_intraday_v11.py": "a720a00bf90b5eff5a06756949bce60ffac52c4c4b452276034198e60c12e2ce",
+        "search_full_universe_intraday_v12_robustness.py": "13c1d8e19e336c96f1cfff6ad38107925d745ad62fdd6d4bb891dfacbf9204c0",
+        "search_full_universe_intraday_v13_regime_rotation.py": "7d52421461ceb75ae729fa912afac8593e8c3883ce6262105ebd58cb4b9d70dc",
+        "search_full_universe_intraday_v15_prior5.py": "495594f8e26fef07e093086c42ef1deeeea669b8e62ff85a10530cf3ddd4920b",
+        "search_full_universe_intraday_v18_diversified_beam.py": "9dc1ed9e0ee59cba850f22322d3cc971d471a8f9b28bf024c5d3cae5ac504081",
+        "search_full_universe_intraday_v21_vwap_structure.py": "5889f8e78bde4b4bb442d47c89eb86afcdd9f435197acbcfb3fd0181ce9dc4a9"
+      },
+      "historical_manifests": {
+        "hf-finnhub-1min-243092ebf76c0a362976b26ba931c5c8": "0103622247b908363426221cdbc0b4307588468faa7fea1beaf1ae4322b9266e",
+        "hf-finnhub-1min-4812684e648df8fc683ea07661eb2f9d": "9e76d55ed5363026ad82b8e85a6b1808ef298d9ac72e50c064dc8ccfeef42610"
+      },
+      "proposal_sha256": "9738546cad84ffac2f184c041cc53eb62762c00b17486668b69b6714066e07f4"
+    }
+  },
+  "independence_gate_passed_records": 168,
+  "nonfinite_encoding": "Nonfinite diagnostic metrics are literal strings, not JSON numbers.",
+  "paper_pool_unchanged_by_research": [
+    "lev-v1254-de6c18bd7658f359"
+  ],
+  "pre_null_rejected": 300,
+  "schema_version": "1.0.0",
+  "summary": {
+    "admitted": 0,
+    "completed_versions": 100,
+    "contract_id": "45b3815d7e84bed6",
+    "cumulative_comparison_cells": 109805,
+    "elapsed_seconds": 488.6528415000066,
+    "evaluated_cells": 12800,
+    "frozen_frontier_records": 300,
+    "pre_factory_null_hits": 0,
+    "rejection_reason_counts": {
+      "all_scenario_four_positive_folds": 300,
+      "all_scenario_start_dates_positive": 291,
+      "consumed_2026_total_above_5pct": 300,
+      "consumed_2026q1_total_above_5pct": 300,
+      "cost_18bp_primary": 300,
+      "cumulative_bonferroni_5pct": 300,
+      "delay_5min_primary": 300,
+      "four_of_five_positive_folds": 294,
+      "historical_positive_mdd_below_20pct": 285,
+      "independent_from_v1254_correlation": 132,
+      "parameter_neighborhood_70pct_primary": 300,
+      "standard_primary": 300
+    },
+    "status": "COMPLETE",
+    "version_range": [
+      1765,
+      1864
+    ]
+  },
+  "tests": {
+    "pytest_passed": 879,
+    "pytest_seconds": 71.38,
+    "ruff": "PASS"
+  }
+}

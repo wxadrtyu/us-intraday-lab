@@ -14,7 +14,7 @@ SOXL. Four names were not four independent sources of risk.
 The selection criterion is the minimum 2024-2025 annualized return across standard cost, doubled
 cost and an extra five-minute entry delay, with existing transfer and component-null constraints.
 Neither consumed 2026 nor the most recent Paper loss ranks candidates. v1254 has the strongest
-stress floor (58.35%, versus 55.57% for v449 and 54.95% for v247), standard return (63.60%), and
+stress floor (58.35%, versus 55.57% for v449, 54.95% for v247 and 52.30% for v798), standard return (63.60%), and
 slightly lower standard drawdown (11.36%). Its original 35/36 joint-neighborhood pass and routed
 component-native null pass remain valid; its inherited v45 null and cumulative Bonferroni failures
 remain explicit. Historical 2018-2020 annualized return is only 0.07%, so this is not proof of
@@ -40,6 +40,13 @@ capital to the same anchor. It removes redundant execution, not all market risk.
   the append-only POOL_CONSOLIDATION lifecycle event.
 
 The structured lifecycle record is `research/results/2026-08-26-paper-pool-consolidation.json`.
+
+Future operational checks must inspect `USIntradayLab-V1254-AlpacaPaper` and its `-Closeout`
+task, not reactivate a retired multi-member task. The ledger remains
+`state/paper/v247_v449_pool.sqlite3` and logs remain `state/paper/logs/v449-runner.log` for
+continuity. A local automation configuration inspection found only the separate brokerless
+research-shadow automation; no available legacy Paper heartbeat configuration was rewritten,
+and no new reminder or schedule was created.
 
 ## Independent-source research boundary
 
