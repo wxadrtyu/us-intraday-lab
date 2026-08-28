@@ -1,0 +1,331 @@
+{
+  "records": [
+    {
+      "label": "v4.1",
+      "campaign_id": "research-shadow-86ea09c691248d86d4bf2e49820c2182",
+      "session_date": "2026-08-27",
+      "content_sha256": "4e73297947046408cf9f3e4119cf8f8eceaac51d25bd3bc6b6875033f67771cb",
+      "observation": {
+        "feed": "minute_composite",
+        "parameters": {
+          "spy_current_floor": 0.003,
+          "spy_exit_minute": 300,
+          "stock_excess_floor": 0.005,
+          "stock_range_floor": 0.7
+        },
+        "provider": "twelve_data",
+        "quality": {
+          "context_sessions": 33,
+          "target_minimum_stock_minutes": 387,
+          "target_spy_minutes": 390
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-27",
+        "signals": {
+          "spy": false,
+          "stock": true,
+          "stock_symbol": "CRM"
+        },
+        "theoretical": {
+          "benchmark_return": 0.00039662567451081987,
+          "spy_sleeve_return": 0,
+          "stock_sleeve_return": 0.005996394037066927,
+          "strategy_return": 0.005996394037066927
+        }
+      }
+    },
+    {
+      "label": "v4.1",
+      "campaign_id": "research-shadow-86ea09c691248d86d4bf2e49820c2182",
+      "session_date": "2026-08-28",
+      "content_sha256": "1ca46a7db5f3c0c2842a1d7e1ebde36c283c1f06e5069bea5a4a2da951198438",
+      "observation": {
+        "feed": "minute_composite",
+        "parameters": {
+          "spy_current_floor": 0.003,
+          "spy_exit_minute": 300,
+          "stock_excess_floor": 0.005,
+          "stock_range_floor": 0.7
+        },
+        "provider": "twelve_data",
+        "quality": {
+          "context_sessions": 33,
+          "target_minimum_stock_minutes": 387,
+          "target_spy_minutes": 390
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-28",
+        "signals": {
+          "spy": false,
+          "stock": false,
+          "stock_symbol": null
+        },
+        "stress_diagnostics": {
+          "contract": "same frozen signals; entry delayed five minutes; scheduled exit unchanged",
+          "cost_18bp_return": 0,
+          "delay_5min_9bp_return": 0,
+          "standard_9bp_return": 0
+        },
+        "theoretical": {
+          "benchmark_return": 0,
+          "spy_sleeve_return": 0,
+          "stock_sleeve_return": 0,
+          "strategy_return": 0
+        }
+      }
+    },
+    {
+      "label": "v45",
+      "campaign_id": "research-shadow-90b08a76631366856327b48d9d422c7b",
+      "session_date": "2026-08-27",
+      "content_sha256": "6e9a09b091dca41e924d51c141cc2d460a24c36fa3e332920615976caa112257",
+      "observation": {
+        "admission": {
+          "factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v45e-0d302fbf92727a31",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 292
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-27",
+        "signal": {
+          "decision_bar": 23,
+          "exposure": 1,
+          "selected_symbol": "SOXL"
+        },
+        "theoretical": {
+          "benchmark_return": -0.00044788326474431983,
+          "cost_18bp_return": -0.009570521616929815,
+          "delay_5min_9bp_return": -0.012266444279713339,
+          "standard_9bp_return": -0.008670521616929815
+        }
+      }
+    },
+    {
+      "label": "v45",
+      "campaign_id": "research-shadow-90b08a76631366856327b48d9d422c7b",
+      "session_date": "2026-08-28",
+      "content_sha256": "485a37da130cd47e649b6b357503e46fb1457aa651dca2db48314d4149b8dd69",
+      "observation": {
+        "admission": {
+          "factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v45e-0d302fbf92727a31",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 262
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-28",
+        "signal": {
+          "decision_bar": 23,
+          "exposure": 1,
+          "selected_symbol": "SOXL"
+        },
+        "theoretical": {
+          "benchmark_return": -0.0070263957622251905,
+          "cost_18bp_return": -0.047107992533514366,
+          "delay_5min_9bp_return": -0.04165021312872973,
+          "standard_9bp_return": -0.04620799253351436
+        }
+      }
+    },
+    {
+      "label": "v247",
+      "campaign_id": "research-shadow-7ccd0906ec2adcddd9c78cb9ab46c9c0",
+      "session_date": "2026-08-27",
+      "content_sha256": "319fb51653d857ec7f8891c8084a4eacc2fa17ab993b90d56bb47ad448e042e8",
+      "observation": {
+        "admission": {
+          "component_factory_null_passed": true,
+          "global_bonferroni_passed": false,
+          "inherited_v45_factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v247-df683b8a37c927f6",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 292
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-27",
+        "signals": {
+          "anchor_decision_bar": 23,
+          "anchor_exposure": 1,
+          "anchor_symbol": "SOXL",
+          "component_decision_bar": null,
+          "component_exposure": 1,
+          "component_symbol": null
+        },
+        "theoretical": {
+          "benchmark_return": -0.0004254891015071038,
+          "cost_18bp_return": -0.009091995536083324,
+          "delay_5min_9bp_return": -0.011653122065727672,
+          "standard_9bp_return": -0.008236995536083324
+        },
+        "weights": {
+          "component": 0.05,
+          "v45_anchor": 0.95
+        }
+      }
+    },
+    {
+      "label": "v247",
+      "campaign_id": "research-shadow-7ccd0906ec2adcddd9c78cb9ab46c9c0",
+      "session_date": "2026-08-28",
+      "content_sha256": "b0ac38eae35cad3280311f6e3e98e6558c120a4f2f1475277262d7893f84b40c",
+      "observation": {
+        "admission": {
+          "component_factory_null_passed": true,
+          "global_bonferroni_passed": false,
+          "inherited_v45_factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v247-df683b8a37c927f6",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 262
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-28",
+        "signals": {
+          "anchor_decision_bar": 23,
+          "anchor_exposure": 1,
+          "anchor_symbol": "SOXL",
+          "component_decision_bar": 23,
+          "component_exposure": 1,
+          "component_symbol": "SOXL"
+        },
+        "theoretical": {
+          "benchmark_return": -0.007094788595172469,
+          "cost_18bp_return": -0.04775282538605127,
+          "delay_5min_9bp_return": -0.04229812446717814,
+          "standard_9bp_return": -0.04685282538605126
+        },
+        "weights": {
+          "component": 0.05,
+          "v45_anchor": 0.95
+        }
+      }
+    },
+    {
+      "label": "v449",
+      "campaign_id": "research-shadow-aa9f2cc8e5208b876180e9d800d284f4",
+      "session_date": "2026-08-27",
+      "content_sha256": "f1b41d911341add5901d50deccde1da3c7f7dad1cd9bdf598d624b0a103b7336",
+      "observation": {
+        "admission": {
+          "component_factory_null_passed": true,
+          "global_bonferroni_passed": false,
+          "inherited_v45_factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v449-03e9e3f9c4b21390",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 292
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-27",
+        "signals": {
+          "anchor_decision_bar": 23,
+          "anchor_exposure": 1,
+          "anchor_symbol": "SOXL",
+          "component_decision_bar": 23,
+          "component_exposure": 1,
+          "component_symbol": "SOXL"
+        },
+        "theoretical": {
+          "benchmark_return": -0.0004897506134052209,
+          "cost_18bp_return": -0.009711052327023226,
+          "delay_5min_9bp_return": -0.012406465694753286,
+          "standard_9bp_return": -0.008811052327023226
+        },
+        "weights": {
+          "component": 0.05,
+          "v45_anchor": 0.95
+        }
+      }
+    },
+    {
+      "label": "v449",
+      "campaign_id": "research-shadow-aa9f2cc8e5208b876180e9d800d284f4",
+      "session_date": "2026-08-28",
+      "content_sha256": "dd0cb220f7c9fadc3e6ec077f9a5a209bdc737b7945b8fa5a3db86ace2d08f37",
+      "observation": {
+        "admission": {
+          "component_factory_null_passed": true,
+          "global_bonferroni_passed": false,
+          "inherited_v45_factory_null_passed": false,
+          "type": "USER_AUTHORIZED_RESEARCH_SHADOW_EXCEPTION"
+        },
+        "candidate_id": "lev-v449-03e9e3f9c4b21390",
+        "feed": "iex",
+        "provider": "alpaca",
+        "quality": {
+          "context_sessions": 69,
+          "target_minimum_minutes": 262
+        },
+        "schema_version": "1.0.0",
+        "session_date": "2026-08-28",
+        "signals": {
+          "anchor_decision_bar": 23,
+          "anchor_exposure": 1,
+          "anchor_symbol": "SOXL",
+          "component_decision_bar": 23,
+          "component_exposure": 1,
+          "component_symbol": "SOXL"
+        },
+        "theoretical": {
+          "benchmark_return": -0.007094788595172469,
+          "cost_18bp_return": -0.04775282538605127,
+          "delay_5min_9bp_return": -0.04229812446717814,
+          "standard_9bp_return": -0.04685282538605126
+        },
+        "weights": {
+          "component": 0.05,
+          "v45_anchor": 0.95
+        }
+      }
+    }
+  ],
+  "supplement": {
+    "campaign_id": "research-shadow-86ea09c691248d86d4bf2e49820c2182",
+    "observation_content_sha256": "4e73297947046408cf9f3e4119cf8f8eceaac51d25bd3bc6b6875033f67771cb",
+    "provider": "twelve_data",
+    "session_date": "2026-08-27",
+    "signals": {
+      "spy": false,
+      "stock": true,
+      "stock_symbol": "CRM"
+    },
+    "source_bars_sha256": "aa38e4382b7ee697ce1463bce5f3f8c0ab8f54d97365614ae5b9e9e1e9d6b21f",
+    "stress_diagnostics": {
+      "cost_18bp_return": 0.005546394037066927,
+      "delay_5min_9bp_return": 0.007100654122587486,
+      "standard_9bp_return": 0.005996394037066927
+    },
+    "supplemental_report_only": true
+  },
+  "missing": [
+    {
+      "label": "v4.1",
+      "date": "2026-08-25",
+      "reason": "LIN_384_below_385"
+    }
+  ]
+}
