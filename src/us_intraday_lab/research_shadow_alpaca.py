@@ -163,6 +163,7 @@ def evaluate_alpaca_dual_sleeve_session(
     universe: tuple[str, ...],
     parameters: DualSleeveParameters,
     round_trip_cost: float,
+    execution_delay_minutes: int = 0,
 ) -> DualSleeveShadowObservation:
     """Evaluate one completed IEX session with causal v4 semantics and prior context."""
 
@@ -173,6 +174,8 @@ def evaluate_alpaca_dual_sleeve_session(
         raise ValueError("research shadow universe must contain 50 or 51 sorted symbols")
     if not 0.0 <= round_trip_cost < 0.01:
         raise ValueError("research shadow round-trip cost is invalid")
+    if execution_delay_minutes not in (0, 5):
+        raise ValueError("research shadow execution delay must be zero or five minutes")
     frame = bars.loc[:, list(required)].copy()
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
     localized = frame["timestamp"].dt.tz_convert(NEW_YORK)
@@ -256,25 +259,30 @@ def evaluate_alpaca_dual_sleeve_session(
     stock_benchmark = 0.0
     if stock_signal and stock_symbol is not None:
         stock_target = target.loc[target["symbol"] == stock_symbol].sort_values("minute_index")
-        entry = _at(stock_target, 46, "open")
-        path = stock_target.loc[stock_target["minute_index"].between(46, 329)]
+        entry_minute = 46 + execution_delay_minutes
+        entry = _at(stock_target, entry_minute, "open")
+        path = stock_target.loc[stock_target["minute_index"].between(entry_minute, 329)]
         hits = path.loc[path["high"] >= entry * 1.02]
         if len(hits):
             exit_minute = int(hits.iloc[0]["minute_index"])
             raw_stock_return = 0.02
             stock_benchmark = (
-                _at(spy_target, exit_minute, "close") / _at(spy_target, 46, "open") - 1.0
+                _at(spy_target, exit_minute, "close") / _at(spy_target, entry_minute, "open") - 1.0
             )
         else:
             raw_stock_return = _at(stock_target, 330, "open") / entry - 1.0
-            stock_benchmark = _at(spy_target, 330, "open") / _at(spy_target, 46, "open") - 1.0
+            stock_benchmark = (
+                _at(spy_target, 330, "open") / _at(spy_target, entry_minute, "open") - 1.0
+            )
         stock_sleeve_return = 0.5 * (raw_stock_return - round_trip_cost)
         stock_benchmark *= 0.5
     spy_sleeve_return = 0.0
     spy_benchmark = 0.0
     if spy_signal:
         raw_spy_return = (
-            _at(spy_target, parameters.spy_exit_minute, "open") / _at(spy_target, 31, "open") - 1.0
+            _at(spy_target, parameters.spy_exit_minute, "open")
+            / _at(spy_target, 31 + execution_delay_minutes, "open")
+            - 1.0
         )
         spy_sleeve_return = 0.5 * (raw_spy_return - round_trip_cost)
         spy_benchmark = 0.5 * raw_spy_return

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 
 def _module():
@@ -33,7 +34,10 @@ def _bars(symbols: tuple[str, ...], timestamp: str) -> pd.DataFrame:
     )
 
 
-def test_incremental_cache_reads_only_new_same_provider_interval(tmp_path, monkeypatch) -> None:
+@pytest.mark.parametrize("read_only_cache", [False, True])
+def test_incremental_cache_reads_only_new_same_provider_interval(
+    tmp_path, monkeypatch, read_only_cache
+) -> None:
     module = _module()
     campaign_id = "campaign"
     directory = tmp_path / campaign_id
@@ -67,7 +71,32 @@ def test_incremental_cache_reads_only_new_same_provider_interval(tmp_path, monke
         campaign_id=campaign_id,
         session_date=date(2026, 8, 19),
         universe=("AAA",),
+        read_only_cache=read_only_cache,
     )
     assert calls == [(datetime(2026, 8, 19, tzinfo=UTC), datetime(2026, 8, 20, tzinfo=UTC))]
     assert set(result["symbol"]) == set(symbols)
-    assert (directory / "2026-08-19.parquet").exists()
+    assert (directory / "2026-08-19.parquet").exists() is not read_only_cache
+    assert (directory / "2026-08-18.parquet").exists()
+
+
+def test_read_only_cache_hit_never_fetches_or_changes_bytes(tmp_path, monkeypatch) -> None:
+    module = _module()
+    directory = tmp_path / "campaign"
+    directory.mkdir()
+    path = directory / "2026-08-19.parquet"
+    _bars(("AAA", "SPY"), "2026-08-19T19:59:00Z").to_parquet(path, index=False)
+    original = path.read_bytes()
+
+    def forbidden(**kwargs):
+        raise AssertionError("cache hit must not fetch")
+
+    monkeypatch.setattr(module.TwelveDataHistory, "from_environment", forbidden)
+    result = module._load_or_fetch_bars(
+        cache_dir=tmp_path,
+        campaign_id="campaign",
+        session_date=date(2026, 8, 19),
+        universe=("AAA",),
+        read_only_cache=True,
+    )
+    assert len(result) == 2
+    assert path.read_bytes() == original

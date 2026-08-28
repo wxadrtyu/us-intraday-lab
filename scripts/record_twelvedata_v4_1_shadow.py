@@ -43,6 +43,7 @@ def _load_or_fetch_bars(
     campaign_id: str,
     session_date: date,
     universe: tuple[str, ...],
+    read_only_cache: bool = False,
 ) -> pd.DataFrame:
     directory = cache_dir / campaign_id
     path = directory / f"{session_date.isoformat()}.parquet"
@@ -85,6 +86,8 @@ def _load_or_fetch_bars(
             start=start,
             end=end,
         )
+    if read_only_cache:
+        return bars
     directory.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     bars.to_parquet(temporary, index=False)
@@ -100,6 +103,7 @@ def main() -> None:
     parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--session-date", required=True, type=date.fromisoformat)
     parser.add_argument("--cache-dir", required=True, type=Path)
+    parser.add_argument("--read-only-cache", action="store_true")
     args = parser.parse_args()
     official_minutes = expected_minute_index(args.session_date)
     if len(official_minutes) != 390:
@@ -129,6 +133,7 @@ def main() -> None:
         campaign_id=args.campaign_id,
         session_date=args.session_date,
         universe=universe,
+        read_only_cache=args.read_only_cache,
     )
     observation = evaluate_alpaca_dual_sleeve_session(
         bars,
@@ -138,14 +143,30 @@ def main() -> None:
         round_trip_cost=float(proposal["cost_contract"]["round_trip_cost_1_5x"]),
     )
     store = ResearchShadowStore(args.root.resolve() / "state" / "research_shadow.sqlite3")
+    record = observation.as_record(frozen, provider="twelve_data", feed="minute_composite")
+    stress = {}
+    for name, cost, delay in (
+        ("cost_18bp_return", 0.0018, 0),
+        ("delay_5min_9bp_return", 0.0009, 5),
+    ):
+        evaluated = evaluate_alpaca_dual_sleeve_session(
+            bars,
+            session_date=args.session_date,
+            universe=universe,
+            parameters=frozen,
+            round_trip_cost=cost,
+            execution_delay_minutes=delay,
+        )
+        stress[name] = evaluated.strategy_return
+    record["stress_diagnostics"] = {
+        "standard_9bp_return": observation.strategy_return,
+        **stress,
+        "contract": "same frozen signals; entry delayed five minutes; scheduled exit unchanged",
+    }
     digest = store.record_observation(
         campaign_id=args.campaign_id,
         session_date=args.session_date,
-        observation=observation.as_record(
-            frozen,
-            provider="twelve_data",
-            feed="minute_composite",
-        ),
+        observation=record,
         recorded_at=datetime.now(UTC),
     )
     status = store.status(args.campaign_id)
@@ -168,6 +189,7 @@ def main() -> None:
                     "spy": observation.spy_signal,
                 },
                 "strategy_return": observation.strategy_return,
+                "stress_diagnostics": record["stress_diagnostics"],
             },
             sort_keys=True,
         )
