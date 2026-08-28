@@ -39,4 +39,3 @@ candidate. A failed hard gate never becomes an admission or an exception.
 This is brokerless research only. No order, Paper state or existing observation
 is modified. Reports must distinguish 100 versions, 2,650 cells and 300 frontier
 records; overlapping rejection counts are not unique strategy counts.
-
