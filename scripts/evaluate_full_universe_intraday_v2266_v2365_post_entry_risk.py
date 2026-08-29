@@ -23,6 +23,7 @@ PROPOSAL = Path(__file__).resolve().parents[1] / (
     "research/proposals/full_universe_intraday_v2266_v2365_post_entry_risk/proposal.json"
 )
 CODE_PATH = Path(__file__)
+CODE_DEPENDENCIES: tuple[Path, ...] = ()
 SCENARIOS = risk.NAMES
 ASSETS = np.array((3, 4))
 
@@ -287,6 +288,7 @@ def main() -> None:
     contract = {
         "proposal_sha256": sha(PROPOSAL),
         "code_sha256": sha(CODE_PATH),
+        "dependency_sha256": {path.name: sha(path) for path in CODE_DEPENDENCIES},
         "proposal_version": proposal["proposal_version"],
     }
     prior.v12._atomic(args.output / "contract.json", contract)
