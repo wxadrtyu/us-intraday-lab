@@ -1,0 +1,53 @@
+{
+  "proposal_version": "v2366-v2465-conditional-exit-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 2366,
+  "last_version": 2465,
+  "hypothesis_count": 100,
+  "source_candidate": "lev-v1254-de6c18bd7658f359",
+  "hypothesis": "A post-entry exit should require joint deterioration in the selected leveraged ETF and SPY, while a separate profit-giveback rule protects gains; this should avoid the return destruction of unconditional stops.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "entry_contract": "unchanged frozen v1254 multifactor routes and dynamic sleeve weights",
+  "exit_contract": "complete 5-minute close confirmation and next-bar-open execution only",
+  "fixed_definition": {
+    "hard_stop_market_confirmation": "SPY return since sleeve entry <= -0.25pct",
+    "profit_protection_activation": "selected ETF peak close since entry >= +1.5pct",
+    "hard_stop_logic": "ETF hard loss AND SPY confirmation",
+    "trailing_logic": "activated peak-to-close giveback independent of SPY"
+  },
+  "grid": {
+    "hard_stops": [0.03, 0.04, 0.05, 0.06, 0.07],
+    "trailing_drawdowns": [0.02, 0.03, 0.04, 0.05, 0.06],
+    "minimum_holding_bars": [1, 2],
+    "application_modes": ["both_sleeves", "anchor_only"]
+  },
+  "missingness_contract": {
+    "incomplete_monitor_bar": "no trigger from that bar",
+    "triggered_next_open_missing": "candidate and matched baseline both cash for the session",
+    "no_imputation": true
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "scenarios": ["9bp", "18bp", "delay_5min_9bp"],
+  "hard_gates": {
+    "all_scenarios_annualized_return_min": 0.5,
+    "all_scenarios_mdd_max": 0.2,
+    "all_scenarios_information_ratio_min": 1.0,
+    "mdd_reduction_all_scenarios_min": 0.2,
+    "tail_loss_reduction_all_scenarios_min": 0.15,
+    "historical_2018_2020_return_positive": true,
+    "historical_2018_2020_mdd_max": 0.2,
+    "four_of_five_positive_folds_all_scenarios": true,
+    "all_start_dates_positive_all_scenarios": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "consumed_2026q1_total_return_min": 0.05,
+    "global_bonferroni_p_max": 0.05,
+    "native_overlay_null_required": true
+  },
+  "prior_comparison_cells": 111405,
+  "campaign_comparison_cells": 100,
+  "cumulative_comparison_cells": 111505,
+  "paper_pool_change_authorized": false
+}
