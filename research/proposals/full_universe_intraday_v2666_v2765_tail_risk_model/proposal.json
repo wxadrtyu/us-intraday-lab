@@ -1,0 +1,76 @@
+{
+  "proposal_version": "v2666-v2765-tail-risk-model-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 2666,
+  "last_version": 2765,
+  "hypothesis_count": 100,
+  "source_candidate": "lev-v1254-de6c18bd7658f359",
+  "hypothesis": "A 2022-2023 fitted 16-factor downside-severity model can identify the small subset of sessions responsible for OOS tail loss, allowing conditional gross reduction without sacrificing the 18bp return gate.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "factor_clock": "bar_23_complete",
+  "factor_contract": [
+    "spy_current", "spy_volatility", "sector_breadth", "sector_dispersion",
+    "risk_asset_agreement", "cyclical_minus_defensive", "tech_minus_market",
+    "leveraged_current_mean", "leveraged_current_min", "leveraged_current_spread",
+    "leveraged_recent_mean", "leveraged_recent_min", "leveraged_path_efficiency_mean",
+    "leveraged_realized_volatility_max", "leveraged_close_location_mean",
+    "leveraged_signed_volume_imbalance_mean"
+  ],
+  "fit": {
+    "method": "ridge",
+    "alpha": 10.0,
+    "target": "squared_negative_v1254_standard_daily_return",
+    "training_only": "2022_2023"
+  },
+  "fixed_definition": {
+    "hard_stop_market_confirmation": "SPY return since sleeve entry <= -0.25pct",
+    "profit_protection_activation": "selected ETF peak close since entry >= +1.5pct",
+    "trailing_drawdown": 0.03,
+    "exit_application": "both_sleeves",
+    "tail_state_clock": "bar_23_complete",
+    "tail_model": "16_factor_ridge_squared_downside_fit_2022_2023"
+  },
+  "grid": {
+    "hard_stops": [0.05, 0.06, 0.07, 0.08],
+    "trailing_drawdowns": [0.03],
+    "minimum_holding_bars": [1],
+    "application_modes": [
+      "tail_cap_0.250_q_0.700", "tail_cap_0.250_q_0.750", "tail_cap_0.250_q_0.800", "tail_cap_0.250_q_0.850", "tail_cap_0.250_q_0.900",
+      "tail_cap_0.400_q_0.700", "tail_cap_0.400_q_0.750", "tail_cap_0.400_q_0.800", "tail_cap_0.400_q_0.850", "tail_cap_0.400_q_0.900",
+      "tail_cap_0.550_q_0.700", "tail_cap_0.550_q_0.750", "tail_cap_0.550_q_0.800", "tail_cap_0.550_q_0.850", "tail_cap_0.550_q_0.900",
+      "tail_cap_0.700_q_0.700", "tail_cap_0.700_q_0.750", "tail_cap_0.700_q_0.800", "tail_cap_0.700_q_0.850", "tail_cap_0.700_q_0.900",
+      "tail_cap_0.850_q_0.700", "tail_cap_0.850_q_0.750", "tail_cap_0.850_q_0.800", "tail_cap_0.850_q_0.850", "tail_cap_0.850_q_0.900"
+    ]
+  },
+  "missingness_contract": {
+    "minimum_observed_factors": 12,
+    "imputation": "training_2022_2023_column_median",
+    "below_minimum": "cash_and_matched_baseline_cash",
+    "incomplete_monitor_bar": "no trigger_from_that_bar",
+    "triggered_next_open_missing": "candidate_and_matched_baseline_cash"
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "scenarios": ["9bp", "18bp", "delay_5min_9bp"],
+  "hard_gates": {
+    "all_scenarios_annualized_return_min": 0.5,
+    "all_scenarios_mdd_max": 0.2,
+    "all_scenarios_information_ratio_min": 1.0,
+    "mdd_reduction_all_scenarios_min": 0.2,
+    "tail_loss_reduction_all_scenarios_min": 0.15,
+    "historical_2018_2020_return_positive": true,
+    "historical_2018_2020_mdd_max": 0.2,
+    "four_of_five_positive_folds_all_scenarios": true,
+    "all_start_dates_positive_all_scenarios": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "consumed_2026q1_total_return_min": 0.05,
+    "global_bonferroni_p_max": 0.05,
+    "native_overlay_null_required": true
+  },
+  "prior_comparison_cells": 111705,
+  "campaign_comparison_cells": 100,
+  "cumulative_comparison_cells": 111805,
+  "paper_pool_change_authorized": false
+}
