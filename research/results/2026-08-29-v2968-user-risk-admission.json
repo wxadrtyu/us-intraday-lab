@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "decision": "USER_APPROVED_RISK_CANDIDATE",
+  "decision_date": "2026-08-29",
+  "candidate_id": "risk-v2968-de52836b297ae6d8",
+  "source_campaign": "v2967-v3066-reentry-confirmation-1.0.0",
+  "approved_scope": "research admission and prospective observation eligibility",
+  "paper_pool_changed": false,
+  "broker_or_order_action": false,
+  "retained_exceptions": {
+    "historical_2018_2020_annualized_return": 0.03951764947048386,
+    "marginal_profit_null_passed": false,
+    "cumulative_bonferroni_passed": false,
+    "inherited_v45_factory_null_passed": false
+  },
+  "supporting_evidence": {
+    "standard_2024_2025_annualized_return": 0.6572339292926783,
+    "cost_18bp_2024_2025_annualized_return": 0.6000704331698097,
+    "delay_5min_2024_2025_annualized_return": 0.5951750974997665,
+    "standard_2024_2025_max_drawdown": 0.04036943130682302,
+    "consumed_2026q1_total_return": 0.08009022158964862,
+    "native_risk_timing_null_passed": true,
+    "native_risk_timing_evidence_sha256": "a70b53ea333120bc1a40456cab940c2471751bc73dd56eb9da7ead3936213ff6"
+  },
+  "execution_boundary": "No Paper runner, allocation, clock, broker credential, submit path or cancel path is changed by this admission record."
+}
