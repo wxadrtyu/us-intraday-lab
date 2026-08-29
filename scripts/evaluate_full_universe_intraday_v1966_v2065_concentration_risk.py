@@ -22,6 +22,7 @@ anchored = shared.anchored
 PROPOSAL = Path(__file__).resolve().parents[1] / (
     "research/proposals/full_universe_intraday_v1966_v2065_concentration_risk/proposal.json"
 )
+CODE_PATH = Path(__file__)
 SCENARIOS = risk.NAMES
 ASSETS = np.array((3, 4))
 
@@ -161,7 +162,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     contract = {
         "proposal_sha256": sha(PROPOSAL),
-        "code_sha256": sha(Path(__file__)),
+        "code_sha256": sha(CODE_PATH),
         "proposal_version": proposal["proposal_version"],
     }
     prior.v12._atomic(args.output / "contract.json", contract)
@@ -326,7 +327,7 @@ def main():
     )
     result = {
         "status": "COMPLETE",
-        "versions": [1966, 2065],
+        "versions": [proposal["first_version"], proposal["last_version"]],
         "hypotheses": 100,
         "elapsed_seconds": time.perf_counter() - started,
         "contract": contract,
