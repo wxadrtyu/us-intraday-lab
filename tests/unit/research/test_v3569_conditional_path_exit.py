@@ -11,11 +11,15 @@ import evaluate_full_universe_intraday_v3569_v3668_conditional_path_exit as subj
 
 
 def test_campaign_has_one_hundred_distinct_versions() -> None:
-    subject.configure()
-    specifications = subject.campaign.specifications()
-    assert len(specifications) == 100
-    assert len(set(specifications)) == 100
-    assert subject.campaign.PRIOR_COMPARISON_CELLS == 176_105
+    original_rule_raw = subject.campaign.prior._rule_raw
+    try:
+        subject.configure()
+        specifications = subject.campaign.specifications()
+        assert len(specifications) == 100
+        assert len(set(specifications)) == 100
+        assert subject.campaign.PRIOR_COMPARISON_CELLS == 176_105
+    finally:
+        subject.campaign.prior._rule_raw = original_rule_raw
 
 
 def test_two_stage_exit_is_close_confirmed_and_next_open() -> None:
