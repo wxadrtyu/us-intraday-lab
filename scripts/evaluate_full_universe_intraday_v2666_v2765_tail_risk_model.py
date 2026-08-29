@@ -30,9 +30,10 @@ def mode_parameters(mode: str) -> tuple[float, float]:
 
 def fit_model(development) -> tuple[dict, np.ndarray]:
     matrix, names = factors.factor_matrix(development)
-    baseline = tuple(
-        base.risk.add(left, right) for left, right in base.risk.baseline_parts(development, development)
-    )[0]
+    baseline = next(
+        base.risk.add(left, right)
+        for left, right in base.risk.baseline_parts(development, development)
+    )
     target = np.maximum(-baseline.values, 0.0) ** 2
     observed = np.isfinite(matrix)
     train = development.masks()["train_2022_2023"]
