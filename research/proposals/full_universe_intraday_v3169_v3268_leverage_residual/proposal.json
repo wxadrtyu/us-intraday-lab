@@ -1,0 +1,62 @@
+{
+  "proposal_version": "v3169-v3268-leverage-residual-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 3169,
+  "last_version": 3268,
+  "hypothesis_count": 100,
+  "hypothesis": "Causal dislocations between TQQQ and QQQ and between SOXL and XLK, including acceleration from the earlier to recent intraday window, contain cross-sectional residual-reversion or residual-continuation information distinct from outright opening momentum.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "assets": ["TQQQ", "SOXL"],
+  "underlying_mapping": {"TQQQ": "QQQ", "SOXL": "XLK"},
+  "new_factors": [
+    "paired_leverage_residual",
+    "paired_recent_residual",
+    "residual_acceleration",
+    "underlying_relative_strength",
+    "cross_residual_dispersion",
+    "cross_residual_rank",
+    "underlying_direction_agreement"
+  ],
+  "factor_families": [
+    "residual_reversal",
+    "residual_continuation",
+    "residual_laggard_underlying_strength",
+    "residual_leader_underlying_confirmation",
+    "dispersion_reversal",
+    "dispersion_continuation",
+    "underlying_rotation",
+    "residual_flow_absorption",
+    "residual_volatility_contraction",
+    "residual_breakout_confirmation"
+  ],
+  "schedules": [[20, 35], [23, 41], [29, 47], [35, 59], [41, 65]],
+  "state_modes": ["unfiltered", "orderly_rebound_cash_filter"],
+  "cell_grid": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookbacks": [15, 25],
+    "state_quantiles": [0.3, 0.5, 0.7]
+  },
+  "planned_cells": 12800,
+  "prior_comparison_cells": 124905,
+  "cumulative_comparison_cells": 137705,
+  "hard_gates": {
+    "all_scenarios_annualized_return_min": 0.5,
+    "all_scenarios_mdd_max": 0.2,
+    "all_scenarios_information_ratio_min": 1.0,
+    "historical_2018_2020_annualized_return_min": 0.15,
+    "historical_2018_2020_mdd_max": 0.2,
+    "consumed_2026q1_total_return_min": 0.05,
+    "consumed_2026_all_total_return_min": 0.05,
+    "four_of_five_positive_folds": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "global_bonferroni_p_max": 0.05,
+    "native_factory_null_required": true
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "paper_pool_change_authorized": false
+}
