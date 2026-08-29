@@ -81,10 +81,10 @@ def component_route(cube, record: dict, delay: int) -> tuple[np.ndarray, np.ndar
     )
     active &= np.isfinite(cube.opens[cube.rows, entry, selected])
     active &= np.isfinite(cube.opens[cube.rows, model.exit_bar, selected])
-    active &= np.isfinite(cube.opens[:, entry, 0])
+    active &= np.isfinite(cube.opens[cube.rows, entry, 0])
     active &= np.isfinite(cube.opens[:, model.exit_bar, 0])
     active &= cube.opens[cube.rows, entry, selected] > 0
-    active &= cube.opens[:, entry, 0] > 0
+    active &= cube.opens[cube.rows, entry, 0] > 0
     return selected, entry, active
 
 
