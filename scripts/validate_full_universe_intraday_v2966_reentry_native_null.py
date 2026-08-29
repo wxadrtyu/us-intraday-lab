@@ -16,6 +16,9 @@ import numpy as np
 PROPOSAL = Path(__file__).resolve().parents[1] / (
     "research/proposals/full_universe_intraday_v2966_reentry_native_null/proposal.json"
 )
+CODE_PATH = Path(__file__)
+CODE_DEPENDENCIES = (Path(base.__file__), Path(conditional.__file__), Path(reentry.__file__))
+EXPECTED_ELIGIBLE = 22
 
 
 def sha(path: Path) -> str:
@@ -53,7 +56,7 @@ def main() -> None:
     proposal = json.loads(PROPOSAL.read_text())
     source = json.loads(args.source.read_text())
     eligible = [item for item in source["records"] if item["pre_native_overlay_null_pass"]]
-    if len(eligible) != 22:
+    if len(eligible) != EXPECTED_ELIGIBLE:
         raise RuntimeError("PRE_NULL_FAMILY_SIZE_CHANGED")
     frozen = next(
         item for item in eligible if item["candidate_id"] == proposal["frozen_candidate"]
@@ -142,13 +145,9 @@ def main() -> None:
         "elapsed_seconds": time.perf_counter() - started,
         "contract": {
             "proposal_sha256": sha(PROPOSAL),
-            "code_sha256": sha(Path(__file__)),
+            "code_sha256": sha(CODE_PATH),
             "source_sha256": sha(args.source),
-            "dependency_sha256": {
-                Path(base.__file__).name: sha(Path(base.__file__)),
-                Path(conditional.__file__).name: sha(Path(conditional.__file__)),
-                Path(reentry.__file__).name: sha(Path(reentry.__file__)),
-            },
+            "dependency_sha256": {path.name: sha(path) for path in CODE_DEPENDENCIES},
         },
     }
     base.prior.v12._atomic(args.output, payload)

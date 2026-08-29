@@ -1,0 +1,19 @@
+{
+  "proposal_version": "v3067-reentry-confirmation-null-1.0.0",
+  "status": "FROZEN_BEFORE_NULL",
+  "version": 3067,
+  "source_campaign": "v2967-v3066-reentry-confirmation-1.0.0",
+  "frozen_candidate": "risk-v2968-de52836b297ae6d8",
+  "eligible_family": "all pre_native_overlay_null_pass candidates from v2967-v3066",
+  "tested_effect": "daily marginal standard-cost return of one-reentry candidate versus identical conditional-exit and same-symbol-cap counterfactual with no reentry",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_excluded": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "methods": ["SESSION_DELTA_PERMUTATION_MAXT", "SESSION_SAFE_CIRCULAR_SHIFT_MAXT"],
+  "repetitions": 200,
+  "percentile": 0.95,
+  "seed": 20260829,
+  "family_wise_rule": "Each repetition takes the maximum marginal compounded-return improvement across all 43 pre-null survivors.",
+  "safe_shift_minimum_sessions": 5,
+  "pass_rule": "Frozen candidate observed marginal improvement must be strictly above both family-wise 95th-percentile thresholds.",
+  "paper_pool_change_authorized": false
+}
