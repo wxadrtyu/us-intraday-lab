@@ -1,0 +1,19 @@
+{
+  "proposal_version": "v3969-paired-underlying-risk-null-1.0.0",
+  "status": "FROZEN_BEFORE_NULL",
+  "version": 3969,
+  "source_campaign": "v3869-v3968-paired-underlying-risk-1.0.0",
+  "frozen_candidate": "risk-v3929-ada080220b281afd",
+  "eligible_family_size": 25,
+  "tested_effect": "timing-specific 2024-2025 MDD and 5pct expected-shortfall improvement versus matched-validity v1254",
+  "consumed_diagnostics_excluded": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "methods": ["SESSION_OVERLAY_DELTA_PERMUTATION_MAXT", "SESSION_OVERLAY_SAFE_CIRCULAR_SHIFT_MAXT"],
+  "statistic": "minimum across three scenarios of MDD_reduction/20pct and tail_loss_reduction/15pct",
+  "repetitions": 200,
+  "percentile": 0.95,
+  "seed": 2026082902,
+  "safe_shift_minimum_sessions": 5,
+  "pass_rule": "Observed statistic must be at least 1 and strictly above both family-wise 95th-percentile thresholds.",
+  "interpretation_boundary": "Passing validates risk timing only; the frozen 15pct historical gate and cumulative Bonferroni gate remain separate and failed.",
+  "paper_pool_change_authorized": false
+}
