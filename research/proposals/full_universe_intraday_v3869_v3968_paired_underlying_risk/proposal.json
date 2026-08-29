@@ -1,0 +1,50 @@
+{
+  "proposal_version": "v3869-v3968-paired-underlying-risk-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 3869,
+  "last_version": 3968,
+  "hypothesis_count": 100,
+  "source_candidate": "lev-v1254-de6c18bd7658f359",
+  "hypothesis": "A hard loss in TQQQ or SOXL is more informative when its own unleveraged underlying QQQ or XLK confirms deterioration; paired-underlying confirmation and recovery should reduce false exits and improve transfer relative to SPY-only confirmation.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "fixed_definition": {
+    "profit_protection_activation": "selected ETF peak completed close since entry >= +1.5pct",
+    "hard_exit_confirmation": "paired QQQ or XLK completed return since sleeve entry <= frozen threshold",
+    "reentry_confirmation": "selected ETF >= +0.25pct from exit open and paired underlying nonnegative from exit open",
+    "execution": "next_complete_5min_bar_open",
+    "maximum_reentries_per_sleeve_session": 1,
+    "exit_application": "anchor_only",
+    "same_symbol_gross_cap": 0.775
+  },
+  "grid": {
+    "hard_stops": [0.04, 0.05, 0.06, 0.07, 0.08],
+    "trailing_drawdowns": [0.025, 0.03, 0.035, 0.04],
+    "minimum_holding_bars": [1],
+    "application_modes": ["anchor_only_pair_-0.0100", "anchor_only_pair_-0.0050", "anchor_only_pair_0.0000", "anchor_only_pair_0.0050", "anchor_only_pair_0.0100"]
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "scenarios": ["9bp", "18bp", "delay_5min_9bp"],
+  "hard_gates": {
+    "all_scenarios_annualized_return_min": 0.5,
+    "all_scenarios_mdd_max": 0.2,
+    "all_scenarios_information_ratio_min": 1.0,
+    "mdd_reduction_all_scenarios_min": 0.2,
+    "tail_loss_reduction_all_scenarios_min": 0.15,
+    "historical_2018_2020_annualized_return_min": 0.15,
+    "historical_2018_2020_mdd_max": 0.2,
+    "four_of_five_positive_folds_all_scenarios": true,
+    "all_start_dates_positive_all_scenarios": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "consumed_2026q1_total_return_min": 0.05,
+    "consumed_2026_all_total_return_min": 0.05,
+    "global_bonferroni_p_max": 0.05,
+    "native_overlay_null_required": true
+  },
+  "prior_comparison_cells": 201705,
+  "campaign_comparison_cells": 100,
+  "cumulative_comparison_cells": 201805,
+  "paper_pool_change_authorized": false
+}

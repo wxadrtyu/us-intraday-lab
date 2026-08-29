@@ -15,7 +15,7 @@ class VolatilityConvexityCube(exhaustion.MultidayExhaustionCube):
 
     def factors(self, decision: int) -> dict[str, np.ndarray]:
         output = super().factors(decision)
-        if "leverage_residual" in output:
+        if "volatility_multiple" in output:
             return output
 
         current = output["current_return"]
