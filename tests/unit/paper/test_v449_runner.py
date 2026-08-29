@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import pandas as pd
 
-from scripts.run_v449_alpaca_paper import _target_complete
+from scripts.run_v449_alpaca_paper import MAX_ENTRY_LATENESS, _entry_window_open, _target_complete
 from tests.fakes.broker import FakePaperBroker, SubmitBehavior
 from us_intraday_lab.paper.pool import V1254_ID
 from us_intraday_lab.paper.v449 import SleeveSignal, V449PaperLedger
@@ -55,6 +55,12 @@ def test_target_complete_does_not_accept_a_future_bucket_for_a_missing_bucket() 
     bars = _bars(missing={"SOXL": set(range(55, 60))})
 
     assert _target_complete(bars, SESSION, through_bar=23) is False
+
+
+def test_entry_window_is_rechecked_after_slow_market_data_fetch() -> None:
+    eligible = OPEN + timedelta(hours=2)
+    assert _entry_window_open(eligible + MAX_ENTRY_LATENESS, eligible)
+    assert not _entry_window_open(eligible + MAX_ENTRY_LATENESS + timedelta(microseconds=1), eligible)
 
 
 def test_consolidated_runner_only_evaluates_active_member(monkeypatch) -> None:

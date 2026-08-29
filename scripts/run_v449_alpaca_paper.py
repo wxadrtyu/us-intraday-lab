@@ -40,6 +40,11 @@ ENTRY_DECISIONS = (23, 26, 29)
 MAX_ENTRY_LATENESS = timedelta(minutes=2)
 
 
+def _entry_window_open(now: datetime, eligible: datetime) -> bool:
+    """Fail closed both before and after potentially slow market-data retrieval."""
+    return now <= (eligible + MAX_ENTRY_LATENESS).astimezone(UTC)
+
+
 def _args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ledger", type=Path, default=Path("state/paper/v247_v449_pool.sqlite3"))
@@ -172,7 +177,7 @@ def main() -> int:
     for decision in ENTRY_DECISIONS:
         eligible = ny_bar_time(session_date, decision + 1)
         wait_until(eligible)
-        if datetime.now(UTC) > (eligible + MAX_ENTRY_LATENESS).astimezone(UTC):
+        if not _entry_window_open(datetime.now(UTC), eligible):
             ledger.append(
                 event_key=f"{session_date}:decision-{decision}:late",
                 session_date=session_date,
@@ -201,6 +206,19 @@ def main() -> int:
                     "decision_bar": decision,
                     "error_type": type(error).__name__,
                     "error": str(error)[:300],
+                },
+            )
+            continue
+        # The initial 75-day IEX request can take minutes. Never turn a timely
+        # decision into a stale order merely because retrieval began on time.
+        if not _entry_window_open(datetime.now(UTC), eligible):
+            ledger.append(
+                event_key=f"{session_date}:decision-{decision}:late-after-data",
+                session_date=session_date,
+                event_type="SKIP",
+                payload={
+                    "reason": "ENTRY_WINDOW_MISSED_AFTER_DATA",
+                    "decision_bar": decision,
                 },
             )
             continue
