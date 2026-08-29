@@ -1,0 +1,20 @@
+{
+  "proposal_version": "v3068-reentry-risk-null-1.0.0",
+  "status": "FROZEN_BEFORE_NULL",
+  "version": 3068,
+  "source_campaign": "v2967-v3066-reentry-confirmation-1.0.0",
+  "frozen_candidate": "risk-v2968-de52836b297ae6d8",
+  "eligible_family": "all 43 pre_native_overlay_null_pass candidates",
+  "tested_effect": "timing-specific 2024-2025 MDD and 5pct expected-shortfall improvement of the full exit-cap-reentry overlay versus matched-validity v1254",
+  "consumed_diagnostics_excluded": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "methods": ["SESSION_OVERLAY_DELTA_PERMUTATION_MAXT", "SESSION_OVERLAY_SAFE_CIRCULAR_SHIFT_MAXT"],
+  "statistic": "minimum across three scenarios of MDD_reduction/20pct and tail_loss_reduction/15pct",
+  "repetitions": 200,
+  "percentile": 0.95,
+  "seed": 20260829,
+  "family_wise_rule": "Each repetition takes the maximum risk statistic across all 43 pre-null survivors.",
+  "safe_shift_minimum_sessions": 5,
+  "pass_rule": "Observed statistic must be at least 1 and strictly above both family-wise 95th-percentile thresholds.",
+  "interpretation_boundary": "Passing validates risk-timing only; it does not reverse the failed marginal-profit null or cumulative Bonferroni failure.",
+  "paper_pool_change_authorized": false
+}
