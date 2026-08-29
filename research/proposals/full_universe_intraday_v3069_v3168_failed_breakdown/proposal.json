@@ -1,0 +1,52 @@
+{
+  "proposal_version": "v3069-v3168-failed-breakdown-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 3069,
+  "last_version": 3168,
+  "hypothesis_count": 100,
+  "hypothesis": "Rare afternoon failed-breakdown, flow-absorption and volatility-compression transitions can provide a long-only source distinct from the opening/morning v45 family.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "assets": ["TQQQ", "SOXL"],
+  "factor_families": [
+    "failed_breakdown_flow_absorption",
+    "failed_breakdown_relative_reclaim",
+    "capitulation_range_recovery",
+    "quiet_drawdown_reacceleration",
+    "vwap_reclaim_flow_turn",
+    "low_rank_rebound_confirmation",
+    "volatility_compression_reclaim",
+    "volume_exhaustion_recovery",
+    "relative_laggard_range_turn",
+    "breadth_confirmed_path_recovery"
+  ],
+  "schedules": [[47, 59], [47, 65], [53, 65], [53, 72], [59, 72]],
+  "state_modes": ["unfiltered", "orderly_rebound_cash_filter"],
+  "cell_grid": {
+    "score_quantiles": [0.3, 0.4, 0.5, 0.6],
+    "confirmations": [1, 2],
+    "target_volatility": [0.3, 0.35, 0.4, 0.45],
+    "lookbacks": [15, 25],
+    "state_quantiles": [0.3, 0.5, 0.7]
+  },
+  "planned_cells": 12800,
+  "prior_comparison_cells": 112105,
+  "cumulative_comparison_cells": 124905,
+  "hard_gates": {
+    "all_scenarios_annualized_return_min": 0.5,
+    "all_scenarios_mdd_max": 0.2,
+    "all_scenarios_information_ratio_min": 1.0,
+    "historical_2018_2020_annualized_return_min": 0.15,
+    "historical_2018_2020_mdd_max": 0.2,
+    "consumed_2026q1_total_return_min": 0.05,
+    "consumed_2026_all_total_return_min": 0.05,
+    "four_of_five_positive_folds": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "global_bonferroni_p_max": 0.05,
+    "native_factory_null_required": true
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "paper_pool_change_authorized": false
+}

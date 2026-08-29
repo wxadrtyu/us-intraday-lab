@@ -45,6 +45,8 @@ FAMILIES = (
 SCHEDULES = ((32, 53), (35, 65), (41, 65), (41, 72), (47, 75))
 STATE_MODES = ("unfiltered", "orderly_rebound_cash_filter")
 DEVELOPMENT_NAMES = ("train_2022_2023", "2024", "2025")
+HISTORICAL_MIN_ANNUALIZED_RETURN = 0.0
+REQUIRE_CONSUMED_2026Q1_GATE = False
 
 
 def specifications() -> list[tuple]:
@@ -255,11 +257,17 @@ def _record(
         "cost_18bp_primary": _primary(cost),
         "delay_5min_primary": _primary(delay),
         "four_of_five_positive_folds": sum(float(item["annualized_return"]) > 0 for item in folds) >= 4,
-        "historical_positive_mdd_below_20pct": float(historical_obs["annualized_return"]) > 0 and float(historical_obs["max_drawdown"]) < 0.20,
+        "historical_return_floor_mdd_below_20pct": float(historical_obs["annualized_return"])
+        >= HISTORICAL_MIN_ANNUALIZED_RETURN
+        and float(historical_obs["max_drawdown"]) < 0.20,
         "parameter_neighborhood_70pct_primary": neighborhood >= 0.70,
         "consumed_2026_total_above_5pct": float(standard["consumed_2026_all"]["total_return"]) > 0.05,
         "cumulative_bonferroni_5pct": bonferroni < 0.05,
     }
+    if REQUIRE_CONSUMED_2026Q1_GATE:
+        gates["consumed_2026q1_above_5pct"] = (
+            float(standard["consumed_2026q1"]["total_return"]) > 0.05
+        )
     pre_null_names = tuple(name for name in gates if name != "cumulative_bonferroni_5pct")
     definition = {"version": version, **selected["parameters"]}
     return {
