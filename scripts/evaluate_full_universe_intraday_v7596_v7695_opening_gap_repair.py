@@ -22,6 +22,7 @@ def _configure():
     campaign.campaign.FIRST_VERSION = FIRST_VERSION
     campaign.campaign.LAST_VERSION = LAST_VERSION
     campaign.campaign.PRIOR_COMPARISON_CELLS = PRIOR_COMPARISON_CELLS
+    campaign.campaign.v34.Cube = campaign.residual.IntradayPathCube
     campaign.campaign.EXTRA_COMPONENT_DEFINITION.update(
         {
             "type": "nonoverlapping_short_opening_gap_repair",
