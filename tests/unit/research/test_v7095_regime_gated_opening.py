@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[3] / "scripts"))
+
 import evaluate_full_universe_intraday_v7095_v7194_regime_gated_opening as subject
 import numpy as np
 
