@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7195-v7294-opening-failed-breakdown",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7195,
+  "last_version": 7294,
+  "hypothesis": "A later-confirmed failed-breakdown opening reversal conditioned on a prior-close oversold-repair state can provide weak-market return without the historical and 2026 sign reversal of opening continuation.",
+  "version_contract": "10 late-route state-interaction families x 5 train quantiles x 2 orientations; reversal opening component fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 256055,
+  "cumulative_comparison_cells": 256155,
+  "opening_component": {"decision": 8, "exit": 23, "factor_family": "failed_breakdown", "score_quantile": 0.7, "ridge_alpha": 100.0, "prior_close_state_family": "oversold_repair", "prior_close_state_quantile": 0.5},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
