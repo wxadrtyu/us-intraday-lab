@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8196-v8295-dual-intraday-sleeve",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8196,
+  "last_version": 8295,
+  "hypothesis": "Sequentially combining the previously transferable sparse opening-gap and pre-route liquidity-absorption sources can diversify session-level residual returns and raise evidence quality without simultaneous gross stacking.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; two fixed sequential sparse residual sleeves",
+  "planned_cells": 100,
+  "prior_comparison_cells": 257066,
+  "cumulative_comparison_cells": 257166,
+  "intraday_components": [
+    {"decision": 2, "entry": 3, "exit": 11, "factor_family": "dual_sparse_opening_gap", "score_quantile": 0.8, "ridge_alpha": 1000.0},
+    {"decision": 11, "entry": 12, "exit": 23, "factor_family": "dual_sparse_liquidity_absorption", "score_quantile": 0.8, "ridge_alpha": 1000.0}
+  ],
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "late_route_entry": 24, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
