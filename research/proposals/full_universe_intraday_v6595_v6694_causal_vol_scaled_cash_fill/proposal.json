@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6595-v6694-causal-vol-scaled-cash-fill",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6595,
+  "last_version": 6694,
+  "hypothesis": "A frozen causal trailing-volatility scaler can reduce concentration in volatile cash-fill route regimes and raise information ratio without changing signal direction, clocks, or maximum gross.",
+  "version_contract": "10 distinct transfer-quality factor families x 5 training-score quantiles x 2 ridge strengths; risk overlay fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255455,
+  "cumulative_comparison_cells": 255555,
+  "risk_overlay": {"lookback_sessions": 20, "target_annualized_volatility": 0.30, "minimum_exposure": 0.25, "maximum_exposure": 1.0},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cash_fill_is_mutually_exclusive": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}

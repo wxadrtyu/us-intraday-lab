@@ -29,6 +29,8 @@ MODERN_PARENT = dual.MODERN_PARENT
 TRANSFER_PARENT = "lev-v42t-b5dc591391ab516c"
 FALLBACK_PARENT = None
 MECHANISM = "v4423_bar2_multifactor_transfer_gate"
+STREAM_TRANSFORM = lambda streams: streams
+OVERLAY_DEFINITION = None
 GATE_DECISION = 2
 TRANSFER_ENTRY = 3
 ASSETS = np.asarray((3, 4), dtype=int)
@@ -287,7 +289,7 @@ def main() -> None:
         )
         score = _score(development, gate_model)
         allow = np.isfinite(score) & (score >= gate_model["threshold"])
-        streams = _route(dev_parents, dev_modern, allow)
+        streams = STREAM_TRANSFORM(_route(dev_parents, dev_modern, allow))
         observations = tuple(v47._observe(development, stream, True) for stream in streams)
         cells.append(
             {
@@ -308,7 +310,7 @@ def main() -> None:
     for cell in cells:
         hist_score = _score(historical, cell["model"])
         hist_allow = np.isfinite(hist_score) & (hist_score >= cell["model"]["threshold"])
-        historical_streams = _route(hist_parents, hist_modern, hist_allow)
+        historical_streams = STREAM_TRANSFORM(_route(hist_parents, hist_modern, hist_allow))
         historical_obs = tuple(
             v47._observe(historical, stream, True)["historical_2018_2020"]
             for stream in historical_streams
@@ -376,6 +378,7 @@ def main() -> None:
             "factor_set": cell["family"],
             "score_quantile": cell["quantile"],
             "ridge_alpha": cell["alpha"],
+            "risk_overlay": OVERLAY_DEFINITION,
         }
         model = cell["model"]
         records.append(
