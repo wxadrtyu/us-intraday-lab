@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6895-v6994-state-interaction-fill",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6895,
+  "last_version": 6994,
+  "hypothesis": "New prior-close multi-factor interactions can distinguish transferable disjoint-fill sessions from the weak-market and historical states that the broad fill damaged, increasing evidence without changing the frozen v6776 route or fill parents.",
+  "version_contract": "10 new prior-close multi-factor state families x 5 train quantiles x 2 orientations",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255755,
+  "cumulative_comparison_cells": 255855,
+  "frozen_base_and_fill": "identical to v6695-v6794",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "fill_is_mutually_exclusive": true, "state_clock": "prior_close"},
+  "hard_gates": "unchanged strict heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
