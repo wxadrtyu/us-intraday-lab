@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [7796, 7895],
+  "evaluated_cells": 100,
+  "comparison_cells": 256766,
+  "elapsed_seconds": 15.378790799999479,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "native_factory_null_passes": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v7878-3bbec7c98ccd6776",
+    "development_oos_2024_2025": {
+      "standard": {"annualized_return": 0.655155742196581, "max_drawdown": 0.139768426195157, "information_ratio": 1.45483095112684, "trades": 365},
+      "cost_18bp": {"annualized_return": 0.477739502157668, "max_drawdown": 0.15432276258339, "information_ratio": 1.08915542363404},
+      "delay_5min_9bp": {"annualized_return": 0.614607453622413, "max_drawdown": 0.148357447944027, "information_ratio": 1.49336648005805}
+    },
+    "historical": {
+      "standard": {"annualized_return": 0.265819990921661, "max_drawdown": 0.218077889674066},
+      "cost_18bp": {"annualized_return": 0.132677147133661, "max_drawdown": 0.232832190200972},
+      "delay_5min_9bp": {"annualized_return": 0.149271835506223, "max_drawdown": 0.198350408498279}
+    },
+    "consumed_2026q1_total_return": 0.156610007888171,
+    "consumed_2026_all_total_return": 0.303515347499088,
+    "neighbor_primary_share": 0.0,
+    "bonferroni_p": 1.0,
+    "z_score": 1.75088932070925,
+    "failed_gates": [
+      "cost_18bp_primary",
+      "historical_15pct_mdd_below_20pct_all_scenarios",
+      "parameter_neighborhood_70pct_primary",
+      "cumulative_bonferroni_5pct"
+    ]
+  },
+  "gate_pass_counts": {
+    "standard_primary": 86,
+    "cost_18bp_primary": 0,
+    "delay_5min_primary": 57,
+    "four_of_five_positive_folds_all_scenarios": 100,
+    "all_start_dates_positive": 100,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 0,
+    "parameter_neighborhood_70pct_primary": 0,
+    "consumed_2026q1_above_5pct": 100,
+    "consumed_2026_total_above_5pct": 100,
+    "cumulative_bonferroni_5pct": 0
+  },
+  "next_unused_version": 7896
+}
