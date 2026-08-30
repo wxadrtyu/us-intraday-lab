@@ -93,8 +93,14 @@ def main() -> None:
     base.prior.cash._configure()
     base_ids = tuple(dict.fromkeys((base.prior.route.MODERN_PARENT, base.prior.route.TRANSFER_PARENT, base.prior.cash.FALLBACK_PARENT)))
     required = tuple(dict.fromkeys((*base_ids, *base.FILL_PARENTS)))
-    development = sector.SectorFlowLeadershipCube(args.root, "alpaca", 0)
-    historical = sector.SectorFlowLeadershipCube(args.root, "historical", 0)
+    development = v34.Cube(args.root, "alpaca", 0)
+    historical = v34.Cube(args.root, "historical", 0)
+    development_factors = sector.SectorFlowLeadershipCube(args.root, "alpaca", 0)
+    historical_factors = sector.SectorFlowLeadershipCube(args.root, "historical", 0)
+    if not np.array_equal(development.dates, development_factors.dates) or not np.array_equal(
+        historical.dates, historical_factors.dates
+    ):
+        raise RuntimeError("FACTOR_ROUTE_DATE_AXIS_MISMATCH")
     dev_state = base.prior.parent.cross.Cube(args.root, "alpaca", 0)
     hist_state = base.prior.parent.cross.Cube(args.root, "historical", 0)
     models = {item: v39._models(development, [source_map[item]["definition"]["strategy"]])[0] for item in required}
@@ -109,8 +115,8 @@ def main() -> None:
     hist_route = _route(historical, hist_state, hist_parents, core_model, override_model, gate_model, fill_model)
     cells = []
     for offset, (family, quantile, alpha) in enumerate(specifications()):
-        model = quality._fit(development, dev_route[0], dev_route[0].active, FACTOR_SETS[family], quantile, alpha)
-        score = quality._score(development, model)
+        model = quality._fit(development_factors, dev_route[0], dev_route[0].active, FACTOR_SETS[family], quantile, alpha)
+        score = quality._score(development_factors, model)
         allowed = np.isfinite(score) & (score >= model["threshold"])
         streams = tuple(_veto(stream, allowed) for stream in dev_route)
         observations = tuple(v47._observe(development, stream, True) for stream in streams)
@@ -119,7 +125,7 @@ def main() -> None:
     folds = np.array_split(np.flatnonzero(development.masks()["development_all"]), 5)
     records = []
     for cell in cells:
-        hist_score = quality._score(historical, cell["model"])
+        hist_score = quality._score(historical_factors, cell["model"])
         hist_allowed = np.isfinite(hist_score) & (hist_score >= cell["model"]["threshold"])
         hist_streams = tuple(_veto(stream, hist_allowed) for stream in hist_route)
         hist_obs = tuple(v47._observe(historical, stream, True)["historical_2018_2020"] for stream in hist_streams)
