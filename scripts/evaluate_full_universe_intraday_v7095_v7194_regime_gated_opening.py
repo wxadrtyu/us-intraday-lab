@@ -42,7 +42,7 @@ def _opening_components(
     )
     opening_state_model = base.campaign.state._fit_state(
         development_state,
-        base.campaign.state.STATE_FAMILIES[OPENING_STATE_FAMILY],
+        base.campaign.CORE_LOW_DISPERSION_TREND,
         OPENING_STATE_QUANTILE,
     )
     dev_mask = dev_modern & _allowed_state(development_state, opening_state_model)

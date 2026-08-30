@@ -24,3 +24,4 @@ def test_regime_gate_preregistration():
     assert subject.OPENING_STATE_FAMILY == "low_dispersion_trend"
     assert subject.OPENING_STATE_QUANTILE == 0.50
     assert subject.base.OPENING_SLOT[1] < 24
+    assert subject.base.campaign.CORE_LOW_DISPERSION_TREND
