@@ -1,0 +1,551 @@
+{
+  "status": "COMPLETE",
+  "version_range": [
+    3970,
+    5994
+  ],
+  "completed_versions": 2025,
+  "frontier_records": 2425,
+  "final_cumulative_comparison_cells": 254855,
+  "strict_pre_factory_null_passes": 0,
+  "factory_null_runs": 0,
+  "admitted_candidates": 0,
+  "campaigns": [
+    {
+      "artifact": "3970-v4069.json",
+      "artifact_sha256": "dbc8270d4dd74809332e3e57dac6934dcfc90b2441081be30ddd8e4d4bbaa7cf",
+      "version_range": [
+        3970,
+        4069
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 201905,
+      "elapsed_seconds": 5.776455599989276,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026_total_above_5pct": 54,
+        "consumed_2026q1_above_5pct": 80,
+        "cost_18bp_primary": 100,
+        "cumulative_bonferroni_5pct": 100,
+        "delay_5min_primary": 100,
+        "four_of_five_positive_folds_all_scenarios": 74,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 100,
+        "parameter_neighborhood_70pct_primary": 100,
+        "standard_primary": 100,
+        "all_start_dates_positive": 45
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4043-439875adffb2dce7",
+        "passed_gates": 3,
+        "failed_gates": [
+          "consumed_2026q1_above_5pct",
+          "cost_18bp_primary",
+          "cumulative_bonferroni_5pct",
+          "delay_5min_primary",
+          "historical_15pct_mdd_below_20pct_all_scenarios",
+          "parameter_neighborhood_70pct_primary",
+          "standard_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.36397783053537136,
+          "information_ratio": 0.9270816837174447,
+          "max_drawdown": 0.21626505592297995,
+          "profit_factor": 1.6099471912604841,
+          "total_return": 0.8535733391842746,
+          "trades": 132
+        },
+        "consumed_2026q1_total_return": -0.08782093887771569,
+        "consumed_2026_all_total_return": 0.14147398658428578,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4070-v4169.json",
+      "artifact_sha256": "c9e215e5056b5dc0bc18c9c631d977845dfaf29390e6f406a2ba59496eab4057",
+      "version_range": [
+        4070,
+        4169
+      ],
+      "versions": 100,
+      "evaluated_cells": 50000,
+      "comparison_cells": 251905,
+      "elapsed_seconds": 308.6558875000046,
+      "records": 300,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 153,
+        "cost_18bp_primary": 261,
+        "cumulative_bonferroni_5pct": 300,
+        "delay_5min_primary": 237,
+        "four_of_five_positive_folds_all_scenarios": 61,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 300,
+        "parameter_neighborhood_70pct_primary": 300,
+        "standard_primary": 243,
+        "consumed_2026_total_above_5pct": 85
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4101-6b4a8349f205f365",
+        "passed_gates": 7,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct",
+          "historical_15pct_mdd_below_20pct_all_scenarios",
+          "parameter_neighborhood_70pct_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.734546709086163,
+          "information_ratio": 1.4830501025926037,
+          "max_drawdown": 0.14760959217511638,
+          "profit_factor": 2.6619539169720396,
+          "total_return": 1.9889905795532,
+          "trades": 128
+        },
+        "consumed_2026q1_total_return": 0.07617098843869652,
+        "consumed_2026_all_total_return": 0.33576316959476915,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4170-v4269.json",
+      "artifact_sha256": "a4e5f033a411278f337a6759098d3bb8aedff5693f59a3ae1698b100c3ea59b5",
+      "version_range": [
+        4170,
+        4269
+      ],
+      "versions": 100,
+      "evaluated_cells": 1000,
+      "comparison_cells": 252905,
+      "elapsed_seconds": 17.7013711000036,
+      "records": 300,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 200,
+        "cumulative_bonferroni_5pct": 300,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 264,
+        "parameter_neighborhood_70pct_primary": 265,
+        "consumed_2026_total_above_5pct": 149,
+        "cost_18bp_primary": 189,
+        "delay_5min_primary": 194,
+        "standard_primary": 163,
+        "four_of_five_positive_folds_all_scenarios": 42
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4257-5511a435fd6c77a0",
+        "passed_gates": 9,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct"
+        ],
+        "oos": {
+          "annualized_return": 0.6368842661372047,
+          "information_ratio": 1.2947186510433877,
+          "max_drawdown": 0.13735598622458567,
+          "profit_factor": 2.1571575761721573,
+          "total_return": 1.6637172027557123,
+          "trades": 115
+        },
+        "consumed_2026q1_total_return": 0.20734347846924406,
+        "consumed_2026_all_total_return": 0.5028778250134669,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4270-v4369.json",
+      "artifact_sha256": "af25afd702d9e7c5fe5aa512ccd258e1916526608e0b99b6b930894d724b3c44",
+      "version_range": [
+        4270,
+        4369
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 253005,
+      "elapsed_seconds": 218.46008000001893,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 83,
+        "cumulative_bonferroni_5pct": 100,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 100,
+        "parameter_neighborhood_70pct_primary": 99,
+        "delay_5min_primary": 96,
+        "cost_18bp_primary": 93,
+        "standard_primary": 84,
+        "consumed_2026_total_above_5pct": 22,
+        "four_of_five_positive_folds_all_scenarios": 3
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4280-0957f91c2251f58e",
+        "passed_gates": 7,
+        "failed_gates": [
+          "consumed_2026q1_above_5pct",
+          "cumulative_bonferroni_5pct",
+          "historical_15pct_mdd_below_20pct_all_scenarios"
+        ],
+        "oos": {
+          "annualized_return": 0.6513842515718031,
+          "information_ratio": 1.4997084523031423,
+          "max_drawdown": 0.16901858369005363,
+          "profit_factor": 1.9646795219496695,
+          "total_return": 1.7108335193640256,
+          "trades": 184
+        },
+        "consumed_2026q1_total_return": 0.008308328225723915,
+        "consumed_2026_all_total_return": 0.10871726124361669,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4370-v4469.json",
+      "artifact_sha256": "a3133631388f379bfdf383f0d82f3d25bb844474d8b0cfeb4ea3ca0a8d66d84c",
+      "version_range": [
+        4370,
+        4469
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 253105,
+      "elapsed_seconds": 11.547201699984726,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 66,
+        "cumulative_bonferroni_5pct": 100,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 59,
+        "consumed_2026_total_above_5pct": 47,
+        "parameter_neighborhood_70pct_primary": 2,
+        "cost_18bp_primary": 1
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4423-5298677326af2b2b",
+        "passed_gates": 9,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct"
+        ],
+        "oos": {
+          "annualized_return": 0.7086033969553753,
+          "information_ratio": 1.7606761735836607,
+          "max_drawdown": 0.16421230297767564,
+          "profit_factor": 2.238467760737245,
+          "total_return": 1.9007679748337654,
+          "trades": 125
+        },
+        "consumed_2026q1_total_return": 0.06397575992516802,
+        "consumed_2026_all_total_return": 0.09253037188728541,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4470-v4569.json",
+      "artifact_sha256": "5d34cde909ff149e5ee7e877e5ee267cb04a47a016915e6087e224c025fda74a",
+      "version_range": [
+        4470,
+        4569
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 253205,
+      "elapsed_seconds": 11.60720329999458,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "cumulative_bonferroni_5pct": 100,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 68,
+        "parameter_neighborhood_70pct_primary": 64,
+        "consumed_2026_total_above_5pct": 29,
+        "consumed_2026q1_above_5pct": 18,
+        "cost_18bp_primary": 51,
+        "delay_5min_primary": 33,
+        "standard_primary": 33
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4513-0d708bbd918157bb",
+        "passed_gates": 9,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct"
+        ],
+        "oos": {
+          "annualized_return": 0.7624541406858818,
+          "information_ratio": 1.8745877009039662,
+          "max_drawdown": 0.12678028169014088,
+          "profit_factor": 2.3902911911237705,
+          "total_return": 2.0853588055099563,
+          "trades": 124
+        },
+        "consumed_2026q1_total_return": 0.09979476503726104,
+        "consumed_2026_all_total_return": 0.0992793457432064,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4570-v4669.json",
+      "artifact_sha256": "16e4b9c874412e84d40634b3420f55f41a570107c4bed9976026ea4f1cd657dc",
+      "version_range": [
+        4570,
+        4669
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 253305,
+      "elapsed_seconds": 22.266913800005568,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "cost_18bp_primary": 100,
+        "cumulative_bonferroni_5pct": 100,
+        "delay_5min_primary": 100,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 100,
+        "parameter_neighborhood_70pct_primary": 100,
+        "standard_primary": 72
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4630-a7a07c2fbad73dbb",
+        "passed_gates": 5,
+        "failed_gates": [
+          "cost_18bp_primary",
+          "cumulative_bonferroni_5pct",
+          "delay_5min_primary",
+          "historical_15pct_mdd_below_20pct_all_scenarios",
+          "parameter_neighborhood_70pct_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.5161900931560015,
+          "information_ratio": 1.5357202940121393,
+          "max_drawdown": 0.12334439165348987,
+          "profit_factor": 1.8813241752668433,
+          "total_return": 1.287470384364985,
+          "trades": 177
+        },
+        "consumed_2026q1_total_return": 0.08968034631600319,
+        "consumed_2026_all_total_return": 0.14701472207522026,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "4670-v5669.json",
+      "artifact_sha256": "11b1184f509853bcfa543f7100621e1012646decf9753cb44dac0fd1b884e587",
+      "version_range": [
+        4670,
+        5669
+      ],
+      "versions": 1000,
+      "evaluated_cells": 1000,
+      "comparison_cells": 254305,
+      "elapsed_seconds": 66.26697820000118,
+      "records": 1000,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 798,
+        "cost_18bp_primary": 1000,
+        "cumulative_bonferroni_5pct": 1000,
+        "delay_5min_primary": 1000,
+        "four_of_five_positive_folds_all_scenarios": 896,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 998,
+        "parameter_neighborhood_70pct_primary": 1000,
+        "standard_primary": 1000,
+        "consumed_2026_total_above_5pct": 668,
+        "all_start_dates_positive": 635
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v4956-4e75209af7e09dac",
+        "passed_gates": 4,
+        "failed_gates": [
+          "cost_18bp_primary",
+          "cumulative_bonferroni_5pct",
+          "delay_5min_primary",
+          "historical_15pct_mdd_below_20pct_all_scenarios",
+          "parameter_neighborhood_70pct_primary",
+          "standard_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.2932703205435425,
+          "information_ratio": 0.8066987515205429,
+          "max_drawdown": 0.1270490762899542,
+          "profit_factor": 1.8563314734996446,
+          "total_return": 0.667435284512129,
+          "trades": 119
+        },
+        "consumed_2026q1_total_return": 0.07044299914046537,
+        "consumed_2026_all_total_return": 0.12978362503535856,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "5670-v5769.json",
+      "artifact_sha256": "6abbe5e5c506f611ff74098dd58f08a4bb531facedf4a0ec4d605613c17cf7e7",
+      "version_range": [
+        5670,
+        5769
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 254405,
+      "elapsed_seconds": 5.606415999995079,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "cumulative_bonferroni_5pct": 100,
+        "parameter_neighborhood_70pct_primary": 98,
+        "consumed_2026_total_above_5pct": 56,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 14,
+        "consumed_2026q1_above_5pct": 46,
+        "cost_18bp_primary": 83,
+        "delay_5min_primary": 73,
+        "standard_primary": 70
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v5760-e7557881b2cf83f3",
+        "passed_gates": 9,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct"
+        ],
+        "oos": {
+          "annualized_return": 0.6918780559503432,
+          "information_ratio": 1.7385146898549682,
+          "max_drawdown": 0.14521810353295328,
+          "profit_factor": 2.0550625884297027,
+          "total_return": 1.8445884076753942,
+          "trades": 146
+        },
+        "consumed_2026q1_total_return": 0.09471731379666726,
+        "consumed_2026_all_total_return": 0.07085182274355573,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "5770-v5869.json",
+      "artifact_sha256": "67810cecaabf88f33ecace68127547d66fa51139e2a75e54e7cb9a5475655028",
+      "version_range": [
+        5770,
+        5869
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 254505,
+      "elapsed_seconds": 10.949170899984892,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026_total_above_5pct": 73,
+        "cumulative_bonferroni_5pct": 100,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 58,
+        "parameter_neighborhood_70pct_primary": 92,
+        "cost_18bp_primary": 85,
+        "consumed_2026q1_above_5pct": 66,
+        "delay_5min_primary": 60,
+        "standard_primary": 39
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v5863-62b7dbb55ce7e78d",
+        "passed_gates": 9,
+        "failed_gates": [
+          "cumulative_bonferroni_5pct"
+        ],
+        "oos": {
+          "annualized_return": 0.6261428656693788,
+          "information_ratio": 1.5981077434089783,
+          "max_drawdown": 0.1343554118436041,
+          "profit_factor": 1.9324444913490972,
+          "total_return": 1.6290787940601201,
+          "trades": 147
+        },
+        "consumed_2026q1_total_return": 0.09414814193471388,
+        "consumed_2026_all_total_return": 0.08099027428113192,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "5870-v5969.json",
+      "artifact_sha256": "b5b20ba5aca4fcce96144b594bb69e5bcaf591bf901a74b861f5f5fda8c2c23f",
+      "version_range": [
+        5870,
+        5969
+      ],
+      "versions": 100,
+      "evaluated_cells": 100,
+      "comparison_cells": 254605,
+      "elapsed_seconds": 18.687016999989282,
+      "records": 100,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026_total_above_5pct": 57,
+        "cumulative_bonferroni_5pct": 100,
+        "parameter_neighborhood_70pct_primary": 100,
+        "consumed_2026q1_above_5pct": 53,
+        "cost_18bp_primary": 97,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 9,
+        "delay_5min_primary": 70,
+        "standard_primary": 67
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v5881-70a999525a732165",
+        "passed_gates": 7,
+        "failed_gates": [
+          "consumed_2026_total_above_5pct",
+          "cumulative_bonferroni_5pct",
+          "parameter_neighborhood_70pct_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.6388683030932312,
+          "information_ratio": 1.638017900497245,
+          "max_drawdown": 0.14721723772938633,
+          "profit_factor": 2.048163623062218,
+          "total_return": 1.6701398943924834,
+          "trades": 133
+        },
+        "consumed_2026q1_total_return": 0.09471731379666726,
+        "consumed_2026_all_total_return": 0.04060871070224703,
+        "bonferroni_p": 1
+      }
+    },
+    {
+      "artifact": "5970-v5994.json",
+      "artifact_sha256": "fc146256b174eadcfe356e3de6688e765ff6994746abd6c83be688f675ff467a",
+      "version_range": [
+        5970,
+        5994
+      ],
+      "versions": 25,
+      "evaluated_cells": 250,
+      "comparison_cells": 254855,
+      "elapsed_seconds": 29.918041700002505,
+      "records": 25,
+      "strict_pre_factory_null_passes": 0,
+      "rejection_reason_counts": {
+        "consumed_2026q1_above_5pct": 25,
+        "cost_18bp_primary": 25,
+        "cumulative_bonferroni_5pct": 25,
+        "delay_5min_primary": 25,
+        "historical_15pct_mdd_below_20pct_all_scenarios": 25,
+        "parameter_neighborhood_70pct_primary": 25,
+        "standard_primary": 25,
+        "consumed_2026_total_above_5pct": 21,
+        "all_start_dates_positive_all_scenarios": 23,
+        "four_of_five_positive_folds_all_scenarios": 17
+      },
+      "top_candidate": {
+        "candidate_id": "lev-v5980-36034842055995ca",
+        "passed_gates": 3,
+        "failed_gates": [
+          "consumed_2026q1_above_5pct",
+          "cost_18bp_primary",
+          "cumulative_bonferroni_5pct",
+          "delay_5min_primary",
+          "historical_15pct_mdd_below_20pct_all_scenarios",
+          "parameter_neighborhood_70pct_primary",
+          "standard_primary"
+        ],
+        "oos": {
+          "annualized_return": 0.22775586629786182,
+          "information_ratio": 0.8959192269722736,
+          "max_drawdown": 0.22999911554287833,
+          "profit_factor": 1.3081015650954553,
+          "total_return": 0.5037068510960869,
+          "trades": 233
+        },
+        "consumed_2026q1_total_return": -0.1523356839711868,
+        "consumed_2026_all_total_return": 0.08738485308905042,
+        "bonferroni_p": 1
+      }
+    }
+  ]
+}
