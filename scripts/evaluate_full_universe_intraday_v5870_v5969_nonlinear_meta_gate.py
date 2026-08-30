@@ -42,6 +42,7 @@ FACTOR_SETS = {
     "contraction_repair": ("recent_volatility_ratio", "recent_volume_ratio", "drawdown_from_high", "rebound_from_low", "return_acceleration", "close_location"),
     "balanced": ("current_return", "relative_return", "path_efficiency", "signed_volume_imbalance", "vwap_distance", "close_location", "drawdown_from_high", "rebound_from_low", "return_acceleration", "prior20_return", "spy_volatility"),
 }
+MECHANISM = "v4513_nonlinear_bar17_meta_gate"
 
 
 def specifications():
@@ -153,7 +154,7 @@ def main() -> None:
         z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
         bonferroni = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells)
         gates = {"standard_primary": _primary(observations[0]), "cost_18bp_primary": _primary(observations[1]), "delay_5min_primary": _primary(observations[2]), "four_of_five_positive_folds_all_scenarios": all(sum(float(item["annualized_return"]) > 0 for item in values) >= 4 for values in fold_metrics.values()), "all_start_dates_positive": all(float(item["annualized_return"]) > 0 for item in starts.values()), "historical_15pct_mdd_below_20pct_all_scenarios": all(float(item["annualized_return"]) >= 0.15 and float(item["max_drawdown"]) < 0.20 for item in historical_obs), "parameter_neighborhood_70pct_primary": neighborhood >= 0.70, "consumed_2026q1_above_5pct": float(observations[0]["consumed_2026q1"]["total_return"]) > 0.05, "consumed_2026_total_above_5pct": float(observations[0]["consumed_2026_all"]["total_return"]) > 0.05, "cumulative_bonferroni_5pct": bonferroni < 0.05}
-        definition = {"version": cell["version"], "mechanism": "v4513_nonlinear_bar17_meta_gate", "factor_set": cell["family"], "tree_depth": cell["depth"], "minimum_leaf": cell["min_leaf"], "score_quantile": cell["quantile"], "trees": 64}
+        definition = {"version": cell["version"], "mechanism": MECHANISM, "factor_set": cell["family"], "tree_depth": cell["depth"], "minimum_leaf": cell["min_leaf"], "score_quantile": cell["quantile"], "trees": 64}
         records.append({"candidate_id": f"lev-v{cell['version']}-" + _identity(definition), "definition": definition, "standard": observations[0], "cost_18bp": observations[1], "delay_5min_9bp": observations[2], "historical_scenarios": {"standard": historical_obs[0], "cost_18bp": historical_obs[1], "delay_5min_9bp": historical_obs[2]}, "development_folds": fold_metrics, "start_date_stress": starts, "neighbor_primary_share": neighborhood, "multiple_comparison": {"total_cells": total_cells, "z_score": z_score, "bonferroni_p": bonferroni}, "gates": gates, "strict_pre_factory_null_pass": all(gates.values())})
     records.sort(key=lambda item: _rank((item["standard"], item["cost_18bp"], item["delay_5min_9bp"])), reverse=True)
     payload = {"schema_version": "1.0.0", "status": "COMPLETE", "version_range": [FIRST_VERSION, LAST_VERSION], "evaluated_cells": len(cells), "comparison_cells": total_cells, "strict_pre_factory_null_passes": sum(item["strict_pre_factory_null_pass"] for item in records), "elapsed_seconds": time.perf_counter() - started, "records": records}

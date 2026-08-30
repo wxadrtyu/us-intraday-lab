@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6095-v6194-half-fallback",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6095,
+  "last_version": 6194,
+  "hypothesis": "A fixed half-risk fallback on early-gate rejection preserves weak but diversifying modern-sleeve returns while the nonlinear gate retains full exposure only in high-confidence states.",
+  "version_contract": "5 economic early-state factor families x 4 shallow tree structures x 5 frozen training-score quantiles; fallback exposure fixed at 0.50 for the whole batch",
+  "planned_cells": 100,
+  "prior_comparison_cells": 254955,
+  "cumulative_comparison_cells": 255055,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "fallback_exposure": 0.5, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95},
+  "paper_pool_change_authorized": false
+}
