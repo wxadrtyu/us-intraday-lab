@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6495-v6594-sequential-sector-flow",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6495,
+  "last_version": 6594,
+  "hypothesis": "Four separately scored, non-overlapping intraday sleeves using sector-flow and leadership state can create repeated causal evidence while retaining gross one and avoiding overnight exposure.",
+  "version_contract": "10 distinct sector-flow factor families x 5 frozen training-score quantiles x 2 ridge strengths",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255355,
+  "cumulative_comparison_cells": 255455,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "nonoverlapping_slots": [[17, 29], [32, 44], [47, 59], [62, 77]], "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
