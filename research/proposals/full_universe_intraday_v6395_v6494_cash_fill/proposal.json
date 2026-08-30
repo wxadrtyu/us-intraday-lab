@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6395-v6494-cash-fill",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6395,
+  "last_version": 6494,
+  "hypothesis": "A development-leading causal v42 parent used only when the robust state route and its transfer gate both abstain can add a disjoint return source and evidence without diluting accepted core states or exceeding gross one.",
+  "version_contract": "10 distinct transfer-quality factor families x 5 training-score quantiles x 2 ridge strengths; one batch-wide frozen cash-fill parent selected only from 2022-2025 development metrics",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255255,
+  "cumulative_comparison_cells": 255355,
+  "frozen_cash_fill_parent": "lev-v42t-7c0af099b3c0f20b",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cash_fill_is_mutually_exclusive": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
