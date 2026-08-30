@@ -4,23 +4,21 @@
   "version_range": [6795, 6894],
   "evaluated_cells": 100,
   "comparison_cells": 255755,
-  "elapsed_seconds": 24.355544699996244,
+  "elapsed_seconds": 24.61009100000956,
   "strict_pre_factory_null_passes": 0,
   "native_factory_null_runs": 0,
   "admissions": 0,
-  "closest_candidate": {
-    "candidate_id": "lev-v6826-184cd73d5bb251ac",
-    "development_oos_2024_2025": {
-      "standard": {"annualized_return": 0.5168262376894368, "max_drawdown": 0.16421230297767597, "information_ratio": 1.6488572040897727, "trades": 128},
-      "cost_18bp": {"annualized_return": 0.45468275942398173, "max_drawdown": 0.16960554216088108, "information_ratio": 1.4711506462840094, "trades": 128},
-      "delay_5min_9bp": {"annualized_return": 0.5387420797852018, "max_drawdown": 0.16249186628318357, "information_ratio": 1.7829681145991827, "trades": 125}
-    },
-    "consumed_2026q1_total_return": 0.06397575992516802,
-    "consumed_2026_all_total_return": 0.050542918110277446,
-    "neighbor_primary_share": 0.0,
-    "bonferroni_p": 1.0,
-    "z_score": 1.1751349976034144,
-    "failed_gates": ["cost_18bp_primary", "parameter_neighborhood_70pct_primary", "cumulative_bonferroni_5pct"]
+  "development_ranked_candidate": {
+    "candidate_id": "lev-v6853-a41dc580231dbb9d",
+    "standard_annualized_return": 0.567307820624007,
+    "standard_information_ratio": 1.53197201316915,
+    "cost_18bp_annualized_return": 0.502321844752246,
+    "delay_5min_annualized_return": 0.57407706859972,
+    "historical_delay_annualized_return": 0.115706955465805,
+    "consumed_2026q1_total_return": 0.0378299093340033,
+    "consumed_2026_all_total_return": 0.00755375246595125,
+    "z_score": 1.09183131417244,
+    "bonferroni_p": 1.0
   },
   "next_unused_version": 6895
 }

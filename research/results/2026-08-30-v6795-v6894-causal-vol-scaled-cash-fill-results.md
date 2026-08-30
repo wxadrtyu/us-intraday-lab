@@ -1,24 +1,20 @@
-# v6795-v6894 causal volatility-scaled cash-fill results
+# v6795-v6894 causal vol-scaled cash-fill results
 
 ## Outcome
 
 - Atomic campaign status: `COMPLETE`
 - Economic versions / evaluated cells: 100 / 100
-- Runtime: 24.356 seconds
+- Runtime: 24.610 seconds
 - Cumulative comparison cells: 255,755
 - Strict pre-factory-null passes: 0
 - Native factory null runs: 0 (ineligible)
 - Admissions or paper-pool changes: 0
 
-The fixed 30% trailing-volatility target reduced return more than risk. The
-closest record by passed gates, `lev-v6826-184cd73d5bb251ac`, produced 51.68%
-standard annualized return, 16.42% MDD and IR 1.65, but the 18bp annualized
-return fell to 45.47%. The delayed scenario remained at 53.87% annualized and
-IR 1.78. Its 2026Q1 and all-2026 totals were 6.40% and 5.05%.
+The fixed 20-session, 30% target-volatility overlay did not raise information
+ratio and reduced stressed return. The development-ranked record produced
+56.73% standard annualized return and IR 1.53, but only 50.23% at 18bp; its
+historical delayed annualized return was 11.57%, 2026Q1 was 3.78%, and all-2026
+was 0.76%. Its cumulative z statistic was 1.092 and Bonferroni p was 1.0.
 
-The candidate failed the 18bp primary, 70% neighborhood, and cumulative
-Bonferroni gates (`z=1.175`, `p=1.0`). The overlay did not improve the global
-evidence statistic and should not be extended by target-volatility tuning.
-
-No candidate was admitted and the existing simulated-observation pool was not
-modified. The next unused strategy version is v6895.
+This fixed-overlay mechanism is falsified. No candidate was admitted and the
+next unused version is v6895.

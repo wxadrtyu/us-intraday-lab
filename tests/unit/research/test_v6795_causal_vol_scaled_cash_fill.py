@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[3] / "scripts"))
+
 import evaluate_full_universe_intraday_v34_multifactor as v34
 import evaluate_full_universe_intraday_v6795_v6894_causal_vol_scaled_cash_fill as subject
 import numpy as np
