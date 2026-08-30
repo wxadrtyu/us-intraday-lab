@@ -1,0 +1,33 @@
+{
+  "proposal_version": "v5870-v5969-nonlinear-meta-gate-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 5870,
+  "last_version": 5969,
+  "hypothesis_count": 100,
+  "hypothesis": "A shallow bagged nonlinear meta-model fitted only to the frozen route's modern-session residual returns captures factor interactions missed by the bar-17 ridge gate and can remove high-variance negative sessions without changing entries or exits.",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2018_2020", "2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "versions": "5 bar-17 factor sets x 4 shallow tree configurations x 5 train score quantiles",
+  "planned_cells": 100,
+  "prior_comparison_cells": 254505,
+  "cumulative_comparison_cells": 254605,
+  "hard_gates": {
+    "all_oos_scenarios_annualized_return_min": 0.5,
+    "all_oos_scenarios_mdd_max": 0.2,
+    "all_oos_scenarios_information_ratio_min": 1.0,
+    "historical_all_scenarios_annualized_return_min": 0.15,
+    "historical_all_scenarios_mdd_max": 0.2,
+    "consumed_2026q1_total_return_min": 0.05,
+    "consumed_2026_all_total_return_min": 0.05,
+    "four_of_five_positive_folds_all_scenarios": true,
+    "all_start_dates_positive": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "global_bonferroni_p_max": 0.05,
+    "native_factory_null_required": true
+  },
+  "causality": "Modern entry is bar 24; all meta-features end at bar 17. Transfer entry and its existing bar-2 quality gate remain unchanged.",
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "paper_pool_change_authorized": false
+}
