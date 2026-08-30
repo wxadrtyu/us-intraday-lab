@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7095-v7194-regime-gated-opening",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7095,
+  "last_version": 7194,
+  "hypothesis": "The opening trend-flow source is conditional on a prior-close low-dispersion trend regime; a train-only state gate can retain independent opening evidence while withholding the source in unstable regimes that should not support continuation.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; opening component and its prior-close regime gate fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255955,
+  "cumulative_comparison_cells": 256055,
+  "opening_component": {"decision": 2, "exit": 17, "factor_family": "trend_flow_state", "score_quantile": 0.5, "ridge_alpha": 100.0, "enabled_base_state": "base_modern", "prior_close_state_family": "low_dispersion_trend", "prior_close_state_quantile": 0.5, "orientation": "high"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
