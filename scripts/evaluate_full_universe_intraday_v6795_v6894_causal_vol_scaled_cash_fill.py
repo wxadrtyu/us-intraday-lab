@@ -1,13 +1,13 @@
-"""v6595-v6694: causal volatility scaling over the disjoint cash-fill route."""
+"""v6795-v6894: causal volatility scaling over the disjoint cash-fill route."""
 
 from __future__ import annotations
 
 import evaluate_full_universe_intraday_v42_multifactor_vol_target as v42
 import evaluate_full_universe_intraday_v6395_v6494_cash_fill as cash_fill
 
-FIRST_VERSION = 6595
-LAST_VERSION = 6694
-PRIOR_COMPARISON_CELLS = 255_455
+FIRST_VERSION = 6795
+LAST_VERSION = 6894
+PRIOR_COMPARISON_CELLS = 255_655
 LOOKBACK = 20
 TARGET_VOLATILITY = 0.30
 MINIMUM_EXPOSURE = 0.25

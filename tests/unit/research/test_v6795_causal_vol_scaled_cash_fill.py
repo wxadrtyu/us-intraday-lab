@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import evaluate_full_universe_intraday_v34_multifactor as v34
-import evaluate_full_universe_intraday_v6595_v6694_causal_vol_scaled_cash_fill as subject
+import evaluate_full_universe_intraday_v6795_v6894_causal_vol_scaled_cash_fill as subject
 import numpy as np
 
 
@@ -17,3 +17,4 @@ def test_causal_scaler_never_increases_gross():
     assert np.all(np.abs(scaled.values) <= np.abs(stream.values) + 1e-12)
     assert subject.MINIMUM_EXPOSURE > 0
     assert subject.TARGET_VOLATILITY == 0.30
+    assert subject.FIRST_VERSION == 6795
