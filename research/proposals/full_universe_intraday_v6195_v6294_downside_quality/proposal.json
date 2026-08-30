@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6195-v6294-downside-quality",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6195,
+  "last_version": 6294,
+  "hypothesis": "A shallow nonlinear gate trained on a downside-penalized early-state target will reject fragile modern-sleeve states more consistently than a mean-return target, while a frozen half-risk fallback preserves diversification.",
+  "version_contract": "5 distinct early-state factor families x 4 shallow tree structures x 5 frozen training-score quantiles; downside penalty 2.0 and fallback exposure 0.50 fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255055,
+  "cumulative_comparison_cells": 255155,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "fallback_exposure": 0.5, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "target": {"positive_multiplier": 1.0, "negative_multiplier": 2.0, "fit_period": "2022-2023 only"},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95},
+  "paper_pool_change_authorized": false
+}
