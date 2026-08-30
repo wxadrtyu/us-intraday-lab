@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [6395, 6494],
+  "evaluated_cells": 100,
+  "comparison_cells": 255355,
+  "elapsed_seconds": 11.787765799992485,
+  "strict_pre_factory_null_passes": 0,
+  "all_non_global_gates_passes": 38,
+  "native_factory_null_runs": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v6426-015fd5815aef0b6f",
+    "development_oos_2024_2025": {
+      "standard": {"annualized_return": 0.7375761103801364, "max_drawdown": 0.16421230297767597, "information_ratio": 1.8109014362606024, "trades": 128},
+      "cost_18bp": {"annualized_return": 0.6539712120336352, "max_drawdown": 0.16960554216088108, "information_ratio": 1.637787025460602, "trades": 128},
+      "delay_5min_9bp": {"annualized_return": 0.7336633942489932, "max_drawdown": 0.16249186628318357, "information_ratio": 1.9162524801343197, "trades": 125}
+    },
+    "historical_annualized_return": {"standard": 0.31277491338767605, "cost_18bp": 0.254364807188626, "delay_5min_9bp": 0.24847510141994156},
+    "consumed_2026q1_total_return": 0.06397575992516802,
+    "consumed_2026_all_total_return": 0.09253037188728541,
+    "neighbor_primary_share": 1.0,
+    "bonferroni_p": 1.0,
+    "z_score": 1.2906233782293377,
+    "failed_gates": ["cumulative_bonferroni_5pct"]
+  },
+  "next_unused_version": 6495
+}
