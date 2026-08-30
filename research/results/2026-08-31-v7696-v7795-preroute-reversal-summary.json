@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [7696, 7795],
+  "evaluated_cells": 100,
+  "comparison_cells": 256666,
+  "elapsed_seconds": 14.359214099999008,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "native_factory_null_passes": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v7778-4f79352bd28349d4",
+    "development_oos_2024_2025": {
+      "standard": {"annualized_return": 0.647648304524736, "max_drawdown": 0.187721624410433, "information_ratio": 1.479681720113, "trades": 381},
+      "cost_18bp": {"annualized_return": 0.42456074694727, "max_drawdown": 0.249339136224592, "information_ratio": 1.01229798474743},
+      "delay_5min_9bp": {"annualized_return": 0.529865722729563, "max_drawdown": 0.241097204403345, "information_ratio": 1.35269583832518}
+    },
+    "historical": {
+      "standard": {"annualized_return": 0.209815675817332, "max_drawdown": 0.19826485388189},
+      "cost_18bp": {"annualized_return": 0.0618091318671401, "max_drawdown": 0.235787016955426},
+      "delay_5min_9bp": {"annualized_return": 0.0270644822380666, "max_drawdown": 0.233638005704004}
+    },
+    "consumed_2026q1_total_return": 0.0494145109597497,
+    "consumed_2026_all_total_return": 0.145528062620929,
+    "neighbor_primary_share": 0.0,
+    "bonferroni_p": 1.0,
+    "z_score": 1.81940978489181,
+    "failed_gates": [
+      "cost_18bp_primary",
+      "delay_5min_primary",
+      "historical_15pct_mdd_below_20pct_all_scenarios",
+      "parameter_neighborhood_70pct_primary",
+      "consumed_2026q1_above_5pct",
+      "cumulative_bonferroni_5pct"
+    ]
+  },
+  "gate_pass_counts": {
+    "standard_primary": 12,
+    "cost_18bp_primary": 0,
+    "delay_5min_primary": 0,
+    "four_of_five_positive_folds_all_scenarios": 100,
+    "all_start_dates_positive": 100,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 0,
+    "parameter_neighborhood_70pct_primary": 0,
+    "consumed_2026q1_above_5pct": 87,
+    "consumed_2026_total_above_5pct": 73,
+    "cumulative_bonferroni_5pct": 0
+  },
+  "next_unused_version": 7796
+}
