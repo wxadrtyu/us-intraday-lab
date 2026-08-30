@@ -77,6 +77,7 @@ def _raw(cube, model, cost, delay, maximum, buffer, temperature):
     active = np.isfinite(best) & (best >= model.threshold + buffer) & (weight_sum > 0)
     active &= np.isfinite(cube.opens[:, entry, 0]) & np.isfinite(cube.opens[:, exit_bar, 0])
     asset_returns = cube.opens[:, exit_bar, assets] / cube.opens[:, entry, assets] - 1.0
+    asset_returns = np.where(valid, asset_returns, 0.0)
     values = np.zeros(len(cube.sessions))
     values[active] = np.sum(weights[active] * asset_returns[active], axis=1) - cost
     benchmark = np.zeros(len(cube.sessions))
