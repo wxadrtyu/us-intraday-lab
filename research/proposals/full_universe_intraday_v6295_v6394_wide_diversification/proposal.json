@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6295-v6394-wide-diversification",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6295,
+  "last_version": 6394,
+  "hypothesis": "Broad equal-gross diversification across 8-20 independently specified causal v42 parents can reduce daily concentration and increase repeated component evidence beyond the previously tested 2-6 parent frontier.",
+  "version_contract": "5 economically distinct breadths x 5 correlation penalties x 2 weighting policies x 2 frozen parent pools",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255155,
+  "cumulative_comparison_cells": 255255,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "concurrent_parent_weights_sum": 1, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}

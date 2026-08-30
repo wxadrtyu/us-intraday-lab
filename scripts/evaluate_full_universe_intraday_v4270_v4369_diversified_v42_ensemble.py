@@ -27,6 +27,7 @@ COUNTS = (2, 3, 4, 5, 6)
 PENALTIES = (0.0, 0.25, 0.50, 0.75, 1.0)
 WEIGHTINGS = ("equal", "inverse_train_volatility")
 POOLS = ("development_frontier_100", "all_500")
+MECHANISM = "train_stability_correlation_greedy_ensemble"
 
 
 def specifications():
@@ -134,7 +135,7 @@ def main() -> None:
         oos = observations[0]["development_oos_2024_2025"]
         z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
         bonferroni = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells)
-        definition = {"version": FIRST_VERSION + offset, "mechanism": "train_stability_correlation_greedy_ensemble", "component_count": count, "correlation_penalty": penalty, "weighting": weighting, "pool": pool, "selected_parents": selected, "weights": weights.tolist()}
+        definition = {"version": FIRST_VERSION + offset, "mechanism": MECHANISM, "component_count": count, "correlation_penalty": penalty, "weighting": weighting, "pool": pool, "selected_parents": selected, "weights": weights.tolist()}
         records.append({
             "candidate_id": f"lev-v{FIRST_VERSION + offset}-" + _identity(definition), "definition": definition,
             "standard": observations[0], "cost_18bp": observations[1], "delay_5min_9bp": observations[2],
