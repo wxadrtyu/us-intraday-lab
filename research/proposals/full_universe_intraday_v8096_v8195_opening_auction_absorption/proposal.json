@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8096-v8195-opening-auction-absorption",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8096,
+  "last_version": 8195,
+  "hypothesis": "A sparse price-volume signal focused on opening-auction absorption and path consistency can isolate a more stable bar-3-to-11 return source than explicit overnight-gap normalization, while remaining time-disjoint from the late route.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; sparse opening-auction absorption component fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 256966,
+  "cumulative_comparison_cells": 257066,
+  "opening_component": {
+    "decision": 2,
+    "entry": 3,
+    "exit": 11,
+    "late_route_entry": 24,
+    "factor_family": "opening_auction_absorption",
+    "factors": ["signed_volume_imbalance", "volume_acceleration", "trend_consistency", "vwap_distance", "close_location", "range_ratio", "relative_return", "sector_breadth"],
+    "score_quantile": 0.8,
+    "ridge_alpha": 1000.0,
+    "enabled_state": "base_modern"
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
