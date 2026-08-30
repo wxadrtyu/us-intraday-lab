@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v6595-v6694-disjoint-wide-cash-fill",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 6595,
+  "last_version": 6694,
+  "hypothesis": "Use the frozen v6426 all-non-global-gates route when active and a train-selected wide same-clock ensemble only when that route is cash, increasing independent active sessions and statistical evidence without overlapping exposure or diluting accepted base states.",
+  "version_contract": "5 ensemble counts x 5 train correlation penalties x 2 weightings x 2 parent pools",
+  "planned_cells": 100,
+  "prior_comparison_cells": 255455,
+  "cumulative_comparison_cells": 255555,
+  "frozen_base": {"campaign": "v6395-v6494", "version": 6426, "factor_set": "breakout_quality", "quantile": 0.0, "ridge_alpha": 100.0},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "fill_is_mutually_exclusive": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "unchanged strict heartbeat contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260830, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
