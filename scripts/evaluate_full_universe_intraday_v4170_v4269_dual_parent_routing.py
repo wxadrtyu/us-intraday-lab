@@ -119,13 +119,19 @@ def main() -> None:
         raise RuntimeError("DUAL_PARENT_PREREGISTRATION_MISMATCH")
     development = v34.Cube(args.root, "alpaca", 0)
     historical = v34.Cube(args.root, "historical", 0)
+    development_state = state.v53.Cube(args.root, "alpaca", 0)
+    historical_state = state.v53.Cube(args.root, "historical", 0)
+    if not np.array_equal(development.dates, development_state.dates) or not np.array_equal(
+        historical.dates, historical_state.dates
+    ):
+        raise RuntimeError("STATE_AND_PARENT_CUBES_MISALIGNED")
     models = {candidate_id: v39._models(development, [parent_map[candidate_id]["definition"]["strategy"]])[0] for candidate_id in required}
     dev_streams = {candidate_id: prior._parent_streams(development, parent_map[candidate_id], models[candidate_id]) for candidate_id in required}
     hist_streams = {candidate_id: prior._parent_streams(historical, parent_map[candidate_id], models[candidate_id]) for candidate_id in required}
     all_cells = []
     for offset, (family, quantile, orientation) in enumerate(specifications()):
-        state_model = _fit_state(development, STATE_FAMILIES[family], quantile)
-        score = _score(development, state_model)
+        state_model = _fit_state(development_state, STATE_FAMILIES[family], quantile)
+        score = _score(development_state, state_model)
         high = np.isfinite(score) & (score >= state_model["threshold"])
         choose_modern = high if orientation == "modern_on_high" else ~high
         for transfer_id in TRANSFER_PARENTS:
@@ -144,7 +150,7 @@ def main() -> None:
         frontier = sorted((cell for cell in all_cells if cell["version"] == version), key=lambda x: x["rank"], reverse=True)[:3]
         for cell in frontier:
             model = cell["state_model"]
-            score = _score(historical, model)
+            score = _score(historical_state, model)
             high = np.isfinite(score) & (score >= model["threshold"])
             choose_modern = high if cell["orientation"] == "modern_on_high" else ~high
             historical_routed = tuple(_choose(modern, transfer, choose_modern) for modern, transfer in zip(hist_streams[MODERN_PARENT], hist_streams[cell["transfer_id"]], strict=True))
