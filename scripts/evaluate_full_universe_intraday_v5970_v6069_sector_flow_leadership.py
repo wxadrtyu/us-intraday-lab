@@ -149,8 +149,14 @@ class SectorFlowLeadershipCube(IntradayPathCube):
             sorted_return[:, :3], axis=1
         )
         return_abs_sum = np.nansum(np.abs(current_return), axis=1)
+        finite_return = np.isfinite(current_return)
+        maximum_absolute_return = np.where(
+            finite_return.any(axis=1),
+            np.where(finite_return, np.abs(current_return), -np.inf).max(axis=1),
+            np.nan,
+        )
         leadership_concentration = np.divide(
-            np.nanmax(np.abs(current_return), axis=1),
+            maximum_absolute_return,
             return_abs_sum,
             out=np.full(len(current_return), np.nan),
             where=return_abs_sum > 0,
