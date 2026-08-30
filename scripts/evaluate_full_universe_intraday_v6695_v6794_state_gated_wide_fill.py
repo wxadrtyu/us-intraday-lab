@@ -52,6 +52,22 @@ FILL_WEIGHTS = np.asarray(
         0.07612641785432452,
     )
 )
+EXTRA_COMPONENT_BUILDER = None
+EXTRA_COMPONENT_DEFINITION = None
+
+
+def _combine_extra(streams, extras):
+    if extras is None:
+        return streams
+    return tuple(
+        v34.v12.ReturnStream(
+            base.values + extra.values,
+            base.benchmark + extra.benchmark,
+            base.active | extra.active,
+            base.component_trades + extra.component_trades,
+        )
+        for base, extra in zip(streams, extras, strict=True)
+    )
 
 
 def specifications():
@@ -117,15 +133,9 @@ def main() -> None:
         item: prior.parent._parent_streams(historical, source_map[item], models[item])
         for item in required
     }
-    core_model = state._fit_state(
-        development_state, CORE_LOW_DISPERSION_TREND, 0.20
-    )
-    override_model = state._fit_state(
-        development_state, CORE_OVERSOLD_REPAIR, 0.35
-    )
-    _, transfer_state = prior.route._base_state(
-        development_state, core_model, override_model
-    )
+    core_model = state._fit_state(development_state, CORE_LOW_DISPERSION_TREND, 0.20)
+    override_model = state._fit_state(development_state, CORE_OVERSOLD_REPAIR, 0.35)
+    _, transfer_state = prior.route._base_state(development_state, core_model, override_model)
     gate_model = prior.route._fit_gate(
         development,
         development_parents[prior.route.TRANSFER_PARENT][0],
@@ -150,6 +160,16 @@ def main() -> None:
         override_model,
         gate_model,
     )
+    extra_dev, extra_hist = (None, None)
+    if EXTRA_COMPONENT_BUILDER is not None:
+        extra_dev, extra_hist = EXTRA_COMPONENT_BUILDER(
+            development,
+            historical,
+            development_state,
+            historical_state,
+            core_model,
+            override_model,
+        )
     dev_fill = tuple(
         prior.wide.campaign._combine(
             [development_parents[item][scenario] for item in FILL_PARENTS], FILL_WEIGHTS
@@ -170,6 +190,7 @@ def main() -> None:
             _disjoint_gated(base, fill, allowed)
             for base, fill in zip(dev_base, dev_fill, strict=True)
         )
+        streams = _combine_extra(streams, extra_dev)
         observations = tuple(v47._observe(development, stream, True) for stream in streams)
         cells.append(
             {
@@ -187,13 +208,12 @@ def main() -> None:
     folds = np.array_split(np.flatnonzero(development.masks()["development_all"]), 5)
     results = []
     for cell in cells:
-        historical_allowed = _allowed(
-            historical_state, cell["model"], cell["orientation"]
-        )
+        historical_allowed = _allowed(historical_state, cell["model"], cell["orientation"])
         historical_streams = tuple(
             _disjoint_gated(base, fill, historical_allowed)
             for base, fill in zip(hist_base, hist_fill, strict=True)
         )
+        historical_streams = _combine_extra(historical_streams, extra_hist)
         historical_obs = tuple(
             v47._observe(historical, stream, True)["historical_2018_2020"]
             for stream in historical_streams
@@ -226,12 +246,8 @@ def main() -> None:
         ]
         neighborhood = sum(item["primary"] for item in neighbors) / len(neighbors)
         oos = observations[0]["development_oos_2024_2025"]
-        z_score = float(oos["information_ratio"]) * math.sqrt(
-            max(1, int(oos["trades"])) / 252
-        )
-        bonferroni = min(
-            1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells
-        )
+        z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
+        bonferroni = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells)
         gates = {
             "standard_primary": prior._primary(observations[0]),
             "cost_18bp_primary": prior._primary(observations[1]),
@@ -244,14 +260,11 @@ def main() -> None:
                 float(item["annualized_return"]) > 0 for item in starts.values()
             ),
             "historical_15pct_mdd_below_20pct_all_scenarios": all(
-                float(item["annualized_return"]) >= 0.15
-                and float(item["max_drawdown"]) < 0.20
+                float(item["annualized_return"]) >= 0.15 and float(item["max_drawdown"]) < 0.20
                 for item in historical_obs
             ),
             "parameter_neighborhood_70pct_primary": neighborhood >= 0.70,
-            "consumed_2026q1_above_5pct": float(
-                observations[0]["consumed_2026q1"]["total_return"]
-            )
+            "consumed_2026q1_above_5pct": float(observations[0]["consumed_2026q1"]["total_return"])
             > 0.05,
             "consumed_2026_total_above_5pct": float(
                 observations[0]["consumed_2026_all"]["total_return"]
@@ -268,6 +281,7 @@ def main() -> None:
             "orientation": cell["orientation"],
             "fill_parents": FILL_PARENTS,
             "fill_weights": FILL_WEIGHTS.tolist(),
+            "extra_component": EXTRA_COMPONENT_DEFINITION,
         }
         results.append(
             {
@@ -303,9 +317,7 @@ def main() -> None:
             }
         )
     results.sort(
-        key=lambda item: prior._rank(
-            (item["standard"], item["cost_18bp"], item["delay_5min_9bp"])
-        ),
+        key=lambda item: prior._rank((item["standard"], item["cost_18bp"], item["delay_5min_9bp"])),
         reverse=True,
     )
     payload = {
@@ -326,9 +338,7 @@ def main() -> None:
             {
                 "status": payload["status"],
                 "evaluated_cells": payload["evaluated_cells"],
-                "strict_pre_factory_null_passes": payload[
-                    "strict_pre_factory_null_passes"
-                ],
+                "strict_pre_factory_null_passes": payload["strict_pre_factory_null_passes"],
                 "best": results[0]["candidate_id"],
                 "elapsed_seconds": payload["elapsed_seconds"],
             }
