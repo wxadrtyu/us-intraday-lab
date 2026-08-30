@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7896-v7995-sparse-absorption",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7896,
+  "last_version": 7995,
+  "hypothesis": "Restricting the bar-12-to-23 liquidity-absorption sleeve to the strongest training-period dislocations should preserve its positive 2026 transfer while reducing transaction-cost drag and historical drawdown.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; sparse liquidity-absorption component fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 256766,
+  "cumulative_comparison_cells": 256866,
+  "preroute_component": {
+    "decision": 11,
+    "entry": 12,
+    "exit": 23,
+    "late_route_entry": 24,
+    "factor_family": "sparse_liquidity_absorption",
+    "factors": ["signed_volume_imbalance", "volume_acceleration", "vwap_distance", "close_location", "range_ratio", "realized_volatility", "relative_return", "sector_breadth"],
+    "score_quantile": 0.8,
+    "ridge_alpha": 1000.0,
+    "enabled_state": "base_modern"
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
