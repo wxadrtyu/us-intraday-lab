@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v5995-v6094-nonlinear-early-state",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 5995,
+  "last_version": 6094,
+  "hypothesis": "Nonlinear interactions observable by bar 2 identify weak modern-sleeve states earlier than the existing bar-17 gate, without changing entry, exit, direction or gross.",
+  "version_contract": "5 economically distinct early factor sets x 4 shallow tree structures x 5 frozen training-score quantiles",
+  "planned_cells": 100,
+  "prior_comparison_cells": 254855,
+  "cumulative_comparison_cells": 254955,
+  "selection_data": [
+    "train_2022_2023",
+    "2024",
+    "2025"
+  ],
+  "diagnostics_not_selection": [
+    "historical_2018_2020",
+    "consumed_2026q1",
+    "consumed_2026_all"
+  ],
+  "execution": {
+    "long_only": true,
+    "gross_max": 1,
+    "overnight": false,
+    "cost_scenarios": [
+      "9bp",
+      "18bp",
+      "extra_5min_9bp"
+    ]
+  },
+  "hard_gates": "exact heartbeat contract; all required before native null",
+  "native_factory_null": {
+    "required": true,
+    "seed": 20260830,
+    "repetitions": 500,
+    "percentile": 0.95
+  },
+  "paper_pool_change_authorized": false
+}
