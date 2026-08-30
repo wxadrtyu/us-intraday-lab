@@ -21,6 +21,8 @@ def test_campaign_has_one_hundred_frozen_versions():
     assert subject.LAST_VERSION == 6794
     assert len(subject.specifications()) == 100
     assert np.isclose(subject.FILL_WEIGHTS.sum(), 1.0)
+    assert subject.CORE_LOW_DISPERSION_TREND
+    assert subject.CORE_OVERSOLD_REPAIR
 
 
 def test_state_gate_cannot_override_active_base():

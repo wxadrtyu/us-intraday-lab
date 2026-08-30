@@ -10,6 +10,7 @@ def test_v5995_preregistered_early_clock_and_one_hundred_versions():
     module = importlib.import_module(
         "evaluate_full_universe_intraday_v5995_v6094_nonlinear_early_state"
     )
+    module._configure()
     c = module.campaign
     assert (c.FIRST_VERSION, c.LAST_VERSION) == (5995, 6094)
     assert c.GATE_DECISION == 2

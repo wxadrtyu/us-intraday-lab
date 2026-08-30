@@ -24,6 +24,8 @@ LAST_VERSION = 6794
 PRIOR_COMPARISON_CELLS = 255_555
 QUANTILES = (0.20, 0.35, 0.50, 0.65, 0.80)
 ORIENTATIONS = ("fill_on_high", "fill_on_low")
+CORE_LOW_DISPERSION_TREND = dict(state.STATE_FAMILIES["low_dispersion_trend"])
+CORE_OVERSOLD_REPAIR = dict(state.STATE_FAMILIES["oversold_repair"])
 FILL_PARENTS = (
     "lev-v42t-9f96beaddb33b2fb",
     "lev-v42t-07566ced3a358a4f",
@@ -116,10 +118,10 @@ def main() -> None:
         for item in required
     }
     core_model = state._fit_state(
-        development_state, state.STATE_FAMILIES["low_dispersion_trend"], 0.20
+        development_state, CORE_LOW_DISPERSION_TREND, 0.20
     )
     override_model = state._fit_state(
-        development_state, state.STATE_FAMILIES["oversold_repair"], 0.35
+        development_state, CORE_OVERSOLD_REPAIR, 0.35
     )
     _, transfer_state = prior.route._base_state(
         development_state, core_model, override_model

@@ -10,6 +10,10 @@ import numpy as np
 
 FALLBACK_EXPOSURE = 0.50
 DOWNSIDE_PENALTY = 2.0
+FIRST_VERSION = 6195
+LAST_VERSION = 6294
+PRIOR_COMPARISON_CELLS = 255_055
+GATE_DECISION = 2
 
 
 def _downside_target(excess_return):
@@ -63,12 +67,7 @@ def _route(parents, base_modern, allow_modern, allow_transfer):
     return tuple(output)
 
 
-campaign.FIRST_VERSION = 6195
-campaign.LAST_VERSION = 6294
-campaign.PRIOR_COMPARISON_CELLS = 255_055
-campaign.GATE_DECISION = 2
-campaign.MECHANISM = "v4513_downside_sensitive_early_quality_half_fallback"
-campaign.FACTOR_SETS = {
+FACTOR_SETS = {
     "early_trend_flow": (
         "current_return",
         "relative_return",
@@ -89,9 +88,19 @@ campaign.FACTOR_SETS = {
         "spy_volatility",
     ),
 }
-campaign._fit = _fit
-linear_gate._route = _route
+
+
+def _configure():
+    campaign.FIRST_VERSION = FIRST_VERSION
+    campaign.LAST_VERSION = LAST_VERSION
+    campaign.PRIOR_COMPARISON_CELLS = PRIOR_COMPARISON_CELLS
+    campaign.GATE_DECISION = GATE_DECISION
+    campaign.MECHANISM = "v4513_downside_sensitive_early_quality_half_fallback"
+    campaign.FACTOR_SETS = FACTOR_SETS
+    campaign._fit = _fit
+    linear_gate._route = _route
 
 
 if __name__ == "__main__":
+    _configure()
     campaign.main()
