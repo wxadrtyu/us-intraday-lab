@@ -129,8 +129,14 @@ def main() -> None:
     parents = source["records"]
     if len(parents) != 500 or len(specifications()) != 100:
         raise RuntimeError("STATE_ROUTING_PREREGISTRATION_MISMATCH")
-    development = cross.Cube(args.root, "alpaca", 0)
-    historical = cross.Cube(args.root, "historical", 0)
+    development = v34.Cube(args.root, "alpaca", 0)
+    historical = v34.Cube(args.root, "historical", 0)
+    development_state = cross.Cube(args.root, "alpaca", 0)
+    historical_state = cross.Cube(args.root, "historical", 0)
+    if not np.array_equal(development.dates, development_state.dates) or not np.array_equal(
+        historical.dates, historical_state.dates
+    ):
+        raise RuntimeError("STATE_AND_PARENT_CUBES_MISALIGNED")
     parent_models = {
         parent["candidate_id"]: v39._models(development, [parent["definition"]["strategy"]])[0]
         for parent in parents
@@ -154,11 +160,11 @@ def main() -> None:
     for offset, (family, quantile, weak_exposure) in enumerate(specifications()):
         coefficients = STATE_FAMILIES[family]
         state_models = {
-            decision: _state_model(development, decision, coefficients, quantile)
+            decision: _state_model(development_state, decision, coefficients, quantile)
             for decision in set(parent_decisions.values())
         }
         dev_scores = {
-            decision: _state_score(development, decision, model) for decision, model in state_models.items()
+            decision: _state_score(development_state, decision, model) for decision, model in state_models.items()
         }
         cells = []
         for parent in parents:
@@ -177,7 +183,7 @@ def main() -> None:
             candidate_id = parent["candidate_id"]
             decision = parent_decisions[candidate_id]
             model = state_models[decision]
-            hist_score = _state_score(historical, decision, model)
+            hist_score = _state_score(historical_state, decision, model)
             hist_streams = tuple(
                 _route(stream, hist_score, model["threshold"], weak_exposure)
                 for stream in hist_parent_streams[candidate_id]
