@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7696-v7795-preroute-reversal",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7696,
+  "last_version": 7795,
+  "hypothesis": "A causal bar-12-to-23 long-only residual-return sleeve can capture intraday reversal and liquidity normalization after the opening auction while remaining non-overlapping with the late route that enters at bar 24.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; pre-route reversal component fixed batch-wide",
+  "planned_cells": 100,
+  "prior_comparison_cells": 256566,
+  "cumulative_comparison_cells": 256666,
+  "preroute_component": {
+    "decision": 11,
+    "entry": 12,
+    "exit": 23,
+    "late_route_entry": 24,
+    "factor_family": "intraday_reversal_quality",
+    "factors": ["current_return", "recent_return", "relative_return", "vwap_distance", "close_location", "path_efficiency", "signed_volume_imbalance", "spy_prior20"],
+    "score_quantile": 0.5,
+    "ridge_alpha": 100.0,
+    "enabled_state": "base_modern"
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
