@@ -141,7 +141,7 @@ def main() -> None:
     core_model = dual._fit_state(development_state, dual.STATE_FAMILIES["low_dispersion_trend"], 0.20)
     override_model = dual._fit_state(development_state, dual.STATE_FAMILIES["oversold_repair"], 0.35)
     dev_modern, dev_transfer = _base_state(development_state, core_model, override_model)
-    hist_modern, hist_transfer = _base_state(historical_state, core_model, override_model)
+    hist_modern, _ = _base_state(historical_state, core_model, override_model)
     cells = []
     for offset, (family, quantile, alpha) in enumerate(specifications()):
         gate_model = _fit_gate(development, dev_parents[TRANSFER_PARENT][0], dev_transfer, FACTOR_SETS[family], quantile, alpha)
