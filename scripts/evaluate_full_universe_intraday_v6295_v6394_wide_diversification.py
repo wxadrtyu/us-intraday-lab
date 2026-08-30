@@ -13,6 +13,27 @@ campaign.WEIGHTINGS = ("equal", "inverse_train_volatility")
 campaign.POOLS = ("development_frontier_100", "all_500")
 campaign.MECHANISM = "wide_same_clock_train_stability_correlation_ensemble"
 
+_original_greedy = campaign._greedy
+_selection_cache = {}
+
+
+def _cached_greedy(cube, parent_ids, standard_streams, count, penalty, weighting):
+    """Build each nested 20-parent path once, then reuse its prefixes."""
+    key = (tuple(parent_ids), penalty, weighting)
+    if key not in _selection_cache:
+        _selection_cache[key] = _original_greedy(
+            cube,
+            parent_ids,
+            standard_streams,
+            max(campaign.COUNTS),
+            penalty,
+            weighting,
+        )
+    return _selection_cache[key][:count]
+
+
+campaign._greedy = _cached_greedy
+
 
 if __name__ == "__main__":
     campaign.main()
