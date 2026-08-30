@@ -1,0 +1,33 @@
+{
+  "proposal_version": "v4270-v4369-diversified-v42-ensemble-1.0.0",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 4270,
+  "last_version": 4369,
+  "hypothesis_count": 100,
+  "hypothesis": "Train-stable low-correlation ensembles of frozen v42 multifactor parents raise IR and transfer robustness while keeping aggregate gross at one.",
+  "source_sha256": "babfd6e0b9262ddc83ea0d046f00ad40fbe3d9ac313669a7c20b50301758c327",
+  "ranking_data": ["train_2022_2023", "2024", "2025"],
+  "consumed_diagnostics_not_ranking": ["2018_2020", "2026Q1", "2026_all", "2026-08-27", "2026-08-28"],
+  "versions": "5 component counts x 5 correlation penalties x 2 weightings x 2 frozen parent pools",
+  "planned_cells": 100,
+  "prior_comparison_cells": 252905,
+  "cumulative_comparison_cells": 253005,
+  "hard_gates": {
+    "all_oos_scenarios_annualized_return_min": 0.5,
+    "all_oos_scenarios_mdd_max": 0.2,
+    "all_oos_scenarios_information_ratio_min": 1.0,
+    "historical_all_scenarios_annualized_return_min": 0.15,
+    "historical_all_scenarios_mdd_max": 0.2,
+    "consumed_2026q1_total_return_min": 0.05,
+    "consumed_2026_all_total_return_min": 0.05,
+    "four_of_five_positive_folds_all_scenarios": true,
+    "all_start_dates_positive": true,
+    "parameter_neighborhood_primary_share_min": 0.7,
+    "global_bonferroni_p_max": 0.05,
+    "native_factory_null_required": true
+  },
+  "maximum_gross": 1.0,
+  "long_only": true,
+  "overnight": false,
+  "paper_pool_change_authorized": false
+}
