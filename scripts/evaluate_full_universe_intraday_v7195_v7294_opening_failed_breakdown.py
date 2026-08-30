@@ -1,4 +1,4 @@
-"""v7195-v7294: oversold-state opening failed-breakdown plus late route."""
+"""v7195-v7294: oversold-state opening reclaim plus late route."""
 
 from __future__ import annotations
 
@@ -11,7 +11,17 @@ FIRST_VERSION = 7195
 LAST_VERSION = 7294
 PRIOR_COMPARISON_CELLS = 256_055
 OPENING_SLOT = (8, 23)
-OPENING_FAMILY = "failed_breakdown"
+OPENING_FAMILY = "opening_reclaim"
+OPENING_FACTORS = (
+    "current_return",
+    "recent_return",
+    "vwap_distance",
+    "close_location",
+    "signed_volume_imbalance",
+    "volume_acceleration",
+    "prior1_return",
+    "spy_prior20",
+)
 OPENING_QUANTILE = 0.70
 OPENING_ALPHA = 100.0
 OPENING_STATE_QUANTILE = 0.50
@@ -30,6 +40,7 @@ def _opening_components(
     core_model,
     override_model,
 ):
+    residual.FACTOR_SETS[OPENING_FAMILY] = OPENING_FACTORS
     model = residual._fit(
         development,
         OPENING_FAMILY,
@@ -70,11 +81,12 @@ def _configure():
     campaign.PRIOR_COMPARISON_CELLS = PRIOR_COMPARISON_CELLS
     campaign.EXTRA_COMPONENT_BUILDER = _opening_components
     campaign.EXTRA_COMPONENT_DEFINITION = {
-        "type": "oversold_state_opening_failed_breakdown",
+        "type": "oversold_state_opening_reclaim",
         "decision": OPENING_SLOT[0],
         "exit": OPENING_SLOT[1],
         "late_route_entry": 24,
         "factor_family": OPENING_FAMILY,
+        "factors": OPENING_FACTORS,
         "score_quantile": OPENING_QUANTILE,
         "ridge_alpha": OPENING_ALPHA,
         "enabled_base_state": "base_modern",

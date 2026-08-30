@@ -13,5 +13,6 @@ def test_campaign_preregistration():
     assert subject.LAST_VERSION == 7294
     assert subject.OPENING_SLOT == (8, 23)
     assert subject.OPENING_SLOT[1] < 24
-    assert subject.OPENING_FAMILY == "failed_breakdown"
+    assert subject.OPENING_FAMILY == "opening_reclaim"
+    assert len(subject.OPENING_FACTORS) == 8
     assert subject.base.campaign.CORE_OVERSOLD_REPAIR
