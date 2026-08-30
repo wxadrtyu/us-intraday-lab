@@ -17,7 +17,7 @@ def test_v5970_preregistration_and_nonoverlap():
     assert len(set(module.specifications())) == 25
     assert len(module.QUANTILES) * len(module.TARGETS) * len(module.specifications()) == 250
     assert all(
-        left[1] < right[0] for left, right in zip(module.SLOTS, module.SLOTS[1:], strict=True)
+        left[1] < right[0] for left, right in zip(module.SLOTS, module.SLOTS[1:])
     )
 
 
