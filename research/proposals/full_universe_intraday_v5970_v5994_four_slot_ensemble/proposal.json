@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v5970-v5994-four-slot-ensemble",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 5970,
+  "last_version": 5994,
+  "version_count": 25,
+  "version_definition": "ordered pair of five economic factor mechanisms assigned first-second-second-first across four disjoint intraday slots",
+  "internal_parameter_cells": "5 score quantiles x 2 daily volatility targets per version",
+  "planned_cells": 250,
+  "prior_comparison_cells": 254605,
+  "cumulative_comparison_cells": 254855,
+  "selection_data": [
+    "train_2022_2023",
+    "2024",
+    "2025"
+  ],
+  "diagnostics_not_selection": [
+    "historical_2018_2020",
+    "consumed_2026q1",
+    "consumed_2026_all"
+  ],
+  "execution": {
+    "long_only": true,
+    "assets": [
+      "TQQQ",
+      "SOXL"
+    ],
+    "gross_limit_each_nonoverlapping_slot": 1,
+    "overnight": false,
+    "slots": [
+      [
+        2,
+        17
+      ],
+      [
+        18,
+        35
+      ],
+      [
+        36,
+        53
+      ],
+      [
+        54,
+        72
+      ]
+    ],
+    "cost_scenarios": [
+      "9bp",
+      "18bp",
+      "extra_5min_9bp"
+    ]
+  },
+  "hard_gates": "exact heartbeat contract; all must pass before native factory null",
+  "native_factory_null": {
+    "required_after_all_reference_gates": true,
+    "methods": [
+      "SESSION_SIGNAL_PERMUTATION",
+      "SESSION_SAFE_TIMESTAMP_SHIFT"
+    ],
+    "seed": 20260830,
+    "repetitions": 500,
+    "percentile": 0.95
+  },
+  "paper_pool_change_authorized": false
+}
