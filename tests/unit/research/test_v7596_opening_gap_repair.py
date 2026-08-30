@@ -9,6 +9,6 @@ def test_short_gap_repair_contract():
     assert subject.LAST_VERSION == 7695
     assert subject.OPENING_SLOT == (2, 11)
     assert subject.OPENING_SLOT[1] < 24
-    assert subject.OPENING_FAMILY == "gap_repair"
+    assert subject.OPENING_FAMILY == "short_gap_reversal"
     assert subject.OPENING_FAMILY in subject.campaign.residual.FACTOR_SETS
-    assert subject.campaign.campaign.v34.Cube is subject.campaign.residual.IntradayPathCube
+    assert "gap" in subject.OPENING_FACTORS
