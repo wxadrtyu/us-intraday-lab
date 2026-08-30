@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [6195, 6294],
+  "evaluated_cells": 100,
+  "comparison_cells": 255155,
+  "elapsed_seconds": 17.504497300018556,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v6207-9c978ff28afd8e6e",
+    "development_oos_2024_2025": {
+      "annualized_return": 0.591610129285078,
+      "max_drawdown": 0.11675165736790283,
+      "information_ratio": 1.611108514026565,
+      "trades": 148
+    },
+    "consumed_2026q1_total_return": 0.10388955131445377,
+    "consumed_2026_all_total_return": 0.06415686435713841,
+    "neighbor_primary_share": 0.6666666666666666,
+    "bonferroni_p": 1.0,
+    "z_score": 1.2346827484479812,
+    "failed_gates": [
+      "parameter_neighborhood_70pct_primary",
+      "cumulative_bonferroni_5pct"
+    ]
+  },
+  "next_unused_version": 6295
+}
