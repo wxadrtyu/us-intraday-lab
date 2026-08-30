@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7595-loss-veto-ensemble",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7595,
+  "last_version": 7595,
+  "hypothesis": "Equal-gross averaging of ten independently specified causal loss-veto routes can retain the strong transferable route economics while diversifying model-selection error and increasing genuine component-level evidence.",
+  "version_contract": "one ensemble strategy; one development-ranked bar-23 veto model from each of ten preregistered economic factor families; equal 10% concurrent gross",
+  "planned_cells": 11,
+  "parameter_neighborhood": "full ten-model ensemble plus ten leave-one-family-out ensembles",
+  "prior_comparison_cells": 256455,
+  "cumulative_comparison_cells": 256466,
+  "selection_source": "atomic COMPLETE v7495-v7594 output; family ranking uses only 2022-2025 fields",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_weight": 0.1, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"]},
+  "paper_pool_change_authorized": false
+}
