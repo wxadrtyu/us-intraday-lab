@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [7896, 7995],
+  "evaluated_cells": 100,
+  "comparison_cells": 256866,
+  "elapsed_seconds": 15.001742899999954,
+  "strict_pre_factory_null_passes": 0,
+  "all_non_global_gate_passes": 3,
+  "native_factory_null_runs": 0,
+  "native_factory_null_passes": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v7989-cad6a1f1e18025ac",
+    "development_oos_2024_2025": {
+      "standard": {"annualized_return": 0.7075929017747975, "max_drawdown": 0.1324401259134208, "information_ratio": 1.6024352465660086, "trades": 216},
+      "cost_18bp": {"annualized_return": 0.565124620628892, "max_drawdown": 0.13424012591342072, "information_ratio": 1.3130187206135369, "trades": 216},
+      "delay_5min_9bp": {"annualized_return": 0.6697601300869607, "max_drawdown": 0.12429897376055643, "information_ratio": 1.6480976681825183, "trades": 211}
+    },
+    "historical": {
+      "standard": {"annualized_return": 0.2997552095361, "max_drawdown": 0.190745114112153},
+      "cost_18bp": {"annualized_return": 0.19113070004209143, "max_drawdown": 0.19815444238989832},
+      "delay_5min_9bp": {"annualized_return": 0.18357703865163577, "max_drawdown": 0.17100810774449138}
+    },
+    "consumed_2026q1_total_return": 0.2635347505137102,
+    "consumed_2026_all_total_return": 0.444112385849154,
+    "neighbor_primary_share": 1.0,
+    "bonferroni_p": 1.0,
+    "z_score": 1.483566759854795,
+    "failed_gates": ["cumulative_bonferroni_5pct"]
+  },
+  "gate_pass_counts": {
+    "standard_primary": 100,
+    "cost_18bp_primary": 99,
+    "delay_5min_primary": 100,
+    "four_of_five_positive_folds_all_scenarios": 100,
+    "all_start_dates_positive": 100,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 3,
+    "parameter_neighborhood_70pct_primary": 97,
+    "consumed_2026q1_above_5pct": 100,
+    "consumed_2026_total_above_5pct": 100,
+    "cumulative_bonferroni_5pct": 0
+  },
+  "next_unused_version": 7996
+}
