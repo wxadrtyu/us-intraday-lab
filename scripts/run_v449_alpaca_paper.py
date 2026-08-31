@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from datetime import UTC, date, datetime, timedelta
@@ -37,7 +38,11 @@ from us_intraday_lab.research_shadow_alpaca import NEW_YORK, AlpacaIexHistory
 from us_intraday_lab.v45_research_shadow import ASSETS, SYMBOLS
 
 ENTRY_DECISIONS = (23, 26, 29)
-MAX_ENTRY_LATENESS = timedelta(minutes=2)
+# Default remains fail-closed at two minutes.  A one-process environment
+# override is available for an explicitly authorized Paper session only.
+MAX_ENTRY_LATENESS = timedelta(
+    minutes=float(os.environ.get("PAPER_ENTRY_LATENESS_MINUTES", "2"))
+)
 
 
 def _entry_window_open(now: datetime, eligible: datetime) -> bool:
