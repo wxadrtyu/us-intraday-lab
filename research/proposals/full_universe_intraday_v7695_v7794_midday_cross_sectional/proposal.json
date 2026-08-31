@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7695-v7794-midday-cross-sectional",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7695,
+  "last_version": 7794,
+  "hypothesis": "Midday TQQQ-versus-SOXL relative strength confirmed by sector flow breadth and path efficiency can provide an independent low-frequency continuation source with better historical and weak-market transfer than opening continuation or late reversal.",
+  "version_contract": "10 fixed multi-factor families x 5 fixed midday schedules x 2 fixed prior-state modes; 64 or 192 train-only parameter cells per version",
+  "planned_versions": 100,
+  "planned_cells": 12800,
+  "prior_comparison_cells": 256555,
+  "cumulative_comparison_cells": 269355,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
