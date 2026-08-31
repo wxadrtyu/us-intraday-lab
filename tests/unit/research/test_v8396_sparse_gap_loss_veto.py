@@ -11,5 +11,6 @@ def test_sparse_gap_loss_veto_contract():
     assert subject.GATE_DECISION < subject.ENTRY_BAR
     assert subject.FROZEN_ROUTE_VERSION == 8055
     assert subject.FROZEN_STATE_QUANTILE == 0.80
+    assert "high_vol_recovery" in subject.campaign.base.state.STATE_FAMILIES
     assert subject.campaign._route is subject._sparse_gap_route
     assert subject.campaign.quality.GATE_DECISION == 23

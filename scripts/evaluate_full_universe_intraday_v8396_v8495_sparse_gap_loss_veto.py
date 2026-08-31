@@ -84,6 +84,9 @@ def _configure():
     _fill_model = None
     _opening_model = None
     sparse_gap._configure()
+    campaign.base.state.STATE_FAMILIES["high_vol_recovery"] = dict(
+        campaign.base.state.STATE_FAMILIES[FROZEN_STATE_FAMILY]
+    )
     last_bar._configure()
     campaign.FIRST_VERSION = FIRST_VERSION
     campaign.LAST_VERSION = LAST_VERSION
