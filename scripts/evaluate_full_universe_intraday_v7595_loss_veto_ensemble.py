@@ -22,10 +22,13 @@ from us_intraday_lab.fast_intraday_research import metrics
 
 VERSION = 7595
 PRIOR_COMPARISON_CELLS = 256_455
+SELECTION_VERSION_RANGE = [7495, 7594]
 NULL_REPETITIONS = 500
 NULL_PERCENTILE = 0.95
 NULL_SEED = 20260831
 SAFE_SHIFT_MINIMUM = 20
+MECHANISM = "equal_gross_loss_veto_model_ensemble"
+COMPONENT_WEIGHT = 0.1
 
 
 def _combine(streams):
@@ -97,6 +100,10 @@ def _native_null(route, allowed, variants, development_mask):
     return evidence
 
 
+COMPONENT_COMBINER = _combine
+NATIVE_NULL = _native_null
+
+
 def _primary(observation):
     oos = observation["development_oos_2024_2025"]
     return (
@@ -122,7 +129,10 @@ def main():
     if base.base.prior.parent._sha(args.source) != base.base.prior.SOURCE_SHA256:
         raise RuntimeError("V42_SOURCE_HASH_CHANGED")
     selection = json.loads(args.selection.read_text(encoding="utf-8"))
-    if selection["status"] != "COMPLETE" or selection["version_range"] != [7495, 7594]:
+    if (
+        selection["status"] != "COMPLETE"
+        or selection["version_range"] != SELECTION_VERSION_RANGE
+    ):
         raise RuntimeError("V7495_SELECTION_NOT_FROZEN_COMPLETE")
     selected_records = []
     for family in base.FACTOR_SETS:
@@ -224,7 +234,7 @@ def main():
     cells = []
     for variant in variants:
         streams = tuple(
-            _combine([dev_components[index][scenario] for index in variant])
+            COMPONENT_COMBINER([dev_components[index][scenario] for index in variant])
             for scenario in range(3)
         )
         observations = tuple(v47._observe(development, stream, True) for stream in streams)
@@ -239,7 +249,7 @@ def main():
     full = cells[0]
     streams, observations = full["streams"], full["observations"]
     historical_streams = tuple(
-        _combine([hist_components[index][scenario] for index in variants[0]])
+        COMPONENT_COMBINER([hist_components[index][scenario] for index in variants[0]])
         for scenario in range(3)
     )
     historical_obs = tuple(
@@ -292,14 +302,14 @@ def main():
     pre_null = all(gates.values())
     native_null = None
     if pre_null:
-        native_null = _native_null(
+        native_null = NATIVE_NULL(
             dev_route[0], dev_allowed, variants, development.masks()["development_all"]
         )
     definition = {
         "version": VERSION,
-        "mechanism": "equal_gross_loss_veto_model_ensemble",
+        "mechanism": MECHANISM,
         "components": contracts,
-        "component_weight": 0.1,
+        "component_weight": COMPONENT_WEIGHT,
         "gross_limit": 1.0,
     }
     candidate_id = f"lev-v{VERSION}-" + base._identity(definition)

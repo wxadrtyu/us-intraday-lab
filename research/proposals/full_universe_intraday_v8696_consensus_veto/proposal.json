@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8696-consensus-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8696,
+  "last_version": 8696,
+  "hypothesis": "Requiring agreement from at least 60% of ten independently specified causal loss-veto families can reduce single-model selection error and retain only stable sparse-gap route sessions, increasing session-level IR and global evidence.",
+  "version_contract": "one majority-consensus strategy; one development-ranked bar-23 veto model from each of ten preregistered linear economic factor families",
+  "planned_cells": 11,
+  "parameter_neighborhood": "full ten-model consensus plus ten leave-one-family-out consensus variants",
+  "prior_comparison_cells": 257566,
+  "cumulative_comparison_cells": 257577,
+  "selection_source": "atomic COMPLETE v8396-v8495 output; family ranking uses only 2022-2025 fields",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "consensus_share": 0.6, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "2024-2025 annualized return >=50% in all three primary scenarios plus all unchanged gates; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"]},
+  "paper_pool_change_authorized": false
+}
