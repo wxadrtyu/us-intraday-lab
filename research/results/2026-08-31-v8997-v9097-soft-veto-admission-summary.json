@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [8997, 9097],
+  "evaluated_cells": 100,
+  "comparison_cells": 257977,
+  "economic_elapsed_seconds": 14.526618099996995,
+  "strict_pre_factory_null_passes": 4,
+  "native_factory_null_runs": 4,
+  "native_factory_null_passes": 4,
+  "research_admissible_candidates": 4,
+  "candidate_ids": [
+    "lev-v9083-fade6a99e0b4fa2c",
+    "lev-v9022-e29ae7b811678f13",
+    "lev-v9084-cc42e3f44582698e",
+    "lev-v9021-6c1978eb6f9b7757"
+  ],
+  "family_leaders": [
+    "lev-v9083-fade6a99e0b4fa2c",
+    "lev-v9022-e29ae7b811678f13"
+  ],
+  "within_family_correlations": {
+    "relative_absorption": 0.99868638338504,
+    "unstable_reclaim": 0.9986417193309511
+  },
+  "between_family_leader_correlation": 0.9336581717910025,
+  "native_thresholds": {
+    "session_signal_permutation_maxT_95pct": 7.67267212980647,
+    "safe_circular_shift_maxT_95pct": 7.939506747353973
+  },
+  "evidence_sha256": "471a636aa172866274a00470e000aaea0e2d28a56792b71d4184f878dbc75a1c",
+  "simulated_observation_pool_changes": 0,
+  "next_unused_version": 9098
+}
