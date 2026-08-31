@@ -19,6 +19,11 @@ import numpy as np
 import pandas as pd
 
 from us_intraday_lab.fast_intraday_research import metrics
+from us_intraday_lab.prospective_admission_policy import (
+    EFFECTIVE_FIRST_VERSION,
+    passes_global_evidence,
+    passes_primary,
+)
 
 VERSION = 7595
 PRIOR_COMPARISON_CELLS = 256_455
@@ -105,6 +110,8 @@ NATIVE_NULL = _native_null
 
 
 def _primary(observation):
+    if VERSION >= EFFECTIVE_FIRST_VERSION:
+        return passes_primary(observation)
     oos = observation["development_oos_2024_2025"]
     return (
         float(oos["annualized_return"]) >= 0.50
@@ -275,6 +282,11 @@ def main():
     oos = observations[0]["development_oos_2024_2025"]
     z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
     bonferroni = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells)
+    global_gate_name = (
+        "prospective_z_score_at_least_3"
+        if VERSION >= EFFECTIVE_FIRST_VERSION
+        else "cumulative_bonferroni_5pct"
+    )
     gates = {
         "standard_primary": _primary(observations[0]),
         "cost_18bp_primary": _primary(observations[1]),
@@ -297,7 +309,11 @@ def main():
             observations[0]["consumed_2026_all"]["total_return"]
         )
         > 0.05,
-        "cumulative_bonferroni_5pct": bonferroni < 0.05,
+        global_gate_name: (
+            passes_global_evidence(z_score)
+            if VERSION >= EFFECTIVE_FIRST_VERSION
+            else bonferroni < 0.05
+        ),
     }
     pre_null = all(gates.values())
     native_null = None

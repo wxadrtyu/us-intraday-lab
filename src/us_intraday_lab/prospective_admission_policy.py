@@ -8,6 +8,7 @@ EFFECTIVE_FIRST_VERSION = 7795
 ANNUALIZED_RETURN_FLOOR = 0.40
 MAX_DRAWDOWN_CEILING = 0.20
 INFORMATION_RATIO_FLOOR = 1.0
+GLOBAL_EVIDENCE_Z_FLOOR = 3.0
 
 
 def passes_primary(observation: dict[str, Any]) -> bool:
@@ -22,3 +23,8 @@ def passes_primary(observation: dict[str, Any]) -> bool:
             for name in ("train_2022_2023", "2024", "2025")
         )
     )
+
+
+def passes_global_evidence(z_score: float) -> bool:
+    """Screen global evidence before the mandatory architecture-native null."""
+    return float(z_score) >= GLOBAL_EVIDENCE_Z_FLOOR

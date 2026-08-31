@@ -3,6 +3,8 @@ from __future__ import annotations
 from us_intraday_lab.prospective_admission_policy import (
     ANNUALIZED_RETURN_FLOOR,
     EFFECTIVE_FIRST_VERSION,
+    GLOBAL_EVIDENCE_Z_FLOOR,
+    passes_global_evidence,
     passes_primary,
 )
 
@@ -25,3 +27,9 @@ def test_policy_is_prospective_and_strictly_above_40_percent():
     assert ANNUALIZED_RETURN_FLOOR == 0.40
     assert not passes_primary(_observation(0.40))
     assert passes_primary(_observation(0.400001))
+
+
+def test_global_evidence_floor_precedes_mandatory_native_null():
+    assert GLOBAL_EVIDENCE_Z_FLOOR == 3.0
+    assert not passes_global_evidence(2.999999)
+    assert passes_global_evidence(3.0)

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "status": "USER_AUTHORIZED_PROSPECTIVE_POLICY",
+  "authorized_date": "2026-08-31",
+  "effective_first_version": 8697,
+  "global_evidence_gate": {
+    "metric": "z_score",
+    "operator": ">=",
+    "value": 3.0,
+    "previous_gate": "cumulative_two_sided_bonferroni_p_below_0.05",
+    "previous_current_implied_z": "approximately_5.2"
+  },
+  "rationale": "Retain a strong fixed evidence screen while delegating dependency-aware family-wise control to the mandatory architecture-native maxT null.",
+  "unchanged_followup_gate": {
+    "native_factory_null": "required",
+    "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"],
+    "repetitions": 500,
+    "percentile": 0.95,
+    "both_methods_must_pass": true
+  },
+  "retroactive_reclassification": false,
+  "paper_pool_change_authorized": false
+}
