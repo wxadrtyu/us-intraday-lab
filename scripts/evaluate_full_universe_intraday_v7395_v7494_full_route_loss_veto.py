@@ -44,6 +44,8 @@ FACTOR_SETS = {
     "relative_absorption": ("relative_return", "signed_volume_imbalance", "close_location", "growth_minus_defensive_flow", "sector_path_efficiency_breadth"),
     "balanced_loss_veto": ("current_return", "relative_return", "drawdown_from_high", "rebound_from_low", "return_acceleration", "signed_volume_imbalance", "recent_volatility_ratio", "sector_signed_flow_breadth", "sector_breadth_acceleration", "growth_minus_defensive_flow"),
 }
+STREAM_TRANSFORM = None
+MECHANISM = "v6776_full_route_causal_loss_veto"
 
 
 def specifications():
@@ -125,7 +127,12 @@ def main() -> None:
         model = quality._fit(development_factors, dev_route[0], dev_route[0].active, FACTOR_SETS[family], quantile, alpha)
         score = quality._score(development_factors, model)
         allowed = np.isfinite(score) & (score >= model["threshold"])
-        streams = tuple(_veto(stream, allowed) for stream in dev_route)
+        streams = tuple(
+            _veto(stream, allowed)
+            if STREAM_TRANSFORM is None
+            else STREAM_TRANSFORM(stream, allowed)
+            for stream in dev_route
+        )
         observations = tuple(v47._observe(development, stream, True) for stream in streams)
         cells.append({"version": FIRST_VERSION + offset, "family": family, "quantile": quantile, "alpha": alpha, "model": model, "streams": streams, "observations": observations, "primary": all(_primary(item) for item in observations)})
     total_cells = PRIOR_COMPARISON_CELLS + len(cells)
@@ -134,7 +141,12 @@ def main() -> None:
     for cell in cells:
         hist_score = quality._score(historical_factors, cell["model"])
         hist_allowed = np.isfinite(hist_score) & (hist_score >= cell["model"]["threshold"])
-        hist_streams = tuple(_veto(stream, hist_allowed) for stream in hist_route)
+        hist_streams = tuple(
+            _veto(stream, hist_allowed)
+            if STREAM_TRANSFORM is None
+            else STREAM_TRANSFORM(stream, hist_allowed)
+            for stream in hist_route
+        )
         hist_obs = tuple(v47._observe(historical, stream, True)["historical_2018_2020"] for stream in hist_streams)
         streams, observations = cell["streams"], cell["observations"]
         fold_metrics = {name: [metrics(stream.values[index], stream.benchmark[index], stream.active[index]) for index in folds] for name, stream in zip(("standard", "cost_18bp", "delay_5min_9bp"), streams, strict=True)}
@@ -167,7 +179,7 @@ def main() -> None:
                 else bonferroni < 0.05
             ),
         }
-        definition = {"version": cell["version"], "mechanism": "v6776_full_route_causal_loss_veto", "base_candidate": "lev-v6776-f28d61d0cb13f09d", "factor_set": cell["family"], "score_quantile": cell["quantile"], "ridge_alpha": cell["alpha"]}
+        definition = {"version": cell["version"], "mechanism": MECHANISM, "base_candidate": "lev-v6776-f28d61d0cb13f09d", "factor_set": cell["family"], "score_quantile": cell["quantile"], "ridge_alpha": cell["alpha"]}
         model = cell["model"]
         records.append({"candidate_id": f"lev-v{cell['version']}-" + _identity(definition), "definition": definition, "veto_model": {"factors": model["factors"], "mean": model["mean"].tolist(), "scale": model["scale"].tolist(), "coefficients": model["coefficients"].tolist(), "threshold": model["threshold"]}, "standard": observations[0], "cost_18bp": observations[1], "delay_5min_9bp": observations[2], "historical_scenarios": {"standard": hist_obs[0], "cost_18bp": hist_obs[1], "delay_5min_9bp": hist_obs[2]}, "development_folds": fold_metrics, "start_date_stress": starts, "neighbor_primary_share": neighborhood, "multiple_comparison": {"total_cells": total_cells, "z_score": z_score, "bonferroni_p": bonferroni}, "gates": gates, "strict_pre_factory_null_pass": all(gates.values())})
     records.sort(key=lambda item: _rank((item["standard"], item["cost_18bp"], item["delay_5min_9bp"])), reverse=True)
