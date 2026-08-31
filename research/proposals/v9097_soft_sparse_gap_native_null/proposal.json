@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "v9097-soft-sparse-gap-native-null",
+  "status": "FROZEN_BEFORE_NULL_RUN",
+  "validation_version": 9097,
+  "candidate_source": "atomic COMPLETE v8997-v9096 artifact",
+  "eligible_candidates": 4,
+  "selection_rule": "all and only strict_pre_factory_null_pass=true records",
+  "development_interval": "development_all_2022_2025",
+  "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"],
+  "repetitions": 500,
+  "percentile": 0.95,
+  "seed": 20260831,
+  "safe_shift_minimum_sessions": 20,
+  "familywise_control": "maximum compound profit across all four candidates per repetition",
+  "pass_rule": "candidate observed compound profit must exceed both maxT 95th-percentile thresholds",
+  "paper_pool_change_authorized": false
+}
