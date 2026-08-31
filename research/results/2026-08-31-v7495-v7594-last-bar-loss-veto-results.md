@@ -10,16 +10,13 @@
 - Native factory null runs: 0 (ineligible)
 - Admissions or paper-pool changes: 0
 
-Moving the loss veto to bar 23 materially strengthened the economic frontier.
+Moving the veto observation to bar 23 did not improve global evidence. Candidate
 `lev-v7577-16febbbf5c8877e6` passed every non-global gate with 90.03% standard
-annualized return, 10.45% MDD, IR 2.24 and 169 trades. The 18bp and delayed
-scenarios returned 81.34% and 86.24% annualized with IR 2.06 and 2.33.
-Historical annualized returns were 29.73%, 23.77%, and 21.49%; 2026Q1 and
-all-2026 totals were 6.29% and 11.02%. Its neighborhood share was 100%.
+annualized return, IR 2.24, 81.34% at 18bp, 86.24% under delay, historical
+annualized returns of 29.73%/23.77%/21.49%, 6.29% in consumed 2026Q1, 11.02%
+in all consumed 2026, and a 100% primary neighborhood.
 
-The cumulative statistic was still only `z=1.834`, so Bonferroni remained
-`p=1.0`. The mandatory global gate failed and native factory null was not run.
-This is a research milestone, not an admitted strategy.
-
-No simulated-observation pool or execution state was changed. The next unused
-strategy version is v7595.
+Its z statistic was 1.834, slightly below the earlier bar-17 result, and
+Bonferroni p remained 1.0. No candidate was admitted. The next campaign tests
+explicit nonlinear path-times-sector interactions rather than another veto
+timing shift. The next unused version is v7595.

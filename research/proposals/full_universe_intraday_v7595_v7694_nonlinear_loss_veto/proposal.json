@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v7595-v7694-nonlinear-loss-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 7595,
+  "last_version": 7694,
+  "hypothesis": "Explicit causal interactions between asset-level repair and cross-sector flow state can isolate high-quality absorption events that a linear additive veto cannot separate.",
+  "base_candidate": "lev-v6776-f28d61d0cb13f09d",
+  "version_contract": "10 frozen nonlinear interaction families x 5 train score quantiles x 2 ridge alphas",
+  "planned_cells": 100,
+  "prior_comparison_cells": 256455,
+  "cumulative_comparison_cells": 256555,
+  "timing": {"veto_decision_bar": 17, "earliest_route_entry_bar": 24},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "exact unchanged contract; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
