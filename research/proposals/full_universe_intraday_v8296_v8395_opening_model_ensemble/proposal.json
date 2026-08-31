@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8296-v8395-opening-model-ensemble",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8296,
+  "last_version": 8395,
+  "hypothesis": "Equal-gross averaging of sparse overnight-gap normalization and opening-auction absorption within the opening interval, followed sequentially by sparse pre-route absorption, can diversify model error and improve session-level IR without exceeding gross one.",
+  "version_contract": "10 distinct late-route state-interaction families x 5 train quantiles x 2 orientations; two fixed 50/50 opening models followed by one fixed pre-route sleeve",
+  "planned_cells": 100,
+  "prior_comparison_cells": 257166,
+  "cumulative_comparison_cells": 257266,
+  "intraday_components": {
+    "opening": {"decision": 2, "entry": 3, "exit": 11, "models": ["dual_sparse_opening_gap", "ensemble_opening_auction_absorption"], "weights": [0.5, 0.5]},
+    "preroute": {"decision": 11, "entry": 12, "exit": 23, "factor_family": "dual_sparse_liquidity_absorption"},
+    "score_quantile": 0.8,
+    "ridge_alpha": 1000.0
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "component_intervals_nonoverlapping": true, "late_route_entry": 24, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "2024-2025 annualized return >=50% in all three primary scenarios plus all unchanged gates; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "method": "session_signal_permutation"},
+  "paper_pool_change_authorized": false
+}
