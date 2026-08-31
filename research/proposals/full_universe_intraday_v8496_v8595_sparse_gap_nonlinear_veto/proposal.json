@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8496-v8595-sparse-gap-nonlinear-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8496,
+  "last_version": 8595,
+  "hypothesis": "Nonlinear interactions between adverse price paths and sector-flow states at bar 23 can identify harmful late-route sessions missed by linear vetoes, improving the development-evidence-leading sparse-gap route's IR while preserving temporal transfer.",
+  "version_contract": "10 distinct nonlinear veto factor families x 5 train quantiles x 2 ridge penalties over one frozen sparse-gap route",
+  "planned_cells": 100,
+  "prior_comparison_cells": 257366,
+  "cumulative_comparison_cells": 257466,
+  "frozen_route": {"source_version": 8055, "selection_rule": "maximum development-only z in the COMPLETE v7996-v8095 campaign", "opening_score_quantile": 0.8, "state_family": "volatile_breadth_repair", "state_quantile": 0.8, "orientation": "fill_on_low"},
+  "veto": {"decision": 23, "late_route_entry": 24, "nonlinear_factor_families": 10, "train_quantiles": 5, "ridge_penalties": 2},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "opening_and_late_intervals_nonoverlapping": true, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "2024-2025 annualized return >=50% in all three primary scenarios plus all unchanged gates; all required before native null",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"]},
+  "paper_pool_change_authorized": false
+}
