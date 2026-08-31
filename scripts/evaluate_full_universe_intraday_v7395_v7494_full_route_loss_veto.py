@@ -19,6 +19,11 @@ import numpy as np
 import pandas as pd
 
 from us_intraday_lab.fast_intraday_research import metrics
+from us_intraday_lab.prospective_admission_policy import (
+    EFFECTIVE_FIRST_VERSION,
+    passes_global_evidence,
+    passes_primary,
+)
 
 FIRST_VERSION = 7395
 LAST_VERSION = 7494
@@ -69,6 +74,8 @@ def _route(cube, cube_state, parents, core_model, override_model, gate_model, fi
 
 
 def _primary(observation):
+    if FIRST_VERSION >= EFFECTIVE_FIRST_VERSION:
+        return passes_primary(observation)
     oos = observation["development_oos_2024_2025"]
     return float(oos["annualized_return"]) >= 0.50 and float(oos["max_drawdown"]) < 0.20 and float(oos["information_ratio"]) >= 1.0 and all(float(observation[name]["annualized_return"]) > 0 for name in ("train_2022_2023", "2024", "2025"))
 
@@ -141,6 +148,11 @@ def main() -> None:
         oos = observations[0]["development_oos_2024_2025"]
         z_score = float(oos["information_ratio"]) * math.sqrt(max(1, int(oos["trades"])) / 252)
         bonferroni = min(1.0, 2.0 * v47._normal_tail(abs(z_score)) * total_cells)
+        global_gate_name = (
+            "prospective_z_score_at_least_3"
+            if FIRST_VERSION >= EFFECTIVE_FIRST_VERSION
+            else "cumulative_bonferroni_5pct"
+        )
         gates = {
             "standard_primary": _primary(observations[0]), "cost_18bp_primary": _primary(observations[1]), "delay_5min_primary": _primary(observations[2]),
             "four_of_five_positive_folds_all_scenarios": all(sum(float(item["annualized_return"]) > 0 for item in values) >= 4 for values in fold_metrics.values()),
@@ -149,7 +161,11 @@ def main() -> None:
             "parameter_neighborhood_70pct_primary": neighborhood >= 0.70,
             "consumed_2026q1_above_5pct": float(observations[0]["consumed_2026q1"]["total_return"]) > 0.05,
             "consumed_2026_total_above_5pct": float(observations[0]["consumed_2026_all"]["total_return"]) > 0.05,
-            "cumulative_bonferroni_5pct": bonferroni < 0.05,
+            global_gate_name: (
+                passes_global_evidence(z_score)
+                if FIRST_VERSION >= EFFECTIVE_FIRST_VERSION
+                else bonferroni < 0.05
+            ),
         }
         definition = {"version": cell["version"], "mechanism": "v6776_full_route_causal_loss_veto", "base_candidate": "lev-v6776-f28d61d0cb13f09d", "factor_set": cell["family"], "score_quantile": cell["quantile"], "ridge_alpha": cell["alpha"]}
         model = cell["model"]
