@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v8797-v8896-threshold-stability-sparse-gap-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 8797,
+  "last_version": 8896,
+  "hypothesis": "The confirmed bar-23 sparse-gap evidence frontier is stable near a 20% veto share; a narrow, symmetric 18%-22% train-quantile neighborhood can determine whether a robust adjacent threshold crosses z>=3 without relying on a single selected point.",
+  "version_contract": "10 frozen economic veto families x 5 quantiles [0.18,0.19,0.20,0.21,0.22] x 2 ridge alphas [30,100]",
+  "planned_cells": 100,
+  "prior_comparison_cells": 257677,
+  "cumulative_comparison_cells": 257777,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "gate_decision_bar": 23, "entry_bar": 24, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "primary annualized return >40%; z>=3.0; all other gates unchanged; native null required after all pre-null gates",
+  "native_factory_null": {"required": true, "seed": 20260831, "repetitions": 500, "percentile": 0.95, "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"]},
+  "paper_pool_change_authorized": false
+}

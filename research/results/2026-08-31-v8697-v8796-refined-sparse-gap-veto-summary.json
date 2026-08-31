@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [8697, 8796],
+  "evaluated_cells": 100,
+  "comparison_cells": 257677,
+  "elapsed_seconds": 14.60231410000415,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "admissions": 0,
+  "closest_candidate": {
+    "candidate_id": "lev-v8722-8718c02edcc7b721",
+    "standard_annualized_return": 1.18161970688988,
+    "standard_information_ratio": 2.37681599293942,
+    "standard_trades": 380,
+    "cost_18bp_annualized_return": 0.986121102226331,
+    "delay_5min_annualized_return": 1.01946469200069,
+    "historical_standard_annualized_return": 0.44426846673183,
+    "historical_cost_18bp_annualized_return": 0.320278484629555,
+    "historical_delay_annualized_return": 0.372739783529571,
+    "consumed_2026q1_total_return": 0.10024243045181,
+    "consumed_2026_all_total_return": 0.201077576341337,
+    "neighbor_primary_share": 1.0,
+    "z_score": 2.91868407809801,
+    "failed_gates": ["prospective_z_score_at_least_3"]
+  },
+  "next_unused_version": 8797
+}
