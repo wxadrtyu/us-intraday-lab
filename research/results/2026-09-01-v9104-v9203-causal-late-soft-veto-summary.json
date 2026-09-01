@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [9104, 9203],
+  "evaluated_cells": 100,
+  "comparison_cells": 258082,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "admissions": 0,
+  "causality_contract": {"gate_decision_bar": 23, "earliest_entry_bar": 24, "opening_sleeve_included": false},
+  "closest_candidate": {
+    "candidate_id": "lev-v9192-210e7e5a556b677a",
+    "standard_annualized_return": 0.7974933710510919,
+    "standard_max_drawdown": 0.0959518810702501,
+    "standard_information_ratio": 2.1265904211740994,
+    "cost_18bp_annualized_return": 0.6923373284635528,
+    "delay_5min_annualized_return": 0.7366226553214135,
+    "historical_standard_annualized_return": 0.40405453288896376,
+    "consumed_2026q1_total_return": 0.024489683466608403,
+    "consumed_2026_all_total_return": 0.23991150167753328,
+    "prospective_z_score": 2.7843604506280943,
+    "failed_gates": ["consumed_2026q1_above_5pct", "prospective_z_score_at_least_3"]
+  },
+  "rejection_counts": {
+    "prospective_z_score_at_least_3": 100,
+    "consumed_2026q1_above_5pct": 86,
+    "standard_primary": 9,
+    "cost_18bp_primary": 10,
+    "delay_5min_primary": 10,
+    "parameter_neighborhood_70pct_primary": 10,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 1
+  },
+  "paper_pool_changes": 0,
+  "next_unused_version": 9204
+}

@@ -6,13 +6,18 @@ import pytest
 from tests.fakes.broker import FakePaperBroker, SubmitBehavior
 from us_intraday_lab.paper.pool import (
     LEGACY_FOUR_MEMBER_ALLOCATIONS,
+    PAPER_ADMISSION_STATES,
     POOL_ALLOCATIONS,
+    USER_REQUESTED_FOUR_WAY_ALLOCATIONS,
     V247_ID,
     V449_ID,
     V798_ID,
     V798_STATE_THRESHOLD,
     V1254_ID,
     V1254_STATE_THRESHOLD,
+    V9022_ID,
+    V9083_ID,
+    V9100_ID,
     v798_state_score,
     v1254_state_score,
     validate_pool_allocations,
@@ -244,6 +249,22 @@ def test_consolidated_pool_allocations_are_exact() -> None:
     validate_pool_allocations()
     assert POOL_ALLOCATIONS == {V1254_ID: 1.0}
     assert sum(POOL_ALLOCATIONS.values()) == pytest.approx(1.0)
+
+
+def test_noncausal_family_leaders_and_merge_fail_closed() -> None:
+    assert PAPER_ADMISSION_STATES[V9022_ID] == "REJECTED_NONCAUSAL_TIMING_PARITY"
+    assert PAPER_ADMISSION_STATES[V9083_ID] == "REJECTED_NONCAUSAL_TIMING_PARITY"
+    assert PAPER_ADMISSION_STATES[V9100_ID] == "REJECTED_NONCAUSAL_TIMING_PARITY"
+    assert V9022_ID not in POOL_ALLOCATIONS
+    assert V9083_ID not in POOL_ALLOCATIONS
+    assert V9100_ID not in POOL_ALLOCATIONS
+    assert USER_REQUESTED_FOUR_WAY_ALLOCATIONS == {
+        V1254_ID: 0.25,
+        V9022_ID: 0.25,
+        V9083_ID: 0.25,
+        V9100_ID: 0.25,
+    }
+    assert sum(USER_REQUESTED_FOUR_WAY_ALLOCATIONS.values()) == pytest.approx(1.0)
 
 
 def test_four_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:

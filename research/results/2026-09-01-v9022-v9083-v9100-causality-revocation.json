@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "decision": "RESEARCH_ADMISSION_REVOKED_NONCAUSAL_TIMING",
+  "candidate_ids": [
+    "lev-v9022-e29ae7b811678f13",
+    "lev-v9083-fade6a99e0b4fa2c",
+    "lev-v9100-87067c388a289dba"
+  ],
+  "cause": {
+    "gate_decision_bar": 23,
+    "opening_entry_bar": 3,
+    "opening_exit_bar": 11,
+    "defect": "bar-23 exposure was applied retrospectively to a route containing the completed bar-3-to-11 opening sleeve"
+  },
+  "causal_repair_campaign": {
+    "version_range": [9104, 9203],
+    "evaluated_cells": 100,
+    "strict_pre_factory_null_passes": 0,
+    "native_factory_null_runs": 0,
+    "best_candidate": "lev-v9192-210e7e5a556b677a",
+    "best_failed_gates": [
+      "consumed_2026q1_above_5pct",
+      "prospective_z_score_at_least_3"
+    ]
+  },
+  "paper_action": {
+    "requested_allocations_recorded": {
+      "v1254": 0.25,
+      "v9022": 0.25,
+      "v9083": 0.25,
+      "v9100": 0.25
+    },
+    "activated_allocations": {"v1254": 1.0},
+    "orders_submitted_for_rejected_candidates": 0,
+    "reason": "exact forward execution parity is impossible for the frozen noncausal definitions"
+  },
+  "next_unused_version": 9204
+}

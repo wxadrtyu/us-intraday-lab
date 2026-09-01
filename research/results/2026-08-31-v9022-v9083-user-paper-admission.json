@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "decision": "USER_AUTHORIZED_ALPACA_PAPER_ADMISSION",
+  "decision_date": "2026-08-31",
+  "candidate_ids": [
+    "lev-v9022-e29ae7b811678f13",
+    "lev-v9083-fade6a99e0b4fa2c"
+  ],
+  "deduplication": {
+    "retained_family_leaders": 2,
+    "within_family_near_duplicates_excluded": [
+      "lev-v9021-6c1978eb6f9b7757",
+      "lev-v9084-cc42e3f44582698e"
+    ],
+    "between_family_leader_correlation": 0.9336581717910025
+  },
+  "supporting_evidence": {
+    "source_summary": "research/results/2026-08-31-v8997-v9097-soft-veto-admission-summary.json",
+    "native_factory_null_evidence_sha256": "471a636aa172866274a00470e000aaea0e2d28a56792b71d4184f878dbc75a1c",
+    "all_hard_and_stress_gates_passed": true,
+    "native_factory_null_passed": true
+  },
+  "paper_state": {
+    "v1254": "ACTIVE_UNCHANGED",
+    "v9022": "ADMITTED_PENDING_EXECUTION_PARITY",
+    "v9083": "ADMITTED_PENDING_EXECUTION_PARITY",
+    "activation_rule": "Activate only after the forward evaluator reproduces the frozen research route and signal/exposure parity checks pass.",
+    "planned_equal_allocation_after_parity": {
+      "v1254": 0.3333333333333333,
+      "v9022": 0.3333333333333333,
+      "v9083": 0.3333333333333333
+    }
+  },
+  "execution_safety": {
+    "existing_append_only_ledger_changed": false,
+    "broker_credentials_changed": false,
+    "order_logic_changed_before_parity": false,
+    "manual_submit_or_cancel": false
+  }
+}
