@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [9098, 9103],
+  "evaluated_cells": 5,
+  "comparison_cells": 257982,
+  "strict_pre_factory_null_passes": 5,
+  "native_factory_null_runs": 5,
+  "native_factory_null_passes": 5,
+  "research_admissible_candidates": 5,
+  "preregistered_primary_candidate": "lev-v9100-87067c388a289dba",
+  "preregistered_primary_passed": true,
+  "primary_metrics": {
+    "standard_9bp_annualized_return": 1.1010127689970108,
+    "standard_9bp_max_drawdown": 0.12110231299247143,
+    "standard_9bp_information_ratio": 2.3728920541177354,
+    "cost_18bp_annualized_return": 0.9120219634681068,
+    "cost_18bp_max_drawdown": 0.12694164356396642,
+    "cost_18bp_information_ratio": 2.0336506671454995,
+    "delay_5min_9bp_annualized_return": 0.93753757859467,
+    "delay_5min_9bp_max_drawdown": 0.16501582378008572,
+    "delay_5min_9bp_information_ratio": 2.213748746108038,
+    "historical_standard_annualized_return": 0.4176374882789404,
+    "historical_cost_18bp_annualized_return": 0.2926435491560426,
+    "historical_delay_5min_annualized_return": 0.3501818607624372,
+    "consumed_2026q1_total_return": 0.0947478811170448,
+    "consumed_2026_all_total_return": 0.27225431270227585,
+    "prospective_z_score": 3.1247726889494816,
+    "neighbor_primary_share": 1.0
+  },
+  "native_null": {
+    "observed_compound_profit": 11.077483718299426,
+    "session_signal_permutation_maxT_95pct": 7.312845269319671,
+    "safe_circular_shift_maxT_95pct": 7.2878416581628525,
+    "evidence_sha256": "4c65a032506458ad19b4b329b7b13463fb7f79372e0250b3fd7995db95ecede5"
+  },
+  "paper_pool_changes": 0,
+  "next_unused_version": 9104
+}

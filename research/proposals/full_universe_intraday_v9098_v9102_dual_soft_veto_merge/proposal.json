@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9098-v9102-dual-soft-veto-merge",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9098,
+  "last_version": 9102,
+  "hypothesis": "A convex merge of the independently admitted unstable-reclaim and relative-absorption soft-veto exposures can retain their common sparse-gap route while reducing factor-specific adverse-session variance.",
+  "version_contract": "five fixed unstable-reclaim weights [0.30,0.40,0.50,0.60,0.70], relative-absorption receives the complement; v9100 at 0.50/0.50 is the preregistered primary candidate and all other cells are neighborhood stress only",
+  "planned_cells": 5,
+  "prior_comparison_cells": 257977,
+  "cumulative_comparison_cells": 257982,
+  "parents": ["lev-v9022-e29ae7b811678f13", "lev-v9083-fade6a99e0b4fa2c"],
+  "frozen_parent_economic_sha256": "972a13aade2229c8df3d1ae6819f40e63def42a4998eb8425078a1b9c974c572",
+  "frozen_parent_native_null_sha256": "026433e9ea82a263de65f112077078bc3fd0df18ced517ce044a3bd33dc66923",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "all existing primary, historical, folds, start-date, 70% neighborhood, consumed diagnostics, prospective z>=3.0, then native maxT null",
+  "native_factory_null": {"required": true, "seed": 20260901, "repetitions": 500, "percentile": 0.95, "methods": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"]},
+  "paper_pool_change_authorized": false
+}
