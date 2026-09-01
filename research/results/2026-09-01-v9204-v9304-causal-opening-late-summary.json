@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [9204, 9304],
+  "evaluated_cells": 100,
+  "comparison_cells": 258182,
+  "strict_pre_factory_null_passes": 1,
+  "native_factory_null_runs": 1,
+  "native_factory_null_passes": 1,
+  "research_admissible_candidates": 1,
+  "candidate_id": "lev-v9292-d229bbc0e792bfcf",
+  "metrics": {
+    "standard_9bp_annualized_return": 1.0603747564291002,
+    "standard_9bp_max_drawdown": 0.10379810391412947,
+    "standard_9bp_information_ratio": 2.449816732581696,
+    "cost_18bp_annualized_return": 0.8789853816845397,
+    "cost_18bp_max_drawdown": 0.1116552266913392,
+    "cost_18bp_information_ratio": 2.09632723873342,
+    "delay_5min_9bp_annualized_return": 0.9244937697609512,
+    "delay_5min_9bp_max_drawdown": 0.09660040409915538,
+    "delay_5min_9bp_information_ratio": 2.3166042533506817,
+    "consumed_2026q1_total_return": 0.09772083743528315,
+    "consumed_2026_all_total_return": 0.27957296426363687,
+    "prospective_z_score": 3.226071917438734
+  },
+  "native_null": {
+    "observed_compound_profit": 9.123370909098513,
+    "session_signal_permutation_maxT_95pct": 6.406028566847337,
+    "safe_circular_shift_maxT_95pct": 6.407508629418233,
+    "evidence_sha256": "fd4dc609dcaa91080e9bd6c2956ae5d16f690a552a8bec4c2cae44a84874fb9e"
+  },
+  "paper_pool_changes": 0,
+  "next_unused_version": 9305
+}

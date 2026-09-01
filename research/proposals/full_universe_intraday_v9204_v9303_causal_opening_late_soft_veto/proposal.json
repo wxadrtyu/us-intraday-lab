@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9204-v9303-causal-opening-late-soft-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9204,
+  "last_version": 9303,
+  "hypothesis": "Keeping the independently causal bar-2 opening sleeve at fixed exposure while applying the bar-23 soft veto only to the late route can restore diversified return without retrospective scaling.",
+  "version_contract": "10 frozen late-veto families x 5 quantiles [0.10,0.15,0.20,0.25,0.30] x 2 ridge alphas [30,100]; late low-score exposure 25%; opening exposure fixed and never uses bar-23 information",
+  "planned_cells": 100,
+  "prior_comparison_cells": 258082,
+  "cumulative_comparison_cells": 258182,
+  "causality_contract": {
+    "opening_decision_bar": 2,
+    "opening_entry_bar": 3,
+    "opening_exit_bar": 11,
+    "late_gate_decision_bar": 23,
+    "late_entry_bar": 24,
+    "late_gate_applies_to_opening": false
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "all existing primary, historical, fold, start-date, neighborhood, consumed diagnostic, prospective-z, and native-null gates",
+  "paper_pool_change_authorized": false
+}
