@@ -1,0 +1,929 @@
+{
+  "completed_versions": 100,
+  "cumulative_comparison_cells": 283783,
+  "elapsed_seconds": 469.7602916000178,
+  "planned_new_cells": 12800,
+  "planned_versions": 100,
+  "pre_factory_null_hits": 0,
+  "rejected_frontier_records": 300,
+  "rejection_reason_counts": {
+    "all_start_dates_positive": 176,
+    "consumed_2026_total_above_5pct": 197,
+    "consumed_2026q1_above_5pct": 220,
+    "cost_18bp_primary": 300,
+    "cumulative_bonferroni_5pct": 300,
+    "delay_5min_primary": 300,
+    "four_of_five_positive_folds_all_scenarios": 279,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 300,
+    "parameter_neighborhood_70pct_primary": 300,
+    "standard_primary": 300
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [
+    9405,
+    9504
+  ],
+  "versions": [
+    {
+      "best_candidate_id": "lev-v9405-0c271deb5c184c20",
+      "best_consumed_2026_total_return": -0.18843563284534437,
+      "best_oos_annualized_return": 0.03271577136225412,
+      "cells": 64,
+      "hypothesis": "relative_strength_flow_confirmation over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9405
+    },
+    {
+      "best_candidate_id": "lev-v9406-f3438cf69d3289cd",
+      "best_consumed_2026_total_return": -0.05641083439517958,
+      "best_oos_annualized_return": -0.0028944160262405205,
+      "cells": 64,
+      "hypothesis": "efficient_breakout over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9406
+    },
+    {
+      "best_candidate_id": "lev-v9407-98880ae4845db56d",
+      "best_consumed_2026_total_return": -0.20358122651035626,
+      "best_oos_annualized_return": -0.12774949976866257,
+      "cells": 64,
+      "hypothesis": "vwap_hold_broadening over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9407
+    },
+    {
+      "best_candidate_id": "lev-v9408-789f011dba2da466",
+      "best_consumed_2026_total_return": -0.24617765983099216,
+      "best_oos_annualized_return": 0.005502159004352469,
+      "cells": 64,
+      "hypothesis": "quiet_relative_breakout over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9408
+    },
+    {
+      "best_candidate_id": "lev-v9409-98447d7773fcddb5",
+      "best_consumed_2026_total_return": -0.0898389828289401,
+      "best_oos_annualized_return": 0.012153863398593145,
+      "cells": 64,
+      "hypothesis": "sector_flow_leader over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9409
+    },
+    {
+      "best_candidate_id": "lev-v9410-cfdd3c852b7ab36a",
+      "best_consumed_2026_total_return": -0.01159324810892881,
+      "best_oos_annualized_return": -0.07174861613818384,
+      "cells": 64,
+      "hypothesis": "growth_risk_leadership over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9410
+    },
+    {
+      "best_candidate_id": "lev-v9411-ccc5d5747023d464",
+      "best_consumed_2026_total_return": -0.20574797190815686,
+      "best_oos_annualized_return": -0.04486700710251135,
+      "cells": 64,
+      "hypothesis": "residual_momentum over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9411
+    },
+    {
+      "best_candidate_id": "lev-v9412-2c8b1acf98390188",
+      "best_consumed_2026_total_return": -0.08681277256890929,
+      "best_oos_annualized_return": -0.023839944006622815,
+      "cells": 64,
+      "hypothesis": "range_high_persistence over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9412
+    },
+    {
+      "best_candidate_id": "lev-v9413-41d391b540edded7",
+      "best_consumed_2026_total_return": -0.15906671863189303,
+      "best_oos_annualized_return": -0.04156204367244043,
+      "cells": 64,
+      "hypothesis": "broadening_rank_persistence over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9413
+    },
+    {
+      "best_candidate_id": "lev-v9414-008df49f0180ce5f",
+      "best_consumed_2026_total_return": -0.12684803410741186,
+      "best_oos_annualized_return": 0.029960636595115275,
+      "cells": 64,
+      "hypothesis": "flow_acceleration_leader over bars (5, 17) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9414
+    },
+    {
+      "best_candidate_id": "lev-v9415-e4928cb2e8aad5ec",
+      "best_consumed_2026_total_return": -0.005412184178469337,
+      "best_oos_annualized_return": -0.05075962232943809,
+      "cells": 64,
+      "hypothesis": "relative_strength_flow_confirmation over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9415
+    },
+    {
+      "best_candidate_id": "lev-v9416-601f239172ff3418",
+      "best_consumed_2026_total_return": 0.07302331705880882,
+      "best_oos_annualized_return": -0.026654871731415564,
+      "cells": 64,
+      "hypothesis": "efficient_breakout over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9416
+    },
+    {
+      "best_candidate_id": "lev-v9417-d80f50ce473fe962",
+      "best_consumed_2026_total_return": 0.013134807812661853,
+      "best_oos_annualized_return": 0.032213042955525184,
+      "cells": 64,
+      "hypothesis": "vwap_hold_broadening over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9417
+    },
+    {
+      "best_candidate_id": "lev-v9418-128d80f4881e296c",
+      "best_consumed_2026_total_return": -0.07510176702190174,
+      "best_oos_annualized_return": -0.08319582980992257,
+      "cells": 64,
+      "hypothesis": "quiet_relative_breakout over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9418
+    },
+    {
+      "best_candidate_id": "lev-v9419-1fffb06c4b9ee548",
+      "best_consumed_2026_total_return": -0.07404399905347259,
+      "best_oos_annualized_return": -0.0004852522223069977,
+      "cells": 64,
+      "hypothesis": "sector_flow_leader over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9419
+    },
+    {
+      "best_candidate_id": "lev-v9420-a53d980a6cc6532a",
+      "best_consumed_2026_total_return": -0.0687688221526177,
+      "best_oos_annualized_return": 0.05134347668646422,
+      "cells": 64,
+      "hypothesis": "growth_risk_leadership over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9420
+    },
+    {
+      "best_candidate_id": "lev-v9421-44518d318a49c968",
+      "best_consumed_2026_total_return": 0.45616636413423595,
+      "best_oos_annualized_return": -0.07496972217560405,
+      "cells": 64,
+      "hypothesis": "residual_momentum over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9421
+    },
+    {
+      "best_candidate_id": "lev-v9422-ea0de04c8998fe47",
+      "best_consumed_2026_total_return": 0.04976243495344068,
+      "best_oos_annualized_return": -0.001104735392747691,
+      "cells": 64,
+      "hypothesis": "range_high_persistence over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9422
+    },
+    {
+      "best_candidate_id": "lev-v9423-3ff9d36d8f495819",
+      "best_consumed_2026_total_return": -0.006353854176774587,
+      "best_oos_annualized_return": -0.03938168683424048,
+      "cells": 64,
+      "hypothesis": "broadening_rank_persistence over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9423
+    },
+    {
+      "best_candidate_id": "lev-v9424-38d32ff641eeeb79",
+      "best_consumed_2026_total_return": 0.0762444622981111,
+      "best_oos_annualized_return": 0.02418451735062077,
+      "cells": 64,
+      "hypothesis": "flow_acceleration_leader over bars (11, 23) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9424
+    },
+    {
+      "best_candidate_id": "lev-v9425-1de642de68da0730",
+      "best_consumed_2026_total_return": 0.03741652415817476,
+      "best_oos_annualized_return": 0.11598834346530285,
+      "cells": 64,
+      "hypothesis": "relative_strength_flow_confirmation over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9425
+    },
+    {
+      "best_candidate_id": "lev-v9426-191fda29d7ec6abe",
+      "best_consumed_2026_total_return": 0.21086581974166885,
+      "best_oos_annualized_return": 0.04512749240584424,
+      "cells": 64,
+      "hypothesis": "efficient_breakout over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9426
+    },
+    {
+      "best_candidate_id": "lev-v9427-71b1b5d27fbe3459",
+      "best_consumed_2026_total_return": 0.1550904666370354,
+      "best_oos_annualized_return": 0.13035087640228116,
+      "cells": 64,
+      "hypothesis": "vwap_hold_broadening over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9427
+    },
+    {
+      "best_candidate_id": "lev-v9428-c6e123332a840e05",
+      "best_consumed_2026_total_return": 0.09870585890069528,
+      "best_oos_annualized_return": 0.11790892732909075,
+      "cells": 64,
+      "hypothesis": "quiet_relative_breakout over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9428
+    },
+    {
+      "best_candidate_id": "lev-v9429-c84328c62e52ed24",
+      "best_consumed_2026_total_return": -0.022483385368814002,
+      "best_oos_annualized_return": -0.0065199723551898625,
+      "cells": 64,
+      "hypothesis": "sector_flow_leader over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9429
+    },
+    {
+      "best_candidate_id": "lev-v9430-2b7774d834205461",
+      "best_consumed_2026_total_return": 0.02854431799358581,
+      "best_oos_annualized_return": 0.08397264157314788,
+      "cells": 64,
+      "hypothesis": "growth_risk_leadership over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9430
+    },
+    {
+      "best_candidate_id": "lev-v9431-eea277334a0f1b3b",
+      "best_consumed_2026_total_return": 0.13795234669407153,
+      "best_oos_annualized_return": 0.06354547922130172,
+      "cells": 64,
+      "hypothesis": "residual_momentum over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9431
+    },
+    {
+      "best_candidate_id": "lev-v9432-f0b4ff25182f78b6",
+      "best_consumed_2026_total_return": 0.041670615131915056,
+      "best_oos_annualized_return": 0.09457086592694841,
+      "cells": 64,
+      "hypothesis": "range_high_persistence over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9432
+    },
+    {
+      "best_candidate_id": "lev-v9433-df2624e575974a0e",
+      "best_consumed_2026_total_return": 0.13721603317496012,
+      "best_oos_annualized_return": 0.08291744808149559,
+      "cells": 64,
+      "hypothesis": "broadening_rank_persistence over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9433
+    },
+    {
+      "best_candidate_id": "lev-v9434-b59f87c5333f9fae",
+      "best_consumed_2026_total_return": 0.16278100385372407,
+      "best_oos_annualized_return": -0.007354738080202039,
+      "cells": 64,
+      "hypothesis": "flow_acceleration_leader over bars (17, 29) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9434
+    },
+    {
+      "best_candidate_id": "lev-v9435-e73db1654be23988",
+      "best_consumed_2026_total_return": 0.04144777552496404,
+      "best_oos_annualized_return": 0.021674322905838928,
+      "cells": 64,
+      "hypothesis": "relative_strength_flow_confirmation over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9435
+    },
+    {
+      "best_candidate_id": "lev-v9436-4bd832a7acd35fe3",
+      "best_consumed_2026_total_return": 0.0975888657796149,
+      "best_oos_annualized_return": -0.029105333144768597,
+      "cells": 64,
+      "hypothesis": "efficient_breakout over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9436
+    },
+    {
+      "best_candidate_id": "lev-v9437-6fe5d14c08ec732e",
+      "best_consumed_2026_total_return": 0.027220330749059274,
+      "best_oos_annualized_return": 0.03114972300256791,
+      "cells": 64,
+      "hypothesis": "vwap_hold_broadening over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9437
+    },
+    {
+      "best_candidate_id": "lev-v9438-4a976a51eae13978",
+      "best_consumed_2026_total_return": 0.12898774348815967,
+      "best_oos_annualized_return": -0.03481397687302945,
+      "cells": 64,
+      "hypothesis": "quiet_relative_breakout over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9438
+    },
+    {
+      "best_candidate_id": "lev-v9439-9542431550ce2fbc",
+      "best_consumed_2026_total_return": 0.09107421507743085,
+      "best_oos_annualized_return": 0.071146693580181,
+      "cells": 64,
+      "hypothesis": "sector_flow_leader over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9439
+    },
+    {
+      "best_candidate_id": "lev-v9440-bd0a9cd12f772820",
+      "best_consumed_2026_total_return": 0.06265543414834274,
+      "best_oos_annualized_return": -0.053904532733187294,
+      "cells": 64,
+      "hypothesis": "growth_risk_leadership over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9440
+    },
+    {
+      "best_candidate_id": "lev-v9441-db03b61dc8b7fbc1",
+      "best_consumed_2026_total_return": 0.08448626529269143,
+      "best_oos_annualized_return": -0.03449769253067514,
+      "cells": 64,
+      "hypothesis": "residual_momentum over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9441
+    },
+    {
+      "best_candidate_id": "lev-v9442-16edd6c642ac0e2d",
+      "best_consumed_2026_total_return": 0.07625978897151975,
+      "best_oos_annualized_return": -0.039674920761187726,
+      "cells": 64,
+      "hypothesis": "range_high_persistence over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9442
+    },
+    {
+      "best_candidate_id": "lev-v9443-62d7f157bf7a368b",
+      "best_consumed_2026_total_return": 0.023192932620769158,
+      "best_oos_annualized_return": 0.0330648995722973,
+      "cells": 64,
+      "hypothesis": "broadening_rank_persistence over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9443
+    },
+    {
+      "best_candidate_id": "lev-v9444-112bb72b8caa540a",
+      "best_consumed_2026_total_return": 0.06587696622609052,
+      "best_oos_annualized_return": -0.07861617960144573,
+      "cells": 64,
+      "hypothesis": "flow_acceleration_leader over bars (35, 47) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9444
+    },
+    {
+      "best_candidate_id": "lev-v9445-47485416fcdae967",
+      "best_consumed_2026_total_return": -0.192671796054952,
+      "best_oos_annualized_return": -0.10542370320921757,
+      "cells": 64,
+      "hypothesis": "relative_strength_flow_confirmation over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9445
+    },
+    {
+      "best_candidate_id": "lev-v9446-e4d319ba635aeef3",
+      "best_consumed_2026_total_return": -0.15184860958232005,
+      "best_oos_annualized_return": -0.11814283783484913,
+      "cells": 64,
+      "hypothesis": "efficient_breakout over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9446
+    },
+    {
+      "best_candidate_id": "lev-v9447-aebefd27b55c7460",
+      "best_consumed_2026_total_return": -0.21983677372653398,
+      "best_oos_annualized_return": -0.02560147671492652,
+      "cells": 64,
+      "hypothesis": "vwap_hold_broadening over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9447
+    },
+    {
+      "best_candidate_id": "lev-v9448-5e67fceecd094f64",
+      "best_consumed_2026_total_return": -0.25654201038545343,
+      "best_oos_annualized_return": -0.05387452613868415,
+      "cells": 64,
+      "hypothesis": "quiet_relative_breakout over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9448
+    },
+    {
+      "best_candidate_id": "lev-v9449-2929c47d84765a9b",
+      "best_consumed_2026_total_return": -0.0008152579411646599,
+      "best_oos_annualized_return": -0.016551244008400245,
+      "cells": 64,
+      "hypothesis": "sector_flow_leader over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9449
+    },
+    {
+      "best_candidate_id": "lev-v9450-f8be4aee33800a90",
+      "best_consumed_2026_total_return": -0.06683911965285683,
+      "best_oos_annualized_return": -0.019952027616059742,
+      "cells": 64,
+      "hypothesis": "growth_risk_leadership over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9450
+    },
+    {
+      "best_candidate_id": "lev-v9451-cff0f808db13eb65",
+      "best_consumed_2026_total_return": -0.1462756560262949,
+      "best_oos_annualized_return": -0.06668488027908392,
+      "cells": 64,
+      "hypothesis": "residual_momentum over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9451
+    },
+    {
+      "best_candidate_id": "lev-v9452-8b87ceb04f806eb3",
+      "best_consumed_2026_total_return": -0.1846905734105604,
+      "best_oos_annualized_return": -0.06080576528811099,
+      "cells": 64,
+      "hypothesis": "range_high_persistence over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9452
+    },
+    {
+      "best_candidate_id": "lev-v9453-97058d0aef84a3e5",
+      "best_consumed_2026_total_return": -0.18050245839372214,
+      "best_oos_annualized_return": -0.039957557291867896,
+      "cells": 64,
+      "hypothesis": "broadening_rank_persistence over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9453
+    },
+    {
+      "best_candidate_id": "lev-v9454-159bd8d1500039db",
+      "best_consumed_2026_total_return": -0.08837432804250289,
+      "best_oos_annualized_return": -0.11607312257296121,
+      "cells": 64,
+      "hypothesis": "flow_acceleration_leader over bars (53, 65) with unfiltered",
+      "pre_factory_null_hits": 0,
+      "version": 9454
+    },
+    {
+      "best_candidate_id": "lev-v9455-d4ada8e2609a35cc",
+      "best_consumed_2026_total_return": -0.1797229261244011,
+      "best_oos_annualized_return": 0.06685494196852004,
+      "cells": 192,
+      "hypothesis": "relative_strength_flow_confirmation over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9455
+    },
+    {
+      "best_candidate_id": "lev-v9456-9d88284b1f34af47",
+      "best_consumed_2026_total_return": -0.08155997929332282,
+      "best_oos_annualized_return": 0.06632811988963794,
+      "cells": 192,
+      "hypothesis": "efficient_breakout over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9456
+    },
+    {
+      "best_candidate_id": "lev-v9457-50570da47c2f7056",
+      "best_consumed_2026_total_return": -0.2810301142050077,
+      "best_oos_annualized_return": -0.04379029173357196,
+      "cells": 192,
+      "hypothesis": "vwap_hold_broadening over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9457
+    },
+    {
+      "best_candidate_id": "lev-v9458-ea16ecd447d34f1a",
+      "best_consumed_2026_total_return": -0.2451286618941606,
+      "best_oos_annualized_return": 0.04105491017357821,
+      "cells": 192,
+      "hypothesis": "quiet_relative_breakout over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9458
+    },
+    {
+      "best_candidate_id": "lev-v9459-5a6430c7f475cdfa",
+      "best_consumed_2026_total_return": -0.1005632223501518,
+      "best_oos_annualized_return": 0.012153863398593145,
+      "cells": 192,
+      "hypothesis": "sector_flow_leader over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9459
+    },
+    {
+      "best_candidate_id": "lev-v9460-8beafaa046e84ad2",
+      "best_consumed_2026_total_return": 0.017543361679233982,
+      "best_oos_annualized_return": -0.014070134435027581,
+      "cells": 192,
+      "hypothesis": "growth_risk_leadership over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9460
+    },
+    {
+      "best_candidate_id": "lev-v9461-9877004246b89086",
+      "best_consumed_2026_total_return": -0.2421425198762278,
+      "best_oos_annualized_return": 0.0005738570431632617,
+      "cells": 192,
+      "hypothesis": "residual_momentum over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9461
+    },
+    {
+      "best_candidate_id": "lev-v9462-69f3151095f2cdad",
+      "best_consumed_2026_total_return": -0.08338039011839271,
+      "best_oos_annualized_return": -0.013578102046184592,
+      "cells": 192,
+      "hypothesis": "range_high_persistence over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9462
+    },
+    {
+      "best_candidate_id": "lev-v9463-9ec4c9c5114288b0",
+      "best_consumed_2026_total_return": -0.14817853501875822,
+      "best_oos_annualized_return": -0.015188608301881512,
+      "cells": 192,
+      "hypothesis": "broadening_rank_persistence over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9463
+    },
+    {
+      "best_candidate_id": "lev-v9464-0e22579598fce274",
+      "best_consumed_2026_total_return": -0.12963279123153293,
+      "best_oos_annualized_return": 0.006278802094908498,
+      "cells": 192,
+      "hypothesis": "flow_acceleration_leader over bars (5, 17) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9464
+    },
+    {
+      "best_candidate_id": "lev-v9465-da2588abdc07c203",
+      "best_consumed_2026_total_return": 0.08815699945128452,
+      "best_oos_annualized_return": 0.08206906617923604,
+      "cells": 192,
+      "hypothesis": "relative_strength_flow_confirmation over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9465
+    },
+    {
+      "best_candidate_id": "lev-v9466-8f5dfd14159a220e",
+      "best_consumed_2026_total_return": 0.08339414391293376,
+      "best_oos_annualized_return": 0.089125852172794,
+      "cells": 192,
+      "hypothesis": "efficient_breakout over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9466
+    },
+    {
+      "best_candidate_id": "lev-v9467-03f1c7d04e596c38",
+      "best_consumed_2026_total_return": 0.14778657071782675,
+      "best_oos_annualized_return": 0.0819942319858078,
+      "cells": 192,
+      "hypothesis": "vwap_hold_broadening over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9467
+    },
+    {
+      "best_candidate_id": "lev-v9468-181c655db39eaff3",
+      "best_consumed_2026_total_return": 0.06839112725440155,
+      "best_oos_annualized_return": 0.020578300481113088,
+      "cells": 192,
+      "hypothesis": "quiet_relative_breakout over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9468
+    },
+    {
+      "best_candidate_id": "lev-v9469-7b759b3df2f31799",
+      "best_consumed_2026_total_return": -0.02802885449640946,
+      "best_oos_annualized_return": -0.0001016763000148968,
+      "cells": 192,
+      "hypothesis": "sector_flow_leader over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9469
+    },
+    {
+      "best_candidate_id": "lev-v9470-18d903373486646e",
+      "best_consumed_2026_total_return": 0.01829274328003394,
+      "best_oos_annualized_return": 0.05299192297246336,
+      "cells": 192,
+      "hypothesis": "growth_risk_leadership over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9470
+    },
+    {
+      "best_candidate_id": "lev-v9471-34fa48de8b3940d4",
+      "best_consumed_2026_total_return": 0.14717536029371558,
+      "best_oos_annualized_return": 0.009907269396081997,
+      "cells": 192,
+      "hypothesis": "residual_momentum over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9471
+    },
+    {
+      "best_candidate_id": "lev-v9472-274bd54577b84329",
+      "best_consumed_2026_total_return": 0.10818934915674894,
+      "best_oos_annualized_return": 0.04973278090239863,
+      "cells": 192,
+      "hypothesis": "range_high_persistence over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9472
+    },
+    {
+      "best_candidate_id": "lev-v9473-801315f1ef489498",
+      "best_consumed_2026_total_return": 0.03618195075784425,
+      "best_oos_annualized_return": 0.07632753785984225,
+      "cells": 192,
+      "hypothesis": "broadening_rank_persistence over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9473
+    },
+    {
+      "best_candidate_id": "lev-v9474-d0930cf491c1fe3e",
+      "best_consumed_2026_total_return": 0.047440030471660455,
+      "best_oos_annualized_return": 0.060325749925537187,
+      "cells": 192,
+      "hypothesis": "flow_acceleration_leader over bars (11, 23) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9474
+    },
+    {
+      "best_candidate_id": "lev-v9475-7a82336061ef7e72",
+      "best_consumed_2026_total_return": 0.01033920008517586,
+      "best_oos_annualized_return": 0.05747281049250885,
+      "cells": 192,
+      "hypothesis": "relative_strength_flow_confirmation over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9475
+    },
+    {
+      "best_candidate_id": "lev-v9476-b3612960aba3adf4",
+      "best_consumed_2026_total_return": 0.19143657418068227,
+      "best_oos_annualized_return": 0.12452181326038914,
+      "cells": 192,
+      "hypothesis": "efficient_breakout over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9476
+    },
+    {
+      "best_candidate_id": "lev-v9477-7fa291a90037fe10",
+      "best_consumed_2026_total_return": 0.12537430024285245,
+      "best_oos_annualized_return": 0.09721289854275739,
+      "cells": 192,
+      "hypothesis": "vwap_hold_broadening over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9477
+    },
+    {
+      "best_candidate_id": "lev-v9478-051a2dee1efa3095",
+      "best_consumed_2026_total_return": 0.030009707171380073,
+      "best_oos_annualized_return": 0.07780315665788029,
+      "cells": 192,
+      "hypothesis": "quiet_relative_breakout over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9478
+    },
+    {
+      "best_candidate_id": "lev-v9479-a88b6d947a0911f7",
+      "best_consumed_2026_total_return": 0.17827428091329844,
+      "best_oos_annualized_return": 0.06810737412825318,
+      "cells": 192,
+      "hypothesis": "sector_flow_leader over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9479
+    },
+    {
+      "best_candidate_id": "lev-v9480-c9ea5fc1d08b9f18",
+      "best_consumed_2026_total_return": 0.07491329020379145,
+      "best_oos_annualized_return": 0.07595931346591689,
+      "cells": 192,
+      "hypothesis": "growth_risk_leadership over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9480
+    },
+    {
+      "best_candidate_id": "lev-v9481-bee4f00902656d21",
+      "best_consumed_2026_total_return": 0.057128818574822215,
+      "best_oos_annualized_return": 0.09545106059255315,
+      "cells": 192,
+      "hypothesis": "residual_momentum over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9481
+    },
+    {
+      "best_candidate_id": "lev-v9482-4e4179acff5a70ac",
+      "best_consumed_2026_total_return": 0.041670615131915056,
+      "best_oos_annualized_return": 0.09417335214575129,
+      "cells": 192,
+      "hypothesis": "range_high_persistence over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9482
+    },
+    {
+      "best_candidate_id": "lev-v9483-063d0bc7c5467e2a",
+      "best_consumed_2026_total_return": 0.2488138638336037,
+      "best_oos_annualized_return": 0.08095257589256843,
+      "cells": 192,
+      "hypothesis": "broadening_rank_persistence over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9483
+    },
+    {
+      "best_candidate_id": "lev-v9484-bc3797c5ab0294a8",
+      "best_consumed_2026_total_return": 0.12675322604075268,
+      "best_oos_annualized_return": 0.09399810294670674,
+      "cells": 192,
+      "hypothesis": "flow_acceleration_leader over bars (17, 29) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9484
+    },
+    {
+      "best_candidate_id": "lev-v9485-8892f151b10f8eb8",
+      "best_consumed_2026_total_return": -0.01659376682457059,
+      "best_oos_annualized_return": -0.04281778979277695,
+      "cells": 192,
+      "hypothesis": "relative_strength_flow_confirmation over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9485
+    },
+    {
+      "best_candidate_id": "lev-v9486-04a9465028d4c464",
+      "best_consumed_2026_total_return": 0.0975888657796149,
+      "best_oos_annualized_return": -0.04011991492933298,
+      "cells": 192,
+      "hypothesis": "efficient_breakout over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9486
+    },
+    {
+      "best_candidate_id": "lev-v9487-a5d70d29cd1ce6c2",
+      "best_consumed_2026_total_return": 0.0225958143590983,
+      "best_oos_annualized_return": 0.03282125898583099,
+      "cells": 192,
+      "hypothesis": "vwap_hold_broadening over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9487
+    },
+    {
+      "best_candidate_id": "lev-v9488-76e713bb37b5e370",
+      "best_consumed_2026_total_return": 0.05360408597130317,
+      "best_oos_annualized_return": 0.006119536176523388,
+      "cells": 192,
+      "hypothesis": "quiet_relative_breakout over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9488
+    },
+    {
+      "best_candidate_id": "lev-v9489-79db434adb808a8e",
+      "best_consumed_2026_total_return": 0.09590515220236506,
+      "best_oos_annualized_return": 0.05974865144159791,
+      "cells": 192,
+      "hypothesis": "sector_flow_leader over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9489
+    },
+    {
+      "best_candidate_id": "lev-v9490-bbc33c0428c31dce",
+      "best_consumed_2026_total_return": 0.05916135086613461,
+      "best_oos_annualized_return": -0.024290046243029884,
+      "cells": 192,
+      "hypothesis": "growth_risk_leadership over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9490
+    },
+    {
+      "best_candidate_id": "lev-v9491-bab3b09631eb4e4e",
+      "best_consumed_2026_total_return": 0.008762131681921081,
+      "best_oos_annualized_return": -0.016893185268475386,
+      "cells": 192,
+      "hypothesis": "residual_momentum over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9491
+    },
+    {
+      "best_candidate_id": "lev-v9492-bba0dc65ae5708ee",
+      "best_consumed_2026_total_return": 0.09099843001551133,
+      "best_oos_annualized_return": -0.03521092507887724,
+      "cells": 192,
+      "hypothesis": "range_high_persistence over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9492
+    },
+    {
+      "best_candidate_id": "lev-v9493-0cc6423cfec4d259",
+      "best_consumed_2026_total_return": 0.023192932620769158,
+      "best_oos_annualized_return": 0.004142535635931033,
+      "cells": 192,
+      "hypothesis": "broadening_rank_persistence over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9493
+    },
+    {
+      "best_candidate_id": "lev-v9494-0aac6ac22bb9fadc",
+      "best_consumed_2026_total_return": -0.021203040582371102,
+      "best_oos_annualized_return": -0.05456754340315184,
+      "cells": 192,
+      "hypothesis": "flow_acceleration_leader over bars (35, 47) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9494
+    },
+    {
+      "best_candidate_id": "lev-v9495-809a037edebc69d7",
+      "best_consumed_2026_total_return": -0.08630500057286739,
+      "best_oos_annualized_return": -0.016961841560055646,
+      "cells": 192,
+      "hypothesis": "relative_strength_flow_confirmation over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9495
+    },
+    {
+      "best_candidate_id": "lev-v9496-45ca1f90817659ba",
+      "best_consumed_2026_total_return": -0.11163785517868219,
+      "best_oos_annualized_return": -0.04611473275626643,
+      "cells": 192,
+      "hypothesis": "efficient_breakout over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9496
+    },
+    {
+      "best_candidate_id": "lev-v9497-e553c3d17f0ca0d9",
+      "best_consumed_2026_total_return": -0.2273738033294287,
+      "best_oos_annualized_return": -0.0016700366726263294,
+      "cells": 192,
+      "hypothesis": "vwap_hold_broadening over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9497
+    },
+    {
+      "best_candidate_id": "lev-v9498-6d20c76240e59681",
+      "best_consumed_2026_total_return": -0.07286520080739323,
+      "best_oos_annualized_return": -0.03644348380030371,
+      "cells": 192,
+      "hypothesis": "quiet_relative_breakout over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9498
+    },
+    {
+      "best_candidate_id": "lev-v9499-caad4d03e6a310fe",
+      "best_consumed_2026_total_return": -0.03416511118948806,
+      "best_oos_annualized_return": 0.00277077827499439,
+      "cells": 192,
+      "hypothesis": "sector_flow_leader over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9499
+    },
+    {
+      "best_candidate_id": "lev-v9500-77b419e8462dfd45",
+      "best_consumed_2026_total_return": -0.08775868586318414,
+      "best_oos_annualized_return": 0.017463508833046593,
+      "cells": 192,
+      "hypothesis": "growth_risk_leadership over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9500
+    },
+    {
+      "best_candidate_id": "lev-v9501-3803adf27ef44c4f",
+      "best_consumed_2026_total_return": -0.09803084201299428,
+      "best_oos_annualized_return": -0.024359134939763605,
+      "cells": 192,
+      "hypothesis": "residual_momentum over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9501
+    },
+    {
+      "best_candidate_id": "lev-v9502-104a9b23bb9ebbfa",
+      "best_consumed_2026_total_return": -0.11218269493741484,
+      "best_oos_annualized_return": -0.04775943386318715,
+      "cells": 192,
+      "hypothesis": "range_high_persistence over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9502
+    },
+    {
+      "best_candidate_id": "lev-v9503-68a7746aa01e0100",
+      "best_consumed_2026_total_return": -0.18223240828252596,
+      "best_oos_annualized_return": -0.005345031012756407,
+      "cells": 192,
+      "hypothesis": "broadening_rank_persistence over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9503
+    },
+    {
+      "best_candidate_id": "lev-v9504-d4406fa2e6c3bd70",
+      "best_consumed_2026_total_return": -0.08375128174340984,
+      "best_oos_annualized_return": -0.027531496253116683,
+      "cells": 192,
+      "hypothesis": "flow_acceleration_leader over bars (53, 65) with orderly_rebound_cash_filter",
+      "pre_factory_null_hits": 0,
+      "version": 9504
+    }
+  ]
+}
