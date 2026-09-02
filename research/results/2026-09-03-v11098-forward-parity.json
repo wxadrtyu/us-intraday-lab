@@ -1,0 +1,15 @@
+{
+  "active_session_mismatches": 0,
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "daily_values_sha256": "8a8d40091dab932de0f3f535ee463527f7498933b9d152d4c1ad3b323b1da83c",
+  "early_fill_minimum_entry_bar": 11,
+  "late_fill_minimum_entry_bar": 24,
+  "maximum_absolute_daily_return_error": 0.0,
+  "modern_or_fallback_route_sessions": 1315,
+  "passed": true,
+  "route_clock_causality_passed": true,
+  "schema_version": "1.0.0",
+  "sessions": 1407,
+  "status": "COMPLETE",
+  "transfer_route_sessions": 92
+}
