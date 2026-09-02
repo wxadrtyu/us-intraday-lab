@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11708-v11807-branch-causal-hard-veto",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11708,
+  "last_version": 11807,
+  "hypothesis": "Replacing the v11098 late-route 25% soft exposure with cash when the causal bar-5 quality ensemble rejects a session may remove low-edge transactions and improve the historically binding 18bp result while retaining the fixed opening sleeve.",
+  "version_contract": "the frozen 5 AND factor pairs x 5 lower quantiles x 4 ridge alphas, with rejected late-route exposure fixed at zero instead of 0.25",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 311883,
+  "cumulative_comparison_cells": 311983,
+  "causal_execution": {"quality_decision_bar": 5, "rejected_late_exposure": 0.0, "opening_sleeve_unchanged": true, "branch_route_clocks_unchanged": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged three-scenario primary, fold, start, historical, neighborhood, consumed, prospective evidence and native-null gates",
+  "paper_pool_change_authorized": false
+}
