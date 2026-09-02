@@ -16,15 +16,17 @@ import numpy as np
 from us_intraday_lab.paper.v10824 import assemble_forward_plan, routed_anchor
 
 CANDIDATE_ID = "lev-v11098-2ddc1d07c9cfe31e"
+SELECTION_RANGE = [11006, 11105]
+CAMPAIGN_CONFIGURE = branch._configure
 
 
 def validate(root: Path, source_path: Path, selection_path: Path) -> dict:
     selection = json.loads(selection_path.read_text(encoding="utf-8"))
     candidates = [item for item in selection["records"] if item["candidate_id"] == CANDIDATE_ID]
-    if selection.get("version_range") != [11006, 11105] or len(candidates) != 1:
+    if selection.get("version_range") != SELECTION_RANGE or len(candidates) != 1:
         raise RuntimeError("V11098_PARITY_SELECTION_CHANGED")
     definition = candidates[0]["definition"]
-    branch._configure()
+    CAMPAIGN_CONFIGURE()
     campaign = branch.boundary.logical.clock.parent.parent.sparse_veto.campaign
     sparse_veto = branch.boundary.logical.clock.parent.parent.sparse_veto
     campaign.base.prior.cash._configure()
@@ -132,6 +134,7 @@ def validate(root: Path, source_path: Path, selection_path: Path) -> dict:
         fill_active=fill_active,
         fill_allowed=fill_allowed,
         outer_allowed=outer_allowed,
+        low_exposure=branch.boundary.logical.clock.parent.parent.LOW_EXPOSURE,
     )
     maximum_error = float(np.max(np.abs(expected.values - actual.values)))
     active_mismatches = int(np.count_nonzero(expected.active != actual.active))

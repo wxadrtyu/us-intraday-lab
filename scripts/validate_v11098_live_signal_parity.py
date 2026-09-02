@@ -20,13 +20,16 @@ from v11098_live_frame_adapter import (
     signals_for_session,
 )
 
+CANDIDATE_ID = "lev-v11098-2ddc1d07c9cfe31e"
+CAMPAIGN_CONFIGURE = branch._configure
+
 
 class _Facade:
     logical = branch.boundary.logical
 
     @staticmethod
     def _configure() -> None:
-        branch._configure()
+        CAMPAIGN_CONFIGURE()
 
 
 def validate(root: Path, source: Path, selection_path: Path, contract_path: Path) -> dict:
@@ -37,7 +40,7 @@ def validate(root: Path, source: Path, selection_path: Path, contract_path: Path
     candidate = next(
         item
         for item in selection["records"]
-        if item["candidate_id"] == "lev-v11098-2ddc1d07c9cfe31e"
+        if item["candidate_id"] == CANDIDATE_ID
     )
     definition = candidate["definition"]
     model = campaign.quality._fit(
@@ -60,7 +63,7 @@ def validate(root: Path, source: Path, selection_path: Path, contract_path: Path
     cube = sector.SectorFlowLeadershipCube(root, "alpaca", 0)
     cube._v11098_parent_cube = _development
     parent_cube = _development
-    contract = load_contract(contract_path)
+    contract = load_contract(contract_path, CANDIDATE_ID)
     frozen_outer = contract["outer_gate_model"]
     frozen_left = _daily_gate_score(cube, frozen_outer["left"], 5)
     frozen_right = _daily_gate_score(cube, frozen_outer["right"], 5)

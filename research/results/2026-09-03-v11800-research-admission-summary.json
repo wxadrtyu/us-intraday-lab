@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "status": "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING",
+  "status": "LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING",
   "candidate_id": "lev-v11800-90804cea426c9753",
   "selection_version_range": [11708, 11807],
   "validation_version": 11808,
@@ -24,6 +24,17 @@
     "session_signal_permutation_maxT_95pct": 5.8074121029337,
     "safe_circular_shift_maxT_95pct": 5.66013282461934,
     "evidence_sha256": "5d1645e7ae819f1b13fce874b92ad40d6037409e6cf9a4d32d56bb5493de41f0"
+  },
+  "execution_parity": {
+    "forward_contract_sha256": "ad4df82c8a0624d52501943304193f43a3211eebcc6db1d9d02ad6ce10c09985",
+    "route_sessions": 1407,
+    "route_maximum_absolute_daily_return_error": 0.0,
+    "signal_sessions": 1347,
+    "emitted_legs": 2345,
+    "signal_maximum_absolute_daily_return_error": 6.938893903907228e-18,
+    "active_session_mismatches": 0,
+    "gross_limit_violations": 0,
+    "passed": true
   },
   "paper_pool_changed": false
 }

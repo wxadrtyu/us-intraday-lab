@@ -31,13 +31,16 @@ class LiveLeg:
     exposure: float
 
 
-def load_contract(path: Path) -> dict:
+def load_contract(
+    path: Path,
+    expected_candidate_id: str = "lev-v11098-2ddc1d07c9cfe31e",
+) -> dict:
     payload = json.loads(path.read_text(encoding="utf-8"))
     expected = payload.pop("contract_sha256", None)
     observed = hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    if expected != observed or payload.get("candidate_id") != "lev-v11098-2ddc1d07c9cfe31e":
+    if expected != observed or payload.get("candidate_id") != expected_candidate_id:
         raise ValueError("V11098_FORWARD_CONTRACT_INVALID")
     payload["contract_sha256"] = expected
     return payload

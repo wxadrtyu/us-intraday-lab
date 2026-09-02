@@ -22,5 +22,5 @@ late-route quality decision uses cash instead of 25% exposure. Opening signals,
 branch decisions, parent selection, and entry/exit clocks are unchanged.
 
 This is research admission only. v11800 remains fail-closed as
-`RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING`; no Paper allocation, runner,
+`LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING`; no Paper allocation, runner,
 broker, or order state changed.
