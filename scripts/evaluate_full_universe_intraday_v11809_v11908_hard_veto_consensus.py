@@ -61,6 +61,9 @@ def _configure() -> None:
     campaign = hard.branch.boundary.logical.clock.parent.parent.sparse_veto.campaign
     campaign.FIRST_VERSION = FIRST_VERSION
     campaign.LAST_VERSION = LAST_VERSION
+    # The active user contract requires the literal cumulative Bonferroni gate.
+    # Keep the earlier z>=3 policy from silently substituting for it.
+    campaign.EFFECTIVE_FIRST_VERSION = LAST_VERSION + 1
     campaign.PRIOR_COMPARISON_CELLS = PRIOR_COMPARISON_CELLS
     campaign.FACTOR_SETS = FACTOR_SETS
     campaign.QUANTILES = QUANTILES

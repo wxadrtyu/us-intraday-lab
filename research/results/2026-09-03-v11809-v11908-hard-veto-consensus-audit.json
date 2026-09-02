@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE_REJECTED",
+  "version_range": [11809, 11908],
+  "evaluated_cells": 100,
+  "elapsed_seconds": 15.118713400006527,
+  "reported_pre_null_candidate": "lev-v11881-87ed9043df8ef0a1",
+  "reported_prospective_z_score": 3.1157811548496266,
+  "cumulative_comparison_cells": 312083,
+  "cumulative_bonferroni_p": 1.0,
+  "cumulative_bonferroni_passed": false,
+  "corrected_strict_pre_factory_null_passes": 0,
+  "native_null_run": false,
+  "paper_pool_changed": false,
+  "next_unused_version": 11909
+}

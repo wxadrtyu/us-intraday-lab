@@ -2,7 +2,7 @@
 
 Candidate: `lev-v11800-90804cea426c9753`
 
-Status: `LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING`
+Status: `EXECUTION_PARITY_PASSED_BUT_RESEARCH_REJECTED_CUMULATIVE_BONFERRONI`
 
 The frozen contract reuses the v11098 causal DataFrame feature and leg adapter. The only strategy change is the preregistered hard-cash late-sleeve quality veto: a rejected bar-5 outer gate now receives zero late exposure instead of 25%. Opening, routing, symbols, entry clocks, exit clocks, long-only behavior, no-overnight behavior, and gross-at-entry constraints are unchanged.
 
@@ -16,4 +16,7 @@ The frozen contract reuses the v11098 causal DataFrame feature and leg adapter. 
 - Outer gate, modern state, transfer gate, fill gate, active state, and parent checks: zero mismatches/failures.
 - Gross limit violations: zero.
 
-This closes research-to-live-signal parity only. The strategy remains excluded from `POOL_ALLOCATIONS`; runner wiring and a separate explicit activation decision are still required before Paper trading.
+This closes research-to-live-signal parity only. A later gate-contract audit
+found cumulative Bonferroni p=1.0, so the candidate is rejected and remains
+excluded from `POOL_ALLOCATIONS`. The parity evidence is retained for audit;
+it does not authorize runner wiring or Paper trading.

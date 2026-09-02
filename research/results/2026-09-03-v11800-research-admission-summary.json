@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "status": "LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING",
+  "status": "REJECTED_CUMULATIVE_BONFERRONI_GATE",
   "candidate_id": "lev-v11800-90804cea426c9753",
   "selection_version_range": [11708, 11807],
   "validation_version": 11808,
@@ -16,6 +16,8 @@
   },
   "consumed_diagnostics": {"2026q1_total_return": 0.0933988687060152, "2026_all_total_return": 0.0525755827539527},
   "prospective_z_score": 3.19623063053036,
+  "cumulative_bonferroni_p": 1.0,
+  "cumulative_bonferroni_passed": false,
   "neighbor_primary_share": 1.0,
   "native_factory_null": {
     "passed": true,

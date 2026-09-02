@@ -28,3 +28,9 @@ def test_consensus_structures_are_genuinely_distinct() -> None:
     members = list(campaign.CONSENSUS_SPECS.values())
     assert len({tuple(item) for item in members}) == 5
     assert sorted(map(len, members)) == [3, 3, 3, 3, 4]
+
+
+def test_active_contract_restores_literal_bonferroni_gate() -> None:
+    campaign._configure()
+    evaluator = campaign.hard.branch.boundary.logical.clock.parent.parent.sparse_veto.campaign
+    assert evaluator.EFFECTIVE_FIRST_VERSION > campaign.LAST_VERSION

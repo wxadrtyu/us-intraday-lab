@@ -1,8 +1,11 @@
 # v11800 branch-causal hard-veto research admission
 
-`lev-v11800-90804cea426c9753` passed every preregistered primary, stress,
-historical, fold, start-date, neighborhood, consumed-diagnostic, prospective
-evidence, and native factory-null gate.
+`lev-v11800-90804cea426c9753` passed the primary, stress, historical, fold,
+start-date, neighborhood, consumed-diagnostic, z-score screen, native
+factory-null, and execution-parity checks. A subsequent contract audit found
+that the evaluator substituted a z>=3 screen for the explicitly required
+cumulative Bonferroni p<0.05 gate. Its cumulative Bonferroni p is 1.0, so the
+candidate is rejected despite the other passes.
 
 - 2024-2025 standard: 103.58% annualized, 9.66% MDD, IR 2.46.
 - 2024-2025 18bp: 85.04% annualized, 10.21% MDD, IR 2.09.
@@ -21,6 +24,7 @@ The only architectural change from v11098 is that a rejected causal bar-5
 late-route quality decision uses cash instead of 25% exposure. Opening signals,
 branch decisions, parent selection, and entry/exit clocks are unchanged.
 
-This is research admission only. v11800 remains fail-closed as
-`LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING`; no Paper allocation, runner,
-broker, or order state changed.
+The corrected status is `REJECTED_CUMULATIVE_BONFERRONI_GATE`. The frozen
+contract and parity evidence remain useful audit artifacts, but native max-T
+and execution parity do not override a failed declared gate. No Paper
+allocation, runner, broker, or order state changed.
