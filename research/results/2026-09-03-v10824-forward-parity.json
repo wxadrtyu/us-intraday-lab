@@ -1,0 +1,15 @@
+{
+  "active_session_mismatches": 0,
+  "anchor_sessions": 282,
+  "candidate_id": "lev-v10824-dc64eea19fd64bd8",
+  "cash_sessions": 304,
+  "daily_values_sha256": "cdf01d89d7555e7b90491d0bc939282ab566c4de6b6b14f2b849e0574b05aad5",
+  "fill_sessions": 821,
+  "full_exposure_sessions": 984,
+  "low_exposure_sessions": 423,
+  "maximum_absolute_daily_return_error": 0.0,
+  "passed": true,
+  "schema_version": "1.0.0",
+  "sessions": 1407,
+  "status": "COMPLETE"
+}

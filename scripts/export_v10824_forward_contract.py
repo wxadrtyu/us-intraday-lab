@@ -102,7 +102,11 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
         campaign.base.prior.BASE_QUANTILE,
         campaign.base.prior.BASE_ALPHA,
     )
-    fill_state_model = campaign.base.state._fit_state(
+    # The causal route ignores its legacy final argument and internally fits
+    # this preregistered sparse-gap fill state.  Capture that exact model after
+    # invoking the route instead of exporting the v6776 campaign placeholder.
+    sparse_veto = boundary.logical.clock.parent.parent.sparse_veto
+    fill_state_placeholder = campaign.base.state._fit_state(
         state, campaign.base.state.STATE_FAMILIES["high_vol_recovery"], 0.20
     )
     late = campaign._route(
@@ -112,7 +116,7 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
         core_model,
         override_model,
         transfer_gate_model,
-        fill_state_model,
+        fill_state_placeholder,
     )[0]
     opening = boundary.logical.clock.parent.parent._opening_by_late_stream[id(late)]
     candidate = selected[0]["definition"]
@@ -125,8 +129,9 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
         float(candidate["ridge_alpha"]),
     )
     opening_model = boundary.logical.clock.parent.parent.sparse_veto._opening_model
-    if opening_model is None:
-        raise RuntimeError("V10824_OPENING_MODEL_NOT_FITTED")
+    fill_state_model = sparse_veto._fill_model
+    if opening_model is None or fill_state_model is None:
+        raise RuntimeError("V10824_ROUTE_MODEL_NOT_FITTED")
 
     contract: dict[str, Any] = {
         "schema_version": "1.0.0",
@@ -169,6 +174,8 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
             "override_state_model": override_model,
             "transfer_gate_model": transfer_gate_model,
             "fill_state_model": fill_state_model,
+            "fill_state_family": sparse_veto.FROZEN_STATE_FAMILY,
+            "fill_state_quantile": sparse_veto.FROZEN_STATE_QUANTILE,
             "fill_orientation": "fill_on_low",
         },
         "opening_model": opening_model,
