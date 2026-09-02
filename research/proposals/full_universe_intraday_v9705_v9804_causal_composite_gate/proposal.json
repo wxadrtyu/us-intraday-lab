@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9705-v9804-causal-composite-gate",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9705,
+  "last_version": 9804,
+  "hypothesis": "Causal combinations of the historically robust growth-state gate and the higher-development-IR volatility/liquidity gate can improve global evidence without losing the 18bp and historical floors.",
+  "version_contract": "10 frozen composite factor sets x 5 frozen score quantiles x 2 frozen ridge alphas; one cell per version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 284483,
+  "cumulative_comparison_cells": 284583,
+  "causal_execution": "identical to v9605: every routed parent enters no earlier than bar 24 and volatility exposure is recomputed after repricing",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}

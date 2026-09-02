@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [9605, 9704],
+  "evaluated_versions": 100,
+  "evaluated_cells": 100,
+  "comparison_cells": 284483,
+  "elapsed_seconds": 14.75258919998305,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "best_development_candidate": "lev-v9672-2d13ee7ee4a75a5e",
+  "best_all_non_global_gates_candidate": "lev-v9642-b1cb2f09a0933b0e",
+  "v9292_status": "REJECTED_NONCAUSAL_LATE_ROUTE_REPRICING_PARITY",
+  "paper_pool_changed": false
+}
