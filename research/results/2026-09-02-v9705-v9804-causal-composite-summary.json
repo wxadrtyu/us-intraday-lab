@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "version_range": [9705, 9804],
+  "evaluated_versions": 100,
+  "comparison_cells": 284583,
+  "elapsed_seconds": 14.545509599993238,
+  "strict_pre_factory_null_passes": 0,
+  "native_factory_null_runs": 0,
+  "best_candidate": "lev-v9772-d29ecfd804a63c36",
+  "maximum_prospective_z_score": 2.587836205077283,
+  "paper_pool_changed": false
+}

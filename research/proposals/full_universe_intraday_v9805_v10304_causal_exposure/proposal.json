@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9805-v10304-causal-exposure",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9805,
+  "last_version": 10304,
+  "hypothesis": "The causally repriced late route may gain development IR and prospective statistical strength by changing only the residual allocation retained when the bar-23 quality gate fails.",
+  "version_contract": "5 frozen residual exposures x 10 original factor families x 5 frozen quantiles x 2 frozen ridge alphas; one cell per version",
+  "residual_exposures": [0.0, 0.05, 0.1, 0.4, 0.6],
+  "planned_versions": 500,
+  "planned_new_cells": 500,
+  "prior_comparison_cells": 284583,
+  "cumulative_comparison_cells": 285083,
+  "causal_execution": "all routed parents are repriced no earlier than bar 24; zero residual exposure also removes the rejected route trade from active/trade counts",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "ranking_rule": "development hard gates then prospective z-score; diagnostic periods cannot select exposure, factor family, quantile, or alpha",
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}
