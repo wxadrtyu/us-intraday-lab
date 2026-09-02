@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11407-v11098-portfolio-vol-native-null",
+  "status": "FROZEN_BEFORE_NATIVE_NULL",
+  "validation_version": 11407,
+  "selection_version_range": [11307, 11406],
+  "eligible_candidate_count": 55,
+  "nulls": ["portfolio_exposure_session_permutation_maxT", "portfolio_exposure_safe_circular_shift_maxT"],
+  "repetitions": 500,
+  "percentile": 0.95,
+  "safe_shift_minimum_sessions": 20,
+  "seed": 20260903,
+  "pass_rule": "observed compounded development profit must exceed both maxT 95th-percentile thresholds across every pre-null eligible overlay",
+  "incremental_null_contract": "the already native-null-passed frozen v11098 daily return stream is retained while only the new prior-return portfolio exposure overlay is permuted or safely shifted",
+  "paper_pool_change_authorized": false
+}

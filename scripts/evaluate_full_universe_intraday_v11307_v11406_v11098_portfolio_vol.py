@@ -156,13 +156,18 @@ def _base_streams(root: Path, source_path: Path, selection_path: Path):
     return development, historical, dev_streams, hist_streams
 
 
-def _scale(streams, lookback: int, target: float, floor: float):
-    exposure = np.ones(len(streams[0].values))
-    values = streams[0].values
+def _portfolio_exposure(values, lookback: int, target: float, floor: float):
+    values = np.asarray(values)
+    exposure = np.ones(len(values))
     for index in range(lookback, len(values)):
         realized = float(np.std(values[index - lookback : index], ddof=1) * np.sqrt(252.0))
         if np.isfinite(realized) and realized > 1e-8:
             exposure[index] = np.clip(target / realized, floor, 1.0)
+    return exposure
+
+
+def _scale(streams, lookback: int, target: float, floor: float):
+    exposure = _portfolio_exposure(streams[0].values, lookback, target, floor)
     return tuple(
         v34.v12.ReturnStream(
             stream.values * exposure,
