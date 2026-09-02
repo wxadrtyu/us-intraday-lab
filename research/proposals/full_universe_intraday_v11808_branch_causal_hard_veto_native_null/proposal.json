@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11808-branch-causal-hard-veto-native-null",
+  "status": "FROZEN_BEFORE_NATIVE_NULL",
+  "validation_version": 11808,
+  "selection_version_range": [11708, 11807],
+  "eligible_candidate_count": 2,
+  "candidate_ids": ["lev-v11800-90804cea426c9753", "lev-v11804-86896a768173d80d"],
+  "nulls": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"],
+  "repetitions": 500,
+  "percentile": 0.95,
+  "safe_shift_minimum_sessions": 20,
+  "seed": 20260903,
+  "pass_rule": "observed compounded development profit must exceed both maxT 95th-percentile thresholds across both eligible hard-veto candidates",
+  "paper_pool_change_authorized": false
+}

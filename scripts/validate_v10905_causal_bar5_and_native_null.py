@@ -19,6 +19,7 @@ REPETITIONS = 500
 PERCENTILE = 0.95
 SEED = 20260902
 SAFE_SHIFT_MINIMUM = 20
+EXPECTED_ELIGIBLE = 1
 
 
 def _compound(values):
@@ -59,12 +60,8 @@ def _development_route(root: Path, source_path: Path):
     core_model = campaign.base.state._fit_state(
         state, campaign.base.CORE_LOW_DISPERSION_TREND, 0.20
     )
-    override_model = campaign.base.state._fit_state(
-        state, campaign.base.CORE_OVERSOLD_REPAIR, 0.35
-    )
-    _, transfer_state = campaign.base.prior.route._base_state(
-        state, core_model, override_model
-    )
+    override_model = campaign.base.state._fit_state(state, campaign.base.CORE_OVERSOLD_REPAIR, 0.35)
+    _, transfer_state = campaign.base.prior.route._base_state(state, core_model, override_model)
     gate_model = campaign.base.prior.route._fit_gate(
         development,
         parents[campaign.base.prior.route.TRANSFER_PARENT][0],
@@ -91,17 +88,12 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     selection = json.loads(args.selection.read_text(encoding="utf-8"))
-    if (
-        selection.get("status") != "COMPLETE"
-        or selection.get("version_range") != SELECTION_RANGE
-    ):
+    if selection.get("status") != "COMPLETE" or selection.get("version_range") != SELECTION_RANGE:
         raise RuntimeError("V10905_SELECTION_NOT_FROZEN_COMPLETE")
     eligible = [item for item in selection["records"] if item["strict_pre_factory_null_pass"]]
-    if len(eligible) != 1:
+    if len(eligible) != EXPECTED_ELIGIBLE:
         raise RuntimeError("V10905_ELIGIBLE_CANDIDATE_COUNT_CHANGED")
-    campaign, development, factors, late, opening = _development_route(
-        args.root, args.source
-    )
+    campaign, development, factors, late, opening = _development_route(args.root, args.source)
     index = np.flatnonzero(development.masks()["development_all"])
     exposures = []
     for item in eligible:
@@ -124,17 +116,13 @@ def main() -> None:
         )
     late_values = late.values[index]
     opening_values = opening.values[index]
-    observed = [
-        _compound(opening_values + late_values * exposure) for exposure in exposures
-    ]
+    observed = [_compound(opening_values + late_values * exposure) for exposure in exposures]
     rng = np.random.default_rng(SEED)
     permutation_max, shift_max = [], []
     for _ in range(REPETITIONS):
         permutation_max.append(
             max(
-                _compound(
-                    opening_values + late_values * exposure[rng.permutation(len(index))]
-                )
+                _compound(opening_values + late_values * exposure[rng.permutation(len(index))])
                 for exposure in exposures
             )
         )
