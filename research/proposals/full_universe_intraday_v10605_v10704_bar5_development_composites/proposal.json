@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v10605-v10704-bar5-development-composites",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 10605,
+  "last_version": 10704,
+  "hypothesis": "Causal combinations of the three top development-ranked bar-5 signal families can preserve prospective z-score above 3 while diversifying their errors.",
+  "version_contract": "10 frozen top-three factor combinations x 5 frozen quantiles x 2 frozen ridge alphas; one cell per version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 285383,
+  "cumulative_comparison_cells": 285483,
+  "causal_execution": "gate at bar 5, route entry no earlier than bar 11 after the opening sleeve exits, delayed scenario at bar 12 or later",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "ranking_rule": "development hard gates then prospective z-score; diagnostics cannot select factor combinations or parameters",
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}
