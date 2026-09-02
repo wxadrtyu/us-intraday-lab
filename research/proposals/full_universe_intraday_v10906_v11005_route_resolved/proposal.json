@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v10906-v11005-route-resolved",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 10906,
+  "last_version": 11005,
+  "hypothesis": "The v10824 bar-5 logical gate may retain robust alpha after every anchor and fill parent is delayed until the bar-23 route outcome is knowable.",
+  "version_contract": "5 frozen logical pairs x 5 frozen quantiles x 4 frozen ridge alphas; one cell per version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 285683,
+  "cumulative_comparison_cells": 285783,
+  "causal_execution": {
+    "opening_decision_bar": 2,
+    "opening_entry_bar": 3,
+    "opening_exit_bar": 11,
+    "outer_gate_decision_bar": 5,
+    "route_decision_bar": 23,
+    "all_late_parent_minimum_entry_bar": 24,
+    "delay_scenario_minimum_entry_bar": 25
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "stop_rule": "continue only if a strict pre-native-null pass exists; otherwise mark this causal repair exhausted and move to an independent return source",
+  "paper_pool_change_authorized": false
+}
