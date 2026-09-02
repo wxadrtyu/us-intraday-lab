@@ -269,7 +269,10 @@ def test_noncausal_family_leaders_and_merge_fail_closed() -> None:
 
 
 def test_v10824_waits_for_execution_parity_before_paper_allocation() -> None:
-    assert PAPER_ADMISSION_STATES[V10824_ID] == "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING"
+    assert (
+        PAPER_ADMISSION_STATES[V10824_ID]
+        == "REJECTED_NONCAUSAL_EARLY_FILL_BEFORE_ROUTE_RESOLUTION"
+    )
     assert V10824_ID not in POOL_ALLOCATIONS
 
 

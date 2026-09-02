@@ -117,6 +117,41 @@ def validate(root: Path, source_path: Path, selection_path: Path) -> dict:
     maximum_error = float(np.max(np.abs(expected.values - actual.values)))
     active_mismatches = int(np.count_nonzero(expected.active != actual.active))
     passed = maximum_error <= 1e-12 and active_mismatches == 0
+    use_fill = (~anchor_active) & fill_active & fill_allowed
+    # A transfer-route miss is knowable at bar 2.  Modern and fallback parent
+    # misses are not knowable until their own bar-23 signal decisions.  Any
+    # fill component entered before bar 24 on those sessions is retrospective.
+    route_unresolved_until_bar23 = modern_state | ((~modern_state) & (~transfer_allowed))
+    violating_components = []
+    violating_session_mask = np.zeros(len(cube.sessions), dtype=bool)
+    violating_contribution = np.zeros(len(cube.sessions))
+    for parent_id, weight in zip(
+        campaign.base.FILL_PARENTS, campaign.base.FILL_WEIGHTS, strict=True
+    ):
+        decision = int(models[parent_id].specification["decision"])
+        entry = max(decision + 1, 11)
+        if entry >= 24:
+            continue
+        violation = (
+            route_unresolved_until_bar23 & use_fill & parents[parent_id][0].active
+        )
+        count = int(np.count_nonzero(violation))
+        if count:
+            violating_components.append(
+                {
+                    "parent_id": parent_id,
+                    "decision_bar": decision,
+                    "entry_bar": entry,
+                    "violating_sessions": count,
+                }
+            )
+            violating_session_mask |= violation
+            violating_contribution += np.where(
+                violation,
+                float(weight) * parents[parent_id][0].values * actual.late_exposure,
+                0.0,
+            )
+    violating_indices = np.flatnonzero(violating_session_mask)
     return {
         "schema_version": "1.0.0",
         "status": "COMPLETE" if passed else "FAILED",
@@ -133,6 +168,29 @@ def validate(root: Path, source_path: Path, selection_path: Path) -> dict:
             np.asarray(actual.values, dtype="<f8").tobytes()
         ).hexdigest(),
         "passed": passed,
+        "execution_causality": {
+            "passed": len(violating_indices) == 0,
+            "reason": (
+                None
+                if len(violating_indices) == 0
+                else "FILL_ENTERED_BEFORE_BAR23_ROUTE_ABSENCE_WAS_KNOWABLE"
+            ),
+            "violating_sessions": len(violating_indices),
+            "first_violating_session": (
+                None if len(violating_indices) == 0 else str(cube.sessions[violating_indices[0]])
+            ),
+            "last_violating_session": (
+                None if len(violating_indices) == 0 else str(cube.sessions[violating_indices[-1]])
+            ),
+            "violating_component_session_pairs": sum(
+                item["violating_sessions"] for item in violating_components
+            ),
+            "affected_return_contribution_sum": float(violating_contribution.sum()),
+            "affected_return_contribution_abs_sum": float(
+                np.abs(violating_contribution).sum()
+            ),
+            "components": violating_components,
+        },
     }
 
 
