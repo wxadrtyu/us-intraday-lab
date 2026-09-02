@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9605-v9704-causal-repriced-v9292",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9605,
+  "last_version": 9704,
+  "hypothesis": "The economic idea behind rejected v9292 may survive when every late-route parent is genuinely repriced after the bar-23 gate while its selection signal remains frozen at its native causal decision time.",
+  "version_contract": "10 frozen bar-23 quality factor families x 5 frozen quantiles x 2 frozen ridge alphas; one cell per version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 284383,
+  "cumulative_comparison_cells": 284483,
+  "causal_repair": {
+    "gate_decision_bar": 23,
+    "standard_entry_bar": "max(native decision + 1, 24)",
+    "delay_entry_bar": "standard entry + 1",
+    "parent_selection": "frozen native causal decision",
+    "volatility_exposure": "recomputed from causally repriced 9bp stream",
+    "opening_sleeve": "frozen decision 2, entry 3, exit 11 and never exposed to bar-23 veto"
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {
+    "long_only": true,
+    "gross_max": 1,
+    "overnight": false,
+    "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]
+  },
+  "hard_gates": "all existing primary, three-scenario historical, fold, start-date, neighborhood, consumed diagnostic, prospective global evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}
