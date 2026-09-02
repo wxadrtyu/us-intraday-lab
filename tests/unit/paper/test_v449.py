@@ -18,6 +18,7 @@ from us_intraday_lab.paper.pool import (
     V9022_ID,
     V9083_ID,
     V9100_ID,
+    V10824_ID,
     v798_state_score,
     v1254_state_score,
     validate_pool_allocations,
@@ -265,6 +266,11 @@ def test_noncausal_family_leaders_and_merge_fail_closed() -> None:
         V9100_ID: 0.25,
     }
     assert sum(USER_REQUESTED_FOUR_WAY_ALLOCATIONS.values()) == pytest.approx(1.0)
+
+
+def test_v10824_waits_for_execution_parity_before_paper_allocation() -> None:
+    assert PAPER_ADMISSION_STATES[V10824_ID] == "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING"
+    assert V10824_ID not in POOL_ALLOCATIONS
 
 
 def test_four_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:
