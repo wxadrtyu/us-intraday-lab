@@ -28,7 +28,7 @@ FAMILIES = (
     ("prior_weak_open_reversal", ("prior20_return", "gap", "current_return"), (-1, -1, 1)),
     ("gap_flow_agreement", ("gap", "signed_volume_imbalance", "close_location"), (1, 1, 1)),
 )
-SCHEDULES = ((2, 23), (5, 35), (8, 47), (11, 59), (17, 77))
+SCHEDULES = ((5, 23), (8, 35), (11, 47), (14, 59), (17, 77))
 STATE_MODES = ("unfiltered", "orderly_rebound_cash_filter")
 
 

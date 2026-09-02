@@ -16,4 +16,4 @@ def test_v11207_reserves_one_hundred_distinct_hypotheses() -> None:
 
 def test_v11207_entry_is_after_every_frozen_decision() -> None:
     assert all(decision < exit_bar for decision, exit_bar in campaign.SCHEDULES)
-    assert min(decision for decision, _ in campaign.SCHEDULES) >= 2
+    assert min(decision for decision, _ in campaign.SCHEDULES) >= 3

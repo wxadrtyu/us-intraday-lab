@@ -2,6 +2,7 @@
   "schema_version": "1.0.0",
   "proposal_id": "full-universe-intraday-v11207-v11306-opening-dislocation",
   "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "pre_outcome_amendment": "The initial run stopped before producing any version result because the frozen two-confirmation operator requires decision_bar >= 3. The first schedule was shifted from (2,23) to (5,23); no outcome was observed before this correction.",
   "first_version": 11207,
   "last_version": 11306,
   "hypothesis": "The interaction between the overnight gap and the first 15-90 minutes of price, volume, VWAP and cross-asset confirmation contains an intraday-only continuation or repair premium distinct from the v11098 routed parent ensemble.",
