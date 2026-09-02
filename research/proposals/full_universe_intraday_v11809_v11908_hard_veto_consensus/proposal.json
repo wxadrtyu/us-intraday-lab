@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11809-v11908-hard-veto-consensus",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11809,
+  "last_version": 11908,
+  "hypothesis": "The admitted v11800 hard-cash veto may retain avoidable high-cost late-route trades because two-factor agreement is too permissive. Requiring development-fitted three- or four-family agreement at the unchanged causal bar-5 clock may improve 18bp robustness without changing the opening sleeve or route clocks.",
+  "version_contract": "five fixed consensus structures times five lower quantiles times four ridge alphas; every rejected late route receives zero exposure",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 311983,
+  "cumulative_comparison_cells": 312083,
+  "consensus_structures": ["without_absorption", "without_growth", "without_reclaim", "without_flow", "all_four"],
+  "causal_execution": {
+    "quality_decision_bar": 5,
+    "rejected_late_exposure": 0.0,
+    "opening_sleeve_unchanged": true,
+    "branch_route_clocks_unchanged": true
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged three-scenario primary, fold, start, historical, neighborhood, consumed, prospective evidence and native-null gates",
+  "native_null_policy": "pre-register a new validation version only if one or more candidates pass every pre-null gate",
+  "paper_pool_change_authorized": false
+}
