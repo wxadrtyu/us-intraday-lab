@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11408-v11507-midday-exhaustion-repair",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11408,
+  "last_version": 11507,
+  "hypothesis": "Leveraged-ETF laggards that show causal midday exhaustion, improving breadth, price-flow divergence or VWAP/range repair can mean-revert before the close without an overnight position.",
+  "version_contract": "10 frozen exhaustion mechanisms x 5 frozen decision/exit schedules x 2 frozen prior-state modes",
+  "planned_versions": 100,
+  "planned_cells": 12800,
+  "prior_comparison_cells": 298883,
+  "cumulative_comparison_cells": 311683,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "maximum_gross": 1.0, "overnight": false, "entry_after_decision": true, "cost_scenarios_bp": [9, 18], "extra_delay_bars": 1},
+  "hard_gates": "three-scenario primary; at least 4/5 positive folds; all start dates positive; all historical scenarios at least 15% annualized and below 20% MDD; neighborhood at least 70%; 2026Q1 and all-2026 above 5%; global evidence; native null after pre-null pass",
+  "stop_rule": "complete all atomic versions; run native null only after complete pre-null passage; otherwise close this source",
+  "paper_pool_change_authorized": false
+}
