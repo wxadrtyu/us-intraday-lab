@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v10905-causal-bar5-and-native-null",
+  "status": "FROZEN_BEFORE_NULL_RUN",
+  "validation_version": 10905,
+  "selection_version_range": [10805, 10904],
+  "eligible_candidate_count": 1,
+  "method": ["SESSION_SIGNAL_PERMUTATION_MAXT", "SAFE_CIRCULAR_SHIFT_MAXT"],
+  "repetitions": 500,
+  "percentile": 0.95,
+  "seed": 20260902,
+  "safe_shift_minimum_sessions": 20,
+  "pass_rule": "observed compounded development profit must exceed both familywise 95th-percentile thresholds",
+  "paper_pool_change_authorized": false
+}
