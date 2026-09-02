@@ -13,8 +13,8 @@ import evaluate_full_universe_intraday_v5970_v6069_sector_flow_leadership as sec
 import evaluate_full_universe_intraday_v10805_v10904_bar5_and_boundary as boundary
 import numpy as np
 
-
 VALIDATION_VERSION = 10905
+SELECTION_RANGE = [10805, 10904]
 REPETITIONS = 500
 PERCENTILE = 0.95
 SEED = 20260902
@@ -91,7 +91,10 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     selection = json.loads(args.selection.read_text(encoding="utf-8"))
-    if selection.get("status") != "COMPLETE" or selection.get("version_range") != [10805, 10904]:
+    if (
+        selection.get("status") != "COMPLETE"
+        or selection.get("version_range") != SELECTION_RANGE
+    ):
         raise RuntimeError("V10905_SELECTION_NOT_FROZEN_COMPLETE")
     eligible = [item for item in selection["records"] if item["strict_pre_factory_null_pass"]]
     if len(eligible) != 1:

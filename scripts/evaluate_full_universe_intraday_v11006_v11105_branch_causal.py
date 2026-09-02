@@ -68,7 +68,6 @@ def _branch_causal_route(
         transfer_score >= gate_model["threshold"]
     )
     use_transfer = (~modern_state) & transfer_allowed
-    use_fallback = (~modern_state) & (~transfer_allowed)
     fallback_id = cash.FALLBACK_PARENT
     anchors = []
     for scenario in range(3):

@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11106-branch-causal-native-null",
+  "status": "FROZEN_BEFORE_NATIVE_NULL",
+  "validation_version": 11106,
+  "selection_version_range": [11006, 11105],
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "candidate_count": 1,
+  "nulls": ["session_signal_permutation_maxT", "safe_circular_shift_maxT"],
+  "repetitions": 500,
+  "percentile": 0.95,
+  "safe_shift_minimum_sessions": 20,
+  "seed": 20260903,
+  "pass_rule": "observed compounded development profit must exceed both maxT 95th-percentile thresholds",
+  "causal_route": "bar-2-resolved transfer fill may enter at bar11; bar-23 modern/fallback fill enters no earlier than bar24",
+  "paper_pool_change_authorized": false
+}
