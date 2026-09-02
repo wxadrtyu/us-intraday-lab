@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v10805-v10904-bar5-and-boundary",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 10805,
+  "last_version": 10904,
+  "hypothesis": "The development optimum for causal AND gates may lie just below the previous q=0.10 grid boundary, increasing sample size enough to cross prospective z=3 without abandoning precision.",
+  "version_contract": "5 frozen AND pairs x 5 lower-boundary quantiles x 4 frozen ridge alphas; one cell per version",
+  "quantiles": [0.0, 0.025, 0.05, 0.075, 0.1],
+  "ridge_alphas": [10.0, 30.0, 100.0, 300.0],
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 285583,
+  "cumulative_comparison_cells": 285683,
+  "causal_execution": "each gate uses only bar-5 factors; route entry is bar 11 or later and delayed entry is one bar later",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "stop_rule": "if no complete pre-native-null pass appears, stop optimizing the v9292 successor family and move to an independent return source",
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}
