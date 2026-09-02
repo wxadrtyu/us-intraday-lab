@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11006-v11105-branch-causal",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11006,
+  "last_version": 11105,
+  "hypothesis": "Preserving early fill only when the bar-2 transfer route is already resolved can recover timing alpha without using future bar-23 modern or fallback inactivity.",
+  "version_contract": "5 frozen logical pairs x 5 frozen quantiles x 4 frozen ridge alphas; one cell per version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 285783,
+  "cumulative_comparison_cells": 285883,
+  "causal_execution": {
+    "transfer_route_decision_bar": 2,
+    "transfer_fill_minimum_entry_bar": 11,
+    "modern_fallback_route_decision_bar": 23,
+    "modern_fallback_fill_minimum_entry_bar": 24,
+    "delayed_entries_add_bars": 1
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "stop_rule": "run native null only for complete pre-null passes; otherwise stop this repaired route family and move to an independent return source",
+  "paper_pool_change_authorized": false
+}
