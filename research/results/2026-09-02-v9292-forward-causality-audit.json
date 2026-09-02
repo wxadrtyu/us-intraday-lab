@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "lev-v9292-d229bbc0e792bfcf",
+  "status": "REJECTED_NONCAUSAL_LATE_ROUTE_REPRICING_PARITY",
+  "late_gate_decision_bar": 23,
+  "declared_late_entry_bar": 24,
+  "routed_parent_count": 12,
+  "offending_parent_count": 8,
+  "offending_parents": [
+    {
+      "candidate_id": "lev-v42t-b5dc591391ab516c",
+      "decision_bar": 2,
+      "native_entry_bar": 3,
+      "exit_bar": 72,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-9f96beaddb33b2fb",
+      "decision_bar": 2,
+      "native_entry_bar": 3,
+      "exit_bar": 72,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-07566ced3a358a4f",
+      "decision_bar": 5,
+      "native_entry_bar": 6,
+      "exit_bar": 47,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-336ed49b282f9ef2",
+      "decision_bar": 5,
+      "native_entry_bar": 6,
+      "exit_bar": 77,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-0ff8216ae0c8c1c5",
+      "decision_bar": 11,
+      "native_entry_bar": 12,
+      "exit_bar": 66,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-7fa628a0a122d7a1",
+      "decision_bar": 17,
+      "native_entry_bar": 18,
+      "exit_bar": 77,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-c3c1886e4da2d7e6",
+      "decision_bar": 5,
+      "native_entry_bar": 6,
+      "exit_bar": 72,
+      "enters_before_declared_late_entry": true
+    },
+    {
+      "candidate_id": "lev-v42t-e9a2127d4c32fc73",
+      "decision_bar": 5,
+      "native_entry_bar": 6,
+      "exit_bar": 47,
+      "enters_before_declared_late_entry": true
+    }
+  ],
+  "reason": "The bar-23 veto scales full-session parent returns whose native entries occur before bar 24; the research graph does not reprice those parents at bar 24.",
+  "paper_activation_allowed": false
+}
