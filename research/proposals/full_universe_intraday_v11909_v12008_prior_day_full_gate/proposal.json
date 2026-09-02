@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11909-v12008-prior-day-full-gate",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11909,
+  "last_version": 12008,
+  "hypothesis": "The persistent opening sleeve prevents late-only gates from raising whole-strategy significance enough for the cumulative Bonferroni hurdle. A fully causal prior-session state gate applied before the open to both sleeves may remove low-quality full days while preserving the admitted branch architecture on allowed days.",
+  "version_contract": "ten fixed prior-close state families times high/low orientation times five quantiles; rejected sessions remain entirely in cash",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 312083,
+  "cumulative_comparison_cells": 312183,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "causal_execution": {
+    "gate_information_clock": "prior_session_close",
+    "applies_before_open": true,
+    "rejected_session_exposure": 0.0,
+    "opening_and_branch_signals_unchanged_when_allowed": true
+  },
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "native_null_policy": "run only after every pre-null gate including literal cumulative Bonferroni passes",
+  "paper_pool_change_authorized": false
+}
