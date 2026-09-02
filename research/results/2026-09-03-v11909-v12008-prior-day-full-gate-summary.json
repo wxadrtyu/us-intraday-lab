@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE_REJECTED",
+  "version_range": [11909, 12008],
+  "evaluated_cells": 100,
+  "elapsed_seconds": 15.238994300016202,
+  "strict_pre_factory_null_passes": 0,
+  "best_candidate_id": "lev-v11977-7b1020f1f43bb1ec",
+  "best_standard_2024_2025": {
+    "annualized_return": 0.9491047556458141,
+    "max_drawdown": 0.08049275681673529,
+    "information_ratio": 2.4308212458556526
+  },
+  "best_cost_18bp_2024_2025": {
+    "annualized_return": 0.8082107881185596,
+    "max_drawdown": 0.08502014322378193,
+    "information_ratio": 2.13015911856712
+  },
+  "best_delay_5min_2024_2025": {
+    "annualized_return": 0.845922244297107,
+    "max_drawdown": 0.07917837539863015,
+    "information_ratio": 2.229796724488902
+  },
+  "best_z_score": 2.6960851233588357,
+  "best_cumulative_bonferroni_p": 1.0,
+  "rejection_counts": {
+    "cumulative_bonferroni_5pct": 100,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 85,
+    "parameter_neighborhood_70pct_primary": 87,
+    "cost_18bp_primary": 76,
+    "delay_5min_primary": 71,
+    "standard_primary": 67,
+    "consumed_2026_total_above_5pct": 54,
+    "consumed_2026q1_above_5pct": 50,
+    "four_of_five_positive_folds_all_scenarios": 30,
+    "all_start_dates_positive": 4
+  },
+  "native_null_run": false,
+  "paper_pool_changed": false,
+  "next_unused_version": 12009
+}
