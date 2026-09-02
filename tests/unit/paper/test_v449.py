@@ -277,7 +277,7 @@ def test_v10824_waits_for_execution_parity_before_paper_allocation() -> None:
     assert V10824_ID not in POOL_ALLOCATIONS
     assert (
         PAPER_ADMISSION_STATES[V11098_ID]
-        == "FORWARD_ROUTE_PARITY_PASSED_LIVE_FRAME_ADAPTER_PENDING"
+        == "LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING"
     )
     assert V11098_ID not in POOL_ALLOCATIONS
 

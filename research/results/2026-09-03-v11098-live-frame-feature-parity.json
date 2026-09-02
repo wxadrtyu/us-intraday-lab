@@ -1,0 +1,20 @@
+{
+  "compared_sessions": 80,
+  "decision_bars": [
+    2,
+    5,
+    11,
+    17,
+    23,
+    41,
+    77
+  ],
+  "details": [],
+  "factor_comparisons": 455,
+  "finite_mask_mismatches": 0,
+  "maximum_absolute_error": 6.661338147750939e-16,
+  "passed": true,
+  "recent_sessions": 100,
+  "schema_version": "1.0.0",
+  "status": "COMPLETE"
+}
