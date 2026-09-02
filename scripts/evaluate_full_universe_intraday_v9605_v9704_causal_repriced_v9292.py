@@ -21,12 +21,16 @@ GATE_DECISION = 23
 MINIMUM_ENTRY_BAR = GATE_DECISION + 1
 
 
-def effective_entry_bar(decision: int, delay: int) -> int:
+def effective_entry_bar(
+    decision: int, delay: int, minimum_entry_bar: int = MINIMUM_ENTRY_BAR
+) -> int:
     """First executable bar after both the native signal and late gate."""
-    return max(int(decision) + 1, MINIMUM_ENTRY_BAR) + int(delay)
+    return max(int(decision) + 1, int(minimum_entry_bar)) + int(delay)
 
 
-def _repriced_sleeve(cube, model, cost: float, delay: int):
+def _repriced_sleeve(
+    cube, model, cost: float, delay: int, minimum_entry_bar: int = MINIMUM_ENTRY_BAR
+):
     matrix, _, _ = v34._matrix(cube, model.specification, model.factors)
     score = np.einsum(
         "saf,f,f->sa",
@@ -40,7 +44,7 @@ def _repriced_sleeve(cube, model, cost: float, delay: int):
     selected = assets[local]
     value = score[cube.rows, local]
     decision = int(model.specification["decision"])
-    entry = effective_entry_bar(decision, delay)
+    entry = effective_entry_bar(decision, delay, minimum_entry_bar)
     exit_bar = int(model.specification["exit"])
     active = np.isfinite(value) & (value >= model.threshold) & (entry < exit_bar)
     active &= cube.first[cube.rows, entry, selected] <= entry * 5 + cube.boundary_tolerance

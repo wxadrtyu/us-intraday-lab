@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v10305-v10604-causal-gate-clock",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 10305,
+  "last_version": 10604,
+  "hypothesis": "Earlier causal quality decisions can retain more of the late-route return while preserving executable timing and avoiding overlap with the fixed opening sleeve.",
+  "version_contract": "3 frozen gate clocks x 10 original factor families x 5 frozen quantiles x 2 frozen ridge alphas; one cell per version",
+  "gate_decision_bars": [5, 11, 17],
+  "minimum_entry_bars": [11, 12, 18],
+  "planned_versions": 300,
+  "planned_new_cells": 300,
+  "prior_comparison_cells": 285083,
+  "cumulative_comparison_cells": 285383,
+  "causal_execution": "entry is max(native decision + 1, gate decision + 1, opening exit); delay enters one additional bar later",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "ranking_rule": "development hard gates then prospective z-score; diagnostics cannot select the gate clock or parameters",
+  "hard_gates": "unchanged prospective primary, historical, fold, start-date, neighborhood, consumed diagnostic, global-evidence, and native-null gates",
+  "paper_pool_change_authorized": false
+}
