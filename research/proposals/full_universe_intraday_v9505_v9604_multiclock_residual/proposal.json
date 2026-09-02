@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9505-v9604-multiclock-residual",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9505,
+  "last_version": 9604,
+  "hypothesis": "Three causally evaluated and non-overlapping intraday residual sleeves can diversify clock-time and regime dependence better than the rejected standalone v9305-v9504 families.",
+  "version_contract": "10 frozen factor bundles x 10 frozen three-window structures; 6 quantile/alpha cells remain inside each version",
+  "planned_versions": 100,
+  "planned_new_cells": 600,
+  "prior_comparison_cells": 283783,
+  "cumulative_comparison_cells": 284383,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {"long_only": true, "gross_max": 1, "overnight": false, "entry": "next five-minute open", "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]},
+  "hard_gates": "all existing primary, three-scenario historical, three-scenario fold, three-scenario start-date, neighborhood, consumed diagnostic, cumulative Bonferroni, and native-null gates",
+  "paper_pool_change_authorized": false
+}
