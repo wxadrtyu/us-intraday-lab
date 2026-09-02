@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v9305-v9404-causal-recovery",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 9305,
+  "last_version": 9404,
+  "hypothesis": "Long-only intraday laggards can recover when contemporaneous price stabilization, liquidity absorption, or sector broadening confirms that selling pressure is fading.",
+  "version_contract": "10 frozen recovery families x 5 separated decision/exit schedules x 2 market-state modes; each version ranks its parameter cells only on development data",
+  "planned_versions": 100,
+  "planned_new_cells": 12800,
+  "prior_comparison_cells": 258183,
+  "cumulative_comparison_cells": 270983,
+  "causality_contract": {
+    "signal_information_cutoff": "declared decision bar",
+    "entry": "next five-minute bar open",
+    "exit": "declared same-session exit bar",
+    "retroactive_gating": false
+  },
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {
+    "long_only": true,
+    "gross_max": 1,
+    "overnight": false,
+    "cost_scenarios": ["9bp", "18bp", "extra_5min_9bp"]
+  },
+  "hard_gates": "2024-2025 all-scenario annualized return at least 50%, MDD below 20%, IR at least 1; 2018-2020 all-scenario annualized return at least 15% and MDD below 20%; at least 4/5 positive folds in all scenarios; all start dates positive; neighborhood at least 70%; 2026Q1 and full-2026 consumed returns above 5%; cumulative Bonferroni below 5%; native factory null required after all reference gates pass",
+  "paper_pool_change_authorized": false
+}
