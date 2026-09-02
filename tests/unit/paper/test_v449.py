@@ -20,6 +20,7 @@ from us_intraday_lab.paper.pool import (
     V9100_ID,
     V10824_ID,
     V11098_ID,
+    V11800_ID,
     v798_state_score,
     v1254_state_score,
     validate_pool_allocations,
@@ -280,6 +281,8 @@ def test_v10824_waits_for_execution_parity_before_paper_allocation() -> None:
         == "LIVE_FRAME_SIGNAL_PARITY_PASSED_RUNNER_WIRING_PENDING"
     )
     assert V11098_ID not in POOL_ALLOCATIONS
+    assert PAPER_ADMISSION_STATES[V11800_ID] == "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING"
+    assert V11800_ID not in POOL_ALLOCATIONS
 
 
 def test_four_member_pool_worst_case_gross_stays_below_buffer(tmp_path) -> None:

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "status": "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING",
+  "candidate_id": "lev-v11800-90804cea426c9753",
+  "selection_version_range": [11708, 11807],
+  "validation_version": 11808,
+  "development_oos_2024_2025": {
+    "standard_9bp": {"annualized_return": 1.03578153074681, "max_drawdown": 0.0966117068170469, "information_ratio": 2.46408367396339},
+    "cost_18bp": {"annualized_return": 0.850406227676148, "max_drawdown": 0.102087627256743, "information_ratio": 2.08630648873376},
+    "delay_5min_9bp": {"annualized_return": 1.01671979378933, "max_drawdown": 0.0891595562926111, "information_ratio": 2.40684269511874}
+  },
+  "historical_2018_2020": {
+    "standard_annualized_return": 0.281130459833498,
+    "cost_18bp_annualized_return": 0.167182773290157,
+    "delay_5min_annualized_return": 0.251640268750013
+  },
+  "consumed_diagnostics": {"2026q1_total_return": 0.0933988687060152, "2026_all_total_return": 0.0525755827539527},
+  "prospective_z_score": 3.19623063053036,
+  "neighbor_primary_share": 1.0,
+  "native_factory_null": {
+    "passed": true,
+    "repetitions": 500,
+    "observed_profit": 7.18454147242535,
+    "session_signal_permutation_maxT_95pct": 5.8074121029337,
+    "safe_circular_shift_maxT_95pct": 5.66013282461934,
+    "evidence_sha256": "5d1645e7ae819f1b13fce874b92ad40d6037409e6cf9a4d32d56bb5493de41f0"
+  },
+  "paper_pool_changed": false
+}
