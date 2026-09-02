@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11207-v11306-opening-dislocation",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11207,
+  "last_version": 11306,
+  "hypothesis": "The interaction between the overnight gap and the first 15-90 minutes of price, volume, VWAP and cross-asset confirmation contains an intraday-only continuation or repair premium distinct from the v11098 routed parent ensemble.",
+  "version_contract": "10 frozen economic signal families x 5 frozen causal decision/exit schedules x 2 frozen prior-state modes",
+  "planned_versions": 100,
+  "planned_cells": 12800,
+  "prior_comparison_cells": 285983,
+  "cumulative_comparison_cells": 298783,
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "execution": {
+    "long_only": true,
+    "maximum_gross": 1.0,
+    "overnight": false,
+    "entry_after_decision": true,
+    "cost_scenarios_bp": [9, 18],
+    "extra_delay_bars": 1
+  },
+  "hard_gates": "standard, 18bp and delay primary gates; 4/5 positive folds; all start dates positive; all three historical scenarios at least 15% annualized and below 20% MDD; neighborhood at least 70%; consumed 2026Q1 and all-2026 above 5%; global evidence; native null after complete pre-null pass",
+  "stop_rule": "complete every atomic version; run native null only after every pre-null gate passes; otherwise close this source and continue independently",
+  "paper_pool_change_authorized": false
+}
