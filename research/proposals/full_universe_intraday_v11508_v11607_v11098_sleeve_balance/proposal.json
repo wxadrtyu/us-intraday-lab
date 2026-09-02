@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v11508-v11607-v11098-sleeve-balance",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 11508,
+  "last_version": 11607,
+  "hypothesis": "The non-overlapping opening and branch-routed late sleeves of v11098 have different return quality; a conservative fixed balance learned only from development data can improve robustness without changing any signal, route, or clock.",
+  "version_contract": "10 frozen opening weights x 10 frozen late-route weights; both range from 0.50 to 0.95 and one pair is one version",
+  "planned_versions": 100,
+  "planned_new_cells": 100,
+  "prior_comparison_cells": 311683,
+  "cumulative_comparison_cells": 311783,
+  "base_candidate": "lev-v11098-2ddc1d07c9cfe31e",
+  "causality": "weights are constant; opening and branch route retain their frozen decisions, symbols, entries and exits; sleeves do not overlap except the bar-11 exit/entry handoff",
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "hard_gates": "unchanged three-scenario primary, fold, start, historical, neighborhood, consumed, prospective evidence and native-null gates",
+  "paper_pool_change_authorized": false
+}

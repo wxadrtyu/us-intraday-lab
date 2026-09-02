@@ -43,7 +43,7 @@ def _combine(opening, route, exposure):
     )
 
 
-def _base_streams(root: Path, source_path: Path, selection_path: Path):
+def _base_streams(root: Path, source_path: Path, selection_path: Path, *, return_components=False):
     branch._configure()
     campaign = branch.boundary.logical.clock.parent.parent.sparse_veto.campaign
     if campaign.base.prior.parent._sha(source_path) != campaign.base.prior.SOURCE_SHA256:
@@ -153,6 +153,17 @@ def _base_streams(root: Path, source_path: Path, selection_path: Path):
         _combine(opening, route, hist_outer)
         for opening, route in zip(hist_openings, hist_routes, strict=True)
     )
+    if return_components:
+        return (
+            development,
+            historical,
+            dev_openings,
+            dev_routes,
+            dev_outer,
+            hist_openings,
+            hist_routes,
+            hist_outer,
+        )
     return development, historical, dev_streams, hist_streams
 
 
