@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "status": "RESEARCH_ADMITTED_EXECUTION_PARITY_PENDING",
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "selection_version_range": [11006, 11105],
+  "validation_version": 11106,
+  "development_oos_2024_2025": {
+    "standard_9bp": {"annualized_return": 1.0019042590604617, "max_drawdown": 0.09402895360294761, "information_ratio": 2.389457375818933},
+    "cost_18bp": {"annualized_return": 0.815600597865457, "max_drawdown": 0.10122603088600746, "information_ratio": 2.005287960711684},
+    "delay_5min_9bp": {"annualized_return": 0.9735187068632676, "max_drawdown": 0.08705803727807238, "information_ratio": 2.3175432475967686}
+  },
+  "historical_2018_2020": {
+    "standard_annualized_return": 0.26590501035115444,
+    "cost_18bp_annualized_return": 0.1515115017768256,
+    "delay_5min_annualized_return": 0.24304912737388085,
+    "maximum_drawdown": 0.15129318809672176
+  },
+  "consumed_diagnostics": {"2026q1_total_return": 0.09130920743830373, "2026_all_total_return": 0.05916147142938066},
+  "prospective_z_score": 3.0994308089606797,
+  "neighbor_primary_share": 1.0,
+  "native_factory_null": {
+    "passed": true,
+    "repetitions": 500,
+    "observed_profit": 6.6008369854297895,
+    "session_signal_permutation_maxT_95pct": 5.458001115209315,
+    "safe_circular_shift_maxT_95pct": 5.298810914734265,
+    "evidence_sha256": "98a842af1148714e8b0f892a15b637c07f19f3a30bd63851114af1ff50b96dd3"
+  },
+  "execution_causality": "transfer fill enters after bar2 route resolution; modern/fallback fill enters after bar23 route resolution",
+  "paper_pool_changed": false
+}
