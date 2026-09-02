@@ -22,6 +22,19 @@ import numpy as np
 
 CANDIDATE_ID = "lev-v10824-dc64eea19fd64bd8"
 SELECTION_RANGE = [10805, 10904]
+CAMPAIGN_CONFIGURE = boundary._configure
+EXECUTION_METADATA = {
+    "long_only": True,
+    "gross_limit": 1.0,
+    "overnight": False,
+    "bar_minutes": 5,
+    "outer_gate_decision_bar": 5,
+    "minimum_late_entry_bar": 11,
+    "opening_decision_bar": 2,
+    "opening_entry_bar": 3,
+    "opening_exit_bar": 11,
+    "outer_gate_low_exposure": boundary.logical.clock.parent.parent.LOW_EXPOSURE,
+}
 
 
 def _sha(path: Path) -> str:
@@ -50,7 +63,7 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
     if len(selected) != 1 or not selected[0].get("strict_pre_factory_null_pass"):
         raise RuntimeError("V10824_FROZEN_CANDIDATE_CHANGED")
 
-    boundary._configure()
+    CAMPAIGN_CONFIGURE()
     campaign = boundary.logical.clock.parent.parent.sparse_veto.campaign
     if campaign.base.prior.parent._sha(source_path) != campaign.base.prior.SOURCE_SHA256:
         raise RuntimeError("V10824_SOURCE_HASH_CHANGED")
@@ -144,18 +157,7 @@ def build_contract(root: Path, source_path: Path, selection_path: Path) -> dict[
             "threshold_validation": "2024",
             "consumed_2026_used_for_fit_or_ranking": False,
         },
-        "execution": {
-            "long_only": True,
-            "gross_limit": 1.0,
-            "overnight": False,
-            "bar_minutes": 5,
-            "outer_gate_decision_bar": 5,
-            "minimum_late_entry_bar": 11,
-            "opening_decision_bar": 2,
-            "opening_entry_bar": 3,
-            "opening_exit_bar": 11,
-            "outer_gate_low_exposure": boundary.logical.clock.parent.parent.LOW_EXPOSURE,
-        },
+        "execution": EXECUTION_METADATA,
         "symbols": list(v34.v12.SYMBOLS),
         "parents": {
             item: {
