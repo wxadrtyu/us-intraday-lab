@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE_REJECTED",
+  "version_range": [13209, 13308],
+  "versions": 100,
+  "evaluated_cells": 2000,
+  "comparison_cells": 327183,
+  "elapsed_seconds": 39.79126820000238,
+  "strict_pre_factory_null_passes": 0,
+  "best_candidate_id": "lev-v13252-4b38bf13999c47ce",
+  "best_standard_2024_2025": {"annualized_return": 2.439707319663349, "max_drawdown": 0.08273372682233826, "information_ratio": 3.74405013234664, "trades": 169},
+  "best_cost_18bp_2024_2025": {"annualized_return": 1.7803087549874084, "max_drawdown": 0.08543372682233819, "information_ratio": 3.01219794046567},
+  "best_delay_5min_2024_2025": {"annualized_return": 1.2760057052370888, "max_drawdown": 0.09441838343792064, "information_ratio": 2.698614846614116},
+  "best_z_score": 3.0660888595838043,
+  "best_cumulative_bonferroni_p": 1.0,
+  "selected_top_k": 1,
+  "failed_best_gates": ["cumulative_bonferroni_5pct"],
+  "native_null_run": false,
+  "paper_pool_changed": false,
+  "next_unused_version": 13309
+}
