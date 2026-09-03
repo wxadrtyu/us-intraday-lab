@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+SCRIPTS = Path(__file__).parents[3] / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+import evaluate_full_universe_intraday_v13509_v13608_state_delta_alpha as campaign
+
+
+def test_v13509_campaign_is_frozen_before_scan() -> None:
+    proposal = json.loads(
+        (
+            Path(__file__).parents[3]
+            / "research/proposals/full_universe_intraday_v13509_v13608_state_delta_alpha/proposal.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert proposal["status"] == "FROZEN_BEFORE_OUTCOME_SCAN"
+    assert proposal["first_version"] == campaign.FIRST_VERSION == 13509
+    assert proposal["last_version"] == campaign.LAST_VERSION == 13608
+    assert set(campaign.LAG_BY_SCHEDULE.values()) == {2, 3, 4, 5, 6}
+    assert len(campaign.base.residual.FACTOR_SETS) * len(campaign.SCHEDULES) == 100
+
+
+def test_execution_remains_long_only_single_asset() -> None:
+    campaign._configure()
+    assert tuple(campaign.base.ASSETS) == (3, 4)
+    assert campaign.base.TOP_K == (1,)
+    assert campaign.base.MECHANISM == "causal_intraday_factor_state_delta_alpha"

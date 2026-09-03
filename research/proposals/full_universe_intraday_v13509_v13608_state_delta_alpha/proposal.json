@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13509-v13608-state-delta-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13509,
+  "last_version": 13608,
+  "hypothesis": "Changes in path, VWAP, flow, breadth, and volatility states over the preceding 10 to 30 minutes may predict future leveraged-ETF residual returns more robustly than state levels. All differences are causal at the decision bar.",
+  "version_contract": "ten fixed factor families times ten causal schedule-and-lag structures; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 329183,
+  "cumulative_comparison_cells": 330183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "transform": "causal_factor_state_difference", "lags_minutes": [10, 15, 20, 25, 30]},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
