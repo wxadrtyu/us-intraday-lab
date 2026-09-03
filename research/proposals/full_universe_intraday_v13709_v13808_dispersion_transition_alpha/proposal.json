@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13709-v13808-dispersion-transition-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13709,
+  "last_version": 13808,
+  "hypothesis": "Cross-sectional convergence and expansion across leveraged and sector assets alter the payoff to relative leadership. Causal panel ranks, robust deviations, dispersion changes, and tail asymmetry may identify that transition independently of raw state differences.",
+  "version_contract": "ten fixed factor families times ten causal schedule-and-lag structures; each version uses the same frozen rank, robust-deviation, dispersion-ratio, and tail-asymmetry transforms and ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 331183,
+  "cumulative_comparison_cells": 332183,
+  "universe": ["TQQQ", "SOXL"],
+  "context_panel": "thirteen leveraged and sector assets already present in the frozen factor cube",
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "transform": "causal_cross_sectional_dispersion_transition", "lags_minutes": [10, 15, 20, 25, 30]},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
