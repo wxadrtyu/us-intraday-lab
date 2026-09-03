@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import evaluate_full_universe_intraday_v12009_v12108_topk_cross_section as base
@@ -27,6 +28,7 @@ SCHEDULES = (
 LAG_BY_SCHEDULE = {
     schedule: (2, 3, 4, 5, 6)[index % 5] for index, schedule in enumerate(SCHEDULES)
 }
+_MATRIX_CACHE: dict[tuple[int, tuple[str, ...], int, int], np.ndarray] = {}
 
 
 @dataclass(slots=True)
@@ -50,19 +52,25 @@ def _panel_rank(values: np.ndarray) -> np.ndarray:
 
 
 def _dispersion_matrix(cube, factors, decision, lag_bars):
+    key = (id(cube), tuple(factors), decision, lag_bars)
+    cached = _MATRIX_CACHE.get(key)
+    if cached is not None:
+        return cached
     current = cube.factors(decision)
     earlier = cube.factors(decision - lag_bars)
     pieces = []
     for name in factors:
         now = current[name][:, PANEL]
         prior = earlier[name][:, PANEL]
-        median = np.nanmedian(now, axis=1)
-        prior_median = np.nanmedian(prior, axis=1)
-        mad = np.nanmedian(np.abs(now - median[:, None]), axis=1)
-        prior_mad = np.nanmedian(np.abs(prior - prior_median[:, None]), axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            median = np.nanmedian(now, axis=1)
+            prior_median = np.nanmedian(prior, axis=1)
+            mad = np.nanmedian(np.abs(now - median[:, None]), axis=1)
+            prior_mad = np.nanmedian(np.abs(prior - prior_median[:, None]), axis=1)
+            q25, q75 = np.nanpercentile(now, (25, 75), axis=1)
         scale = np.maximum(mad, 1e-8)
         dispersion_change = np.log((mad + 1e-8) / (prior_mad + 1e-8))
-        q25, q75 = np.nanpercentile(now, (25, 75), axis=1)
         tail_asymmetry = ((q75 - median) - (median - q25)) / scale
         normalized = (now[:, :2] - median[:, None]) / scale[:, None]
         rank = _panel_rank(now)[:, :2]
@@ -74,7 +82,9 @@ def _dispersion_matrix(cube, factors, decision, lag_bars):
                 rank * tail_asymmetry[:, None],
             )
         )
-    return np.stack(pieces, axis=2)
+    matrix = np.stack(pieces, axis=2)
+    _MATRIX_CACHE[key] = matrix
+    return matrix
 
 
 def _fit(cube, family, schedule):
