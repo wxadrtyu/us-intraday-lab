@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13009-v13108-independent-sleeve-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13009,
+  "last_version": 13108,
+  "hypothesis": "The joint daily gate in the triple-window leader discards usable sleeves when one window is weak. Independent training-fixed thresholds for each non-overlapping sleeve may increase sample efficiency and risk-adjusted evidence while preserving causal long-only execution and instantaneous gross at or below one.",
+  "version_contract": "ten fixed factor mechanisms times ten preregistered non-overlapping window triples; each version ranks five common sleeve quantiles and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 323183,
+  "cumulative_comparison_cells": 324183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "sleeves": 3, "window_overlap": false},
+  "fit_contract": {"window": "train_2022_2023_only", "one_ridge_per_sleeve": true, "activation_thresholds": "one_training_quantile_per_sleeve_frozen_outside_training"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
