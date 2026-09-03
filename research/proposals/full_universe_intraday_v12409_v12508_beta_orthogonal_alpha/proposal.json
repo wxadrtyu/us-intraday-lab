@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12409-v12508-beta-orthogonal-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12409,
+  "last_version": 12508,
+  "hypothesis": "The fixed beta-one SPY subtraction used by earlier residual targets may be unstable across leveraged assets and eras. Estimating a separate no-intercept market beta for TQQQ and SOXL using only 2022-2023, then fitting factors to beta-orthogonal residual returns, may improve cross-era ranking stability while execution remains long-only.",
+  "version_contract": "ten fixed factor mechanisms times ten causal decision-exit schedules; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 317183,
+  "cumulative_comparison_cells": 318183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"beta_window": "train_2022_2023_only", "beta_intercept": false, "beta_frozen_outside_training": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
