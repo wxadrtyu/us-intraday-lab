@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13309-v13408-rule-consensus-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13309,
+  "last_version": 13408,
+  "hypothesis": "Economically signed path, VWAP, flow, gap, compression, and leadership rules may generalize better than outcome-fitted regressions. Only feature normalization and activity thresholds use training data; rule weights are fixed before scanning outcomes.",
+  "version_contract": "ten fixed outcome-free rule templates times ten causal decision-exit schedules; each version ranks five training activity thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 327183,
+  "cumulative_comparison_cells": 328183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"outcome_fit": false, "rule_weights": "preregistered", "feature_scaling": "train_2022_2023_only", "activity_thresholds": "train_2022_2023_only"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
