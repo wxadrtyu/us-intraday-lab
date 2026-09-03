@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12209-v12308-conditional-handoff",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12209,
+  "last_version": 12308,
+  "hypothesis": "A first intraday alpha leg provides causal information about whether the selected leveraged ETF is confirming or failing. A strictly non-overlapping second leg that either continues confirmed leadership or rotates after failure may add an independent same-day return source without increasing concurrent gross exposure.",
+  "version_contract": "five fixed factor mechanisms times two handoff policies times ten decision-handoff-final schedules; each version ranks three development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 600,
+  "prior_comparison_cells": 315583,
+  "cumulative_comparison_cells": 316183,
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "strictly_nonoverlapping_legs": true, "second_entry_after_handoff_decision": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}

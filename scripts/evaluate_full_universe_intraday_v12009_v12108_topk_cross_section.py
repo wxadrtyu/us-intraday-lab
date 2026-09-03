@@ -35,6 +35,7 @@ QUANTILES = (0.0, 0.25, 0.50)
 TARGETS = (0.25, 0.40)
 ALPHA = 100.0
 MECHANISM = "diversified_topk_cross_sectional_residual_alpha"
+DEFINITION_EXTRA = lambda _model: {}
 
 
 @dataclass(slots=True)
@@ -280,6 +281,7 @@ def main():
             "target_volatility": selected["target"],
             "ridge_alpha": ALPHA,
             "gross_limit": 1.0,
+            **DEFINITION_EXTRA(model),
         }
         records.append(
             {
