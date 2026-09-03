@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE_REJECTED",
+  "version_range": [12309, 12408],
+  "versions": 100,
+  "evaluated_cells": 1000,
+  "comparison_cells": 317183,
+  "elapsed_seconds": 19.537617699999828,
+  "strict_pre_factory_null_passes": 0,
+  "best_candidate_id": "lev-v12383-f1de9da97966b20a",
+  "best_standard_2024_2025": {"annualized_return": 0.5289242166948369, "max_drawdown": 0.15803536201469026, "information_ratio": 1.3418495858074662},
+  "best_cost_18bp_2024_2025": {"annualized_return": 0.44493249753484077, "max_drawdown": 0.15969795755134564, "information_ratio": 1.1494171902299881},
+  "best_delay_5min_2024_2025": {"annualized_return": 0.49405596898496107, "max_drawdown": 0.15022486100079435, "information_ratio": 1.3310669219897733},
+  "best_z_score": 0.9784890394160355,
+  "best_cumulative_bonferroni_p": 1.0,
+  "rejection_reason_counts": {
+    "cost_18bp_primary": 100,
+    "delay_5min_primary": 100,
+    "historical_15pct_mdd_below_20pct_all_scenarios": 100,
+    "parameter_neighborhood_70pct_primary": 100,
+    "cumulative_bonferroni_5pct": 100,
+    "standard_primary": 99,
+    "four_of_five_positive_folds_all_scenarios": 94,
+    "consumed_2026q1_above_5pct": 84,
+    "all_start_dates_positive_all_scenarios": 63,
+    "consumed_2026_total_above_5pct": 55
+  },
+  "native_null_run": false,
+  "paper_pool_changed": false,
+  "next_unused_version": 12409
+}
