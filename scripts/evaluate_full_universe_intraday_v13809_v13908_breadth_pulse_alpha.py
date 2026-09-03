@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import evaluate_full_universe_intraday_v12009_v12108_topk_cross_section as base
@@ -58,8 +59,10 @@ def _breadth_matrix(cube, factors, decision, lag_bars):
     for name in factors:
         now_sector = current[name][:, SECTORS]
         prior_sector = earlier[name][:, SECTORS]
-        now_mean = np.nanmean(now_sector, axis=1)
-        prior_mean = np.nanmean(prior_sector, axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            now_mean = np.nanmean(now_sector, axis=1)
+            prior_mean = np.nanmean(prior_sector, axis=1)
         now_share = np.nanmean(now_sector > 0.0, axis=1)
         prior_share = np.nanmean(prior_sector > 0.0, axis=1)
         mean_pulse = now_mean - prior_mean
