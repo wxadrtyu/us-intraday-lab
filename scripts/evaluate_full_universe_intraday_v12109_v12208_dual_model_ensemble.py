@@ -76,8 +76,9 @@ def _fit(cube, family, schedule):
 def _scores(cube, model):
     members = np.stack([_member_score(cube, item) for item in model.members], axis=2)
     standardized = (members - model.mean) / model.scale
-    score = np.nanmean(standardized, axis=2)
-    return np.where(np.isfinite(members).all(axis=2), score, -np.inf)
+    finite = np.isfinite(members).all(axis=2)
+    score = np.where(np.isfinite(standardized), standardized, 0.0).mean(axis=2)
+    return np.where(finite, score, -np.inf)
 
 
 def _configure() -> None:
