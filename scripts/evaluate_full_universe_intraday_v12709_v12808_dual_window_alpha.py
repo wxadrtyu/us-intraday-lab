@@ -80,11 +80,11 @@ def _single_raw(cube, model, top_k, cost, delay):
         - 1.0,
         axis=1,
     )
+    benchmark_return = cube.opens[:, model.exit_bar, 0] / cube.opens[:, entry, 0] - 1.0
+    valid &= np.isfinite(portfolio_return) & np.isfinite(benchmark_return)
     values[valid] = portfolio_return[valid] - cost
     benchmark = np.zeros(len(cube.sessions))
-    benchmark[valid] = (
-        cube.opens[valid, model.exit_bar, 0] / cube.opens[valid, entry, 0] - 1.0
-    )
+    benchmark[valid] = benchmark_return[valid]
     return base.v34.v12.ReturnStream(
         values, benchmark, valid, np.where(valid, top_k, 0).astype(int)
     )
