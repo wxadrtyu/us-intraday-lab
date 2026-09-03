@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12609-v12708-asset-specific-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12609,
+  "last_version": 12708,
+  "hypothesis": "Pooling TQQQ and SOXL under one factor coefficient vector may erase economically distinct technology and semiconductor intraday responses. Separate ridge models fitted only on 2022-2023 may preserve asset-specific residual-alpha structure while retaining causal long-only selection.",
+  "version_contract": "ten fixed factor mechanisms times ten causal decision-exit schedules; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 319183,
+  "cumulative_comparison_cells": 320183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "models": "one_separate_ridge_per_asset", "coefficients_frozen_outside_training": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
