@@ -25,7 +25,6 @@ WINDOW_PAIRS = (
 )
 ORIGINAL_FIT = base._fit
 ORIGINAL_SCORES = base._scores
-ORIGINAL_RAW = base._raw
 
 
 @dataclass(slots=True)
@@ -63,6 +62,34 @@ def _scores(cube, model):
     return np.mean(np.stack(scores), axis=0)
 
 
+def _single_raw(cube, model, top_k, cost, delay):
+    score = ORIGINAL_SCORES(cube, model)
+    selected = np.argpartition(score, -top_k, axis=1)[:, -top_k:]
+    chosen = ASSETS[selected]
+    chosen_score = np.take_along_axis(score, selected, axis=1)
+    entry = model.decision + 1 + delay
+    rows = np.arange(len(cube.sessions))[:, None]
+    valid = np.isfinite(chosen_score).all(axis=1)
+    valid &= (cube.first[rows, entry, chosen] <= entry * 5).all(axis=1)
+    valid &= (cube.first[rows, model.exit_bar, chosen] <= model.exit_bar * 5).all(axis=1)
+    valid &= np.isfinite(cube.opens[rows, entry, chosen]).all(axis=1)
+    valid &= np.isfinite(cube.opens[rows, model.exit_bar, chosen]).all(axis=1)
+    values = np.zeros(len(cube.sessions))
+    portfolio_return = np.mean(
+        cube.opens[rows, model.exit_bar, chosen] / cube.opens[rows, entry, chosen]
+        - 1.0,
+        axis=1,
+    )
+    values[valid] = portfolio_return[valid] - cost
+    benchmark = np.zeros(len(cube.sessions))
+    benchmark[valid] = (
+        cube.opens[valid, model.exit_bar, 0] / cube.opens[valid, entry, 0] - 1.0
+    )
+    return base.v34.v12.ReturnStream(
+        values, benchmark, valid, np.where(valid, top_k, 0).astype(int)
+    )
+
+
 def _raw(cube, model, top_k, threshold, cost, delay):
     scores = _sleeve_scores(cube, model)
     aggregates = [
@@ -72,7 +99,7 @@ def _raw(cube, model, top_k, threshold, cost, delay):
     joint_score = np.mean(np.stack(aggregates), axis=0)
     joint_active = np.isfinite(joint_score) & (joint_score >= threshold)
     sleeve_streams = tuple(
-        ORIGINAL_RAW(cube, sleeve, top_k, -np.inf, cost, delay)
+        _single_raw(cube, sleeve, top_k, cost, delay)
         for sleeve in model.sleeves
     )
     valid = joint_active & np.logical_and.reduce([stream.active for stream in sleeve_streams])
