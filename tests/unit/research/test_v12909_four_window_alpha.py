@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from itertools import pairwise
 from pathlib import Path
 
 SCRIPTS = Path(__file__).parents[3] / "scripts"
@@ -22,7 +23,7 @@ def test_v12909_campaign_is_frozen_before_scan() -> None:
     assert proposal["last_version"] == campaign.LAST_VERSION == 13008
     assert len(campaign.WINDOW_QUADRUPLES) == 10
     assert all(
-        all(left[1] <= right[0] for left, right in zip(group, group[1:]))
+        all(left[1] <= right[0] for left, right in pairwise(group))
         for group in campaign.WINDOW_QUADRUPLES
     )
 
