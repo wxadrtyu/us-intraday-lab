@@ -38,7 +38,7 @@ PARTICIPATION_SETS = {
 @dataclass(slots=True)
 class VolumeClockModel:
     family: str
-    components: tuple[str, ...]
+    factors: tuple[str, ...]
     decision: int
     exit_bar: int
     mean: np.ndarray
@@ -89,7 +89,7 @@ def _participation_matrix(cube, model):
         "rel_sector": cum[:, ASSETS] - np.nanmean(cum[:, SECTORS], axis=1)[:, None],
         "impact": current_return[:, ASSETS] / np.sqrt(np.maximum(cumulative[:, ASSETS], 1.0)),
     }
-    return np.stack([components[name] for name in model.components], axis=2)
+    return np.stack([components[name] for name in model.factors], axis=2)
 
 
 def _fit(cube, family, schedule):
