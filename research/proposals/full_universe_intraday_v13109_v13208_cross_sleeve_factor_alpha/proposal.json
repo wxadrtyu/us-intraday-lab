@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13109-v13208-cross-sleeve-factor-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13109,
+  "last_version": 13208,
+  "hypothesis": "The triple-window leader uses one factor family in all sleeves. Preregistered cross-sleeve factor combinations may reduce correlated errors across the early, middle, and late windows while retaining the successful joint daily gate.",
+  "version_contract": "one hundred fixed Latin-style early-middle-late factor-family combinations on windows 2-23, 23-47, and 47-77; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 324183,
+  "cumulative_comparison_cells": 325183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "sleeves": 3, "window_overlap": false},
+  "fit_contract": {"window": "train_2022_2023_only", "one_ridge_per_sleeve": true, "factor_combinations": "fully_preregistered_before_scan", "daily_gate": "mean_sleeve_score_training_quantile"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
