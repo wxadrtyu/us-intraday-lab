@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12009-v12108-topk-cross-section",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12009,
+  "last_version": 12108,
+  "hypothesis": "Single-winner leveraged ETF selection leaves idiosyncratic variance too high for the cumulative Bonferroni hurdle. Equal-gross top-k portfolios across thirteen liquid leveraged and sector ETFs may preserve cross-sectional residual alpha while diversifying daily noise and raising whole-sample IR.",
+  "version_contract": "ten fixed factor mechanisms times ten non-overlapping decision-exit schedules; each version selects among top-k 2/3/4/6, three thresholds, and two causal volatility targets using only development data",
+  "planned_versions": 100,
+  "planned_parameter_cells": 2400,
+  "prior_comparison_cells": 312183,
+  "cumulative_comparison_cells": 314583,
+  "universe": ["TQQQ", "SOXL", "XLB", "XLC", "XLE", "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "equal_weight_selected_assets": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
