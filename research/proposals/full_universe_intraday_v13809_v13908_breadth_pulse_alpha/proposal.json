@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13809-v13908-breadth-pulse-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13809,
+  "last_version": 13908,
+  "hypothesis": "A causal pulse in sector participation, VWAP position, and signed flow may propagate with a lag into TQQQ or SOXL relative returns, especially when the traded asset diverges from the contemporaneous sector mean.",
+  "version_contract": "ten frozen breadth definitions times ten causal schedule-and-lag structures; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 332183,
+  "cumulative_comparison_cells": 333183,
+  "universe": ["TQQQ", "SOXL"],
+  "sector_context": ["XLB", "XLC", "XLE", "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "transform": "causal_sector_breadth_pulse_propagation", "lags_minutes": [10, 15, 20, 25, 30]},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
