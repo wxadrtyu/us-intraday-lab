@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13909-v14008-volume-clock-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13909,
+  "last_version": 14008,
+  "hypothesis": "Unexpected participation relative to a training-only intraday volume clock may distinguish informed continuation from price moves unsupported by volume.",
+  "version_contract": "ten frozen participation definitions times ten causal schedule-and-window structures; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 333183,
+  "cumulative_comparison_cells": 334183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "seasonality": "same_decision_training_median_only", "windows_minutes": [10, 15, 20, 25, 30]},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
