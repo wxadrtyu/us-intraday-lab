@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12309-v12408-pairwise-relative-value",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12309,
+  "last_version": 12408,
+  "hypothesis": "Directly predicting the future TQQQ-minus-SOXL return spread from contemporaneous factor differences may isolate a higher-sample relative-value edge that single-asset excess-return regressions miss. The strategy remains long-only by holding the predicted winner rather than shorting the loser.",
+  "version_contract": "ten fixed difference-factor families times ten causal decision-exit schedules; each version ranks five absolute-spread thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 316183,
+  "cumulative_comparison_cells": 317183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "single_predicted_winner": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
