@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v13409-v13508-cross-asset-rank-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 13409,
+  "last_version": 13508,
+  "hypothesis": "Session-level percentile ranks across leveraged and sector assets may capture nonlinear leadership and breadth transitions while reducing scale instability across regimes. The transform is causal and outcome-independent; ridge coefficients use training data only.",
+  "version_contract": "ten fixed economic factor families times ten causal decision-exit schedules; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 328183,
+  "cumulative_comparison_cells": 329183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "transform": "causal_cross_asset_percentile_rank", "rank_universe": "asset_indexes_3_through_15"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
