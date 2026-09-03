@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import evaluate_full_universe_intraday_v12009_v12108_topk_cross_section as base
@@ -16,7 +17,7 @@ SCHEDULES = (
     (23, 65), (29, 71), (35, 72), (41, 77), (47, 77),
 )
 WINDOW_BY_SCHEDULE = {
-    schedule: (4, 5, 6, 7, 8)[index % 5] for index, schedule in enumerate(SCHEDULES)
+    schedule: (5, 6, 7, 8, 9)[index % 5] for index, schedule in enumerate(SCHEDULES)
 }
 RELATIONSHIPS = {
     "primary_lead1": ((1, 10), 1),
@@ -30,6 +31,7 @@ RELATIONSHIPS = {
     "cross_anchor": ((10, 1), 1),
     "mixed_anchor": ((0, 10), 2),
 }
+_MATRIX_CACHE: dict[tuple, np.ndarray] = {}
 
 
 @dataclass(slots=True)
@@ -60,8 +62,10 @@ def _training_betas(cube, decision, anchors):
 
 
 def _row_corr(left, right):
-    left_centered = left - np.nanmean(left, axis=1)[:, None]
-    right_centered = right - np.nanmean(right, axis=1)[:, None]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        left_centered = left - np.nanmean(left, axis=1)[:, None]
+        right_centered = right - np.nanmean(right, axis=1)[:, None]
     numerator = np.nansum(left_centered * right_centered, axis=1)
     denominator = np.sqrt(
         np.nansum(left_centered**2, axis=1) * np.nansum(right_centered**2, axis=1)
@@ -72,6 +76,12 @@ def _row_corr(left, right):
 
 
 def _lead_lag_matrix(cube, model):
+    key = (
+        id(cube), model.family, model.decision, model.exit_bar, model.window_bars,
+        model.anchors, model.lead_bars,
+    )
+    if key in _MATRIX_CACHE:
+        return _MATRIX_CACHE[key]
     pieces = []
     end = model.decision + 1
     start = max(1, end - model.window_bars)
@@ -104,7 +114,9 @@ def _lead_lag_matrix(cube, model):
                 axis=1,
             )
         )
-    return np.stack(pieces, axis=1)
+    matrix = np.stack(pieces, axis=1)
+    _MATRIX_CACHE[key] = matrix
+    return matrix
 
 
 def _fit(cube, family, schedule):

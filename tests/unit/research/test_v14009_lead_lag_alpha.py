@@ -22,6 +22,7 @@ def test_v14009_campaign_is_frozen_before_scan() -> None:
     assert proposal["last_version"] == campaign.LAST_VERSION == 14108
     assert len(campaign.RELATIONSHIPS) * len(campaign.SCHEDULES) == 100
     assert {item[1] for item in campaign.RELATIONSHIPS.values()} == {1, 2, 3}
+    assert min(campaign.WINDOW_BY_SCHEDULE.values()) >= 5
 
 
 def test_execution_remains_long_only_single_asset() -> None:
