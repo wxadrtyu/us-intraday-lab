@@ -5,7 +5,7 @@
   "first_version": 13509,
   "last_version": 13608,
   "hypothesis": "Changes in path, VWAP, flow, breadth, and volatility states over the preceding 10 to 30 minutes may predict future leveraged-ETF residual returns more robustly than state levels. All differences are causal at the decision bar.",
-  "version_contract": "ten fixed factor families times ten causal schedule-and-lag structures; each version ranks five training thresholds and two causal volatility targets",
+  "version_contract": "ten fixed factor families times ten causal schedule-and-lag structures whose decisions begin at bar 8 so every lagged state is defined; each version ranks five training thresholds and two causal volatility targets",
   "planned_versions": 100,
   "planned_parameter_cells": 1000,
   "prior_comparison_cells": 329183,

@@ -11,7 +11,18 @@ FIRST_VERSION = 13509
 LAST_VERSION = 13608
 PRIOR_COMPARISON_CELLS = 329_183
 ASSETS = np.asarray((3, 4), dtype=int)
-SCHEDULES = base.residual.SCHEDULES
+SCHEDULES = (
+    (8, 35),
+    (11, 41),
+    (14, 47),
+    (17, 53),
+    (20, 59),
+    (23, 65),
+    (29, 71),
+    (35, 72),
+    (41, 77),
+    (47, 77),
+)
 LAG_BY_SCHEDULE = {
     schedule: (2, 3, 4, 5, 6)[index % 5] for index, schedule in enumerate(SCHEDULES)
 }
