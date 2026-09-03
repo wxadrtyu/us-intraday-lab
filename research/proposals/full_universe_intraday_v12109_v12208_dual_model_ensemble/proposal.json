@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12109-v12208-dual-model-ensemble",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12109,
+  "last_version": 12208,
+  "hypothesis": "Two economically complementary factor models may reduce ranking noise without averaging away leveraged-ETF alpha. Averaging normalized model scores and selecting one of TQQQ or SOXL may raise daily edge and IR while retaining frequent observations.",
+  "version_contract": "ten fixed complementary factor-model pairs times ten causal decision-exit schedules; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 314583,
+  "cumulative_comparison_cells": 315583,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "single_selected_asset": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}

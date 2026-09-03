@@ -34,6 +34,7 @@ TOP_K = (2, 3, 4, 6)
 QUANTILES = (0.0, 0.25, 0.50)
 TARGETS = (0.25, 0.40)
 ALPHA = 100.0
+MECHANISM = "diversified_topk_cross_sectional_residual_alpha"
 
 
 @dataclass(slots=True)
@@ -270,7 +271,7 @@ def main():
         }
         definition = {
             "version": version,
-            "mechanism": "diversified_topk_cross_sectional_residual_alpha",
+            "mechanism": MECHANISM,
             "factor_set": model.family,
             "decision": model.decision,
             "exit": model.exit_bar,
