@@ -124,7 +124,7 @@ def _configure() -> None:
     base.LAST_VERSION = LAST_VERSION
     base.PRIOR_COMPARISON_CELLS = PRIOR_COMPARISON_CELLS
     base.ASSETS = ASSETS
-    base.FACTOR_SETS = FAMILIES
+    base.FACTOR_SETS = base.residual.FACTOR_SETS
     base.SCHEDULES = VARIANTS
     base.TOP_K = (1,)
     base.QUANTILES = (0.0, 0.20, 0.40, 0.60, 0.80)
