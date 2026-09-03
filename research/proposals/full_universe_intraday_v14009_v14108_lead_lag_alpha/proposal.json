@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v14009-v14108-lead-lag-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 14009,
+  "last_version": 14108,
+  "hypothesis": "Causal breakdowns in the intraday relationship between leveraged ETFs and their market or sector anchors, including anchor-leading shocks, may predict subsequent beta-residual returns.",
+  "version_contract": "ten frozen anchor-and-lead relationships times ten causal schedule-and-window structures; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 334183,
+  "cumulative_comparison_cells": 335183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "beta": "zero_intercept_training_only", "lead_bars": [1, 2, 3]},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
