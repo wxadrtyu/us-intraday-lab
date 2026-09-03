@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12709-v12808-dual-window-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12709,
+  "last_version": 12808,
+  "hypothesis": "Independent early and late intraday opportunities can diversify one another within a session. Reusing at most full gross sequentially across two non-overlapping windows may improve return quality and sample efficiency without leverage or overnight exposure.",
+  "version_contract": "ten fixed factor mechanisms times ten preregistered non-overlapping window pairs; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 320183,
+  "cumulative_comparison_cells": 321183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "sleeves": 2, "window_overlap": false},
+  "fit_contract": {"window": "train_2022_2023_only", "one_ridge_per_sleeve": true, "daily_gate": "mean_sleeve_score_training_quantile"},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
