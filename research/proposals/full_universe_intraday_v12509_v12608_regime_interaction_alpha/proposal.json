@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v12509-v12608-regime-interaction-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 12509,
+  "last_version": 12608,
+  "hypothesis": "Leveraged ETF intraday factor payoffs may change nonlinearly with the market's causal direction and volatility state. A ridge model with factor interactions for four train-fixed SPY return-volatility regimes may isolate state-dependent residual alpha without using historical or consumed diagnostics for fitting.",
+  "version_contract": "ten fixed factor mechanisms times ten causal decision-exit schedules; each version ranks five development thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 318183,
+  "cumulative_comparison_cells": 319183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false},
+  "fit_contract": {"window": "train_2022_2023_only", "regime_thresholds": "training_medians_only", "regimes": "2x2_spy_current_return_and_spy_volatility", "thresholds_frozen_outside_training": true},
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
