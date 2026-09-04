@@ -12,7 +12,7 @@ LAST_VERSION = 14208
 PRIOR_COMPARISON_CELLS = 335_183
 ASSETS = np.asarray((3, 4), dtype=int)
 SCHEDULES = (
-    (8, 35),
+    (9, 35),
     (11, 41),
     (14, 47),
     (17, 53),

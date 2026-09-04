@@ -37,6 +37,11 @@ def test_v14109_sign_topology_campaign_is_frozen_before_implementation() -> None
         "overnight": False,
     }
     assert len(campaign.REPRESENTATIONS) * len(campaign.SCHEDULES) == 100
+    assert all(
+        decision >= window + aggregation - 1
+        for decision, _exit in campaign.SCHEDULES
+        for _source, aggregation, window in campaign.REPRESENTATIONS.values()
+    )
 
 
 def test_sign_topology_matrix_cannot_see_bars_after_decision() -> None:
