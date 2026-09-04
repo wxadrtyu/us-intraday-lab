@@ -195,6 +195,7 @@ class V449PaperController:
         strategy_code: str = "v449",
         account_fraction: float = 1.0,
         managed_strategy_codes: tuple[str, ...] | None = None,
+        managed_sleeves: tuple[str, ...] | None = None,
     ) -> None:
         if not 0.0 < account_fraction <= 1.0:
             raise ValueError("PAPER_ACCOUNT_FRACTION_OUT_OF_RANGE")
@@ -206,9 +207,18 @@ class V449PaperController:
         self.strategy_code = strategy_code
         self.account_fraction = account_fraction
         self.managed_strategy_codes = managed_strategy_codes or (strategy_code,)
+        self.managed_sleeves = managed_sleeves or ("component", "anchor")
+
+    @staticmethod
+    def sleeve_code(sleeve: str) -> str:
+        if sleeve in {"component", "anchor"}:
+            return sleeve[0]
+        if not sleeve or not sleeve.isalnum():
+            raise ValueError("PAPER_SLEEVE_CODE_INVALID")
+        return sleeve.lower()
 
     def client_order_id(self, session_date: date, sleeve: str, action: str) -> str:
-        return f"{self.strategy_code}-{session_date:%Y%m%d}-{sleeve[0]}-{action}"
+        return f"{self.strategy_code}-{session_date:%Y%m%d}-{self.sleeve_code(sleeve)}-{action}"
 
     def startup_check(self, session_date: date) -> None:
         account = self.broker.account()
@@ -245,8 +255,9 @@ class V449PaperController:
             raise RuntimeError("DEDICATED_ACCOUNT_CONTAMINATED")
         expected: dict[str, int] = {}
         for strategy_code in self.managed_strategy_codes:
-            for sleeve in ("component", "anchor"):
-                prefix = f"{strategy_code}-{session_date:%Y%m%d}-{sleeve[0]}"
+            for sleeve in self.managed_sleeves:
+                code = self.sleeve_code(sleeve)
+                prefix = f"{strategy_code}-{session_date:%Y%m%d}-{code}"
                 entry = self.broker.order_by_client_id(f"{prefix}-entry")
                 exit_order = self.broker.order_by_client_id(f"{prefix}-exit")
                 if entry is not None:

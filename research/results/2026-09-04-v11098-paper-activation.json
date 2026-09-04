@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "status": "PAPER_ACTIVATED_NEXT_VALID_ENTRY_WINDOW",
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "strategy_code": "v11098",
+  "account_allocation": 1.0,
+  "paper_only": true,
+  "user_authorized_replacement": true,
+  "replaced_strategy": "lev-v1254-de6c18bd7658f359",
+  "replaced_strategy_state": "DISABLED_BY_USER_2026_09_04",
+  "activation_session": "2026-09-04",
+  "activation_timing": {
+    "current_session_entry_windows_missed": true,
+    "catch_up_orders_forbidden": true,
+    "first_eligible_run": "NEXT_VALID_XNYS_SESSION"
+  },
+  "pre_activation_cleanup": {
+    "stale_strategy": "v1254",
+    "symbol": "SOXL",
+    "quantity": 7715,
+    "paper_close_client_order_id": "pool-20260904-z-flat-soxl",
+    "post_cleanup_positions": 0,
+    "post_cleanup_open_orders": 0
+  },
+  "runner": {
+    "entry_bars": [3, 11, 12, 18, 24, 42],
+    "long_only": true,
+    "gross_limit": 1.0,
+    "overnight": false,
+    "data_feed": "ALPACA_IEX",
+    "contract": "research/results/2026-09-03-v11098-forward-contract.json",
+    "ledger": "state/paper/v11098.sqlite3"
+  },
+  "preflight": {
+    "endpoint": "https://paper-api.alpaca.markets",
+    "positions": 0,
+    "open_orders": 0,
+    "active_strategy": "v11098"
+  }
+}

@@ -5,9 +5,8 @@ from datetime import UTC, date, datetime, timedelta
 import pandas as pd
 
 from scripts.run_v449_alpaca_paper import MAX_ENTRY_LATENESS, _entry_window_open, _target_complete
-from tests.fakes.broker import FakePaperBroker, SubmitBehavior
-from us_intraday_lab.paper.pool import V1254_ID
-from us_intraday_lab.paper.v449 import SleeveSignal, V449PaperLedger
+from tests.fakes.broker import FakePaperBroker
+from us_intraday_lab.paper.v449 import V449PaperLedger
 
 SESSION = date(2026, 8, 24)
 OPEN = datetime(2026, 8, 24, 13, 30, tzinfo=UTC)
@@ -63,7 +62,7 @@ def test_entry_window_is_rechecked_after_slow_market_data_fetch() -> None:
     assert not _entry_window_open(eligible + MAX_ENTRY_LATENESS + timedelta(microseconds=1), eligible)
 
 
-def test_consolidated_runner_only_evaluates_active_member(monkeypatch) -> None:
+def test_retired_consolidated_runner_evaluates_no_member(monkeypatch) -> None:
     from scripts import run_v449_alpaca_paper as runner
 
     def inactive(*args, **kwargs):
@@ -72,42 +71,16 @@ def test_consolidated_runner_only_evaluates_active_member(monkeypatch) -> None:
     monkeypatch.setattr(runner, "v247_signals_at", inactive)
     monkeypatch.setattr(runner, "signals_at", inactive)
     monkeypatch.setattr(runner, "v798_signals_at", inactive)
-    monkeypatch.setattr(runner, "v1254_signals_at", lambda *args, **kwargs: ("v1254-signal",))
-    assert runner._pool_signals(None, session_date=SESSION, decision_bar=23) == {
-        "v1254": ("v1254-signal",)
-    }
+    monkeypatch.setattr(runner, "v1254_signals_at", inactive)
+    assert runner._pool_signals(None, session_date=SESSION, decision_bar=23) == {}
 
 
-def test_consolidated_runner_preserves_capital_cap_and_legacy_reconciliation(tmp_path) -> None:
+def test_retired_consolidated_runner_builds_no_controller(tmp_path) -> None:
     from scripts.run_v449_alpaca_paper import _pool_controllers
 
     broker = FakePaperBroker(now=OPEN)
     controllers = _pool_controllers(broker, V449PaperLedger(tmp_path / "pool.sqlite3"))
-    assert set(controllers) == {"v1254"}
-    controller = controllers["v1254"]
-    assert controller.candidate_id == V1254_ID
-    assert controller.account_fraction == 1.0
-    assert set(controller.managed_strategy_codes) == {"v247", "v449", "v798", "v1254", "pool"}
-    for sleeve, symbol, weight, exit_bar in (
-        ("component", "TQQQ", 0.16, 65),
-        ("anchor", "SOXL", 0.84, 72),
-    ):
-        broker.queue_submit_behavior(SubmitBehavior.FILL)
-        controller.enter(
-            session_date=SESSION,
-            signal=SleeveSignal(
-                sleeve=sleeve,
-                symbol=symbol,
-                weight=weight,
-                exposure=1.0,
-                decision_bar=23,
-                exit_bar=exit_bar,
-            ),
-            reference_price=100.0,
-            now=OPEN,
-        )
-    assert sum(p.quantity * 100 for p in broker.positions()) <= 25_000 * 0.99
-    controller.startup_check(SESSION)
+    assert controllers == {}
 
 
 def test_consolidation_does_not_change_decision_clocks() -> None:
