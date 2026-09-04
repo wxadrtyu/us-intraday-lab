@@ -13,7 +13,7 @@ def main() -> int:
     now = datetime.now(UTC)
     local = now.astimezone(NEW_YORK)
     broker = AlpacaPaperBroker.from_environment()
-    if not broker.clock().is_open or local.time() < time(15, 40):
+    if not broker.clock().is_open or local.time() < time(15, 58):
         return 0
     controller = V449PaperController(
         broker=broker,

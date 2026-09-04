@@ -134,7 +134,7 @@ def main() -> int:
         for sleeve, target_exit in entered.items():
             if target_exit == exit_bar:
                 controller.exit_sleeve(session_date=session_date, sleeve=sleeve, now=datetime.now(UTC))
-    wait_until(datetime.combine(session_date, wall_time(15, 45), NEW_YORK))
+    wait_until(datetime.combine(session_date, wall_time(15, 59), NEW_YORK))
     controller.emergency_flatten(session_date=session_date, now=datetime.now(UTC))
     if broker.positions():
         raise RuntimeError("V11098_PAPER_CLOSEOUT_POSITION_REMAINS")

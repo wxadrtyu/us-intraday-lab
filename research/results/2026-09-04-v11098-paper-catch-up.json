@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "status": "PAPER_CATCH_UP_FILLED_EXIT_PENDING",
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "session_date": "2026-09-04",
+  "paper_only": true,
+  "explicit_user_authorization": "错过也跑下吧",
+  "signal": {
+    "sleeve": "anchor",
+    "route": "lev-v42t-6cc68a5a8184492a",
+    "symbol": "SOXL",
+    "original_entry_bar": 24,
+    "catch_up_after_bar": 34,
+    "exit_bar": 72,
+    "weight": 1.0,
+    "exposure": 1.0
+  },
+  "fill": {
+    "client_order_id": "v11098-20260904-a-entry",
+    "broker_order_id": "4c8c5500-ad3e-4a63-9ec7-1b0b8252af16",
+    "side": "buy",
+    "quantity": 9053,
+    "average_fill_price": 116.95,
+    "filled_at_utc": "2026-09-04T16:29:58.394402+00:00"
+  },
+  "post_fill": {
+    "account_equity": 1068750.84,
+    "position_market_value": 1058386.23,
+    "gross_fraction": 0.990302,
+    "open_orders": 0
+  },
+  "exit_plan": {
+    "strategy_exit_bar": 72,
+    "strategy_exit_time_et": "15:30:00",
+    "emergency_flatten_time_et": "15:59:00",
+    "overnight": false
+  }
+}
