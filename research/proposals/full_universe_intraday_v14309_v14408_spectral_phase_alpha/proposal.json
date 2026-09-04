@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_id": "full-universe-intraday-v14309-v14408-spectral-phase-alpha",
+  "status": "FROZEN_BEFORE_OUTCOME_SCAN",
+  "first_version": 14309,
+  "last_version": 14408,
+  "hypothesis": "Causal low-frequency phase, oscillatory power concentration, and multi-scale return-cycle coherence in the observed intraday path may distinguish continuation from exhausted oscillations and predict subsequent leveraged-ETF returns.",
+  "version_contract": "ten economically distinct causal spectral window-and-harmonic representations times ten decision-and-exit schedules; each version ranks five training thresholds and two causal volatility targets",
+  "planned_versions": 100,
+  "planned_parameter_cells": 1000,
+  "prior_comparison_cells": 337183,
+  "cumulative_comparison_cells": 338183,
+  "universe": ["TQQQ", "SOXL"],
+  "execution": {"long_only": true, "gross_limit": 1.0, "overnight": false, "entry": "next_5_minute_bar_open"},
+  "fit_contract": {"window": "train_2022_2023_only", "standardization": "train_2022_2023_only", "direction": "ridge_coefficients_fit_on_train_2022_2023_only", "causality": "all discrete spectral transforms end at the declared decision bar"},
+  "excluded_sources": ["state_differences", "state_acceleration", "cross_sectional_dispersion", "sector_breadth", "volume_clock", "lead_lag_correlation", "return_sign_topology", "candlestick_wicks"],
+  "selection_data": ["train_2022_2023", "2024", "2025"],
+  "diagnostics_not_selection": ["historical_2018_2020", "consumed_2026q1", "consumed_2026_all"],
+  "mandatory_global_gate": "cumulative_bonferroni_p_below_0.05",
+  "paper_pool_change_authorized": false
+}
