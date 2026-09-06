@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "audit_id": "v16209-information-upper-bound-audit",
+  "status": "PREREGISTERED_BEFORE_LABEL_CALCULATION",
+  "dataset": {"event_cache": "causal 5m cache", "permitted_end": "2025-12-31", "consumed_2026_loading": "FORBIDDEN_FOR_THIS_AUDIT", "blind_file_loading": "FORBIDDEN"},
+  "cells": "5 decision bars x 4 holding horizons",
+  "calculations": ["unattainable ex-post top-10 oracle after 18bp", "unattainable ex-post positive-only oracle after 18bp", "causal feature Spearman association with forward return", "forward-return base rate and dispersion"],
+  "purpose": "determine whether the return target is information-limited or whether a materially different causal predictor could in principle exist",
+  "admission": "FORBIDDEN; oracle results are labels, never strategies or candidates"
+}
