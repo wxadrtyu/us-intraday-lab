@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16209-v16308-session-path-momentum",
+  "status": "PREREGISTERED_AFTER_DEVELOPMENT_ONLY_UPPER_BOUND_AUDIT_BEFORE_EVALUATION",
+  "versions": {"first": 16209, "last": 16308, "count": 100},
+  "dataset": {"event_cache": "causal 5m cache", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "development_rationale": "The preregistered 2024-2025 audit found session_return had the largest absolute single-feature Spearman association with later returns (rho 0.0653 at bar23/10m); 2026 was not loaded by the audit.",
+  "economic_hypothesis": "Opening-to-current displacement captures gradual intraday information diffusion more completely than one- or three-bar returns; directional efficiency, volume and range context distinguish persistent session paths from noisy excursions.",
+  "factor_families": ["session_return_momentum", "efficient_session_momentum", "volume_confirmed_session_momentum", "compressed_range_session_momentum", "broad_market_session_momentum"],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
