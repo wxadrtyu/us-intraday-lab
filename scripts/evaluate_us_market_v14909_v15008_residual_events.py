@@ -71,12 +71,15 @@ def score(frame: pd.DataFrame, family: str) -> pd.Series:
 
 
 def run(args: argparse.Namespace) -> dict:
-    BASE["FAMILIES"] = FAMILIES
-    BASE["FIRST_VERSION"] = 14909
-    BASE["PRIOR_COMPARISONS"] = 337_783
-    BASE["attach_training_scales"] = attach_residuals
-    BASE["event_mask"] = event_mask
-    BASE["score"] = score
+    evaluator_globals = BASE["run"].__globals__
+    evaluator_globals.update({
+        "FAMILIES": FAMILIES,
+        "FIRST_VERSION": 14909,
+        "PRIOR_COMPARISONS": 337_783,
+        "attach_training_scales": attach_residuals,
+        "event_mask": event_mask,
+        "score": score,
+    })
     result = BASE["run"](args)
     result["campaign_id"] = "v14909-v15008-cross-section-residual-events"
     result["causal_cross_section_evidence"] = result.pop("training_only_scale_evidence")
