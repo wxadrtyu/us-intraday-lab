@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v14309-v14408-cross-section-short-reversion",
+  "status": "PREREGISTERED_BEFORE_FEATURE_MATERIALIZATION",
+  "versions": {"first": 14309, "last": 14408, "count": 100},
+  "dataset": {
+    "monthly_universe_id": "us-market-monthly-universe-b26117d72ec676735fcc132b",
+    "minute_shards": "E:/us-intraday-lab-data/us-market/data/staging/alpaca_iex_1min_dynamic",
+    "permitted_end": "2026-03-31",
+    "blind_files_from": "2026-04-01",
+    "blind_file_loading": "FORBIDDEN",
+    "quarantine_files": "FORBIDDEN"
+  },
+  "economic_hypothesis": "Temporary stock-specific order-flow imbalances mean-revert over 5-30 minutes among liquid US equities; long-only selection captures the rebound while avoiding market-direction fitting.",
+  "factor_families": [
+    "one_bar_cross_section_reversal",
+    "three_bar_cross_section_reversal",
+    "below_intraday_vwap_reclaim",
+    "negative_return_with_volume_shock",
+    "low_intraday_range_position_reclaim"
+  ],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {
+    "top_score_count": 10,
+    "weighting": "equal",
+    "side": "long_only",
+    "maximum_gross": 1.0,
+    "overnight": false,
+    "entry": "next_5min_open",
+    "delay_stress_entry": "one_additional_5min_open"
+  },
+  "periods": {
+    "development_train": ["2021-01-01", "2023-12-31"],
+    "development_oos": ["2024-01-01", "2025-12-31"],
+    "consumed_diagnostic": ["2026-01-01", "2026-03-31"]
+  },
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {
+    "development_oos_each_scenario_annualized_return_min": 0.50,
+    "development_oos_each_scenario_mdd_max": 0.20,
+    "development_oos_each_scenario_ir_min": 1.0,
+    "consumed_2026q1_total_return_min": 0.05,
+    "positive_folds_min": "4/5",
+    "positive_start_dates": "all",
+    "neighborhood_pass_share_min": 0.70,
+    "cumulative_bonferroni_p_max": 0.05,
+    "historical_2018_2020": "required_for_final_admission_but_candidate_specific_supplement_not_yet_available",
+    "native_factory_null": "run_only_after_all_pre-null_gates"
+  },
+  "paper_activation": false
+}
