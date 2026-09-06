@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v14709-v14808-causal-state-filtered-events",
+  "status": "PREREGISTERED_BEFORE_STATE_FIT_AND_EVALUATION",
+  "versions": {"first": 14709, "last": 14808, "count": 100},
+  "dataset": {"event_cache_source": "v14309_v14408_events.parquet", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Sparse stock-level shocks have conditional short-horizon payoffs determined by contemporaneously observable market breadth and cross-sectional dispersion; filtering adverse states can isolate liquidity rebound or information diffusion.",
+  "event_families": ["downside_exhaustion_reclaim", "upside_impulse_continuation", "volume_climax_reversal", "deep_vwap_reclaim", "range_breakout_confirmation"],
+  "causal_state_gates": {
+    "risk_on": "cross-sectional median ret3 > +0.10%",
+    "risk_off": "cross-sectional median ret3 < -0.10%",
+    "high_dispersion": "ret3 dispersion above decision-bar-specific 2021-2023 q75",
+    "low_dispersion": "ret3 dispersion below decision-bar-specific 2021-2023 q25",
+    "high_absolute_move": "median absolute ret3 above decision-bar-specific 2021-2023 q75"
+  },
+  "decision_schedule": [2, 11, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "fit_policy": "only 2021-2023 state quantiles; fixed before 2024-2025 evaluation",
+  "portfolio": {"maximum_names_per_window": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_simultaneous_gross": 1.0, "gross_reuse": "sequential_non_overlapping_only", "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required_for_final_admission_but_candidate_specific_supplement_not_yet_available", "native_factory_null": "run_only_after_all_pre-null_gates"},
+  "paper_activation": false
+}
