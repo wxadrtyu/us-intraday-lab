@@ -131,6 +131,12 @@ def attach_liquidity_curve(events: pd.DataFrame) -> tuple[pd.DataFrame, dict[str
     con = duckdb.connect()
     context = con.execute("SELECT * FROM read_parquet(?)", [str(LIQUIDITY_CONTEXT)]).fetch_df()
     con.close()
+    context = context.rename(
+        columns={
+            "volume_to_prior": "curve_volume_to_prior",
+            "volume_to_open": "curve_volume_to_open",
+        }
+    )
     context["session_date"] = pd.to_datetime(context["session_date"])
     keys = ["session_date", "bar_idx"]
     for column in ("positive_backload_volume_share", "volume_reacceleration", "signed_trade_imbalance"):
@@ -146,14 +152,14 @@ def event_mask(frame: pd.DataFrame, family: str) -> pd.Series:
         return (frame["backload_transition"] > 0.20) & (frame["signed_volume_imbalance"] > 0.20)
     if family == FAMILIES[2]:
         return (
-            (frame["volume_to_prior"] > 1.50)
+            (frame["curve_volume_to_prior"] > 1.50)
             & (frame["count_to_prior"] > 1.20)
             & (frame["signed_trade_imbalance"] > 0.20)
         )
     if family == FAMILIES[3]:
         return (
-            frame["volume_to_open"].between(0.20, 0.60)
-            & frame["volume_to_prior"].between(0.80, 1.20)
+            frame["curve_volume_to_open"].between(0.20, 0.60)
+            & frame["curve_volume_to_prior"].between(0.80, 1.20)
             & (frame["signed_volume_imbalance"] > 0.20)
         )
     if family == FAMILIES[4]:
@@ -169,7 +175,7 @@ def score(frame: pd.DataFrame, family: str) -> pd.Series:
     if family == FAMILIES[2]:
         return frame["volume_reacceleration_rank"] + frame["signed_trade_imbalance_rank"]
     if family == FAMILIES[3]:
-        return frame["signed_volume_imbalance"] - abs(frame["volume_to_prior"] - 1.0)
+        return frame["signed_volume_imbalance"] - abs(frame["curve_volume_to_prior"] - 1.0)
     if family == FAMILIES[4]:
         return frame["positive_backload_volume_share_rank"] + frame["final_minute_return"]
     raise ValueError(family)
