@@ -86,7 +86,9 @@ def default_windows(available_through: date) -> tuple[AcquisitionWindow, ...]:
         AcquisitionWindow("bear-market-2022", date(2022, 1, 1), date(2022, 12, 31), False),
         AcquisitionWindow("strong-trend-2021", date(2021, 1, 1), date(2021, 12, 31), False),
         AcquisitionWindow("covid-crash-rebound-2020", date(2020, 1, 1), date(2020, 12, 31), False),
-        AcquisitionWindow("late-2018-and-2019-transition", HISTORY_START, date(2019, 12, 31), False),
+        AcquisitionWindow(
+            "late-2018-and-2019-transition", HISTORY_START, date(2019, 12, 31), False
+        ),
     )
 
 
@@ -94,7 +96,9 @@ def latest_completed_session(today: date | None = None) -> date:
     """Find the latest fully completed XNYS session without querying a broker clock."""
     local_now = datetime.now(_NEW_YORK)
     reference = local_now.date() if today is None else today
-    sessions = _XNYS.sessions_in_range(pd.Timestamp(reference - timedelta(days=10)), pd.Timestamp(reference))
+    sessions = _XNYS.sessions_in_range(
+        pd.Timestamp(reference - timedelta(days=10)), pd.Timestamp(reference)
+    )
     if len(sessions) == 0:
         raise RuntimeError("XNYS calendar returned no recent session")
     latest = cast(date, sessions[-1].date())
@@ -197,7 +201,9 @@ class ReadOnlyAlpacaIexDownloader:
             symbol_or_symbols=list(symbols),
             timeframe=TimeFrame.Minute,
             start=datetime.combine(start, datetime_time(), _NEW_YORK).astimezone(UTC),
-            end=datetime.combine(end + timedelta(days=1), datetime_time(), _NEW_YORK).astimezone(UTC),
+            end=datetime.combine(end + timedelta(days=1), datetime_time(), _NEW_YORK).astimezone(
+                UTC
+            ),
             adjustment=Adjustment.SPLIT,
             feed=DataFeed.IEX,
         )
@@ -212,7 +218,9 @@ class ReadOnlyAlpacaIexDownloader:
         raise AssertionError("unreachable")
 
 
-def normalize_alpaca_bars(source: pd.DataFrame, *, ingested_at: datetime | None = None) -> pd.DataFrame:
+def normalize_alpaca_bars(
+    source: pd.DataFrame, *, ingested_at: datetime | None = None
+) -> pd.DataFrame:
     """Retain Alpaca bar fields, restrict to XNYS RTH, and never synthesize rows."""
     if source.empty:
         return pd.DataFrame(
@@ -267,9 +275,7 @@ def restrict_to_xnys_regular_grid(bars: pd.DataFrame) -> tuple[pd.DataFrame, int
         except NotSessionError:
             continue
     if expected_parts:
-        expected = pd.DatetimeIndex(
-            [timestamp for part in expected_parts for timestamp in part]
-        )
+        expected = pd.DatetimeIndex([timestamp for part in expected_parts for timestamp in part])
     else:
         expected = pd.DatetimeIndex([], tz="UTC")
     retained = pd.DatetimeIndex(bars["timestamp"]).isin(expected)
@@ -395,6 +401,7 @@ def publish_window_snapshot(
     window: AcquisitionWindow,
     symbols: tuple[str, ...],
     source_outside_session_rows_filtered: int = 0,
+    revision_root: Path | None = None,
 ) -> dict[str, object]:
     """Atomically publish one content-addressed snapshot; an existing ID is read-only."""
     root = root.resolve()
@@ -431,7 +438,7 @@ def publish_window_snapshot(
         evidence_path = temporary / "quality-evidence.json"
         evidence_path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", "utf-8")
         content_sha256 = _content_hash(temporary, (data_file, evidence_path))
-        code_revision = _code_revision(root)
+        code_revision = _code_revision(root if revision_root is None else revision_root.resolve())
         identity = {
             "content_sha256": content_sha256,
             "provider": "alpaca",
@@ -444,9 +451,9 @@ def publish_window_snapshot(
             "window": evidence["window"],
             "symbols": list(symbols),
         }
-        dataset_id = "alpaca-iex-1min-" + hashlib.sha256(
-            _canonical_json(identity).encode()
-        ).hexdigest()[:32]
+        dataset_id = (
+            "alpaca-iex-1min-" + hashlib.sha256(_canonical_json(identity).encode()).hexdigest()[:32]
+        )
         created_at = pd.Timestamp(bars["ingested_at"].max()).to_pydatetime().astimezone(UTC)
         manifest = {
             "schema_version": "1.0.0",
@@ -578,7 +585,8 @@ def audit_acquisition_environment(
                     "min_timestamp": manifest.get("min_timestamp"),
                     "max_timestamp": manifest.get("max_timestamp"),
                     "quality_complete": manifest.get(
-                        "quality_complete", cast(dict[str, object], manifest.get("quality", {})).get("passed")
+                        "quality_complete",
+                        cast(dict[str, object], manifest.get("quality", {})).get("passed"),
                     ),
                 }
             )
@@ -700,6 +708,7 @@ def acquire_all_windows(
     downloader: ReadOnlyAlpacaIexDownloader,
     symbols: tuple[str, ...] = tuple(sorted(DEFAULT_SYMBOLS)),
     available_through: date | None = None,
+    revision_root: Path | None = None,
 ) -> list[dict[str, object]]:
     """Download priority windows in monthly requests, then publish one snapshot per window."""
     through = latest_completed_session() if available_through is None else available_through
@@ -724,9 +733,7 @@ def acquire_all_windows(
         )
         bars, source_outside_session_rows_filtered = restrict_to_xnys_regular_grid(bars)
         if bars.empty:
-            manifests.append(
-                _record_unavailable_window(root=root, window=window, symbols=symbols)
-            )
+            manifests.append(_record_unavailable_window(root=root, window=window, symbols=symbols))
             continue
         manifests.append(
             publish_window_snapshot(
@@ -735,6 +742,7 @@ def acquire_all_windows(
                 window=window,
                 symbols=symbols,
                 source_outside_session_rows_filtered=source_outside_session_rows_filtered,
+                revision_root=revision_root,
             )
         )
     return manifests

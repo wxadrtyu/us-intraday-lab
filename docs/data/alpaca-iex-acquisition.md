@@ -46,3 +46,21 @@ python scripts/publish_hf_gap_snapshots.py --root G:\us-intraday-lab --repo .
 HF/Finnhub-derived 源只能标记为 `source-as-published; split-anomaly-gated`；它不能被描述为 Alpaca split-adjusted，也不能与 Alpaca 行拼成一个数据集。重复源记录按完整“标的 + 交易日”隔离，清单保存在质量证据中。
 
 脚本在任何下载前先输出只读审计（只报告凭据是否存在，不报告值）。可先运行 `--audit-only`。可用 `--available-through YYYY-MM-DD` 固定可复现的数据截止日，或用 `--symbols` 显式缩小/扩展标的。每月请求先写入带哈希的 staging chunk，失败重跑时复用已验证 chunk，再一次性校验并发布窗口快照。原始 Parquet、数据库和密钥都被 `.gitignore` 排除，不应提交。
+
+## 扩大 ETF 池的独立存储
+
+`research/protocols/expanded_etf_5m_v1.json` 冻结了 64 只 ETF 候选和真正
+5–30 分钟持仓的研究合同。由于主工程盘空间不足，这一批数据写到
+`E:\us-intraday-lab-data\expanded-minute`，同时用 `--repo-root` 记录实际采集代码的
+Git revision，不能因为数据盘不是 Git 工程而丢失代码来源：
+
+```powershell
+$contract = Get-Content research/protocols/expanded_etf_5m_v1.json | ConvertFrom-Json
+python scripts/acquire_alpaca_iex_history.py `
+  --root E:\us-intraday-lab-data\expanded-minute `
+  --repo-root $PWD `
+  --symbols $contract.symbols
+```
+
+64 只只是候选集合。真正可交易集合只能由合同中的 2022–2023 覆盖率和成交额门槛
+产生；上市前和缺失分钟均标记为不可用，不能当作零收益或现金。2026 不参与选择。

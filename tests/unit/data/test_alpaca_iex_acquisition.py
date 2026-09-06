@@ -48,12 +48,25 @@ def test_default_windows_prioritize_blind_current_and_cover_all_regimes() -> Non
     )
     assert windows[-1].start == date(2018, 10, 1)
     covered_years = {
-        year
-        for window in windows
-        for year in range(window.start.year, window.end.year + 1)
+        year for window in windows for year in range(window.start.year, window.end.year + 1)
     }
     assert covered_years == set(range(2018, 2027))
     assert all(not window.blind_test_candidate for window in windows[1:])
+
+
+def test_expanded_etf_protocol_is_frozen_unique_and_short_horizon() -> None:
+    protocol_path = (
+        Path(__file__).resolve().parents[3] / "research" / "protocols" / "expanded_etf_5m_v1.json"
+    )
+    protocol = json.loads(protocol_path.read_text("utf-8"))
+    symbols = protocol["symbols"]
+
+    assert protocol["status"] == "FROZEN_BEFORE_ACQUISITION"
+    assert len(symbols) == 64
+    assert symbols == sorted(set(symbols))
+    assert protocol["execution_contract"]["holding_minutes"] == [5, 10, 15, 20, 25, 30]
+    assert protocol["execution_contract"]["paper_activation"] is False
+    assert protocol["eligibility_contract"]["ranking_uses_2026"] is False
 
 
 def test_downloader_requires_current_environment_credentials_without_reading_files() -> None:
@@ -123,6 +136,34 @@ def test_publish_is_content_addressed_and_blind_evidence_has_no_strategy_metrics
         symbols=("SPY",),
     )
     assert second == manifest
+
+
+def test_publish_can_record_revision_from_repo_separate_from_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = date(2026, 7, 2)
+    bars = normalize_alpaca_bars(
+        _source_bars(session), ingested_at=datetime(2026, 7, 3, tzinfo=UTC)
+    )
+    revision_root = tmp_path / "repo"
+    revision_root.mkdir()
+    observed: list[Path] = []
+
+    def fake_revision(path: Path) -> str:
+        observed.append(path)
+        return "frozen-revision"
+
+    monkeypatch.setattr("us_intraday_lab.data.alpaca_iex_acquisition._code_revision", fake_revision)
+    manifest = publish_window_snapshot(
+        bars,
+        root=tmp_path / "external-data",
+        revision_root=revision_root,
+        window=AcquisitionWindow("blind-test", session, session, True),
+        symbols=("SPY",),
+    )
+
+    assert manifest["code_revision"] == "frozen-revision"
+    assert observed == [revision_root.resolve()]
 
 
 def test_duplicate_or_extreme_adjusted_price_blocks_publication() -> None:

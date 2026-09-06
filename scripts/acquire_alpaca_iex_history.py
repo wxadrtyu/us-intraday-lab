@@ -19,6 +19,12 @@ def main() -> None:
         description="Acquire read-only Alpaca IEX history into immutable snapshots."
     )
     parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Git checkout used only to record the acquisition code revision.",
+    )
     parser.add_argument("--available-through", type=date.fromisoformat)
     parser.add_argument("--symbols", nargs="+", default=DEFAULT_SYMBOLS)
     parser.add_argument("--audit-only", action="store_true")
@@ -39,6 +45,7 @@ def main() -> None:
         downloader=downloader,
         symbols=symbols,
         available_through=available_through,
+        revision_root=args.repo_root,
     )
     for manifest in manifests:
         print(json.dumps(manifest, sort_keys=True), flush=True)

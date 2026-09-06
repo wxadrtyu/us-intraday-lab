@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "expanded-etf-5m-v1",
+  "status": "FROZEN_BEFORE_ACQUISITION",
+  "purpose": "Develop genuinely short 5-30 minute, long-only, no-overnight US ETF strategies without changing the existing Paper pool.",
+  "data_contract": {
+    "primary_provider": "alpaca",
+    "primary_feed": "iex",
+    "bar_size": "1min",
+    "adjustment": "split",
+    "calendar": "XNYS",
+    "session": "regular_only",
+    "fill_missing_minutes": false,
+    "splice_providers": false,
+    "storage_root": "E:/us-intraday-lab-data/expanded-minute",
+    "development_period": ["2021-01-01", "2025-12-31"],
+    "consumed_diagnostics": ["2026-01-01", "2026-03-31"],
+    "blind_period_starts": "2026-04-01"
+  },
+  "execution_contract": {
+    "decision_bar": "completed 5min bar",
+    "earliest_entry": "next 5min bar open",
+    "holding_bars": [1, 2, 3, 4, 5, 6],
+    "holding_minutes": [5, 10, 15, 20, 25, 30],
+    "side": "long_only",
+    "maximum_gross": 1.0,
+    "overnight_positions": false,
+    "paper_activation": false
+  },
+  "eligibility_contract": {
+    "selection_period": ["2022-01-01", "2023-12-31"],
+    "minimum_session_coverage_ratio": 0.95,
+    "minimum_median_session_dollar_volume_usd": 10000000,
+    "minimum_eligible_symbols_per_session": 12,
+    "missing_or_pre_inception_symbol": "ineligible_not_cash_return",
+    "ranking_uses_2026": false
+  },
+  "symbols": [
+    "ARKK", "BIL", "DBA", "DIA", "EEM", "EFA", "EWJ", "EWZ",
+    "FAS", "FXI", "GDX", "GDXJ", "GLD", "HYG", "IBB", "IEF",
+    "IGV", "IHI", "ITB", "IWD", "IWF", "IWM", "KBE", "KRE",
+    "LABU", "LQD", "MDY", "MTUM", "OIH", "PFF", "QQQ", "QUAL",
+    "SHY", "SLV", "SMH", "SOXL", "SOXX", "SPXL", "SPY", "TAN",
+    "TECL", "TLT", "TNA", "TQQQ", "UPRO", "USMV", "USO", "VNQ",
+    "VTI", "VTV", "VUG", "XBI", "XHB", "XLB", "XLC", "XLE",
+    "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"
+  ],
+  "provenance_rules": [
+    "Publish immutable content-addressed snapshots and retain per-symbol-session gaps.",
+    "Do not interpret missing data as zero return or cash.",
+    "Do not use 2026 or historical stress periods for parameter selection.",
+    "Do not modify the current Paper pool during this research protocol."
+  ]
+}
