@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15709-v15808-portfolio-state-baskets",
+  "status": "PREREGISTERED_BEFORE_STATE_FIT_AND_EVALUATION",
+  "versions": {"first": 15709, "last": 15808, "count": 100},
+  "dataset": {"event_cache": "causal 5m cache", "monthly_universe_id": "us-market-monthly-universe-b26117d72ec676735fcc132b", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Portfolio-level breadth, dispersion and activity states can time a diversified liquid basket more robustly than repeatedly selecting idiosyncratic extremes, reducing event noise and transaction-cost sensitivity.",
+  "portfolio_state_families": {
+    "broad_oversold_liquid_rebound": "median ret3<-0.3%, positive breadth<35%, buy most liquid names",
+    "breadth_thrust_liquid_leaders": "median ret3>0.2%, positive breadth>65%, buy liquid positive leaders",
+    "high_dispersion_relative_winners": "dispersion above training q75, buy liquid top ret1 ranks",
+    "high_dispersion_loser_reclaims": "dispersion above training q75, bottom-decile ret3 and current ret1>0",
+    "concentrated_activity_liquid_leaders": "top-10 volume share>20%, buy liquid positive leaders"
+  },
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
