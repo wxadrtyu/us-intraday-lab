@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16609-v16708-causal-ohlc-pressure",
+  "status": "PREREGISTERED_BEFORE_OHLC_PRESSURE_CACHE_BUILD_AND_EVALUATION",
+  "versions": {"first": 16609, "last": 16708, "count": 100},
+  "dataset": {"provider": "alpaca", "feed": "iex", "bar_size": "1min", "permitted_start": "2021-01-01", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "field_audit": {"body_pressure": "minute close-minus-open normalized by minute range", "close_location": "minute close location inside contemporaneous high-low range", "wick_balance": "lower-minus-upper wick fractions from completed minute OHLC", "path_completeness": "exactly five source minutes in current and prior five-minute bars", "future_information": "FORBIDDEN", "2026_selection": "FORBIDDEN"},
+  "economic_hypothesis": "Minute candle bodies, close locations and wick rejection contain causal within-bar order-pressure information not represented by endpoint returns alone; broad bullish bodies or repeated lower-price rejection may persist for 5-30 minutes.",
+  "factor_families": ["bullish_body_consensus", "close_location_accumulation", "lower_wick_rejection", "pressure_reacceleration", "low_wick_directional_pressure"],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
