@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "audit_id": "v14309-v15808-cost-budget-audit",
+  "status": "PREREGISTERED_BEFORE_AGGREGATION",
+  "scope": {"first_version": 14309, "last_version": 15808, "expected_versions": 1500},
+  "inputs": "completed immutable research result JSON files only",
+  "selection_fields": ["development_oos.standard_9bp", "development_oos.cost_18bp", "development_oos.delay_5m_9bp", "signal_sessions"],
+  "forbidden_fields_for_ranking": ["consumed_2026q1", "2026-04 onward blind data"],
+  "outputs": ["trade-frequency proxy", "9-to-18bp annualized cost loss", "5m delay loss", "shortfall to 50% annualized after 18bp", "best family by worst-scenario development annualized return"],
+  "purpose": "choose a genuinely new cost-compatible return source; never lower gates or admit a candidate"
+}
