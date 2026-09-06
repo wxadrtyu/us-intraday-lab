@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import warnings
 from pathlib import Path
 from runpy import run_path
 
@@ -43,7 +44,9 @@ def estimate_mapping(training: pd.DataFrame) -> tuple[pd.DataFrame, int, list[st
         )
         for target in target_returns.columns:
             target_series = target_returns[target]
-            correlations = leader_returns.corrwith(target_series)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                correlations = leader_returns.corrwith(target_series)
             observations = leader_returns.notna().mul(target_series.notna(), axis=0).sum()
             comparisons += len(correlations)
             eligible = pd.DataFrame(
