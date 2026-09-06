@@ -144,6 +144,11 @@ def materialize_events(files: list[Path], cache: Path, rebuild: bool) -> None:
           SELECT symbol, session_date, bar_idx, volume, lag1_volume, opening_volume,
             volume / nullif(lag1_volume, 0) AS volume_to_prior,
             volume / nullif(opening_volume, 0) AS volume_to_open,
+            (high - low) / nullif(open, 0) AS bar_range,
+            (running_high - running_low) / nullif(session_open, 0) AS running_range,
+            close / session_open - 1 AS session_return,
+            abs(close / session_open - 1) /
+              nullif((running_high - running_low) / session_open, 0) AS directional_efficiency,
             close / lag1_close - 1 AS ret1,
             CASE WHEN bar_idx = 2 THEN close / session_open - 1
               ELSE close / lag3_close - 1 END AS ret3,
