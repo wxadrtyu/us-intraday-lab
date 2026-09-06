@@ -44,19 +44,24 @@ def materialize_trade_context(data_root: Path, output: Path) -> dict[str, int | 
     con.execute("PRAGMA memory_limit='12GB'")
     con.execute(
         """
+        CREATE OR REPLACE TABLE five_minute AS
+        SELECT symbol, session_date,
+          CAST(FLOOR((EXTRACT(hour FROM timezone('America/New_York', timestamp)) * 60
+            + EXTRACT(minute FROM timezone('America/New_York', timestamp)) - 570) / 5)
+            AS INTEGER) AS bar_idx,
+          sum(volume) AS volume,
+          sum(trade_count) AS trade_count,
+          count(*) AS minute_count
+        FROM read_parquet(?, union_by_name=true)
+        WHERE session_date BETWEEN DATE '2021-01-01' AND DATE '2026-03-31'
+        GROUP BY symbol, session_date, bar_idx
+        """,
+        [[str(path) for path in files]],
+    )
+    con.execute(
+        """
         COPY (
-          WITH five_minute AS (
-            SELECT symbol, session_date,
-              CAST(FLOOR((EXTRACT(hour FROM timezone('America/New_York', timestamp)) * 60
-                + EXTRACT(minute FROM timezone('America/New_York', timestamp)) - 570) / 5)
-                AS INTEGER) AS bar_idx,
-              sum(volume) AS volume,
-              sum(trade_count) AS trade_count,
-              count(*) AS minute_count
-            FROM read_parquet(?, union_by_name=true)
-            WHERE session_date BETWEEN DATE '2021-01-01' AND DATE '2026-03-31'
-            GROUP BY symbol, session_date, bar_idx
-          ), enriched AS (
+          WITH enriched AS (
             SELECT *,
               lag(bar_idx) OVER w AS lag_bar_idx,
               lag(volume) OVER w AS lag_volume,
@@ -81,7 +86,7 @@ def materialize_trade_context(data_root: Path, output: Path) -> dict[str, int | 
             AND volume > 0 AND lag_volume > 0
         ) TO ? (FORMAT PARQUET, COMPRESSION ZSTD)
         """,
-        [[str(path) for path in files], str(temporary)],
+        [str(temporary)],
     )
     rows = con.execute("SELECT count(*) FROM read_parquet(?)", [str(temporary)]).fetchone()[0]
     con.close()
