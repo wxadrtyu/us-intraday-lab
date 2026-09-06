@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v14909-v15008-cross-section-residual-events",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 14909, "last": 15008, "count": 100},
+  "dataset": {"event_cache_source": "v14309_v14408_events.parquet", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Subtracting the contemporaneously observed cross-sectional market move separates stock-specific order-flow shocks from broad directional movement, allowing abnormal residual dislocations to rebound or diffuse over 5-30 minutes.",
+  "factor_families": {
+    "residual_one_bar_downshock_reversal": "ret1 minus same-time cross-sectional median < -1%",
+    "residual_three_bar_reclaim": "ret3 residual < -1.5% and current ret1 residual > 0",
+    "residual_one_bar_upshock_continuation": "ret1 residual > 1%",
+    "relative_vwap_reclaim": "VWAP deviation minus same-time cross-sectional median < -0.8% and ret1 residual > 0",
+    "residual_volume_climax_reversal": "ret1 residual < -0.8%, volume rank >=90%, range position <=25%"
+  },
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "residualization": "causal session-date and decision-bar cross-sectional median using only current/past bars",
+  "portfolio": {"maximum_names": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required_for_final_admission_but_candidate_specific_supplement_not_yet_available", "native_factory_null": "run_only_after_all_pre-null_gates"},
+  "paper_activation": false
+}
