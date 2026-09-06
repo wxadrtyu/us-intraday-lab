@@ -7,7 +7,10 @@ import pandas as pd
 
 from us_intraday_lab.data.alpaca_iex_acquisition import normalize_alpaca_bars
 from us_intraday_lab.data.calendar import expected_minute_index
-from us_intraday_lab.data.market_minute_acquisition import acquire_eligible_minutes
+from us_intraday_lab.data.market_minute_acquisition import (
+    acquire_eligible_minutes,
+    quarantine_invalid_symbol_sessions,
+)
 
 
 def test_only_eligible_symbol_months_are_acquired_and_blind_is_sealed(tmp_path: Path) -> None:
@@ -49,3 +52,26 @@ def test_only_eligible_symbol_months_are_acquired_and_blind_is_sealed(tmp_path: 
     assert records[0]["blind_test_candidate"] is True
     assert records[0]["strategy_metrics_permitted"] is False
     assert records[0]["row_count"] == 390
+
+
+def test_corrupt_bar_quarantines_the_complete_symbol_session() -> None:
+    session = date(2021, 6, 11)
+    source = pd.DataFrame(
+        {
+            "symbol": "T",
+            "timestamp": expected_minute_index(session),
+            "open": 29.0,
+            "high": 29.1,
+            "low": 28.9,
+            "close": 29.0,
+            "volume": 1000.0,
+        }
+    )
+    bars = normalize_alpaca_bars(source)
+    bars.loc[100, "low"] = 0.0
+
+    accepted, quarantined, groups = quarantine_invalid_symbol_sessions(bars)
+
+    assert accepted.empty
+    assert len(quarantined) == 390
+    assert groups == [{"symbol": "T", "session_date": "2021-06-11"}]
