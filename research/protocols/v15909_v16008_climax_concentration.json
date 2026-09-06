@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15909-v16008-climax-concentration",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 15909, "last": 16008, "count": 100},
+  "dataset": {"event_cache": "causal 5m cache", "monthly_universe_id": "us-market-monthly-universe-b26117d72ec676735fcc132b", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "The early-session volume-climax signal may be diluted by equal-weighting ten names; economically distinct liquidity and market-context confirmations combined with predefined concentration structures test whether scarce high-conviction events can supply materially larger gross alpha.",
+  "signal_structures": ["high_absolute_market_activity", "high_point_in_time_liquidity", "broad_selloff", "idiosyncratic_downshock", "opening_liquidity_persistence"],
+  "portfolio_concentration_structures": {"synthetic_label_2": 1, "synthetic_label_5": 2, "synthetic_label_11": 3, "synthetic_label_17": 5, "synthetic_label_23": 10},
+  "actual_decision_bar": 2,
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}

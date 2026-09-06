@@ -28,6 +28,7 @@ DECISIONS = (2, 5, 11, 17, 23)
 HOLDINGS = (1, 2, 4, 6)
 FIRST_VERSION = 14809
 PRIOR_COMPARISONS = 337_683
+TOP_COUNT_BY_DECISION: dict[int, int] | None = None
 
 
 def attach_training_scales(events: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
@@ -107,9 +108,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             calendar = pd.DatetimeIndex(sorted(events.loc[
                 events["bar_idx"] == decision, "session_date"].unique()))
             subset = qualifying.loc[qualifying["bar_idx"] == decision].dropna(subset=["score"])
-            selected = (subset.sort_values(["session_date", "score", "symbol"],
-                                           ascending=[True, False, True])
-                        .groupby("session_date", sort=False).head(10))
+            selected = subset.sort_values(["session_date", "score", "symbol"],
+                                          ascending=[True, False, True]).copy()
+            selected["selection_rank"] = selected.groupby(
+                "session_date", sort=False).cumcount() + 1
+            top_count = (TOP_COUNT_BY_DECISION or {}).get(decision, 10)
+            selected = selected.loc[selected["selection_rank"] <= top_count]
             for holding_index, holding in enumerate(HOLDINGS):
                 version = FIRST_VERSION + family_index * 20 + decision_index * 4 + holding_index
                 scenarios = SPARSE["sparse_returns"](selected, holding, calendar)
