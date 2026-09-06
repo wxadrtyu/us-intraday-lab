@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16409-v16508-benchmark-lead-lag-catchup",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 16409, "last": 16508, "count": 100},
+  "dataset": {"event_cache": "causal full-market 5m cache", "benchmarks": ["SPY", "QQQ", "IWM"], "permitted_start": "2021-01-01", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "field_audit": {"benchmark_returns": "same completed decision bar only", "symbol_betas": "estimated once from 2021-2023 and frozen", "2024_2025": "selection only", "2026_q1": "consumed diagnostic only"},
+  "economic_hypothesis": "Broad index ETF moves can lead constituent and correlated-stock price discovery by several minutes; stocks whose frozen historical ETF sensitivity implies a larger positive move than currently observed may catch up without overnight exposure.",
+  "factor_families": ["spy_positive_catchup", "qqq_positive_catchup", "iwm_positive_catchup", "benchmark_consensus_catchup", "factor_shock_lag"],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "fixed_rules": {"minimum_beta_observations": 100, "maximum_names": 10, "exclude_benchmark_symbols": true, "beta_training_end": "2023-12-31"},
+  "portfolio": {"weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
