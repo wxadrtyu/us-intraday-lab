@@ -124,6 +124,7 @@ def materialize_events(files: list[Path], cache: Path, rebuild: bool) -> None:
               lag(close, 1) OVER w AS lag1_close,
               lag(bar_idx, 3) OVER w AS lag3_idx,
               lag(close, 3) OVER w AS lag3_close,
+              first_value(open) OVER wr AS session_open,
               sum(vwap * volume) OVER wr / nullif(sum(volume) OVER wr, 0) AS running_vwap,
               min(low) OVER wr AS running_low,
               max(high) OVER wr AS running_high,
@@ -140,18 +141,21 @@ def materialize_events(files: list[Path], cache: Path, rebuild: bool) -> None:
           )
           SELECT symbol, session_date, bar_idx, volume,
             close / lag1_close - 1 AS ret1,
-            close / lag3_close - 1 AS ret3,
+            CASE WHEN bar_idx = 2 THEN close / session_open - 1
+              ELSE close / lag3_close - 1 END AS ret3,
             close / running_vwap - 1 AS vwap_dev,
             (close - running_low) / nullif(running_high - running_low, 0) AS range_pos,
             p1_open, p2_open, p3_open, p5_open, p7_open, p8_open
           FROM enriched
           WHERE bar_idx IN (2, 5, 11, 17, 23)
             AND minute_count = 5
-            AND lag1_idx = bar_idx - 1 AND lag3_idx = bar_idx - 3
+            AND lag1_idx = bar_idx - 1
+            AND (bar_idx = 2 OR lag3_idx = bar_idx - 3)
             AND p1_idx = bar_idx + 1 AND p2_idx = bar_idx + 2
             AND p3_idx = bar_idx + 3 AND p5_idx = bar_idx + 5
             AND p7_idx = bar_idx + 7 AND p8_idx = bar_idx + 8
-            AND lag1_close > 0 AND lag3_close > 0 AND running_vwap > 0
+            AND lag1_close > 0
+            AND (bar_idx = 2 OR lag3_close > 0) AND session_open > 0 AND running_vwap > 0
             AND p1_open > 0 AND p2_open > 0 AND p3_open > 0
             AND p5_open > 0 AND p7_open > 0 AND p8_open > 0
         ) TO ? (FORMAT PARQUET, COMPRESSION ZSTD)
@@ -224,7 +228,11 @@ def development_gate(scenarios: dict[str, pd.Series]) -> bool:
 def robustness(series: pd.Series) -> dict[str, Any]:
     oos = series.loc[(pd.to_datetime(series.index) >= "2024-01-01")
                      & (pd.to_datetime(series.index) <= "2025-12-31")]
-    chunks = np.array_split(oos, 5)
+    chunks = [oos.iloc[start:end] for start, end in zip(
+        np.linspace(0, len(oos), 6, dtype=int)[:-1],
+        np.linspace(0, len(oos), 6, dtype=int)[1:],
+        strict=True,
+    )]
     fold_returns = [metrics(chunk)["total_return"] for chunk in chunks]
     offsets = (0, 20, 40, 60)
     starts = [metrics(oos.iloc[offset:])["total_return"] for offset in offsets]
@@ -303,11 +311,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 })
 
     # Freeze ranking before any consumed-period metric is computed.
-    records.sort(key=lambda item: (
-        item["development_gate_passed"],
-        min(x["annualized_return"] for x in item["development_oos"].values()),
-        min(x["information_ratio"] for x in item["development_oos"].values()),
-    ), reverse=True)
+    def ranking_value(value: float) -> float:
+        return value if math.isfinite(value) else -math.inf
+
+    records.sort(
+        key=lambda item: (
+            item["development_gate_passed"],
+            ranking_value(min(x["annualized_return"] for x in item["development_oos"].values())),
+            ranking_value(min(x["information_ratio"] for x in item["development_oos"].values())),
+        ),
+        reverse=True,
+    )
     frozen_order = [item["version"] for item in records]
     by_version = {item["version"]: item for item in records}
     for rank, version in enumerate(frozen_order, start=1):
@@ -322,7 +336,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         standard_oos = returns["standard_9bp"].loc[
             (pd.to_datetime(returns["standard_9bp"].index) >= "2024-01-01")
             & (pd.to_datetime(returns["standard_9bp"].index) <= "2025-12-31")]
-        t_stat, raw_p = stats.ttest_1samp(standard_oos, 0.0, alternative="greater")
+        if len(standard_oos) >= 2:
+            t_stat, raw_p = stats.ttest_1samp(standard_oos, 0.0, alternative="greater")
+        else:
+            t_stat, raw_p = math.nan, 1.0
         item["multiplicity"] = {
             "t_stat": float(t_stat), "raw_one_sided_p": float(raw_p),
             "cumulative_comparisons": PRIOR_COMPARISONS + len(records),
