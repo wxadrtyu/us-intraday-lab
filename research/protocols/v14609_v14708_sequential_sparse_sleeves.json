@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v14609-v14708-sequential-sparse-sleeves",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 14609, "last": 14708, "count": 100},
+  "dataset": {"event_cache_source": "v14309_v14408_events.parquet", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Independent sparse dislocations at non-overlapping intraday windows can reuse the same unit gross sequentially, increasing opportunity count without simultaneous leverage while preserving cash on no-signal windows.",
+  "event_families": ["downside_exhaustion_reclaim", "upside_impulse_continuation", "volume_climax_reversal", "deep_vwap_reclaim", "range_breakout_confirmation"],
+  "non_overlapping_decision_schedules": [[2, 11], [5, 17], [11, 23], [2, 23], [2, 11, 23]],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names_per_window": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_simultaneous_gross": 1.0, "gross_reuse": "sequential_only", "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required_for_final_admission_but_candidate_specific_supplement_not_yet_available", "native_factory_null": "run_only_after_all_pre-null_gates"},
+  "paper_activation": false
+}
