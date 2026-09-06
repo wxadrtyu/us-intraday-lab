@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15809-v15908-cross-source-consensus",
+  "status": "PREREGISTERED_BEFORE_ENRICHMENT_AND_EVALUATION",
+  "versions": {"first": 15809, "last": 15908, "count": 100},
+  "dataset": {"event_cache": "causal 5m cache", "monthly_universe_id": "us-market-monthly-universe-b26117d72ec676735fcc132b", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Signals from economically distinct price-shock, liquidity-path, market-state and point-in-time participation sources are more reliable when they concur on the same stock and decision time, permitting low-frequency high-confidence 30-minute trades.",
+  "factor_families": {
+    "climax_in_high_activity_state": "volume-climax reversal plus training-frozen high absolute market move",
+    "path_reclaim_after_range_expansion": "negative multi-bar path, positive current bar, large current range and declining volume",
+    "rising_liquidity_breadth_breakout": "point-in-time liquidity growth, positive breadth and volume-confirmed up move",
+    "liquid_oversold_volume_dryup": "top liquidity cohort, negative broad state, stock down path, positive current bar and volume decay",
+    "three_source_consensus_vote": "at least three of five preregistered component observations agree"
+  },
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
