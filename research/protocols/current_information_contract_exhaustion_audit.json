@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "audit_id": "current-information-contract-exhaustion-audit",
+  "status": "PREREGISTERED_BEFORE_AUDIT",
+  "scope": {"strategy_versions_completed": [14309, 17108], "count": 2900, "candidate_count": 0, "minute_data_permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN"},
+  "question": "Does the currently authorized Alpaca IEX minute-bar and point-in-time catalog contract contain an economically distinct causal input not already covered by completed research families?",
+  "audit_dimensions": ["raw minute schema", "causal feature-family coverage", "catalog point-in-time safety", "new-data requirements"],
+  "decision_rule": "If all economically meaningful raw fields and causal transforms are already represented, record NO_NEW_CAUSAL_FIELD_WITHIN_CURRENT_CONTRACT and request a new immutable data contract instead of relabeling failed signals.",
+  "forbidden": ["reading 2026-04 or later blind shards", "using consumed 2026Q1 to choose a new rule", "treating provider/feed/ingested_at as alpha", "using a current retrospective corporate-action or asset snapshot as historical point-in-time truth", "creating parameter-only strategy versions"],
+  "paper_activation": false
+}
