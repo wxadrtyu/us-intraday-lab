@@ -11,7 +11,6 @@ from runpy import run_path
 import duckdb
 import pandas as pd
 
-
 BASE = run_path(
     str(Path(__file__).with_name("evaluate_us_market_v14809_v14908_normalized_events.py")),
     run_name="v14809_common",
