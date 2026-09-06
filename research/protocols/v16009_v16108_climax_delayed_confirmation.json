@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16009-v16108-climax-delayed-confirmation",
+  "status": "PREREGISTERED_BEFORE_PAIR_MATERIALIZATION_AND_EVALUATION",
+  "versions": {"first": 16009, "last": 16108, "count": 100},
+  "dataset": {"event_cache": "causal 5m decision events", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Waiting for a later completed bar after a volume climax can distinguish a genuine liquidity rebound from a continuing collapse; causal confirmation may sacrifice immediacy while improving delay robustness and information ratio.",
+  "transition_pairs": [[2, 5], [2, 11], [5, 11], [11, 17], [17, 23]],
+  "confirmation_structures": ["positive_price_confirmation", "liquidity_dryup_confirmation", "below_vwap_unrecovered", "range_reclaim_confirmation", "market_breadth_recovery"],
+  "holding_bars_after_confirmation": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
