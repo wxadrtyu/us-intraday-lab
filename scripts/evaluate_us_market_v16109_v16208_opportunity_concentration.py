@@ -30,8 +30,6 @@ def attach_opportunity_gates(events: pd.DataFrame) -> tuple[pd.DataFrame, dict[s
     frame["alpha_vwap"] = -frame["vwap_dev"]
     frame["alpha_volume_rev"] = -frame["ret1"] * frame["volume_rank"]
     keys = ["session_date", "bar_idx"]
-    training = frame.loc[(frame["session_date"] >= "2021-01-01")
-                         & (frame["session_date"] <= "2023-12-31")]
     evidence_cells = 0
     for family, column in SCORE_COLUMNS.items():
         rank_column = f"{family}_rank"
