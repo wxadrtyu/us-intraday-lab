@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15209-v15308-path-disagreement-sleeves",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 15209, "last": 15308, "count": 100},
+  "dataset": {"event_cache": "v14309_v14408_events.parquet with causal price, VWAP, range and volume-path fields", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "A negative multi-bar path followed by a positive current bar marks a causal reversal transition; complementary liquidity, VWAP and range confirmations plus non-overlapping opportunity windows may preserve its low drawdown while increasing return.",
+  "trigger_structures": {
+    "baseline_path_disagreement": "ret3<-0.8%, ret1>0.15%, range position>50%, volume acceleration<1",
+    "below_vwap_path_reclaim": "baseline path disagreement plus VWAP deviation<-0.4%",
+    "strong_current_recovery": "ret3<-0.8%, ret1>0.3%, range position>50%",
+    "liquidity_dryup_reversal": "ret3<-0.8%, ret1>0.1%, volume acceleration<0.6",
+    "high_range_reclaim": "ret3<-0.8%, ret1>0.15%, range position>70%"
+  },
+  "non_overlapping_decision_schedules": [[2, 11], [5, 17], [11, 23], [2, 23], [2, 11, 23]],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names_per_window": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_simultaneous_gross": 1.0, "gross_reuse": "sequential_non_overlapping_only", "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
