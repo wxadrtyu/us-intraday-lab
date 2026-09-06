@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16309-v16408-trade-participation-microstructure",
+  "status": "PREREGISTERED_BEFORE_TRADE_COUNT_CACHE_BUILD_AND_EVALUATION",
+  "versions": {"first": 16309, "last": 16408, "count": 100},
+  "dataset": {"provider": "alpaca", "feed": "iex", "bar_size": "1min", "permitted_start": "2021-01-01", "permitted_end": "2026-03-31", "new_causal_field": "trade_count", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "field_audit": {"trade_count": "provider bar field known at each completed minute; aggregated only through the completed decision bar", "future_information": "FORBIDDEN", "2026_selection": "FORBIDDEN"},
+  "economic_hypothesis": "Volume decomposed into trade count and average trade size distinguishes broad participation from block-like participation; aligned participation and positive price acceptance may persist for 5-30 minutes even when price-only signals are weak.",
+  "factor_families": ["block_participation_acceptance", "broad_participation_acceptance", "trade_count_reacceleration", "size_count_alignment", "opening_intensity_persistence"],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_each_scenario_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
