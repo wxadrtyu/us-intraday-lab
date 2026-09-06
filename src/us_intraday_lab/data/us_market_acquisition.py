@@ -14,7 +14,7 @@ import re
 import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from datetime import time as datetime_time
 from pathlib import Path
 from typing import Any, Protocol, cast
@@ -186,7 +186,9 @@ class ReadOnlyDailyBarDownloader:
             symbol_or_symbols=list(symbols),
             timeframe=TimeFrame.Day,
             start=datetime.combine(start, datetime_time(), UTC),
-            end=datetime.combine(end, datetime_time(), UTC),
+            # Alpaca treats the request end as exclusive. Advance one day so
+            # the protocol's inclusive end date is actually retained.
+            end=datetime.combine(end + timedelta(days=1), datetime_time(), UTC),
             adjustment=Adjustment.SPLIT,
             feed=DataFeed.IEX,
             asof=asof.isoformat(),
@@ -213,7 +215,7 @@ def acquire_daily_shards(
     batch_size: int = 100,
     sleep: Callable[[float], None] = time.sleep,
 ) -> list[dict[str, object]]:
-    output_root = root.resolve() / "data" / "staging" / "alpaca_iex_1day"
+    output_root = root.resolve() / "data" / "staging" / "alpaca_iex_1day_v2"
     output_root.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, object]] = []
     if start > end:
@@ -269,7 +271,8 @@ def acquire_daily_shards(
             frame.to_parquet(temporary, index=False, compression="zstd")
             temporary.replace(parquet)
             record = {
-                "schema_version": "1.0.0",
+                "schema_version": "2.0.0",
+                "request_end_semantics": "exclusive_end_plus_one_day",
                 "provider": "alpaca",
                 "feed": "iex",
                 "bar_size": "1day",

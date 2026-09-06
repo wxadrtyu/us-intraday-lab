@@ -1,0 +1,15 @@
+{
+  "schema_version": "2.0.0",
+  "protocol_id": "us-market-dynamic-1m-v2",
+  "status": "FROZEN_BEFORE_CORRECTED_ACQUISITION",
+  "supersedes_daily_shards_only": "us-market-dynamic-1m-v1",
+  "reason": "Alpaca bar request end is exclusive; v1 omitted a trading session when the declared inclusive period end was itself an XNYS session.",
+  "correction": {
+    "declared_end_is_inclusive": true,
+    "request_end": "declared_end_plus_one_calendar_day",
+    "new_daily_shard_root": "data/staging/alpaca_iex_1day_v2",
+    "retain_v1_shards_as_evidence": true,
+    "monthly_universe_must_use": "alpaca_iex_1day_v2"
+  },
+  "all_other_contract_fields": "inherit us-market-dynamic-1m-v1 without change"
+}

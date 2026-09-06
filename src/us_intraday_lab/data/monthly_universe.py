@@ -52,7 +52,7 @@ def build_monthly_universe(
     minimum_median_dollar_volume: float = 10_000_000.0,
 ) -> dict[str, object]:
     """Publish all symbol-month decisions; missing cutoff data fails closed."""
-    daily_root = root.resolve() / "data" / "staging" / "alpaca_iex_1day"
+    daily_root = root.resolve() / "data" / "staging" / "alpaca_iex_1day_v2"
     shards = sorted(daily_root.glob("*.parquet"))
     if not shards:
         raise FileNotFoundError("no daily shards are available")
@@ -69,7 +69,7 @@ def build_monthly_universe(
                  CAST(timestamp AS DATE) AS session_date,
                  max(close) AS close,
                  max(volume) AS volume
-          FROM read_parquet(?)
+          FROM read_parquet(?, union_by_name = true)
           WHERE close IS NOT NULL AND volume IS NOT NULL
           GROUP BY 1, 2
         ),
@@ -135,7 +135,7 @@ def build_monthly_universe(
     manifest: dict[str, object] = {
         "schema_version": "1.0.0",
         "dataset_id": dataset_id,
-        "source": "alpaca-iex-1day-shards",
+        "source": "alpaca-iex-1day-v2-shards",
         "start_month": start_month.isoformat(),
         "end_month": end_month.isoformat(),
         "lookback_sessions": lookback_sessions,

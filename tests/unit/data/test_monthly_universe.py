@@ -36,7 +36,7 @@ def test_universe_uses_only_prior_sessions_and_fails_low_liquidity(tmp_path: Pat
                     "volume": volume,
                 }
             )
-    daily_root = tmp_path / "data" / "staging" / "alpaca_iex_1day"
+    daily_root = tmp_path / "data" / "staging" / "alpaca_iex_1day_v2"
     daily_root.mkdir(parents=True)
     pd.DataFrame(rows).to_parquet(daily_root / "part.parquet", index=False)
 

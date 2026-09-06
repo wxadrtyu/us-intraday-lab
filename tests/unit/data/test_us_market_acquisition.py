@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 
 from us_intraday_lab.data.us_market_acquisition import (
     ASSET_ENDPOINT,
+    ReadOnlyDailyBarDownloader,
     acquire_daily_shards,
     fetch_asset_catalog,
     normalize_asset_catalog,
@@ -122,3 +124,23 @@ def test_daily_acquisition_isolates_one_provider_rejected_symbol(tmp_path: Path)
     assert len(records) == 1
     assert records[0]["provider_rejected_symbols"] == ["BAD"]
     assert records[0]["row_count"] == 1
+
+
+def test_daily_request_advances_inclusive_end_by_one_day() -> None:
+    class FakeClient:
+        request: object | None = None
+
+        def get_stock_bars(self, request: object) -> object:
+            self.request = request
+            return SimpleNamespace(df=pd.DataFrame())
+
+    client = FakeClient()
+    ReadOnlyDailyBarDownloader(client).fetch(
+        symbols=("SPY",),
+        start=date(2025, 1, 1),
+        end=date(2025, 12, 31),
+        asof=date(2025, 12, 31),
+    )
+
+    assert client.request is not None
+    assert client.request.end.date() == date(2026, 1, 1)  # type: ignore[attr-defined]
