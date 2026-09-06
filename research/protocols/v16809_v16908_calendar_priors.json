@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v16809-v16908-frozen-calendar-return-priors",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 16809, "last": 16908, "count": 100},
+  "duplicate_audit": {"overnight_gap": "REJECTED_AS_ALREADY_COVERED_BY_PRIOR_CLOSE_AND_GAP_FAMILIES", "selected_source": "training-frozen intraday calendar return priors"},
+  "dataset": {"event_cache": "causal full-market 5m cache", "permitted_start": "2021-01-01", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "field_audit": {"training_label": "next five-minute open-to-open return used only inside 2021-2023 estimation", "calendar_state": "decision-date weekday, month, week-of-month or quarter known before trading", "frozen_estimates": "no 2024-2026 labels enter expected-return priors", "2026_selection": "FORBIDDEN"},
+  "economic_hypothesis": "Persistent institutional execution schedules and recurring calendar flows can create symbol-specific intraday expected-return patterns; frozen positive priors may select profitable long-only intervals without relying on the current price path.",
+  "factor_families": ["symbol_bar_prior", "weekday_prior", "month_prior", "week_of_month_prior", "quarter_prior"],
+  "minimum_training_observations": {"symbol_bar_prior": 100, "weekday_prior": 20, "month_prior": 20, "week_of_month_prior": 20, "quarter_prior": 60},
+  "fixed_expected_return_floors": {"symbol_bar_prior": 0.0010, "weekday_prior": 0.0012, "month_prior": 0.0012, "week_of_month_prior": 0.0015, "quarter_prior": 0.0010},
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
