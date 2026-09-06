@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15109-v15208-multisignal-consensus",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 15109, "last": 15208, "count": 100},
+  "dataset": {"event_cache": "v14309_v14408_events.parquet with causal price, VWAP, range and volume-path fields", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "Short-horizon alpha is more reliable when independent price-path, liquidity-path, VWAP and range-position observations agree; consensus filters should reduce false positives and transaction-cost drag.",
+  "factor_families": {
+    "downshock_volume_climax_reversal": "ret1<-0.5%, volume acceleration>1.5, range position<25%",
+    "downtrend_reclaim_with_volume_decay": "ret3<-1%, ret1>0, volume acceleration<0.8",
+    "up_impulse_volume_range_continuation": "ret3>1%, ret1>0, volume acceleration>1.25, range position>80%",
+    "below_vwap_reclaim_with_participation": "VWAP deviation<-0.6%, ret1>0.1%, volume rank>70%",
+    "path_disagreement_reversal": "ret3<-0.8%, ret1>0.15%, range position>50%, volume acceleration<1"
+  },
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement: each scenario annualized>=15%, MDD<20%", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
