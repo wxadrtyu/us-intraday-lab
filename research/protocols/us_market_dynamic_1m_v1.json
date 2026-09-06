@@ -9,7 +9,8 @@
     "statuses": ["active", "inactive"],
     "exchanges": ["AMEX", "ARCA", "BATS", "NASDAQ", "NYSE"],
     "exclude_otc": true,
-    "retain_untradable_and_inactive": true
+    "retain_untradable_and_inactive": true,
+    "non_ticker_identifiers": "retain_in_master_exclude_from_bar_requests_with_evidence"
   },
   "coarse_history": {
     "provider": "alpaca",

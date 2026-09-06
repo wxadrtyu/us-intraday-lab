@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
+
+import pandas as pd
 
 from us_intraday_lab.data.us_market_acquisition import (
     ASSET_ENDPOINT,
+    acquire_daily_shards,
     fetch_asset_catalog,
     normalize_asset_catalog,
     primary_exchange_symbols,
     publish_asset_catalog,
+    unqueryable_primary_symbols,
 )
 
 
@@ -42,6 +46,15 @@ def _records() -> list[dict[str, object]]:
             "status": "inactive",
             "tradable": False,
         },
+        {
+            "id": "4",
+            "class": "us_equity",
+            "exchange": "NYSE",
+            "symbol": "0029900E0",
+            "name": "Non-ticker entitlement",
+            "status": "inactive",
+            "tradable": False,
+        },
     ]
 
 
@@ -71,10 +84,41 @@ def test_catalog_preserves_inactive_ids_and_returns_unique_primary_symbols(tmp_p
         frame, root=tmp_path, retrieved_at=datetime(2026, 9, 6, tzinfo=UTC)
     )
 
-    assert manifest["row_count"] == 3
-    assert manifest["inactive_count"] == 2
-    assert manifest["primary_exchange_count"] == 2
+    assert manifest["row_count"] == 4
+    assert manifest["inactive_count"] == 3
+    assert manifest["primary_exchange_count"] == 3
     assert primary_exchange_symbols(frame) == ("ABC",)
+    assert unqueryable_primary_symbols(frame) == ("0029900E0",)
     snapshot = tmp_path / "data" / "catalog" / "us_equity_assets" / manifest["dataset_id"]
     assert (snapshot / "assets.parquet").is_file()
     assert (snapshot / "manifest.json").is_file()
+
+
+def test_daily_acquisition_isolates_one_provider_rejected_symbol(tmp_path: Path) -> None:
+    class FakeDownloader:
+        def fetch(
+            self, *, symbols: tuple[str, ...], start: date, end: date, asof: date
+        ) -> pd.DataFrame:
+            if "BAD" in symbols:
+                raise RuntimeError('{"message":"invalid symbol: BAD"}')
+            return pd.DataFrame(
+                {
+                    "symbol": ["ABC"],
+                    "timestamp": [pd.Timestamp("2022-01-03T05:00:00Z")],
+                    "close": [10.0],
+                }
+            )
+
+    records = acquire_daily_shards(
+        root=tmp_path,
+        downloader=FakeDownloader(),  # type: ignore[arg-type]
+        symbols=("ABC", "BAD"),
+        start=date(2022, 1, 1),
+        end=date(2022, 12, 31),
+        batch_size=100,
+        sleep=lambda _: None,
+    )
+
+    assert len(records) == 1
+    assert records[0]["provider_rejected_symbols"] == ["BAD"]
+    assert records[0]["row_count"] == 1

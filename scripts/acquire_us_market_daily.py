@@ -12,6 +12,7 @@ from us_intraday_lab.data.us_market_acquisition import (
     normalize_asset_catalog,
     primary_exchange_symbols,
     publish_asset_catalog,
+    unqueryable_primary_symbols,
 )
 
 
@@ -28,9 +29,14 @@ def main() -> None:
     assets = normalize_asset_catalog(fetch_asset_catalog())
     catalog = publish_asset_catalog(assets, root=args.root)
     symbols = primary_exchange_symbols(assets)
+    unqueryable = unqueryable_primary_symbols(assets)
     print(
         json.dumps(
-            {"asset_catalog": catalog, "planned_unique_symbols": len(symbols)},
+            {
+                "asset_catalog": catalog,
+                "planned_unique_symbols": len(symbols),
+                "unqueryable_asset_identifiers_retained_in_catalog": len(unqueryable),
+            },
             sort_keys=True,
         ),
         flush=True,

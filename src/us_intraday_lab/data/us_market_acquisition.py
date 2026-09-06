@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -28,6 +29,8 @@ from us_intraday_lab.data.alpaca_iex_acquisition import (
 
 ASSET_ENDPOINT = "https://paper-api.alpaca.markets/v2/assets?asset_class=us_equity"
 PRIMARY_EXCHANGES = frozenset({"AMEX", "ARCA", "BATS", "NASDAQ", "NYSE"})
+QUERYABLE_SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,14}")
+INVALID_SYMBOL_RESPONSE = re.compile(r"invalid symbol:\s*([^\"}]+)", re.IGNORECASE)
 ASSET_COLUMNS = (
     "id",
     "class",
@@ -144,7 +147,18 @@ def publish_asset_catalog(
 
 def primary_exchange_symbols(frame: pd.DataFrame) -> tuple[str, ...]:
     retained = frame.loc[frame["exchange"].isin(PRIMARY_EXCHANGES), "symbol"]
-    return tuple(sorted(set(retained.astype(str))))
+    return tuple(
+        sorted(symbol for symbol in set(retained.astype(str)) if QUERYABLE_SYMBOL.fullmatch(symbol))
+    )
+
+
+def unqueryable_primary_symbols(frame: pd.DataFrame) -> tuple[str, ...]:
+    retained = frame.loc[frame["exchange"].isin(PRIMARY_EXCHANGES), "symbol"]
+    return tuple(
+        sorted(
+            symbol for symbol in set(retained.astype(str)) if not QUERYABLE_SYMBOL.fullmatch(symbol)
+        )
+    )
 
 
 class ReadOnlyDailyBarDownloader:
@@ -223,10 +237,13 @@ def acquire_daily_shards(
             if parquet.exists() or manifest_path.exists():
                 raise ValueError(f"partial daily shard requires audit: {stem}")
             last_error: Exception | None = None
-            for attempt in range(5):
+            rejected: list[str] = []
+            remaining = list(batch)
+            attempt = 0
+            while remaining:
                 try:
                     frame = downloader.fetch(
-                        symbols=batch,
+                        symbols=tuple(remaining),
                         start=period_start,
                         end=period_end,
                         asof=asof,
@@ -234,11 +251,20 @@ def acquire_daily_shards(
                     break
                 except Exception as error:  # bounded provider retry
                     last_error = error
+                    invalid = INVALID_SYMBOL_RESPONSE.search(str(error))
+                    if invalid and invalid.group(1).strip().upper() in remaining:
+                        symbol = invalid.group(1).strip().upper()
+                        remaining.remove(symbol)
+                        rejected.append(symbol)
+                        continue
                     if attempt == 4:
                         raise
                     sleep(min(30.0, 2.0**attempt))
-            else:  # pragma: no cover
-                raise AssertionError(last_error)
+                    attempt += 1
+            else:
+                if last_error is None:
+                    raise AssertionError("empty symbol batch")
+                frame = pd.DataFrame()
             temporary = parquet.with_suffix(".tmp.parquet")
             frame.to_parquet(temporary, index=False, compression="zstd")
             temporary.replace(parquet)
@@ -253,6 +279,7 @@ def acquire_daily_shards(
                 "end": period_end.isoformat(),
                 "asof": asof.isoformat(),
                 "symbols": list(batch),
+                "provider_rejected_symbols": sorted(rejected),
                 "row_count": len(frame),
                 "content_sha256": _sha256_file(parquet),
             }
