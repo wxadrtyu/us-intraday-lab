@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-dynamic-1m-v1",
+  "status": "FROZEN_BEFORE_ACQUISITION",
+  "scope": "All Alpaca-listed US equities, including inactive records, screened point-in-time before minute acquisition.",
+  "storage_root": "E:/us-intraday-lab-data/us-market",
+  "security_master": {
+    "provider": "alpaca",
+    "statuses": ["active", "inactive"],
+    "exchanges": ["AMEX", "ARCA", "BATS", "NASDAQ", "NYSE"],
+    "exclude_otc": true,
+    "retain_untradable_and_inactive": true
+  },
+  "coarse_history": {
+    "provider": "alpaca",
+    "feed": "iex",
+    "bar_size": "1day",
+    "adjustment": "split",
+    "start": "2018-10-01",
+    "end": "2026-09-04",
+    "asof_each_year_end": true,
+    "missing_history": "retain_as_unavailable_never_fill"
+  },
+  "monthly_eligibility": {
+    "information_lag_sessions": 1,
+    "lookback_sessions": 60,
+    "minimum_adjusted_close_usd": 5.0,
+    "minimum_median_daily_dollar_volume_usd": 10000000,
+    "minimum_daily_coverage_ratio": 0.95,
+    "maximum_symbols": null,
+    "missing_symbol": "ineligible_not_cash_return"
+  },
+  "minute_history": {
+    "provider": "alpaca",
+    "feed": "iex",
+    "bar_size": "1min",
+    "calendar": "XNYS",
+    "session": "regular_only",
+    "acquire": "every_symbol_month_passing_monthly_eligibility",
+    "fill_missing_minutes": false,
+    "splice_providers": false
+  },
+  "supplements": {
+    "corporate_actions": [
+      "forward_split", "reverse_split", "cash_dividend", "stock_dividend",
+      "spin_off", "cash_merger", "stock_merger", "name_change", "worthless_removal"
+    ],
+    "historical_2018_2020": "separate_provider_required_for_candidate_stress_only",
+    "historical_quotes": "required_before_paper_admission_or_use_conservative_spread_stress"
+  },
+  "research_boundaries": {
+    "development": ["2021-01-01", "2025-12-31"],
+    "consumed": ["2026-01-01", "2026-03-31"],
+    "blind_starts": "2026-04-01",
+    "paper_activation": false,
+    "broker_orders": false
+  }
+}
