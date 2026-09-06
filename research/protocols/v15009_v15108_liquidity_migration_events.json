@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v15009-v15108-liquidity-migration-events",
+  "status": "PREREGISTERED_BEFORE_CACHE_REBUILD_AND_EVALUATION",
+  "versions": {"first": 15009, "last": 15108, "count": 100},
+  "dataset": {"event_cache": "v14309_v14408_events.parquet with causal lag/opening volume fields", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "economic_hypothesis": "The migration from opening-auction liquidity to continuous trading reveals whether price pressure is receiving fresh participation or exhausting; causal changes in five-minute volume condition continuation and rebound payoffs.",
+  "factor_families": {
+    "volume_acceleration_up_continuation": "current/prior 5m volume >2 and ret1 >0.3%",
+    "volume_acceleration_down_reversal": "current/prior 5m volume >2 and ret1 <-0.5%",
+    "volume_decay_down_reclaim": "current/prior volume <0.5, ret3 <-1%, ret1 >0",
+    "opening_liquidity_persistence": "current/opening-bar volume >0.75, ret3 >0.8%, ret1 >0",
+    "opening_liquidity_exhaustion": "current/opening-bar volume <0.25, ret3 <-0.8%, ret1 >0"
+  },
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal_among_signals", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required_for_final_admission_but_candidate_specific_supplement_not_yet_available", "native_factory_null": "run_only_after_all_pre-null_gates"},
+  "paper_activation": false
+}

@@ -122,9 +122,11 @@ def materialize_events(files: list[Path], cache: Path, rebuild: bool) -> None:
             SELECT *,
               lag(bar_idx, 1) OVER w AS lag1_idx,
               lag(close, 1) OVER w AS lag1_close,
+              lag(volume, 1) OVER w AS lag1_volume,
               lag(bar_idx, 3) OVER w AS lag3_idx,
               lag(close, 3) OVER w AS lag3_close,
               first_value(open) OVER wr AS session_open,
+              first_value(volume) OVER wr AS opening_volume,
               sum(vwap * volume) OVER wr / nullif(sum(volume) OVER wr, 0) AS running_vwap,
               min(low) OVER wr AS running_low,
               max(high) OVER wr AS running_high,
@@ -139,7 +141,9 @@ def materialize_events(files: list[Path], cache: Path, rebuild: bool) -> None:
               wr AS (PARTITION BY symbol, session_date ORDER BY bar_idx
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
           )
-          SELECT symbol, session_date, bar_idx, volume,
+          SELECT symbol, session_date, bar_idx, volume, lag1_volume, opening_volume,
+            volume / nullif(lag1_volume, 0) AS volume_to_prior,
+            volume / nullif(opening_volume, 0) AS volume_to_open,
             close / lag1_close - 1 AS ret1,
             CASE WHEN bar_idx = 2 THEN close / session_open - 1
               ELSE close / lag3_close - 1 END AS ret3,
