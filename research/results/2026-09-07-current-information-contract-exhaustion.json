@@ -1,0 +1,83 @@
+{
+  "audit_id": "current-information-contract-exhaustion-audit",
+  "blind_2026_04_plus_rows_loaded": 0,
+  "candidate_count": 0,
+  "catalog_point_in_time_audit": {
+    "assets": {
+      "dataset_id": "alpaca-us-equity-assets-4cf36da00fead42b3b669620",
+      "decision": "CURRENT_SNAPSHOT_UNSAFE_AS_HISTORICAL_CLASSIFICATION"
+    },
+    "corporate_actions": {
+      "decision": "UNSAFE_FOR_HISTORICAL_SELECTION_WITHOUT_VINTAGED_SNAPSHOTS",
+      "end": "2026-09-04",
+      "retrieved_at": "2026-09-06T04:59:39.431144+00:00"
+    }
+  },
+  "consumed_2026_rows_loaded": 0,
+  "decision": "NO_NEW_CAUSAL_FIELD_WITHIN_CURRENT_CONTRACT",
+  "feature_family_coverage": {
+    "cross_asset_transforms": [
+      "v16409-v16508 frozen broad-ETF beta lead-lag",
+      "v17009-v17108 frozen stock leader network"
+    ],
+    "open_high_low_close": [
+      "v14309-v15308 endpoint/path families",
+      "v16509-v16608 complete minute volatility surface",
+      "v16609-v16708 minute body/close-location/wick pressure"
+    ],
+    "timestamp_session_date": [
+      "v16809-v16908 frozen calendar priors",
+      "v16909-v17008 exact consecutive-session recurring slot flow"
+    ],
+    "trade_count": [
+      "v16309-v16408 trade-count and average-trade-size decomposition",
+      "v16709-v16808 intrabar trade participation timing"
+    ],
+    "volume": [
+      "v14309-v16208 volume, climax, concentration and state families",
+      "v16709-v16808 complete intrabar liquidity curve"
+    ],
+    "vwap": [
+      "v14309-v15308 running-VWAP and residual-VWAP families",
+      "earlier repository v21 and later full-universe VWAP structure families"
+    ]
+  },
+  "next_action": "PAUSE_NEW_STRATEGY_VERSION_CREATION_UNTIL_ONE_NEW_CONTRACT_IS_AUTHORIZED_AND_IMMUTABLY_ACQUIRED",
+  "non_alpha_or_identifier_columns": [
+    "feed",
+    "ingested_at",
+    "provider"
+  ],
+  "required_new_immutable_data_contracts": [
+    "historical timestamped bid/ask quotes or NBBO for spread, imbalance and microprice",
+    "historical trade prints with aggressor-side inference",
+    "timestamped opening/closing auction imbalance and indicative price",
+    "point-in-time earnings/news/event timestamps",
+    "point-in-time short-interest, borrow availability or options-implied state"
+  ],
+  "sample_shard": {
+    "columns": [
+      "symbol",
+      "timestamp",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume",
+      "trade_count",
+      "vwap",
+      "session_date",
+      "provider",
+      "feed",
+      "ingested_at"
+    ],
+    "content_sha256": "379ec73b589875a5bdde2486bad0a293e68b3f68fecb43eca383bd224c7955e9",
+    "month": "2025-12",
+    "rows": 137076,
+    "strategy_metrics_permitted": true
+  },
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_reviewed": 2900,
+  "unmodeled_meaningful_raw_columns": []
+}
