@@ -48,9 +48,7 @@ def quarantine_invalid_symbol_sessions(
     invalid |= numeric["volume"].lt(0)
     invalid |= bars.duplicated(["symbol", "timestamp"], keep=False)
     ordered = bars.sort_values(["symbol", "timestamp"])
-    prior_close = ordered.groupby("symbol", observed=True)["close"].shift()
-    ordered_invalid = (ordered["open"] / prior_close - 1.0).abs().gt(0.60) & prior_close.notna()
-    ordered_invalid |= (ordered["high"] / ordered["low"] - 1.0).gt(0.50)
+    ordered_invalid = (ordered["high"] / ordered["low"] - 1.0).gt(0.50)
     invalid.loc[ordered.index] |= ordered_invalid
     if "trade_count" in bars.columns:
         values = bars["trade_count"].to_numpy(dtype="float64")
@@ -163,7 +161,11 @@ def acquire_eligible_minutes(
             quality: dict[str, object] | None = None
             if not accepted.empty:
                 quality = assess_acquired_bars(
-                    accepted, symbols=tuple(sorted(remaining)), start=month, end=end
+                    accepted,
+                    symbols=tuple(sorted(remaining)),
+                    start=month,
+                    end=end,
+                    allow_adjusted_jumps=True,
                 )
                 quality.pop("groups", None)
             record = {

@@ -180,6 +180,16 @@ def test_duplicate_or_extreme_adjusted_price_blocks_publication() -> None:
     with pytest.raises(ValueError, match="structural or adjusted-price anomaly"):
         assess_acquired_bars(extreme, symbols=("SPY",), start=session, end=session)
 
+    allowed = assess_acquired_bars(
+        extreme,
+        symbols=("SPY",),
+        start=session,
+        end=session,
+        allow_adjusted_jumps=True,
+    )
+    assert allowed["adjusted_jump_rows"] >= 1
+    assert allowed["adjusted_jumps_allowed"] is True
+
     invalid_vwap = bars.copy()
     invalid_vwap.loc[100, "vwap"] = float("nan")
     with pytest.raises(ValueError, match="structural or adjusted-price anomaly"):

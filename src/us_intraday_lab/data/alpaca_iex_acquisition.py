@@ -289,6 +289,7 @@ def assess_acquired_bars(
     symbols: tuple[str, ...],
     start: date,
     end: date,
+    allow_adjusted_jumps: bool = False,
 ) -> dict[str, object]:
     """Measure exact XNYS coverage and block corrupt or suspicious adjusted prices."""
     if bars.empty:
@@ -369,7 +370,9 @@ def assess_acquired_bars(
         or unexpected_session_rows
         or outside_session_total
     )
-    anomaly_passed = not bool(adjusted_jump.any() or intrabar_range.any())
+    anomaly_passed = not bool(intrabar_range.any()) and (
+        allow_adjusted_jumps or not bool(adjusted_jump.any())
+    )
     if not structural_passed or not anomaly_passed:
         raise ValueError("Alpaca IEX bars failed structural or adjusted-price anomaly gates")
     return {
@@ -384,6 +387,7 @@ def assess_acquired_bars(
         "unexpected_session_rows": unexpected_session_rows,
         "outside_session_rows": outside_session_total,
         "adjusted_jump_rows": int(adjusted_jump.sum()),
+        "adjusted_jumps_allowed": allow_adjusted_jumps,
         "intrabar_range_anomaly_rows": int(intrabar_range.sum()),
         "expected_symbol_sessions": expected_groups,
         "observed_symbol_sessions": observed_groups,
