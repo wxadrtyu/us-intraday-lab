@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17009-v17108-frozen-stock-leader-network",
+  "status": "PREREGISTERED_BEFORE_NETWORK_ESTIMATION_AND_EVALUATION",
+  "versions": {"first": 17009, "last": 17108, "count": 100},
+  "duplicate_audit": {"broad_etf_lead_lag": "distinct: SPY/QQQ/IWM are excluded as leaders and no target catch-up gap is used", "selected_source": "training-frozen stock-to-stock predictive lead network"},
+  "dataset": {"event_cache": "causal full-market 5m cache", "permitted_start": "2021-01-01", "permitted_end": "2026-03-31", "blind_file_loading": "FORBIDDEN", "quarantine_files": "FORBIDDEN"},
+  "field_audit": {"leader_input": "leader same-decision-bar completed ret1", "target_label": "target next-5m open-to-open return used only in 2021-2023 network estimation", "leader_universe": "50 highest training-period median-volume non-benchmark stocks", "mapping": "top five positive pairwise correlations per target and decision bar, frozen before 2024", "future_information": "FORBIDDEN", "2026_selection": "FORBIDDEN"},
+  "economic_hypothesis": "Information can propagate from highly traded individual stocks to economically correlated peers before broad ETFs fully reflect it; a training-frozen network of stock leaders may forecast target returns over the next 5-30 minutes.",
+  "network_rules": {"leader_count": 50, "minimum_pair_observations": 100, "minimum_positive_correlation": 0.08, "leaders_per_target": 5, "excluded_leaders": ["SPY", "QQQ", "IWM"], "maximum_mapping_comparisons": 202250},
+  "factor_families": ["top1_leader_impulse", "top3_leader_consensus", "top5_leader_consensus", "concentrated_leader_impulse", "volume_confirmed_network"],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "weighting": "equal", "side": "long_only", "maximum_gross": 1.0, "no_signal": "cash", "overnight": false},
+  "periods": {"development_train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed_diagnostic": ["2026-01-01", "2026-03-31"]},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "hard_gates": {"development_oos_each_scenario_annualized_return_min": 0.50, "development_oos_each_scenario_mdd_max": 0.20, "development_oos_each_scenario_ir_min": 1.0, "consumed_2026q1_total_return_min": 0.05, "positive_folds_min": "4/5", "positive_start_dates": "all", "neighborhood_pass_share_min": 0.70, "cumulative_bonferroni_p_max": 0.05, "historical_2018_2020": "required candidate-specific supplement", "native_factory_null": "run only after all pre-null gates"},
+  "paper_activation": false
+}
