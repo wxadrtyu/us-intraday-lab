@@ -69,6 +69,10 @@ def score(frame: pd.DataFrame, family: str) -> pd.Series:
     return frame[f"{family}_expected_return"]
 
 
+def format_metric(value: float | None, specifier: str) -> str:
+    return "NA" if value is None else format(value, specifier)
+
+
 def run(args: argparse.Namespace) -> dict:
     evaluator_globals = BASE["run"].__globals__
     evaluator_globals.update(
@@ -92,7 +96,9 @@ def run(args: argparse.Namespace) -> dict:
         f"- Status: COMPLETE; versions: {result['versions_completed']}; admitted: 0\n"
         f"- Best: v{best['version']} ({best['family']}, bar {best['decision_bar']}, hold {best['holding_minutes']}m)\n"
         + "\n".join(
-            f"- {name}: annualized {value['annualized_return']:.2%}, MDD {value['max_drawdown']:.2%}, IR {value['information_ratio']:.2f}"
+            f"- {name}: annualized {format_metric(value['annualized_return'], '.2%')}, "
+            f"MDD {format_metric(value['max_drawdown'], '.2%')}, "
+            f"IR {format_metric(value['information_ratio'], '.2f')}"
             for name, value in best["development_oos"].items()
         )
         + f"\n- 2026Q1 consumed 9bp total: {best['consumed_2026q1']['standard_9bp']['total_return']:.2%}\n"
