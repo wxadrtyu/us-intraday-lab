@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17309-v17408-quote-price-divergence",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 17309, "last": 17408, "count": 100},
+  "economic_hypothesis": "Displayed SIP size imbalance can diverge from the completed price path because liquidity is replenished or consumed; price-confirming and price-opposing imbalance states may separate continuation from reversal.",
+  "families": [
+    "up_move_ask_heavy_continuation",
+    "down_move_bid_heavy_reversal",
+    "below_vwap_bid_reclaim",
+    "tight_spread_bid_confirmation",
+    "wide_spread_sell_capitulation_repair"
+  ],
+  "training_thresholds": "2021-2023 per-decision-bar q20/q80 spread and imbalance",
+  "quotes_seen_for_alpha": false,
+  "quotes_seen_exclusion_reason": "progressive lookback makes the count window unequal across rows",
+  "per_symbol_fitting": false,
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "periods": {"train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed": ["2026-01-01", "2026-03-31"]},
+  "portfolio": {"maximum_names": 10, "long_only": true, "maximum_gross": 1.0, "overnight": false},
+  "prior_cumulative_comparisons": 542433,
+  "all_existing_cost_delay_robustness_multiplicity_and_null_gates_apply": true,
+  "paper_activation": false
+}
