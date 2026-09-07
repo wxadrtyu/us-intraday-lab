@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17909-v18008-trade-filtered-opening-climax",
+  "status": "PREREGISTERED_BEFORE_DEVELOPMENT_EVALUATION",
+  "versions": {"first": 17909, "last": 18008, "count": 100},
+  "parent_return_source": "v15912 high-absolute-market-activity opening volume-climax reversal",
+  "economic_hypothesis": "A fixed one-second trade print observed before entry can separate temporary opening liquidity pressure from informed selling without becoming the primary signal.",
+  "training_only_diagnostic": "709e5e7; minimum 100 sessions; no development or consumed data loaded",
+  "families": ["valid_trade", "print_below_mid", "print_not_above_mid", "negative_location", "positive_location"],
+  "actual_decision_bar": 2,
+  "grid": {"top_counts": [1, 2, 3, 5, 10], "holding_bars": [1, 2, 4, 6]},
+  "universe": "all eligible symbols jointly ranked per session; never one-symbol backtests",
+  "training": "2021-2023 market-state threshold only",
+  "development_selection": "2024-2025 only",
+  "consumed_diagnostic": "2026Q1 after ranking freeze",
+  "constraints": {"long_only": true, "gross_max": 1.0, "overnight": false, "blind_after": "2026-03-31", "paper_activation": false},
+  "costs_and_gates": "unchanged 9bp, 18bp, delay, development, consumed, robustness, multiplicity, history and native-null gates",
+  "prior_comparisons": 543033
+}
