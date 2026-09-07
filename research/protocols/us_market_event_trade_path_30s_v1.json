@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-event-trade-path-30s-v1",
+  "status": "FROZEN_BEFORE_ACQUISITION",
+  "provider": "alpaca",
+  "feed": "sip",
+  "execution_capability": "FORBIDDEN",
+  "source": "historical multi-symbol stock trades",
+  "window": "[decision_timestamp-30 seconds, decision_timestamp)",
+  "window_fixed_for_all_rows": true,
+  "progressive_lookback": false,
+  "universe": "all 799799 audited event keys, acquired by timestamp and multi-symbol batch",
+  "features": ["trades_30s", "volume_30s", "notional_30s", "trade_vwap_30s", "tick_volume_imbalance", "back_half_activity_share", "trade_path_return", "last_to_vwap", "largest_trade_share", "venue_count", "venue_concentration", "odd_lot_share"],
+  "tick_rule": "within-symbol price-change sign, zero changes inherit the last nonzero sign only within the fixed window; unresolved signs are zero",
+  "missingness": "explicit zero counts and unavailable flag; no wider-window substitution",
+  "blind_cutoff": "2026-04-01",
+  "provider_splicing": "FORBIDDEN",
+  "immutable_output": "zstd parquet plus SHA-256 manifest",
+  "paper_activation": false
+}
