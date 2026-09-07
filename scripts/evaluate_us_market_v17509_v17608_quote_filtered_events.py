@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-
 from evaluate_us_market_v17409_v17508_microprice_edge import (
     ATTACH_GLOBALS,
     NORMALIZED,
@@ -31,8 +30,8 @@ def attach_filtered_events(events: pd.DataFrame) -> tuple[pd.DataFrame, dict[str
         & scaled["valid_quote"]
     ]
     thresholds = training.groupby("bar_idx", as_index=False).agg(
-        spread_q25=("relative_spread", lambda values: values.quantile(0.25)),
-        age_q25=("quote_age_ms", lambda values: values.quantile(0.25)),
+        filter_spread_q25=("relative_spread", lambda values: values.quantile(0.25)),
+        filter_age_q25=("quote_age_ms", lambda values: values.quantile(0.25)),
     )
     scaled = scaled.merge(thresholds, on="bar_idx", how="left", validate="many_to_one")
     evidence: dict[str, int | str] = {**quote_evidence, **scale_evidence}
@@ -42,8 +41,8 @@ def attach_filtered_events(events: pd.DataFrame) -> tuple[pd.DataFrame, dict[str
 
 def event_mask(frame: pd.DataFrame, family: str) -> pd.Series:
     valid = frame["valid_quote"]
-    tight = frame["relative_spread"] <= frame["spread_q25"]
-    fresh = frame["quote_age_ms"] <= frame["age_q25"]
+    tight = frame["relative_spread"] <= frame["filter_spread_q25"]
+    fresh = frame["quote_age_ms"] <= frame["filter_age_q25"]
     if family == FAMILIES[0]:
         return valid & tight & (frame["z_ret1"] < -2.0)
     if family == FAMILIES[1]:
