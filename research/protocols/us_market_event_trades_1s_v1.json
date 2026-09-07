@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-event-trades-1s-v1",
+  "status": "FROZEN_BEFORE_ACQUISITION",
+  "provider": "alpaca",
+  "feed": "sip",
+  "execution_capability": "FORBIDDEN",
+  "source": "historical multi-symbol stock trades",
+  "window": "[decision_timestamp-1 second, decision_timestamp)",
+  "window_fixed_for_all_rows": true,
+  "progressive_lookback": false,
+  "universe": "all 799799 audited event keys, acquired by timestamp and multi-symbol batch",
+  "quote_dependency": "audited strictly-prior SIP midpoint used only for trade-price location classification",
+  "features": ["trades_1s", "volume_1s", "notional_1s", "trade_vwap", "last_trade_edge_to_final_quote_midpoint", "buy_location_volume", "sell_location_volume", "at_mid_volume", "trade_location_volume_imbalance", "price_range", "largest_trade_share", "venue_count", "odd_lot_share"],
+  "missingness": "explicit zero counts and unavailable flag; no wider-window substitution",
+  "blind_cutoff": "2026-04-01",
+  "provider_splicing": "FORBIDDEN",
+  "immutable_output": "zstd parquet plus SHA-256 manifest",
+  "strategy_versions_reserved_after_audit": {"first": 17709, "count": 100},
+  "paper_activation": false
+}
