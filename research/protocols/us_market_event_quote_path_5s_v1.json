@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-event-quote-path-5s-v1",
+  "status": "FROZEN_BEFORE_ACQUISITION",
+  "provider": "alpaca",
+  "feed": "sip",
+  "execution_capability": "FORBIDDEN",
+  "source": "historical multi-symbol stock quote updates",
+  "window": "[decision_timestamp-5 seconds, decision_timestamp)",
+  "window_fixed_for_all_rows": true,
+  "progressive_lookback": false,
+  "universe": "all 799799 audited event keys, acquired jointly by timestamp and symbol batch",
+  "features": [
+    "quotes_5s", "midpoint_return", "microprice_return", "midpoint_range",
+    "mean_relative_spread", "last_relative_spread", "spread_change",
+    "mean_size_imbalance", "last_size_imbalance", "size_imbalance_change",
+    "back_half_update_share", "bid_price_pressure", "ask_price_pressure",
+    "bid_size_pressure", "ask_size_pressure", "locked_or_crossed_share",
+    "last_quote_age_ms"
+  ],
+  "missingness": "explicit zero counts and unavailable flag; no wider-window substitution",
+  "blind_cutoff": "2026-04-01",
+  "provider_splicing": "FORBIDDEN",
+  "immutable_output": "zstd parquet plus SHA-256 manifest",
+  "paper_activation": false
+}
