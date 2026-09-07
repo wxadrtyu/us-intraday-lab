@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "status": "NO_QUALIFIED_CANDIDATE_CURRENT_QUOTE_FEATURE_SET",
+  "versions_first": 17109,
+  "versions_last": 17708,
+  "versions_completed": 600,
+  "pre_null_candidates": 0,
+  "admitted_candidates": 0,
+  "families_tested": [
+    "single-name quote states",
+    "inventory-pressure reversal",
+    "quote-price divergence",
+    "microprice edge",
+    "quote-filtered price-volume events",
+    "market-wide quote regimes"
+  ],
+  "development_only_diagnostic": {
+    "maximum_consistent_train_and_development_mean_gross_event_bps": 1.415128,
+    "standard_round_trip_cost_bps": 9.0,
+    "conclusion": "unconditional and conditioned quote-state mean edges are materially below the declared cost hurdle"
+  },
+  "best_milestone": {
+    "version": 17292,
+    "family": "wide_bid_supported_inventory_exhaustion",
+    "standard_9bp_annualized_return": 0.17209530152302333,
+    "standard_9bp_max_drawdown": 0.23431580651442008,
+    "standard_9bp_information_ratio": 0.7006315635091797,
+    "cost_18bp_annualized_return": 0.04532401173369904,
+    "delay_5m_9bp_annualized_return": 0.055024895454959255,
+    "positive_folds": 2,
+    "bonferroni_p": 1.0,
+    "consumed_2026q1_standard_9bp_total_return": -0.05515291689908197,
+    "reason_not_candidate": "fails return, drawdown, IR, fold, multiplicity and consumed gates"
+  },
+  "field_restrictions": {
+    "quotes_seen": "not valid as alpha because progressive lookback creates unequal count windows",
+    "p1_open_or_later_price_in_signal": "forbidden",
+    "blind_2026_04_plus": "not loaded"
+  },
+  "next_data_contract": "fixed-window SIP trade-print aggregates immediately before each decision timestamp"
+}
