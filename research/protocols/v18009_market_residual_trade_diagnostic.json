@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "diagnostic_id": "v18009-market-residual-trade-shock-training-screen",
+  "status": "PREREGISTERED_BEFORE_DIAGNOSTIC",
+  "period": "2021-01-01/2023-12-31 training only",
+  "development_or_consumed_loading": "FORBIDDEN",
+  "industry_mapping": "UNAVAILABLE_NO_CAUSAL_CLASSIFICATION_DATASET; market residuals only",
+  "residualization": "same-session same-decision-bar cross-sectional medians/ranks computed before entry",
+  "families": [
+    "buy_pressure_against_price_underperformance",
+    "activity_absorption_reversal",
+    "print_resilience_reversal",
+    "confirmed_idiosyncratic_momentum",
+    "market_selloff_relative_laggard_reversal",
+    "calm_market_idiosyncratic_reversal"
+  ],
+  "decision_bars": [2, 5, 11, 17, 23],
+  "top_counts": [1, 2, 3, 5, 10],
+  "holding_bars": [1, 2, 4, 6],
+  "cells": 600,
+  "cost": "9bp per active session",
+  "retention_floor": {"signal_sessions": 120, "annualized_return": 0.2, "information_ratio": 0.8, "positive_calendar_years": 2},
+  "universe": "all eligible symbols jointly ranked per session and decision bar",
+  "blind_after": "2026-03-31"
+}
