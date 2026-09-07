@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17209-v17308-quote-inventory-reversal",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 17209, "last": 17308, "count": 100},
+  "development_diagnostic_commit": "face179",
+  "economic_hypothesis": "A down final bar while price remains above running VWAP can be temporary dealer inventory pressure; extreme bid support, stale quotes, low update activity or wide spreads may identify subsequent inventory normalization rather than continuation.",
+  "families": [
+    "bid_supported_down_above_vwap",
+    "quiet_down_above_vwap",
+    "stale_down_above_vwap",
+    "wide_down_above_vwap",
+    "wide_bid_supported_inventory_exhaustion"
+  ],
+  "thresholds": "2021-2023 per-decision-bar q20/q80 only",
+  "per_symbol_fitting": false,
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "periods": {"train": ["2021-01-01", "2023-12-31"], "development_oos": ["2024-01-01", "2025-12-31"], "consumed": ["2026-01-01", "2026-03-31"]},
+  "portfolio": {"maximum_names": 10, "long_only": true, "maximum_gross": 1.0, "overnight": false},
+  "cost_scenarios_round_trip": [0.0009, 0.0018],
+  "extra_delay_minutes": 5,
+  "prior_cumulative_comparisons": 542333,
+  "all_existing_hard_gates_apply": true,
+  "paper_activation": false
+}
