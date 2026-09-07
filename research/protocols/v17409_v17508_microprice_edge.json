@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17409-v17508-causal-microprice-edge",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 17409, "last": 17508, "count": 100},
+  "economic_hypothesis": "The displayed-size-weighted SIP microprice relative to midpoint estimates near-term queue pressure; extreme causal microprice edges may confirm or oppose the completed five-minute price path.",
+  "signal_formula": "((ask_price*bid_size + bid_price*ask_size)/(bid_size+ask_size))/midpoint - 1",
+  "future_or_execution_price_inputs": "FORBIDDEN",
+  "families": ["positive_edge_price_confirmation", "positive_edge_downshock_reversal", "positive_edge_below_vwap_reclaim", "negative_edge_upmove_resilience", "tight_spread_positive_edge"],
+  "thresholds": "2021-2023 per-decision-bar q20/q80 only",
+  "per_symbol_fitting": false,
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "long_only": true, "maximum_gross": 1.0, "overnight": false},
+  "prior_cumulative_comparisons": 542533,
+  "all_existing_cost_delay_robustness_multiplicity_and_null_gates_apply": true,
+  "paper_activation": false
+}
