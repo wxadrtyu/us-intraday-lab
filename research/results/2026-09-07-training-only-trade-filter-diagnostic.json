@@ -1,0 +1,2889 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "period": "2021-01-01/2023-12-31 training only",
+  "development_or_consumed_loaded": false,
+  "base_events": 474,
+  "records": [
+    {
+      "family": "no_trade",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.84618145293918,
+      "gross_daily_bp": 51.84618145293918
+    },
+    {
+      "family": "no_trade",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.84618145293918,
+      "gross_daily_bp": 51.84618145293918
+    },
+    {
+      "family": "no_trade",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.84618145293918,
+      "gross_daily_bp": 51.84618145293918
+    },
+    {
+      "family": "no_trade",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.84618145293918,
+      "gross_daily_bp": 51.84618145293918
+    },
+    {
+      "family": "no_trade",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.84618145293918,
+      "gross_daily_bp": 51.84618145293918
+    },
+    {
+      "family": "no_trade",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.29555998597119,
+      "gross_daily_bp": 51.29555998597119
+    },
+    {
+      "family": "no_trade",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.29555998597119,
+      "gross_daily_bp": 51.29555998597119
+    },
+    {
+      "family": "no_trade",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.29555998597119,
+      "gross_daily_bp": 51.29555998597119
+    },
+    {
+      "family": "no_trade",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.29555998597119,
+      "gross_daily_bp": 51.29555998597119
+    },
+    {
+      "family": "no_trade",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 51.29555998597119,
+      "gross_daily_bp": 51.29555998597119
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 111,
+      "sessions": 89,
+      "gross_mean_bp": 32.178611125443176,
+      "gross_daily_bp": 31.479434262600098
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 31.66326951428606,
+      "gross_daily_bp": 31.275202915021275
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 31.66326951428606,
+      "gross_daily_bp": 31.275202915021275
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 31.66326951428606,
+      "gross_daily_bp": 31.275202915021275
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 27.960472530576876,
+      "gross_daily_bp": 29.511378830580753
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 27.960472530576876,
+      "gross_daily_bp": 29.511378830580753
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 27.960472530576876,
+      "gross_daily_bp": 29.511378830580753
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 89,
+      "sessions": 89,
+      "gross_mean_bp": 28.2286319553743,
+      "gross_daily_bp": 28.2286319553743
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 33.29441134630565,
+      "gross_daily_bp": 28.168677309119815
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 33.29441134630565,
+      "gross_daily_bp": 28.168677309119815
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 33.29441134630565,
+      "gross_daily_bp": 28.168677309119815
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 77,
+      "sessions": 66,
+      "gross_mean_bp": 32.035940112034844,
+      "gross_daily_bp": 27.042055621790414
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 110,
+      "sessions": 94,
+      "gross_mean_bp": 21.368411713327404,
+      "gross_daily_bp": 26.786762714691978
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 66,
+      "sessions": 66,
+      "gross_mean_bp": 25.505600499908144,
+      "gross_daily_bp": 25.505600499908144
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.449052834910155,
+      "gross_daily_bp": 24.978581976252347
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.449052834910155,
+      "gross_daily_bp": 24.978581976252347
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.449052834910155,
+      "gross_daily_bp": 24.978581976252347
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 24.42602383775813,
+      "gross_daily_bp": 24.42602383775813
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 113,
+      "sessions": 93,
+      "gross_mean_bp": 23.707879912164575,
+      "gross_daily_bp": 23.63314894566132
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 93,
+      "sessions": 93,
+      "gross_mean_bp": 23.597616253162325,
+      "gross_daily_bp": 23.597616253162325
+    },
+    {
+      "family": "no_trade",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 23.38307452176558,
+      "gross_daily_bp": 23.38307452176558
+    },
+    {
+      "family": "no_trade",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 23.38307452176558,
+      "gross_daily_bp": 23.38307452176558
+    },
+    {
+      "family": "no_trade",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 23.38307452176558,
+      "gross_daily_bp": 23.38307452176558
+    },
+    {
+      "family": "no_trade",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 23.38307452176558,
+      "gross_daily_bp": 23.38307452176558
+    },
+    {
+      "family": "no_trade",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 23.38307452176558,
+      "gross_daily_bp": 23.38307452176558
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 111,
+      "sessions": 89,
+      "gross_mean_bp": 29.471040208886944,
+      "gross_daily_bp": 22.630511272663703
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 93,
+      "sessions": 93,
+      "gross_mean_bp": 22.173637490143687,
+      "gross_daily_bp": 22.173637490143687
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 30.22778325035045,
+      "gross_daily_bp": 21.2441063604852
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 30.22778325035045,
+      "gross_daily_bp": 21.2441063604852
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 30.22778325035045,
+      "gross_daily_bp": 21.2441063604852
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 17.593632803968294,
+      "gross_daily_bp": 21.217489390402466
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 17.593632803968294,
+      "gross_daily_bp": 21.217489390402466
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 17.593632803968294,
+      "gross_daily_bp": 21.217489390402466
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 17.418564699967824,
+      "gross_daily_bp": 21.15598315103429
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 17.418564699967824,
+      "gross_daily_bp": 21.15598315103429
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 17.418564699967824,
+      "gross_daily_bp": 21.15598315103429
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 77,
+      "sessions": 66,
+      "gross_mean_bp": 17.75893758324152,
+      "gross_daily_bp": 20.367172409081
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 20.254034234016306,
+      "gross_daily_bp": 20.254034234016306
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 110,
+      "sessions": 94,
+      "gross_mean_bp": 13.269104723605409,
+      "gross_daily_bp": 19.014099304216256
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.80851661362774,
+      "gross_daily_bp": 18.80066178279637
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.80851661362774,
+      "gross_daily_bp": 18.80066178279637
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 28.80851661362774,
+      "gross_daily_bp": 18.80066178279637
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 31.03982739522989,
+      "gross_daily_bp": 18.30755167772868
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 31.03982739522989,
+      "gross_daily_bp": 18.30755167772868
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 111,
+      "sessions": 96,
+      "gross_mean_bp": 22.341803831547836,
+      "gross_daily_bp": 18.26706356018272
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 115,
+      "sessions": 96,
+      "gross_mean_bp": 28.923107439389376,
+      "gross_daily_bp": 18.188820497624217
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 89,
+      "sessions": 89,
+      "gross_mean_bp": 17.954174500132424,
+      "gross_daily_bp": 17.954174500132424
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 113,
+      "sessions": 93,
+      "gross_mean_bp": 24.030749150423098,
+      "gross_daily_bp": 17.66244527659731
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 66,
+      "sessions": 66,
+      "gross_mean_bp": 17.662373730523758,
+      "gross_daily_bp": 17.662373730523758
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 17.065253213954623,
+      "gross_daily_bp": 17.065253213954623
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 18.061122463415636,
+      "gross_daily_bp": 16.61873628662658
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 18.061122463415636,
+      "gross_daily_bp": 16.61873628662658
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 18.061122463415636,
+      "gross_daily_bp": 16.61873628662658
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 110,
+      "sessions": 94,
+      "gross_mean_bp": 16.580124566799977,
+      "gross_daily_bp": 16.550165332848888
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 24.303110339306137,
+      "gross_daily_bp": 15.464839639078303
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 24.303110339306137,
+      "gross_daily_bp": 15.464839639078303
+    },
+    {
+      "family": "no_trade",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 15.394554037117748,
+      "gross_daily_bp": 15.394554037117748
+    },
+    {
+      "family": "no_trade",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 15.394554037117748,
+      "gross_daily_bp": 15.394554037117748
+    },
+    {
+      "family": "no_trade",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 15.394554037117748,
+      "gross_daily_bp": 15.394554037117748
+    },
+    {
+      "family": "no_trade",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 15.394554037117748,
+      "gross_daily_bp": 15.394554037117748
+    },
+    {
+      "family": "no_trade",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 13,
+      "sessions": 13,
+      "gross_mean_bp": 15.394554037117748,
+      "gross_daily_bp": 15.394554037117748
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 111,
+      "sessions": 89,
+      "gross_mean_bp": 13.87937608039859,
+      "gross_daily_bp": 14.553670992406957
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 13.836078042753096,
+      "gross_daily_bp": 14.269958755241085
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 13.836078042753096,
+      "gross_daily_bp": 14.269958755241085
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": 13.836078042753096,
+      "gross_daily_bp": 14.269958755241085
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 89,
+      "sessions": 89,
+      "gross_mean_bp": 13.51239232061706,
+      "gross_daily_bp": 13.51239232061706
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 167,
+      "sessions": 131,
+      "gross_mean_bp": 12.51828615712809,
+      "gross_daily_bp": 13.4403308783613
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 180,
+      "sessions": 131,
+      "gross_mean_bp": 15.797708035397354,
+      "gross_daily_bp": 13.426037991260893
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 248,
+      "sessions": 248,
+      "gross_mean_bp": 13.122428966481102,
+      "gross_daily_bp": 13.122428966481102
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 93,
+      "sessions": 93,
+      "gross_mean_bp": 12.49509802299874,
+      "gross_daily_bp": 12.49509802299874
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 15.796490512684867,
+      "gross_daily_bp": 12.425943543625513
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 15.796490512684867,
+      "gross_daily_bp": 12.425943543625513
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 18.352525341758593,
+      "gross_daily_bp": 12.348397238624363
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 18.352525341758593,
+      "gross_daily_bp": 12.348397238624363
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 14.424005838745995,
+      "gross_daily_bp": 12.254582089168906
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 14.424005838745995,
+      "gross_daily_bp": 12.254582089168906
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 69,
+      "sessions": 61,
+      "gross_mean_bp": 15.988463276584358,
+      "gross_daily_bp": 12.250713109634864
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 13.408770626945229,
+      "gross_daily_bp": 11.434183723359306
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 13.408770626945229,
+      "gross_daily_bp": 11.434183723359306
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 240,
+      "sessions": 240,
+      "gross_mean_bp": 11.380981703251935,
+      "gross_daily_bp": 11.380981703251935
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 9.109346318314035,
+      "gross_daily_bp": 11.215887194259764
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 9.109346318314035,
+      "gross_daily_bp": 11.215887194259764
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 2.900022772645433,
+      "gross_daily_bp": 11.13616340136837
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 2.900022772645433,
+      "gross_daily_bp": 11.13616340136837
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 238,
+      "sessions": 168,
+      "gross_mean_bp": 10.70530139869334,
+      "gross_daily_bp": 10.965536370403617
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 61,
+      "sessions": 61,
+      "gross_mean_bp": 10.582078509432671,
+      "gross_daily_bp": 10.582078509432671
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 115,
+      "sessions": 96,
+      "gross_mean_bp": 3.2430637651245435,
+      "gross_daily_bp": 10.570752845558927
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 248,
+      "sessions": 248,
+      "gross_mean_bp": 10.490100466346671,
+      "gross_daily_bp": 10.490100466346671
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 131,
+      "sessions": 131,
+      "gross_mean_bp": 10.452963553899796,
+      "gross_daily_bp": 10.452963553899796
+    },
+    {
+      "family": "negative_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 146,
+      "sessions": 146,
+      "gross_mean_bp": 10.41348300789651,
+      "gross_daily_bp": 10.41348300789651
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 67,
+      "sessions": 61,
+      "gross_mean_bp": 9.986035197093171,
+      "gross_daily_bp": 10.375144958737945
+    },
+    {
+      "family": "negative_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 7.4354027692908256,
+      "gross_daily_bp": 10.293229298703366
+    },
+    {
+      "family": "negative_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 7.4354027692908256,
+      "gross_daily_bp": 10.293229298703366
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 238,
+      "sessions": 168,
+      "gross_mean_bp": 12.540719868627665,
+      "gross_daily_bp": 10.203040153573864
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 11.9802202679557,
+      "gross_daily_bp": 9.976931202670094
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 11.9802202679557,
+      "gross_daily_bp": 9.976931202670094
+    },
+    {
+      "family": "negative_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 211,
+      "sessions": 146,
+      "gross_mean_bp": 10.35550954566362,
+      "gross_daily_bp": 9.969416473783744
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 180,
+      "sessions": 131,
+      "gross_mean_bp": 9.622985310875254,
+      "gross_daily_bp": 9.969407786190153
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 240,
+      "sessions": 240,
+      "gross_mean_bp": 9.860999882380156,
+      "gross_daily_bp": 9.860999882380156
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 474,
+      "sessions": 248,
+      "gross_mean_bp": 13.105425264351368,
+      "gross_daily_bp": 9.658911994329364
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 111,
+      "sessions": 96,
+      "gross_mean_bp": 5.301198293407177,
+      "gross_daily_bp": 9.628129046416277
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 167,
+      "sessions": 131,
+      "gross_mean_bp": 2.535766237629178,
+      "gross_daily_bp": 9.622934283995574
+    },
+    {
+      "family": "positive_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 154,
+      "sessions": 154,
+      "gross_mean_bp": 9.572796843678313,
+      "gross_daily_bp": 9.572796843678313
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 217,
+      "sessions": 168,
+      "gross_mean_bp": 11.330923154278217,
+      "gross_daily_bp": 9.542962130687895
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 115,
+      "sessions": 96,
+      "gross_mean_bp": 10.166141225199151,
+      "gross_daily_bp": 9.203753214059237
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 167,
+      "sessions": 131,
+      "gross_mean_bp": 6.807582944022626,
+      "gross_daily_bp": 9.189901950448276
+    },
+    {
+      "family": "positive_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 235,
+      "sessions": 154,
+      "gross_mean_bp": 6.042496581482695,
+      "gross_daily_bp": 9.123977144202497
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 3.53269131465545,
+      "gross_daily_bp": 8.819984564904585
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 187,
+      "sessions": 131,
+      "gross_mean_bp": 3.53269131465545,
+      "gross_daily_bp": 8.819984564904585
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 180,
+      "sessions": 131,
+      "gross_mean_bp": 0.7318889483683483,
+      "gross_daily_bp": 8.767647347058931
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 217,
+      "sessions": 168,
+      "gross_mean_bp": 7.859079008896894,
+      "gross_daily_bp": 8.709397603294127
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 450,
+      "sessions": 248,
+      "gross_mean_bp": 8.743787756186661,
+      "gross_daily_bp": 8.708300094750232
+    },
+    {
+      "family": "positive_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 232,
+      "sessions": 154,
+      "gross_mean_bp": 4.9102550700456025,
+      "gross_daily_bp": 8.667099164240785
+    },
+    {
+      "family": "negative_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 192,
+      "sessions": 146,
+      "gross_mean_bp": 8.78921528562011,
+      "gross_daily_bp": 8.634596194228083
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 142,
+      "sessions": 142,
+      "gross_mean_bp": 8.634110116924061,
+      "gross_daily_bp": 8.634110116924061
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 111,
+      "sessions": 96,
+      "gross_mean_bp": 7.70714878775732,
+      "gross_daily_bp": 8.53241339564882
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 96,
+      "sessions": 96,
+      "gross_mean_bp": 8.517750114488976,
+      "gross_daily_bp": 8.517750114488976
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 168,
+      "sessions": 168,
+      "gross_mean_bp": 8.44227700303835,
+      "gross_daily_bp": 8.44227700303835
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 180,
+      "sessions": 131,
+      "gross_mean_bp": 4.421399159434785,
+      "gross_daily_bp": 8.355110389352719
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 404,
+      "sessions": 248,
+      "gross_mean_bp": 9.858078468869135,
+      "gross_daily_bp": 8.323395279927178
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 352,
+      "sessions": 248,
+      "gross_mean_bp": 9.383450003349704,
+      "gross_daily_bp": 8.296652255592456
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 168,
+      "sessions": 168,
+      "gross_mean_bp": 8.051612476123301,
+      "gross_daily_bp": 8.051612476123301
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 461,
+      "sessions": 240,
+      "gross_mean_bp": 12.01295274710269,
+      "gross_daily_bp": 8.037818955090458
+    },
+    {
+      "family": "positive_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 224,
+      "sessions": 154,
+      "gross_mean_bp": 5.130619101177175,
+      "gross_daily_bp": 7.978816146543699
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 167,
+      "sessions": 131,
+      "gross_mean_bp": 4.438661578741951,
+      "gross_daily_bp": 7.760679723034281
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 131,
+      "sessions": 131,
+      "gross_mean_bp": 7.75068717762609,
+      "gross_daily_bp": 7.75068717762609
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 111,
+      "sessions": 96,
+      "gross_mean_bp": 5.173970100817702,
+      "gross_daily_bp": 7.638179585194964
+    },
+    {
+      "family": "positive_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 207,
+      "sessions": 154,
+      "gross_mean_bp": 3.0433907660374695,
+      "gross_daily_bp": 7.582663623524732
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 3.280447929005327,
+      "gross_daily_bp": 7.537362662477317
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 3.280447929005327,
+      "gross_daily_bp": 7.537362662477317
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 441,
+      "sessions": 240,
+      "gross_mean_bp": 9.288138956436597,
+      "gross_daily_bp": 7.4838220519661425
+    },
+    {
+      "family": "negative_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 17.840193278530943,
+      "gross_daily_bp": 7.2809015892452225
+    },
+    {
+      "family": "negative_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 17.840193278530943,
+      "gross_daily_bp": 7.2809015892452225
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 1.8700019933846852,
+      "gross_daily_bp": 7.130169922615576
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 1.8700019933846852,
+      "gross_daily_bp": 7.130169922615576
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 352,
+      "sessions": 248,
+      "gross_mean_bp": 6.160695788041351,
+      "gross_daily_bp": 7.108741252373447
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 238,
+      "sessions": 168,
+      "gross_mean_bp": 2.9183265724344203,
+      "gross_daily_bp": 7.078879411619708
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 474,
+      "sessions": 248,
+      "gross_mean_bp": 0.6550384522357987,
+      "gross_daily_bp": 7.014983635745997
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 115,
+      "sessions": 94,
+      "gross_mean_bp": 1.6779459860991899,
+      "gross_daily_bp": 6.9820227126455245
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 112,
+      "sessions": 94,
+      "gross_mean_bp": 2.260566635860584,
+      "gross_daily_bp": 6.930376366892023
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 11.514511464822878,
+      "gross_daily_bp": 6.8146144541374785
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 117,
+      "sessions": 96,
+      "gross_mean_bp": 11.514511464822878,
+      "gross_daily_bp": 6.8146144541374785
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 352,
+      "sessions": 248,
+      "gross_mean_bp": 5.0991210066495585,
+      "gross_daily_bp": 6.781395131722927
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 474,
+      "sessions": 248,
+      "gross_mean_bp": 1.6889672601733434,
+      "gross_daily_bp": 6.708872061619723
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 404,
+      "sessions": 248,
+      "gross_mean_bp": 5.441376673439825,
+      "gross_daily_bp": 6.69962062456075
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 199,
+      "sessions": 142,
+      "gross_mean_bp": 11.832254160347548,
+      "gross_daily_bp": 6.634466373538516
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 395,
+      "sessions": 240,
+      "gross_mean_bp": 8.990408852115955,
+      "gross_daily_bp": 6.59207291469743
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 343,
+      "sessions": 240,
+      "gross_mean_bp": 8.371784828984746,
+      "gross_daily_bp": 6.564438456218217
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 115,
+      "sessions": 96,
+      "gross_mean_bp": 8.612367545847407,
+      "gross_daily_bp": 6.549620481306253
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 10.537944258765902,
+      "gross_daily_bp": 6.431810973552749
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 10.537944258765902,
+      "gross_daily_bp": 6.431810973552749
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": 10.537944258765902,
+      "gross_daily_bp": 6.431810973552749
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 343,
+      "sessions": 240,
+      "gross_mean_bp": 5.818841636020672,
+      "gross_daily_bp": 6.373641668311257
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 96,
+      "sessions": 96,
+      "gross_mean_bp": 6.262105106245389,
+      "gross_daily_bp": 6.262105106245389
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 450,
+      "sessions": 248,
+      "gross_mean_bp": 1.2366779170624884,
+      "gross_daily_bp": 6.233080858825376
+    },
+    {
+      "family": "negative_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 211,
+      "sessions": 146,
+      "gross_mean_bp": 14.671569394323779,
+      "gross_daily_bp": 6.21493448361072
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 131,
+      "sessions": 131,
+      "gross_mean_bp": 6.212123586092262,
+      "gross_daily_bp": 6.212123586092262
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 461,
+      "sessions": 240,
+      "gross_mean_bp": 0.014117695394394916,
+      "gross_daily_bp": 6.1184566685873625
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 168,
+      "sessions": 168,
+      "gross_mean_bp": 6.051625144707898,
+      "gross_daily_bp": 6.051625144707898
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 450,
+      "sessions": 248,
+      "gross_mean_bp": -1.2634074075940207,
+      "gross_daily_bp": 6.049886989139063
+    },
+    {
+      "family": "negative_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 146,
+      "sessions": 146,
+      "gross_mean_bp": 6.044890973481618,
+      "gross_daily_bp": 6.044890973481618
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 395,
+      "sessions": 240,
+      "gross_mean_bp": 5.12813655654234,
+      "gross_daily_bp": 5.950883686238139
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 461,
+      "sessions": 240,
+      "gross_mean_bp": 1.3024756590881432,
+      "gross_daily_bp": 5.9438586328199925
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 1.9569160324968942,
+      "gross_daily_bp": 5.867603654366319
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 1.9569160324968942,
+      "gross_daily_bp": 5.867603654366319
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 441,
+      "sessions": 240,
+      "gross_mean_bp": 1.7534119382323377,
+      "gross_daily_bp": 5.793335793576425
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 115,
+      "sessions": 94,
+      "gross_mean_bp": 1.8571489802425845,
+      "gross_daily_bp": 5.780282497532898
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 5.751701843902827,
+      "gross_daily_bp": 5.751701843902827
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 343,
+      "sessions": 240,
+      "gross_mean_bp": 4.333626112445501,
+      "gross_daily_bp": 5.747089166507051
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 248,
+      "sessions": 248,
+      "gross_mean_bp": 5.737688132941695,
+      "gross_daily_bp": 5.737688132941695
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 187,
+      "sessions": 142,
+      "gross_mean_bp": 8.82252514303815,
+      "gross_daily_bp": 5.654909548000272
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": 9.02839673560248,
+      "gross_daily_bp": 5.5959709374770945
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": 9.02839673560248,
+      "gross_daily_bp": 5.5959709374770945
+    },
+    {
+      "family": "print_below_mid",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 131,
+      "sessions": 131,
+      "gross_mean_bp": 5.583485815068637,
+      "gross_daily_bp": 5.583485815068637
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 113,
+      "sessions": 93,
+      "gross_mean_bp": 8.256652126038878,
+      "gross_daily_bp": 5.519564453965157
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 142,
+      "sessions": 142,
+      "gross_mean_bp": 5.450313395043708,
+      "gross_daily_bp": 5.450313395043708
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 404,
+      "sessions": 248,
+      "gross_mean_bp": 1.207352929961463,
+      "gross_daily_bp": 5.34086738983018
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 112,
+      "sessions": 94,
+      "gross_mean_bp": 1.8655363358382828,
+      "gross_daily_bp": 5.200897186569527
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 2.0016523475691854,
+      "gross_daily_bp": 5.031723495088908
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 255,
+      "sessions": 168,
+      "gross_mean_bp": 2.0016523475691854,
+      "gross_daily_bp": 5.031723495088908
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 217,
+      "sessions": 168,
+      "gross_mean_bp": 1.9473052702712252,
+      "gross_daily_bp": 5.005443217802162
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 441,
+      "sessions": 240,
+      "gross_mean_bp": -1.9881214772286453,
+      "gross_daily_bp": 4.99138791894649
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 474,
+      "sessions": 248,
+      "gross_mean_bp": 11.495625415682264,
+      "gross_daily_bp": 4.965881583779535
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 4.590151592015051,
+      "gross_daily_bp": 4.868459435023146
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 4.590151592015051,
+      "gross_daily_bp": 4.868459435023146
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 248,
+      "sessions": 248,
+      "gross_mean_bp": 4.8217796003609035,
+      "gross_daily_bp": 4.8217796003609035
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 240,
+      "sessions": 240,
+      "gross_mean_bp": 4.742065221463971,
+      "gross_daily_bp": 4.742065221463971
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 69,
+      "sessions": 61,
+      "gross_mean_bp": 4.250094834800261,
+      "gross_daily_bp": 4.719090996455405
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 110,
+      "sessions": 94,
+      "gross_mean_bp": 4.652604074884194,
+      "gross_daily_bp": 4.562615013898544
+    },
+    {
+      "family": "negative_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 192,
+      "sessions": 146,
+      "gross_mean_bp": 9.630046285763692,
+      "gross_daily_bp": 4.486010699807713
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 5.153713074610673,
+      "gross_daily_bp": 4.386202908343618
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 5.153713074610673,
+      "gross_daily_bp": 4.386202908343618
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": 5.153713074610673,
+      "gross_daily_bp": 4.386202908343618
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 395,
+      "sessions": 240,
+      "gross_mean_bp": 0.45395885046226153,
+      "gross_daily_bp": 4.25854383321788
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 61,
+      "sessions": 61,
+      "gross_mean_bp": 4.194245003376026,
+      "gross_daily_bp": 4.194245003376026
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 67,
+      "sessions": 61,
+      "gross_mean_bp": 4.062178685464634,
+      "gross_daily_bp": 4.159417473933774
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 450,
+      "sessions": 248,
+      "gross_mean_bp": 6.160096571170041,
+      "gross_daily_bp": 4.12868066511225
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 461,
+      "sessions": 240,
+      "gross_mean_bp": 10.37328452758301,
+      "gross_daily_bp": 4.008422785321357
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 240,
+      "sessions": 240,
+      "gross_mean_bp": 3.986938234877095,
+      "gross_daily_bp": 3.986938234877095
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 352,
+      "sessions": 248,
+      "gross_mean_bp": 4.003331142331184,
+      "gross_daily_bp": 3.627784190909288
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 13.043168974405003,
+      "gross_daily_bp": 3.479981981045638
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 13.043168974405003,
+      "gross_daily_bp": 3.479981981045638
+    },
+    {
+      "family": "unfiltered",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 404,
+      "sessions": 248,
+      "gross_mean_bp": 3.981742342805658,
+      "gross_daily_bp": 3.411045912386518
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 441,
+      "sessions": 240,
+      "gross_mean_bp": 5.506499364114841,
+      "gross_daily_bp": 3.043713716167808
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 69,
+      "sessions": 61,
+      "gross_mean_bp": 12.862581596697604,
+      "gross_daily_bp": 2.930650573766607
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": -1.4258872786208285,
+      "gross_daily_bp": 2.907405182045892
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": -1.4258872786208285,
+      "gross_daily_bp": 2.907405182045892
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 96,
+      "sessions": 96,
+      "gross_mean_bp": 2.7430057291777503,
+      "gross_daily_bp": 2.7430057291777503
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 2.734790746714448,
+      "gross_daily_bp": 2.734790746714448
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": -1.3217111155263388,
+      "gross_daily_bp": 2.681426435820554
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": -1.3217111155263388,
+      "gross_daily_bp": 2.681426435820554
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 89,
+      "gross_mean_bp": -1.3217111155263388,
+      "gross_daily_bp": 2.681426435820554
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 115,
+      "sessions": 94,
+      "gross_mean_bp": -1.9653911670532551,
+      "gross_daily_bp": 2.594408590054484
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 343,
+      "sessions": 240,
+      "gross_mean_bp": 3.1178915925384123,
+      "gross_daily_bp": 2.529405269151392
+    },
+    {
+      "family": "negative_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 146,
+      "sessions": 146,
+      "gross_mean_bp": 2.4984976553948326,
+      "gross_daily_bp": 2.4984976553948326
+    },
+    {
+      "family": "valid_trade",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 395,
+      "sessions": 240,
+      "gross_mean_bp": 3.212375090211606,
+      "gross_daily_bp": 2.305442381344529
+    },
+    {
+      "family": "distributed_prints",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 2.228214255965292,
+      "gross_daily_bp": 2.228214255965292
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 89,
+      "sessions": 89,
+      "gross_mean_bp": 2.21462851943855,
+      "gross_daily_bp": 2.21462851943855
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 112,
+      "sessions": 94,
+      "gross_mean_bp": -2.1822258559180527,
+      "gross_daily_bp": 2.2014850084546125
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": 2.078428349094389,
+      "gross_daily_bp": 2.078428349094389
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 238,
+      "sessions": 168,
+      "gross_mean_bp": -2.2965408676412786,
+      "gross_daily_bp": 2.035074736997935
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 217,
+      "sessions": 168,
+      "gross_mean_bp": 1.6465091260357814,
+      "gross_daily_bp": 1.8889912956726729
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 10,
+      "holding_bars": 2,
+      "events": 325,
+      "sessions": 194,
+      "gross_mean_bp": 7.400577641822954,
+      "gross_daily_bp": 1.8844016146231222
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 3,
+      "holding_bars": 2,
+      "events": 300,
+      "sessions": 194,
+      "gross_mean_bp": 5.104679861069783,
+      "gross_daily_bp": 1.5216816363960366
+    },
+    {
+      "family": "negative_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 23.098426218351783,
+      "gross_daily_bp": 1.413887534446845
+    },
+    {
+      "family": "negative_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 23.098426218351783,
+      "gross_daily_bp": 1.413887534446845
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 199,
+      "sessions": 142,
+      "gross_mean_bp": 1.2026007898551316,
+      "gross_daily_bp": 1.4129512722325774
+    },
+    {
+      "family": "negative_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 15.81873912641163,
+      "gross_daily_bp": 1.3095574073571719
+    },
+    {
+      "family": "negative_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 221,
+      "sessions": 146,
+      "gross_mean_bp": 15.81873912641163,
+      "gross_daily_bp": 1.3095574073571719
+    },
+    {
+      "family": "low_odd_lot",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 111,
+      "sessions": 89,
+      "gross_mean_bp": -2.2683874948511757,
+      "gross_daily_bp": 1.2989807394603752
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 325,
+      "sessions": 194,
+      "gross_mean_bp": -4.336834781056316,
+      "gross_daily_bp": 1.1371059464285755
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 5,
+      "holding_bars": 2,
+      "events": 321,
+      "sessions": 194,
+      "gross_mean_bp": 3.8963778405558176,
+      "gross_daily_bp": 1.0243255608033424
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 93,
+      "sessions": 93,
+      "gross_mean_bp": 0.97786728069826,
+      "gross_daily_bp": 0.97786728069826
+    },
+    {
+      "family": "negative_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 211,
+      "sessions": 146,
+      "gross_mean_bp": 11.62333674156752,
+      "gross_daily_bp": 0.9633160588836089
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 187,
+      "sessions": 142,
+      "gross_mean_bp": 0.23159166153330416,
+      "gross_daily_bp": 0.9026344120113827
+    },
+    {
+      "family": "negative_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 192,
+      "sessions": 146,
+      "gross_mean_bp": 8.893229286038451,
+      "gross_daily_bp": 0.8466837269461878
+    },
+    {
+      "family": "negative_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 211,
+      "sessions": 146,
+      "gross_mean_bp": 15.368351600505173,
+      "gross_daily_bp": 0.7706670594598599
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": -1.1459851604695357,
+      "gross_daily_bp": 0.7328605984244151
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": -1.1459851604695357,
+      "gross_daily_bp": 0.7328605984244151
+    },
+    {
+      "family": "negative_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 192,
+      "sessions": 146,
+      "gross_mean_bp": 9.533589011839089,
+      "gross_daily_bp": 0.728964621629757
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 5.089284573434969,
+      "gross_daily_bp": 0.5893400127133142
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 70,
+      "sessions": 61,
+      "gross_mean_bp": 5.089284573434969,
+      "gross_daily_bp": 0.5893400127133142
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 325,
+      "sessions": 194,
+      "gross_mean_bp": 4.3926644155146155,
+      "gross_daily_bp": 0.42529481809829345
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 321,
+      "sessions": 194,
+      "gross_mean_bp": -6.344165892451489,
+      "gross_daily_bp": 0.16288732124494232
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 14.660975083309312,
+      "gross_daily_bp": 0.0981865680620079
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 14.660975083309312,
+      "gross_daily_bp": 0.0981865680620079
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 14.660975083309312,
+      "gross_daily_bp": 0.0981865680620079
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 69,
+      "sessions": 61,
+      "gross_mean_bp": 4.423804696637956,
+      "gross_daily_bp": -0.05669039417532803
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 300,
+      "sessions": 194,
+      "gross_mean_bp": -2.4827303253090642,
+      "gross_daily_bp": -0.08291618279679935
+    },
+    {
+      "family": "positive_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 235,
+      "sessions": 154,
+      "gross_mean_bp": -3.9891274664255483,
+      "gross_daily_bp": -0.16270137399781445
+    },
+    {
+      "family": "positive_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 224,
+      "sessions": 154,
+      "gross_mean_bp": -3.306072035982386,
+      "gross_daily_bp": -0.17636707321622436
+    },
+    {
+      "family": "positive_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 232,
+      "sessions": 154,
+      "gross_mean_bp": -4.099766238109097,
+      "gross_daily_bp": -0.23581434430124873
+    },
+    {
+      "family": "positive_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 154,
+      "sessions": 154,
+      "gross_mean_bp": -0.24468323331876857,
+      "gross_daily_bp": -0.24468323331876857
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 300,
+      "sessions": 194,
+      "gross_mean_bp": 0.18263072414518297,
+      "gross_daily_bp": -0.24869276176576194
+    },
+    {
+      "family": "positive_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 207,
+      "sessions": 154,
+      "gross_mean_bp": -3.894977083722758,
+      "gross_daily_bp": -0.26273346748216897
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 325,
+      "sessions": 194,
+      "gross_mean_bp": 0.2935652850930525,
+      "gross_daily_bp": -0.27137877594979753
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 1,
+      "holding_bars": 1,
+      "events": 194,
+      "sessions": 194,
+      "gross_mean_bp": -0.4243475365970007,
+      "gross_daily_bp": -0.4243475365970007
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 321,
+      "sessions": 194,
+      "gross_mean_bp": 1.1147592149274541,
+      "gross_daily_bp": -0.4440147912116417
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 300,
+      "sessions": 194,
+      "gross_mean_bp": 1.3894403300959774,
+      "gross_daily_bp": -0.4770361891066945
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 321,
+      "sessions": 194,
+      "gross_mean_bp": -1.1242308626858741,
+      "gross_daily_bp": -0.6971293216428024
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 2,
+      "holding_bars": 2,
+      "events": 268,
+      "sessions": 194,
+      "gross_mean_bp": 0.26706135386306945,
+      "gross_daily_bp": -0.8674588995106477
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 199,
+      "sessions": 142,
+      "gross_mean_bp": 4.055221911088176,
+      "gross_daily_bp": -1.0465924554316102
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 1,
+      "holding_bars": 2,
+      "events": 194,
+      "sessions": 194,
+      "gross_mean_bp": -1.0842755827736965,
+      "gross_daily_bp": -1.0842755827736965
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 61,
+      "sessions": 61,
+      "gross_mean_bp": -1.1587625141476259,
+      "gross_daily_bp": -1.1587625141476259
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 77,
+      "sessions": 66,
+      "gross_mean_bp": 11.758341569253224,
+      "gross_daily_bp": -1.1802373566275455
+    },
+    {
+      "family": "positive_location",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 235,
+      "sessions": 154,
+      "gross_mean_bp": -2.369110321814695,
+      "gross_daily_bp": -1.2299212937301767
+    },
+    {
+      "family": "print_not_above_mid",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 168,
+      "sessions": 168,
+      "gross_mean_bp": -1.232163778174586,
+      "gross_daily_bp": -1.232163778174586
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 268,
+      "sessions": 194,
+      "gross_mean_bp": -1.691496780336523,
+      "gross_daily_bp": -1.4569722166911223
+    },
+    {
+      "family": "positive_location",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 232,
+      "sessions": 154,
+      "gross_mean_bp": -2.7895261328444474,
+      "gross_daily_bp": -1.6827074420612165
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 67,
+      "sessions": 61,
+      "gross_mean_bp": -3.1550436417098733,
+      "gross_daily_bp": -1.872332057911762
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 187,
+      "sessions": 142,
+      "gross_mean_bp": 2.357259062567426,
+      "gross_daily_bp": -1.936250426911985
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 66,
+      "sessions": 66,
+      "gross_mean_bp": -1.9649902506283714,
+      "gross_daily_bp": -1.9649902506283714
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 268,
+      "sessions": 194,
+      "gross_mean_bp": -3.034017596740521,
+      "gross_daily_bp": -2.15219351364139
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 194,
+      "sessions": 194,
+      "gross_mean_bp": -2.40516736624677,
+      "gross_daily_bp": -2.40516736624677
+    },
+    {
+      "family": "negative_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 146,
+      "sessions": 146,
+      "gross_mean_bp": -2.414071737860991,
+      "gross_daily_bp": -2.414071737860991
+    },
+    {
+      "family": "positive_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 154,
+      "sessions": 154,
+      "gross_mean_bp": -2.4789697016192336,
+      "gross_daily_bp": -2.4789697016192336
+    },
+    {
+      "family": "positive_location",
+      "top_count": 3,
+      "holding_bars": 4,
+      "events": 224,
+      "sessions": 154,
+      "gross_mean_bp": -0.469837916184498,
+      "gross_daily_bp": -2.5351380438583413
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 5,
+      "holding_bars": 4,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": 0.49606895663750594,
+      "gross_daily_bp": -2.624050979755008
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 10,
+      "holding_bars": 4,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": 0.49606895663750594,
+      "gross_daily_bp": -2.624050979755008
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 199,
+      "sessions": 142,
+      "gross_mean_bp": 0.012947320822561597,
+      "gross_daily_bp": -2.7864059759586848
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 268,
+      "sessions": 194,
+      "gross_mean_bp": -2.276856106609756,
+      "gross_daily_bp": -2.8142297469116566
+    },
+    {
+      "family": "print_below_mid_negative_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 96,
+      "sessions": 96,
+      "gross_mean_bp": -2.9517911725357564,
+      "gross_daily_bp": -2.9517911725357564
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 187,
+      "sessions": 142,
+      "gross_mean_bp": -0.44626453689365714,
+      "gross_daily_bp": -3.4364815143132716
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": -2.446180053656924,
+      "gross_daily_bp": -3.4497046192191543
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 206,
+      "sessions": 142,
+      "gross_mean_bp": -2.446180053656924,
+      "gross_daily_bp": -3.4497046192191543
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 3,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": -1.6778598928385098,
+      "gross_daily_bp": -3.4624856588503
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 5,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": -1.6778598928385098,
+      "gross_daily_bp": -3.4624856588503
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 10,
+      "holding_bars": 1,
+      "events": 116,
+      "sessions": 93,
+      "gross_mean_bp": -1.6778598928385098,
+      "gross_daily_bp": -3.4624856588503
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 115,
+      "sessions": 94,
+      "gross_mean_bp": -12.535046939886529,
+      "gross_daily_bp": -3.5192056986041322
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": -11.882521580604381,
+      "gross_daily_bp": -3.5911818965094198
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 116,
+      "sessions": 94,
+      "gross_mean_bp": -11.882521580604381,
+      "gross_daily_bp": -3.5911818965094198
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 142,
+      "sessions": 142,
+      "gross_mean_bp": -3.596037091531761,
+      "gross_daily_bp": -3.596037091531761
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 112,
+      "sessions": 94,
+      "gross_mean_bp": -13.153481490059463,
+      "gross_daily_bp": -3.6908098643174454
+    },
+    {
+      "family": "print_above_mid",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 142,
+      "sessions": 142,
+      "gross_mean_bp": -4.004828597763457,
+      "gross_daily_bp": -4.004828597763457
+    },
+    {
+      "family": "extreme_location",
+      "top_count": 1,
+      "holding_bars": 4,
+      "events": 194,
+      "sessions": 194,
+      "gross_mean_bp": -4.387520270444032,
+      "gross_daily_bp": -4.387520270444032
+    },
+    {
+      "family": "positive_location",
+      "top_count": 2,
+      "holding_bars": 4,
+      "events": 207,
+      "sessions": 154,
+      "gross_mean_bp": -7.265375669719157,
+      "gross_daily_bp": -4.815157841651709
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 61,
+      "sessions": 61,
+      "gross_mean_bp": -4.85434682907466,
+      "gross_daily_bp": -4.85434682907466
+    },
+    {
+      "family": "concentrated_prints",
+      "top_count": 2,
+      "holding_bars": 1,
+      "events": 113,
+      "sessions": 93,
+      "gross_mean_bp": -4.585499625124889,
+      "gross_daily_bp": -4.947256795660294
+    },
+    {
+      "family": "print_below_mid_positive_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 67,
+      "sessions": 61,
+      "gross_mean_bp": -12.405457200578649,
+      "gross_daily_bp": -5.645058441611638
+    },
+    {
+      "family": "positive_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 154,
+      "sessions": 154,
+      "gross_mean_bp": -6.052618473876238,
+      "gross_daily_bp": -6.052618473876238
+    },
+    {
+      "family": "positive_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 235,
+      "sessions": 154,
+      "gross_mean_bp": -15.705893281333024,
+      "gross_daily_bp": -6.076687217330636
+    },
+    {
+      "family": "high_odd_lot",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 94,
+      "sessions": 94,
+      "gross_mean_bp": -6.416371404865183,
+      "gross_daily_bp": -6.416371404865183
+    },
+    {
+      "family": "positive_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 232,
+      "sessions": 154,
+      "gross_mean_bp": -15.463717660559599,
+      "gross_daily_bp": -6.573530714318125
+    },
+    {
+      "family": "positive_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 224,
+      "sessions": 154,
+      "gross_mean_bp": -11.465538008191526,
+      "gross_daily_bp": -7.42026037829527
+    },
+    {
+      "family": "positive_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 207,
+      "sessions": 154,
+      "gross_mean_bp": -14.89714155291959,
+      "gross_daily_bp": -8.607752207022365
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 3,
+      "holding_bars": 6,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 2.196518769583288,
+      "gross_daily_bp": -10.499691146202421
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 5,
+      "holding_bars": 6,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 2.196518769583288,
+      "gross_daily_bp": -10.499691146202421
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 10,
+      "holding_bars": 6,
+      "events": 79,
+      "sessions": 66,
+      "gross_mean_bp": 2.196518769583288,
+      "gross_daily_bp": -10.499691146202421
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 1,
+      "holding_bars": 6,
+      "events": 66,
+      "sessions": 66,
+      "gross_mean_bp": -10.830344883617832,
+      "gross_daily_bp": -10.830344883617832
+    },
+    {
+      "family": "balanced_location",
+      "top_count": 2,
+      "holding_bars": 6,
+      "events": 77,
+      "sessions": 66,
+      "gross_mean_bp": -1.4938021886984125,
+      "gross_daily_bp": -12.030733761191634
+    }
+  ]
+}
