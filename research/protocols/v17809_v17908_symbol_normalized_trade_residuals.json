@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17809-v17908-symbol-normalized-trade-residuals",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 17809, "last": 17908, "count": 100},
+  "economic_hypothesis": "A one-second print carries information only when its activity is abnormal for that symbol and intraday decision slot; price response, distributed participation and trade-to-midpoint concession distinguish continuation from temporary liquidity pressure.",
+  "universe": "all eligible symbols jointly ranked within each session and decision bar",
+  "training": "2021-2023 symbol-by-bar medians and quantiles only",
+  "development_selection": "2024-2025 only",
+  "consumed_diagnostic": "2026Q1 after frozen development ranking",
+  "families": [
+    "abnormal_notional_momentum",
+    "abnormal_trade_count_accumulation",
+    "print_discount_reversal",
+    "distributed_participation_continuation",
+    "low_price_response_absorption"
+  ],
+  "grid": {"decision_bars": [2, 5, 11, 17, 23], "holding_bars": [1, 2, 4, 6], "top_count": 10},
+  "constraints": {"long_only": true, "gross_max": 1.0, "overnight": false, "blind_after": "2026-03-31", "paper_activation": false},
+  "costs_and_gates": "unchanged 9bp, 18bp, delay, development, consumed, robustness, multiplicity, history and native-null gates",
+  "prior_comparisons": 542933
+}
