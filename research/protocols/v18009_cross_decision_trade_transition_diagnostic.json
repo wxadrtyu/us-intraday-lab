@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "diagnostic_id": "v18009-cross-decision-trade-transition-training-screen",
+  "status": "PREREGISTERED_BEFORE_DIAGNOSTIC",
+  "period": "2021-01-01/2023-12-31 training only",
+  "development_or_consumed_loading": "FORBIDDEN",
+  "causal_transition": "within symbol and session, current bar compared only with the preceding sampled decision bar",
+  "decision_bars": [5, 11, 17, 23],
+  "families": [
+    "trade_availability_activation",
+    "activity_burst_continuation",
+    "positive_location_flip_reversal",
+    "persistent_sell_pressure_exhaustion",
+    "print_discount_deepening_reversal",
+    "print_discount_recovery_continuation"
+  ],
+  "top_counts": [1, 2, 3, 5, 10],
+  "holding_bars": [1, 2, 4, 6],
+  "cost": "9bp per active session",
+  "retention_floor": {"signal_sessions": 120, "annualized_return": 0.2, "information_ratio": 0.8, "positive_calendar_years": 2},
+  "universe": "all eligible symbols jointly ranked per session and current decision bar",
+  "blind_after": "2026-03-31"
+}
