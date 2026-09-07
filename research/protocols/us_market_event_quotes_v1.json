@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-event-quotes-v1",
+  "status": "FROZEN_BEFORE_BULK_ACQUISITION",
+  "purpose": "Add causal spread, midpoint, quote-age and displayed-size features to simultaneous cross-sectional research.",
+  "provider": "alpaca",
+  "primary_feed": "sip",
+  "fallback_feed": null,
+  "source_endpoint": "historical multi-symbol stock quotes",
+  "execution_capability": "FORBIDDEN",
+  "universe_contract": {
+    "parent": "point-in-time monthly US-equity catalog",
+    "requested_rows": "every symbol-date-bar_idx row already present in v14309_v14408_events.parquet",
+    "cross_sectional_semantics": "all requested symbols at one decision timestamp are one joint research cross-section",
+    "per_symbol_parameter_fitting": false,
+    "decision_bar_indices": [2, 5, 11, 17, 23]
+  },
+  "time_contract": {
+    "development_start": "2021-01-01",
+    "development_end": "2025-12-31",
+    "consumed_diagnostic_start": "2026-01-01",
+    "consumed_diagnostic_end": "2026-03-31",
+    "blind_cutoff": "2026-04-01",
+    "blind_rows_forbidden": true,
+    "quote_timestamp_rule": "strictly less than completed five-minute decision cutoff"
+  },
+  "acquisition_contract": {
+    "multi_symbol_batches": true,
+    "default_batch_size": 50,
+    "progressive_lookback_seconds": [1, 5, 30, 120],
+    "missingness": "explicit missing row; never forward-fill beyond 120 seconds",
+    "provider_splicing": "forbidden",
+    "raw_tick_retention": false,
+    "raw_tick_retention_reason": "The entitlement probe returned 25,938 SIP quote updates for only two liquid symbols in five minutes; full raw history is not economical.",
+    "immutable_output": "zstd parquet plus SHA-256 manifest per month, bar index and symbol batch",
+    "resume": "existing complete hash-valid shards are reused; partial shards fail closed"
+  },
+  "features": [
+    "bid_price",
+    "ask_price",
+    "bid_size",
+    "ask_size",
+    "midpoint",
+    "relative_spread",
+    "size_imbalance",
+    "quote_age_ms",
+    "locked_or_crossed",
+    "quotes_seen"
+  ],
+  "selection_boundary": {
+    "2026_rows_may_rank_or_fit": false,
+    "research_versions_resume_at": 17109,
+    "new_versions_before_complete_acquisition": false
+  }
+}
