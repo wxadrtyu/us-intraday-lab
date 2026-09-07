@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "campaign_id": "v17609-v17708-market-quote-regimes",
+  "status": "PREREGISTERED_BEFORE_EVALUATION",
+  "versions": {"first": 17609, "last": 17708, "count": 100},
+  "economic_hypothesis": "The simultaneous cross-section of SIP spreads, quote ages and displayed imbalance measures market-wide liquidity supply and dealer stress; price-volume events may behave differently in calm, stressed, bid-supported or dispersed quote regimes.",
+  "market_state_fields": ["median_spread", "spread_dispersion", "median_imbalance", "imbalance_dispersion", "median_quote_age", "quote_availability_share"],
+  "families": ["calm_upshock_continuation", "stressed_downshock_reversal", "bid_regime_price_continuation", "dispersed_vwap_reclaim", "fresh_market_volume_reversal"],
+  "thresholds": "2021-2023 per-decision-bar q25/q75 only",
+  "quotes_seen_for_alpha": false,
+  "per_symbol_fitting": false,
+  "decision_bars": [2, 5, 11, 17, 23],
+  "holding_bars": [1, 2, 4, 6],
+  "portfolio": {"maximum_names": 10, "long_only": true, "maximum_gross": 1.0, "overnight": false},
+  "prior_cumulative_comparisons": 542733,
+  "all_existing_cost_delay_robustness_multiplicity_and_null_gates_apply": true,
+  "paper_activation": false
+}
