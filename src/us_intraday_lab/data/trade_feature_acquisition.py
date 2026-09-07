@@ -67,7 +67,8 @@ class ReadOnlyAlpacaTradeDownloader:
         return cls(cast(HistoricalTradesClient, client))
 
     def fetch(
-        self, *, symbols: tuple[str, ...], start: datetime, end: datetime, asof: date
+        self, *, symbols: tuple[str, ...], start: datetime, end: datetime, asof: date,
+        retries: int = 6, sleep: Sleep = time.sleep,
     ) -> pd.DataFrame:
         from alpaca.data.enums import DataFeed
         from alpaca.data.requests import StockTradesRequest
@@ -76,7 +77,17 @@ class ReadOnlyAlpacaTradeDownloader:
             symbol_or_symbols=list(symbols), start=start, end=end,
             feed=DataFeed.SIP, asof=asof.isoformat(),
         )
-        response = self._client.get_stock_trades(request)
+        for attempt in range(retries + 1):
+            try:
+                response = self._client.get_stock_trades(request)
+                break
+            except Exception as error:
+                rate_limited = "429" in str(error) or "too many requests" in str(error).lower()
+                if not rate_limited or attempt >= retries:
+                    raise
+                sleep(min(90.0, 5.0 * (2**attempt)))
+        else:
+            raise AssertionError("unreachable")
         source = response.df.reset_index()
         if source.empty:
             return pd.DataFrame(columns=TRADE_COLUMNS)
