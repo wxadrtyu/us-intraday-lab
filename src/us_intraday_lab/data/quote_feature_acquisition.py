@@ -162,7 +162,8 @@ def latest_quote_features(
             sleep(throttle_seconds)
     raw = pd.concat(raw_parts, ignore_index=True) if raw_parts else pd.DataFrame()
     if raw.empty:
-        latest = pd.DataFrame({"symbol": pd.Series(dtype="string")})
+        latest = pd.DataFrame(columns=QUOTE_COLUMNS)
+        latest["symbol"] = latest["symbol"].astype("string")
         counts: dict[str, int] = {}
     else:
         counts = {

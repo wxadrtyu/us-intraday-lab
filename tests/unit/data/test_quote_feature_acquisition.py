@@ -70,3 +70,33 @@ def test_latest_quote_features_are_batched_causal_and_missing_is_explicit() -> N
     assert result.loc["AAA", "quote_age_ms"] == 900.0
     assert not bool(result.loc["BBB", "quote_available"])
     assert result.loc["BBB", "quotes_seen"] == 0
+
+
+def test_all_missing_quote_batch_remains_explicit_instead_of_crashing() -> None:
+    cutoff = datetime(2026, 3, 2, 14, 45, tzinfo=UTC)
+
+    class EmptyDownloader(ReadOnlyAlpacaQuoteDownloader):
+        def __init__(self) -> None:
+            self.feed = "sip"
+
+        def fetch(
+            self,
+            *,
+            symbols: tuple[str, ...],
+            start: datetime,
+            end: datetime,
+            asof: date,
+        ) -> pd.DataFrame:
+            return pd.DataFrame()
+
+    result = latest_quote_features(
+        downloader=EmptyDownloader(),
+        symbols=("AAA", "BBB"),
+        cutoff=cutoff,
+        session_date=date(2026, 3, 2),
+        sleep=lambda _: None,
+        throttle_seconds=0,
+    )
+
+    assert result["quote_available"].tolist() == [False, False]
+    assert result["quotes_seen"].tolist() == [0, 0]
