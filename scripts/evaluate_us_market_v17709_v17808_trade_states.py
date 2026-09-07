@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 from runpy import run_path
+from typing import Any, cast
 
 import pandas as pd
 
@@ -99,7 +100,7 @@ def score(frame: pd.DataFrame, family: str) -> pd.Series:
     raise ValueError(family)
 
 
-def run(args: argparse.Namespace) -> dict:
+def run(args: argparse.Namespace) -> dict[str, Any]:
     global TRADE_CACHE
     TRADE_CACHE = Path(args.data_root) / "research/cache/us_market_event_trade_features_1s_v1.parquet"
     evaluator_globals = BASE["run"].__globals__
@@ -129,7 +130,7 @@ def run(args: argparse.Namespace) -> dict:
         "- Final admission: NO unless every gate, history supplement and native null pass.\n",
         "utf-8",
     )
-    return result
+    return cast(dict[str, Any], result)
 
 
 def parse_args() -> argparse.Namespace:
