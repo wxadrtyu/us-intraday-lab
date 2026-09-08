@@ -183,7 +183,9 @@ def build_news_features(
     )
     if prepared["news_id"].astype(str).duplicated().any():
         raise ValueError("NEWS_ARTICLE_ID_DUPLICATE")
-    if not prepared["symbols"].map(lambda value: isinstance(value, (list, tuple))).all():
+    if not prepared["symbols"].map(
+        lambda value: isinstance(value, (list, tuple, np.ndarray))
+    ).all():
         raise TypeError("NEWS_ARTICLE_SYMBOLS_INVALID")
     prepared = _article_features(prepared, lexicon)
     exploded = prepared.explode("symbols", ignore_index=True).rename(

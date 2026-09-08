@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -79,3 +80,14 @@ def test_training_mode_rejects_non_training_events() -> None:
 
     with pytest.raises(ValueError, match="TRAINING_ONLY"):
         build_news_features(events, _articles(), FROZEN_NEWS_LEXICON)
+
+
+def test_features_accept_parquet_list_columns_as_numpy_arrays() -> None:
+    articles = _articles().iloc[[0]].copy()
+    articles["symbols"] = pd.Series(
+        [np.asarray(["AAPL", "MSFT"], dtype=object)], dtype=object
+    )
+
+    result = build_news_features(_events(), articles, FROZEN_NEWS_LEXICON)
+
+    assert result["article_count_30m"].tolist() == [1, 1]
