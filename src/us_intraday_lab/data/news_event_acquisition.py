@@ -10,8 +10,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 from collections.abc import Mapping
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 from typing import Protocol, cast
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -24,6 +26,8 @@ from us_intraday_lab.data.alpaca_iex_acquisition import (
 )
 
 NEWS_URL = "https://data.alpaca.markets/v1beta1/news"
+TRAINING_START = date(2021, 1, 1)
+TRAINING_END = date(2023, 12, 31)
 CANONICAL_COLUMNS = (
     "news_id",
     "created_at",
@@ -94,6 +98,14 @@ def _hash_json(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def fetch_updated_day(
     transport: NewsTransport, day: date, *, limit: int = 50
 ) -> tuple[pd.DataFrame, tuple[NewsPage, ...]]:
@@ -157,6 +169,76 @@ def fetch_updated_day(
         frame["created_at"] = pd.to_datetime(frame["created_at"], utc=True)
         frame["available_at"] = pd.to_datetime(frame["available_at"], utc=True)
     return frame, tuple(pages)
+
+
+def acquire_updated_days(
+    root: Path,
+    start: date,
+    end: date,
+    transport: NewsTransport,
+) -> list[dict[str, object]]:
+    """Persist complete immutable UTC-day metadata partitions for training."""
+    if start > end or start < TRAINING_START or end > TRAINING_END:
+        raise ValueError("ALPACA_NEWS_ACQUISITION_TRAINING_ONLY")
+    output_root = root / "data/staging/alpaca_news_metadata_v1"
+    records: list[dict[str, object]] = []
+    current = start
+    while current <= end:
+        month_root = output_root / current.strftime("%Y-%m")
+        month_root.mkdir(parents=True, exist_ok=True)
+        parquet = month_root / f"{current.isoformat()}.parquet"
+        manifest_path = month_root / f"{current.isoformat()}.json"
+        if parquet.is_file() and manifest_path.is_file():
+            manifest = cast(
+                dict[str, object],
+                json.loads(manifest_path.read_text(encoding="utf-8")),
+            )
+            if manifest.get("complete") is not True:
+                raise ValueError(f"PARTIAL_NEWS_DAY:{current.isoformat()}")
+            if manifest.get("content_sha256") != _sha256_file(parquet):
+                raise ValueError(f"NEWS_DAY_HASH_MISMATCH:{current.isoformat()}")
+            records.append(manifest)
+            current += timedelta(days=1)
+            continue
+        if parquet.exists() or manifest_path.exists():
+            raise ValueError(f"PARTIAL_NEWS_DAY:{current.isoformat()}")
+
+        frame, pages = fetch_updated_day(transport, current)
+        temporary_parquet = parquet.with_suffix(".tmp.parquet")
+        frame.to_parquet(temporary_parquet, index=False, compression="zstd")
+        content_sha256 = _sha256_file(temporary_parquet)
+        manifest = {
+            "schema_version": "1.0.0",
+            "provider": "alpaca",
+            "source_type": "historical_news_metadata",
+            "utc_day": current.isoformat(),
+            "available_time_field": "updated_at",
+            "page_count": len(pages),
+            "row_count": len(frame),
+            "unique_news_ids": int(frame["news_id"].nunique()) if not frame.empty else 0,
+            "symbol_links": (
+                int(frame["symbols"].map(len).sum()) if not frame.empty else 0
+            ),
+            "rejected_rows": 0,
+            "pages": list(pages),
+            "content_sha256": content_sha256,
+            "complete": True,
+            "training_only": True,
+        }
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=month_root,
+            delete=False,
+        ) as handle:
+            json.dump(manifest, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            temporary_manifest = Path(handle.name)
+        temporary_parquet.replace(parquet)
+        temporary_manifest.replace(manifest_path)
+        records.append(manifest)
+        current += timedelta(days=1)
+    return records
 
 
 class AlpacaNewsHttpTransport:

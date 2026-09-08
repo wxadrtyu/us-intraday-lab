@@ -6,7 +6,10 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from us_intraday_lab.data.news_event_acquisition import fetch_updated_day
+from us_intraday_lab.data.news_event_acquisition import (
+    acquire_updated_days,
+    fetch_updated_day,
+)
 
 
 class FakeTransport:
@@ -56,3 +59,45 @@ def test_fetch_updated_day_rejects_missing_updated_at() -> None:
 
     with pytest.raises(ValueError, match="NEWS_UPDATED_AT_INVALID"):
         fetch_updated_day(transport, date(2022, 3, 15))
+
+
+def test_acquire_days_resumes_and_rejects_partial_or_post_training(tmp_path) -> None:
+    transport = FakeTransport([{"news": [_article()], "next_page_token": None}])
+
+    manifest = acquire_updated_days(
+        tmp_path,
+        date(2022, 3, 15),
+        date(2022, 3, 15),
+        transport,
+    )[0]
+
+    assert manifest["available_time_field"] == "updated_at"
+    assert manifest["complete"] is True
+    calls = len(transport.calls)
+    assert acquire_updated_days(
+        tmp_path,
+        date(2022, 3, 15),
+        date(2022, 3, 15),
+        transport,
+    )[0] == manifest
+    assert len(transport.calls) == calls
+
+    partial = (
+        tmp_path
+        / "data/staging/alpaca_news_metadata_v1/2022-03/2022-03-16.parquet"
+    )
+    partial.touch()
+    with pytest.raises(ValueError, match="PARTIAL_NEWS_DAY"):
+        acquire_updated_days(
+            tmp_path,
+            date(2022, 3, 16),
+            date(2022, 3, 16),
+            transport,
+        )
+    with pytest.raises(ValueError, match="TRAINING_ONLY"):
+        acquire_updated_days(
+            tmp_path,
+            date(2024, 1, 1),
+            date(2024, 1, 1),
+            transport,
+        )
