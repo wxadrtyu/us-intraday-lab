@@ -11,10 +11,12 @@ import hashlib
 import json
 import os
 import tempfile
-from collections.abc import Mapping
+import time
+from collections.abc import Callable, Mapping
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Protocol, cast
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -44,6 +46,8 @@ class NewsTransport(Protocol):
 
 
 type NewsPage = dict[str, object]
+Sleep = Callable[[float], None]
+TRANSIENT_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 
 
 def _timestamp(value: object, *, reason: str) -> pd.Timestamp:
@@ -107,11 +111,21 @@ def _sha256_file(path: Path) -> str:
 
 
 def fetch_updated_day(
-    transport: NewsTransport, day: date, *, limit: int = 50
+    transport: NewsTransport,
+    day: date,
+    *,
+    limit: int = 50,
+    sleep: Sleep = time.sleep,
+    max_attempts: int = 5,
+    base_backoff_seconds: float = 1.0,
 ) -> tuple[pd.DataFrame, tuple[NewsPage, ...]]:
     """Fetch one complete UTC day, following every opaque page token."""
     if type(limit) is not int or not 1 <= limit <= 50:
         raise ValueError("NEWS_PAGE_LIMIT_INVALID")
+    if type(max_attempts) is not int or max_attempts < 1:
+        raise ValueError("NEWS_RETRY_ATTEMPTS_INVALID")
+    if base_backoff_seconds < 0:
+        raise ValueError("NEWS_RETRY_BACKOFF_INVALID")
     start = datetime.combine(day, datetime.min.time(), UTC)
     end = start + timedelta(days=1)
     query: dict[str, object] = {
@@ -124,7 +138,18 @@ def fetch_updated_day(
     pages: list[NewsPage] = []
     seen_tokens: set[str] = set()
     while True:
-        response = transport(query)
+        for attempt in range(max_attempts):
+            try:
+                response = transport(query)
+                break
+            except HTTPError as error:
+                if error.code not in TRANSIENT_HTTP_CODES or attempt + 1 >= max_attempts:
+                    raise
+                sleep(base_backoff_seconds * 2**attempt)
+            except (URLError, TimeoutError):
+                if attempt + 1 >= max_attempts:
+                    raise
+                sleep(base_backoff_seconds * 2**attempt)
         raw_news = response.get("news", ())
         if not isinstance(raw_news, list):
             raise TypeError("NEWS_RESPONSE_INVALID")

@@ -1,15 +1,33 @@
 {
   "schema_version": "1.0.0",
   "protocol_id": "alpaca-news-event-metadata-v1",
-  "status": "FROZEN_BEFORE_NETWORK_PROBE",
+  "status": "FROZEN_FOR_TRAINING_ACQUISITION",
   "design_commit": "7c42c18",
   "acquisition_commit": "18e8db8",
   "feature_commit": "63fd488",
+  "probe_evidence_commit": "7b3cead",
   "provider": "alpaca",
   "source_url": "https://data.alpaca.markets/v1beta1/news",
   "execution_capability": "FORBIDDEN",
   "query_partition": "half-open UTC day",
   "pagination": "ascending, limit 50, traverse every next_page_token",
+  "transient_retry": {
+    "http_codes": [
+      429,
+      500,
+      502,
+      503,
+      504
+    ],
+    "max_attempts_per_page": 5,
+    "backoff_seconds": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "page_token_persistence": "memory only; manifest retains hash only"
+  },
   "deduplication_key": "news_id",
   "availability_time_field": "updated_at",
   "causal_cutoff": "available_at strictly less than decision_timestamp",
