@@ -1,0 +1,22 @@
+{
+  "available_time_field": "updated_at",
+  "contract_failures": 0,
+  "duplicate_news_ids": 0,
+  "end": "2023-12-31",
+  "estimated_full_calls": 15091,
+  "hash_failures": 0,
+  "missing_days": 0,
+  "observed_days": 1095,
+  "page_count": 15091,
+  "partial_days": 0,
+  "provider": "alpaca",
+  "row_count": 727609,
+  "schema_version": "1.0.0",
+  "source_type": "historical_news_metadata",
+  "start": "2021-01-01",
+  "status": "COMPLETE",
+  "strategy_metrics_permitted": false,
+  "symbol_links": 1409071,
+  "training_only": true,
+  "unique_news_ids": 727609
+}
