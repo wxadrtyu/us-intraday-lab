@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "diagnostic_id": "quote-path-5s-training-edge-v1",
+  "status": "PREREGISTERED_BEFORE_TRAINING_VALUES_READ",
+  "data_contract": "us-market-event-quote-path-5s-v1",
+  "training_period": "2021-01-01/2023-12-31",
+  "development_period": "2024-01-01/2025-12-31 not loaded",
+  "consumed_period": "2026-01-01/2026-03-31 not loaded",
+  "blind_period": "2026-04-01+ forbidden",
+  "universe": "all point-in-time eligible symbols at each session and decision bar",
+  "decision_bars": [2, 5, 11, 17, 23],
+  "entry": "p1_open",
+  "exits": {"1": "p2_open", "2": "p3_open", "4": "p5_open", "6": "p7_open"},
+  "round_trip_cost": 0.0009,
+  "quote_factor_models": [
+    "bid_impulse", "sell_exhaustion", "microprice_divergence",
+    "imbalance_accumulation", "spread_compression", "late_quote_acceleration",
+    "bid_replenishment", "ask_withdrawal", "liquidity_vacuum_continuation",
+    "locked_pressure", "calm_accumulation", "quote_churn_reversal"
+  ],
+  "event_state_models": ["none", "bar_reversal", "bar_continuation", "vwap_reversion", "efficient_trend"],
+  "quote_weights": [1.0, 0.75, 0.5],
+  "volume_rank_floors": [0.0, 0.5, 0.75],
+  "top_counts": [1, 3, 5, 10],
+  "ranking": "cross-sectional percentile features with deterministic symbol tie break at each session and fixed decision bar",
+  "portfolio": "equal-weight selected symbols at one fixed decision bar per cell, long-only, gross<=1, no overnight",
+  "retention_gate": {
+    "annualized_return_after_9bp_min": 0.20,
+    "information_ratio_min": 0.8,
+    "positive_calendar_years_min": 2,
+    "signal_sessions_min": 120
+  },
+  "next_step": "only retained training cells permit preregistration of v18009-v18108; otherwise preserve falsification and change information contract",
+  "execution_capability": "FORBIDDEN"
+}
