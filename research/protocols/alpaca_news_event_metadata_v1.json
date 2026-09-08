@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "alpaca-news-event-metadata-v1",
+  "status": "FROZEN_BEFORE_NETWORK_PROBE",
+  "design_commit": "7c42c18",
+  "acquisition_commit": "18e8db8",
+  "feature_commit": "63fd488",
+  "provider": "alpaca",
+  "source_url": "https://data.alpaca.markets/v1beta1/news",
+  "execution_capability": "FORBIDDEN",
+  "query_partition": "half-open UTC day",
+  "pagination": "ascending, limit 50, traverse every next_page_token",
+  "deduplication_key": "news_id",
+  "availability_time_field": "updated_at",
+  "causal_cutoff": "available_at strictly less than decision_timestamp",
+  "created_at_role": "audit only; never causal availability",
+  "retained_fields": [
+    "news_id",
+    "created_at",
+    "available_at",
+    "source",
+    "symbols",
+    "headline",
+    "summary"
+  ],
+  "forbidden_fields": [
+    "content",
+    "author",
+    "images",
+    "url"
+  ],
+  "raw_text_policy": "headline and summary are temporary metadata inputs only; feature output contains no raw text",
+  "lookbacks": [
+    "30m",
+    "2h",
+    "1d",
+    "5d"
+  ],
+  "lexicon_sha256": "3bdd74da39dbe29163ed4da1aeca2aff6c4215a202a47a8076dc30cc8694cda6",
+  "event_universe": "v14309_v14408_events.parquet",
+  "event_universe_rows": 799799,
+  "event_universe_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "explicit_missingness": "one feature row per frozen event key; zero counts and false availability when no eligible news",
+  "training_period": [
+    "2021-01-01",
+    "2023-12-31"
+  ],
+  "development_period": [
+    "2024-01-01",
+    "2025-12-31"
+  ],
+  "consumed_period": [
+    "2026-01-01",
+    "2026-03-31"
+  ],
+  "forbidden_period_start": "2026-04-01",
+  "probe_period": [
+    "2022-03-15",
+    "2022-03-15"
+  ],
+  "probe_strategy_metrics_permitted": false,
+  "provider_splicing": "FORBIDDEN",
+  "paper_pool_mutation": false,
+  "paper_activation": false,
+  "failure_conditions": [
+    "missing or partial UTC day",
+    "pagination token cycle",
+    "same news ID with conflicting metadata",
+    "updated_at outside queried UTC day",
+    "missing or invalid updated_at",
+    "content hash mismatch",
+    "forbidden field persistence",
+    "development or consumed data opened before the declared gate"
+  ]
+}
