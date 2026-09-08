@@ -248,10 +248,9 @@ def test_v1254_prior_close_state_is_finite_and_uses_sector_dispersion() -> None:
     assert sparse_score != score
 
 
-def test_consolidated_pool_allocations_are_exact() -> None:
+def test_paper_pool_is_empty_after_v11098_user_removal() -> None:
     validate_pool_allocations()
-    assert POOL_ALLOCATIONS == {V11098_ID: 1.0}
-    assert sum(POOL_ALLOCATIONS.values()) == pytest.approx(1.0)
+    assert POOL_ALLOCATIONS == {}
 
 
 def test_noncausal_family_leaders_and_merge_fail_closed() -> None:
@@ -270,14 +269,17 @@ def test_noncausal_family_leaders_and_merge_fail_closed() -> None:
     assert sum(USER_REQUESTED_FOUR_WAY_ALLOCATIONS.values()) == pytest.approx(1.0)
 
 
-def test_v11098_is_the_only_active_parity_proven_paper_allocation() -> None:
+def test_v11098_is_disabled_until_a_full_market_candidate_qualifies() -> None:
     assert (
         PAPER_ADMISSION_STATES[V10824_ID]
         == "REJECTED_NONCAUSAL_EARLY_FILL_BEFORE_ROUTE_RESOLUTION"
     )
     assert V10824_ID not in POOL_ALLOCATIONS
-    assert PAPER_ADMISSION_STATES[V11098_ID] == "ACTIVE_PARITY_PROVEN"
-    assert POOL_ALLOCATIONS[V11098_ID] == 1.0
+    assert (
+        PAPER_ADMISSION_STATES[V11098_ID]
+        == "DISABLED_BY_USER_2026_09_09_PRODUCTION_UNIVERSE_ONLY"
+    )
+    assert V11098_ID not in POOL_ALLOCATIONS
     assert PAPER_ADMISSION_STATES[V1254_ID] == "DISABLED_BY_USER_2026_09_04"
     assert PAPER_ADMISSION_STATES[V11800_ID] == "REJECTED_CUMULATIVE_BONFERRONI_GATE"
     assert V11800_ID not in POOL_ALLOCATIONS

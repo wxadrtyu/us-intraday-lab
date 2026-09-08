@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "status": "PAPER_DEACTIVATED_BY_USER",
+  "candidate_id": "lev-v11098-2ddc1d07c9cfe31e",
+  "strategy_code": "v11098",
+  "authorized_date": "2026-09-09",
+  "reason": "fixed two-asset TQQQ/SOXL action universe is not acceptable for the production-grade full-market strategy objective",
+  "final_session": "2026-09-08",
+  "final_trade": {
+    "symbol": "SOXL",
+    "quantity": 8230,
+    "entry_average_fill_price": 126.933681,
+    "exit_average_fill_price": 126.812972,
+    "gross_realized_pnl_usd": -993.43507,
+    "gross_trade_return": -0.0009509611558495834,
+    "exit_client_order_id": "pool-20260908-z-flat-soxl"
+  },
+  "post_deactivation_account": {
+    "positions": 0,
+    "open_orders": 0
+  },
+  "disabled_scheduled_tasks": [
+    "USIntradayLab-V11098-AlpacaPaper",
+    "USIntradayLab-V11098-AlpacaPaper-Closeout",
+    "USIntradayLab-V11098-Recovery-20260908"
+  ],
+  "evidence_retention": "ledger and broker order history remain append-only; no prior observation was deleted"
+}

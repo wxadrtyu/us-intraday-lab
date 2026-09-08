@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "status": "USER_AUTHORIZED_PROSPECTIVE_POLICY",
+  "authorized_date": "2026-09-09",
+  "effective_first_version": 18010,
+  "objective": "production-grade long-only intraday US equity strategies derived from the full eligible market universe",
+  "research_universe": {
+    "ranking_scope": "all point-in-time eligible symbols are ranked jointly for every session and decision clock",
+    "action_scope": "ordinary US equities selected from the eligible full-market cross-section; a fixed TQQQ/SOXL or other small hard-coded action universe is forbidden",
+    "membership": "point-in-time observed tradability only; unavailable symbols are ineligible rather than imputed",
+    "survivorship_rule": "current constituents must not be projected backward and delisted symbols must not be silently excluded",
+    "data_gaps": "fail closed; no zero-fill, forward-fill, cross-provider minute splicing, or missing-as-cash performance",
+    "maximum_concurrent_holdings": 10
+  },
+  "execution": {
+    "long_only": true,
+    "gross_limit": 1.0,
+    "overnight": false,
+    "entry": "next_observable_bar_after_signal",
+    "primary_scenarios": [
+      "standard_9bp",
+      "cost_18bp",
+      "delay_5min_9bp"
+    ]
+  },
+  "selection_and_diagnostics": {
+    "fit": "2022-2023 only",
+    "development_selection": ["2024", "2025", "2024-2025"],
+    "historical_stress_not_selection": "2018-2020",
+    "consumed_not_selection": ["2026Q1", "2026_all"],
+    "future_forward": "append-only and never retroactively ranked"
+  },
+  "hard_gates": {
+    "development_oos_all_primary_scenarios": {
+      "annualized_return": ">0.40",
+      "max_drawdown": "<0.20",
+      "information_ratio": ">=1.0"
+    },
+    "train_and_development_period_sign": "positive for 2022-2023, 2024, and 2025",
+    "historical_2018_2020_all_primary_scenarios": {
+      "annualized_return": ">=0.15",
+      "max_drawdown": "<0.20"
+    },
+    "consumed_2026q1_total_return": ">0.05",
+    "consumed_2026_all_total_return": ">0.05",
+    "positive_folds": ">=4_of_5_all_primary_scenarios",
+    "start_dates": "all_positive",
+    "parameter_neighborhood": ">=0.70",
+    "global_evidence_z_score": ">=3.0",
+    "native_factory_null": {
+      "required_after_all_pre_null_gates": true,
+      "methods": [
+        "session_signal_permutation_maxT",
+        "safe_circular_shift_maxT"
+      ],
+      "repetitions": 500,
+      "percentile": 0.95,
+      "both_methods_must_pass": true
+    },
+    "execution_parity": "exact production signal, exposure, sizing, timing, and exit evaluator must reproduce frozen research decisions"
+  },
+  "paper_admission": {
+    "default": "NOT_ADMITTED",
+    "requires_all_hard_gates": true,
+    "requires_human_authorization": true,
+    "paper_pool_must_remain_empty_until_qualified": true
+  },
+  "retroactive_reclassification": false
+}
