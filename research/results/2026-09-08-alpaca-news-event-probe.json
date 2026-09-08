@@ -1,0 +1,22 @@
+{
+  "available_time_field": "updated_at",
+  "contract_failures": 0,
+  "duplicate_news_ids": 0,
+  "end": "2022-03-15",
+  "estimated_full_calls": 22995,
+  "hash_failures": 0,
+  "missing_days": 0,
+  "observed_days": 1,
+  "page_count": 21,
+  "partial_days": 0,
+  "provider": "alpaca",
+  "row_count": 1044,
+  "schema_version": "1.0.0",
+  "source_type": "historical_news_metadata",
+  "start": "2022-03-15",
+  "status": "COMPLETE",
+  "strategy_metrics_permitted": false,
+  "symbol_links": 2355,
+  "training_only": true,
+  "unique_news_ids": 1044
+}
