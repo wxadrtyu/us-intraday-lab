@@ -14,6 +14,15 @@ import exchange_calendars  # type: ignore[import-untyped]
 import pandas as pd
 
 _XNYS = exchange_calendars.get_calendar("XNYS")
+_DAILY_SOURCES = {
+    "alpaca_iex_1day_v2": ("alpaca-iex-1day-v2-shards", "monthly_universe", "iex", ""),
+    "alpaca_sip_1day_v1": (
+        "alpaca-sip-1day-v1-shards",
+        "monthly_universe_sip_v1",
+        "sip",
+        "sip-",
+    ),
+}
 
 
 def monthly_cutoffs(start_month: date, end_month: date) -> pd.DataFrame:
@@ -50,9 +59,13 @@ def build_monthly_universe(
     minimum_coverage_ratio: float = 0.95,
     minimum_close: float = 5.0,
     minimum_median_dollar_volume: float = 10_000_000.0,
+    source: str = "alpaca_iex_1day_v2",
 ) -> dict[str, object]:
     """Publish all symbol-month decisions; missing cutoff data fails closed."""
-    daily_root = root.resolve() / "data" / "staging" / "alpaca_iex_1day_v2"
+    if source not in _DAILY_SOURCES:
+        raise ValueError(f"unsupported daily source: {source}")
+    source_label, output_namespace, source_feed, dataset_infix = _DAILY_SOURCES[source]
+    daily_root = root.resolve() / "data" / "staging" / source
     shards = sorted(daily_root.glob("*.parquet"))
     if not shards:
         raise FileNotFoundError("no daily shards are available")
@@ -120,13 +133,13 @@ def build_monthly_universe(
         ],
     ).fetch_df()
     connection.close()
-    output_root = root.resolve() / "data" / "catalog" / "monthly_universe"
+    output_root = root.resolve() / "data" / "catalog" / output_namespace
     output_root.mkdir(parents=True, exist_ok=True)
     temporary_root = Path(tempfile.mkdtemp(prefix=".universe-", dir=output_root))
     data_path = temporary_root / "decisions.parquet"
     decisions.to_parquet(data_path, index=False, compression="zstd")
     content_hash = _sha256_file(data_path)
-    dataset_id = f"us-market-monthly-universe-{content_hash[:24]}"
+    dataset_id = f"us-market-monthly-universe-{dataset_infix}{content_hash[:24]}"
     eligible = decisions.loc[decisions["eligible"]]
     counts = {
         str(month): int(count)
@@ -135,7 +148,9 @@ def build_monthly_universe(
     manifest: dict[str, object] = {
         "schema_version": "1.0.0",
         "dataset_id": dataset_id,
-        "source": "alpaca-iex-1day-v2-shards",
+        "source": source_label,
+        "source_dataset": source,
+        "source_feed": source_feed,
         "start_month": start_month.isoformat(),
         "end_month": end_month.isoformat(),
         "lookback_sessions": lookback_sessions,
@@ -147,6 +162,7 @@ def build_monthly_universe(
         "eligible_counts_by_month": counts,
         "content_sha256": content_hash,
         "uses_future_data": False,
+        "uses_current_asset_status": False,
         "missing_is_cash": False,
     }
     (temporary_root / "manifest.json").write_text(

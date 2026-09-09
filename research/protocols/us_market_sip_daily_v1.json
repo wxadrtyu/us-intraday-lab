@@ -1,0 +1,17 @@
+{
+  "adjustment": "split",
+  "asof_policy": "calendar_year_end_or_requested_end",
+  "bar_size": "1day",
+  "credentials": [
+    "ALPACA_PAPER_API_KEY",
+    "ALPACA_PAPER_SECRET_KEY"
+  ],
+  "feed": "sip",
+  "missing_data_policy": "preserve_missing_no_fill_no_cash_substitution",
+  "provider": "alpaca",
+  "read_only_market_data": true,
+  "schema_version": "1.0.0",
+  "source_namespace": "alpaca_sip_1day_v1",
+  "symbol_policy": "all_queryable_primary_exchange_assets_from_frozen_catalog",
+  "trading_operations_forbidden": true
+}

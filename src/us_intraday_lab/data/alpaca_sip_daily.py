@@ -208,6 +208,7 @@ def acquire_sip_daily_shards(
                 "provider_rejected_symbols": sorted(rejected),
                 "row_count": len(frame),
                 "content_sha256": _sha256_file(parquet),
+                "read_only_market_data": True,
             }
             temporary_manifest = manifest_path.with_suffix(".tmp")
             temporary_manifest.write_text(

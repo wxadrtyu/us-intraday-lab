@@ -59,3 +59,38 @@ def test_universe_uses_only_prior_sessions_and_fails_low_liquidity(tmp_path: Pat
     assert not bool(decisions.loc["THIN", "eligible"])
     assert decisions.loc["THIN", "decision_reason"] == "liquidity_below_floor"
     assert manifest["uses_future_data"] is False
+
+
+def test_universe_explicitly_uses_sip_daily_source(tmp_path: Path) -> None:
+    calendar = exchange_calendars.get_calendar("XNYS")
+    sessions = calendar.sessions_window(pd.Timestamp("2022-01-31"), -60)
+    daily_root = tmp_path / "data" / "staging" / "alpaca_sip_1day_v1"
+    daily_root.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "symbol": ["FULL"] * len(sessions),
+            "timestamp": sessions,
+            "close": [20.0] * len(sessions),
+            "volume": [1_000_000.0] * len(sessions),
+        }
+    ).to_parquet(daily_root / "part.parquet", index=False)
+
+    manifest = build_monthly_universe(
+        root=tmp_path,
+        start_month=date(2022, 2, 1),
+        end_month=date(2022, 2, 1),
+        source="alpaca_sip_1day_v1",
+    )
+
+    assert manifest["source"] == "alpaca-sip-1day-v1-shards"
+    assert manifest["source_feed"] == "sip"
+    assert manifest["uses_current_asset_status"] is False
+    assert str(manifest["dataset_id"]).startswith("us-market-monthly-universe-sip-")
+    assert (
+        tmp_path
+        / "data"
+        / "catalog"
+        / "monthly_universe_sip_v1"
+        / str(manifest["dataset_id"])
+        / "decisions.parquet"
+    ).is_file()
