@@ -64,7 +64,7 @@ def test_universe_uses_only_prior_sessions_and_fails_low_liquidity(tmp_path: Pat
 def test_universe_explicitly_uses_sip_daily_source(tmp_path: Path) -> None:
     calendar = exchange_calendars.get_calendar("XNYS")
     sessions = calendar.sessions_window(pd.Timestamp("2022-01-31"), -60)
-    daily_root = tmp_path / "data" / "staging" / "alpaca_sip_1day_v1"
+    daily_root = tmp_path / "data" / "staging" / "alpaca_sip_1day_v2"
     daily_root.mkdir(parents=True)
     pd.DataFrame(
         {
@@ -79,10 +79,12 @@ def test_universe_explicitly_uses_sip_daily_source(tmp_path: Path) -> None:
         root=tmp_path,
         start_month=date(2022, 2, 1),
         end_month=date(2022, 2, 1),
-        source="alpaca_sip_1day_v1",
+        source="alpaca_sip_1day_v2",
+        candidate_symbols=("FULL", "NOBARS"),
+        verify_source=False,
     )
 
-    assert manifest["source"] == "alpaca-sip-1day-v1-shards"
+    assert manifest["source"] == "alpaca-sip-1day-v2-shards"
     assert manifest["source_feed"] == "sip"
     assert manifest["uses_current_asset_status"] is False
     assert str(manifest["dataset_id"]).startswith("us-market-monthly-universe-sip-")
@@ -90,7 +92,53 @@ def test_universe_explicitly_uses_sip_daily_source(tmp_path: Path) -> None:
         tmp_path
         / "data"
         / "catalog"
-        / "monthly_universe_sip_v1"
+        / "monthly_universe_sip_v2"
         / str(manifest["dataset_id"])
         / "decisions.parquet"
     ).is_file()
+
+    decisions = pd.read_parquet(
+        tmp_path
+        / "data"
+        / "catalog"
+        / "monthly_universe_sip_v2"
+        / str(manifest["dataset_id"])
+        / "decisions.parquet"
+    ).set_index("symbol")
+    assert decisions.loc["NOBARS", "decision_reason"] == "missing_cutoff_bar"
+
+
+def test_universe_coverage_uses_exact_trailing_xnys_sessions(tmp_path: Path) -> None:
+    calendar = exchange_calendars.get_calendar("XNYS")
+    cutoff = pd.Timestamp("2022-01-31")
+    trailing = calendar.sessions_window(cutoff, -60)
+    older = calendar.sessions_window(trailing[0], -4)[:-1]
+    rows = []
+    for symbol, sessions in (("PASS", trailing[3:]), ("STALE", trailing[4:].append(older))):
+        for session in sessions:
+            rows.append({"symbol": symbol, "timestamp": session, "close": 10.0, "volume": 2e6})
+    daily_root = tmp_path / "data" / "staging" / "alpaca_sip_1day_v2"
+    daily_root.mkdir(parents=True)
+    pd.DataFrame(rows).to_parquet(daily_root / "part.parquet", index=False)
+
+    manifest = build_monthly_universe(
+        root=tmp_path,
+        start_month=date(2022, 2, 1),
+        end_month=date(2022, 2, 1),
+        source="alpaca_sip_1day_v2",
+        candidate_symbols=("PASS", "STALE"),
+        verify_source=False,
+    )
+    decisions = pd.read_parquet(
+        tmp_path
+        / "data"
+        / "catalog"
+        / "monthly_universe_sip_v2"
+        / str(manifest["dataset_id"])
+        / "decisions.parquet"
+    ).set_index("symbol")
+
+    assert decisions.loc["PASS", "observed_sessions"] == 57
+    assert bool(decisions.loc["PASS", "eligible"])
+    assert decisions.loc["STALE", "observed_sessions"] == 56
+    assert decisions.loc["STALE", "decision_reason"] == "insufficient_coverage"

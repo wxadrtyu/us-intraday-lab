@@ -38,30 +38,60 @@ def audit_sip_universe(
     independent_historical_master: bool,
     hashes_valid: bool,
     partial_partitions: int,
+    event_grid_coverage_ratio: float | None = None,
+    expected_candidate_symbols: tuple[str, ...] | None = None,
+    decision_symbols: tuple[str, ...] | None = None,
+    expected_sessions: tuple[date, ...] | None = None,
+    observed_sessions: tuple[date, ...] | None = None,
 ) -> dict[str, Any]:
     """Return an auditable gate; data sources are compared but never spliced."""
     missing_months = sorted(set(expected_months).difference(observed_months))
-    reasons: list[str] = []
+    daily_reasons: list[str] = []
+    if not expected_months:
+        daily_reasons.append("EXPECTED_MONTH_SET_EMPTY")
     if missing_months:
-        reasons.append("EXPECTED_MONTH_MISSING")
+        daily_reasons.append("EXPECTED_MONTH_MISSING")
+    if sip_daily.empty:
+        daily_reasons.append("SIP_DAILY_EMPTY")
     if not hashes_valid:
-        reasons.append("PARTITION_HASH_INVALID")
+        daily_reasons.append("PARTITION_HASH_INVALID")
     if partial_partitions:
-        reasons.append("PARTIAL_PARTITION_PRESENT")
+        daily_reasons.append("PARTIAL_PARTITION_PRESENT")
     if not independent_historical_master:
-        reasons.append("INDEPENDENT_HISTORICAL_MASTER_MISSING")
+        daily_reasons.append("INDEPENDENT_HISTORICAL_MASTER_MISSING")
+    missing_symbols: list[str] = []
+    if expected_candidate_symbols is not None:
+        missing_symbols = sorted(set(expected_candidate_symbols).difference(decision_symbols or ()))
+        if missing_symbols:
+            daily_reasons.append("CANDIDATE_SYMBOL_DECISIONS_MISSING")
+    missing_sessions: list[date] = []
+    if expected_sessions is not None:
+        missing_sessions = sorted(set(expected_sessions).difference(observed_sessions or ()))
+        if missing_sessions:
+            daily_reasons.append("EXPECTED_XNYS_SESSION_MISSING")
+    reasons = list(daily_reasons)
+    if event_grid_coverage_ratio is None:
+        reasons.append("DECISION_EVENT_GRID_NOT_AUDITED")
+    elif event_grid_coverage_ratio < 0.95:
+        reasons.append("DECISION_EVENT_GRID_COVERAGE_BELOW_95_PERCENT")
 
     return {
         "schema_version": "1.0.0",
+        "daily_universe_permitted": not daily_reasons,
         "strategy_metrics_permitted": not reasons,
         "rejection_reasons": reasons,
         "expected_months": [month.isoformat() for month in expected_months],
         "observed_months": [month.isoformat() for month in observed_months],
         "missing_months": [month.isoformat() for month in missing_months],
+        "missing_candidate_symbol_count": len(missing_symbols),
+        "missing_candidate_symbols": missing_symbols,
+        "missing_session_count": len(missing_sessions),
+        "missing_sessions": [session.isoformat() for session in missing_sessions],
         "sip_daily_rows": len(sip_daily),
         "iex_daily_rows": len(iex_daily),
         "hashes_valid": hashes_valid,
         "partial_partitions": partial_partitions,
+        "event_grid_coverage_ratio": event_grid_coverage_ratio,
         "survivorship": {
             "independent_historical_master": independent_historical_master,
             "current_asset_snapshot_is_point_in_time_history": False,

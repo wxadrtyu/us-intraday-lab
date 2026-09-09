@@ -13,6 +13,8 @@ import duckdb
 import exchange_calendars  # type: ignore[import-untyped]
 import pandas as pd
 
+from us_intraday_lab.data.alpaca_sip_daily import validate_sip_daily_source
+
 _XNYS = exchange_calendars.get_calendar("XNYS")
 _DAILY_SOURCES = {
     "alpaca_iex_1day_v2": ("alpaca-iex-1day-v2-shards", "monthly_universe", "iex", ""),
@@ -21,6 +23,12 @@ _DAILY_SOURCES = {
         "monthly_universe_sip_v1",
         "sip",
         "sip-",
+    ),
+    "alpaca_sip_1day_v2": (
+        "alpaca-sip-1day-v2-shards",
+        "monthly_universe_sip_v2",
+        "sip",
+        "sip-v2-",
     ),
 }
 
@@ -60,21 +68,36 @@ def build_monthly_universe(
     minimum_close: float = 5.0,
     minimum_median_dollar_volume: float = 10_000_000.0,
     source: str = "alpaca_iex_1day_v2",
+    candidate_symbols: tuple[str, ...] | None = None,
+    verify_source: bool = True,
 ) -> dict[str, object]:
     """Publish all symbol-month decisions; missing cutoff data fails closed."""
     if source not in _DAILY_SOURCES:
         raise ValueError(f"unsupported daily source: {source}")
     source_label, output_namespace, source_feed, dataset_infix = _DAILY_SOURCES[source]
+    if source == "alpaca_sip_1day_v2" and verify_source:
+        validate_sip_daily_source(root=root)
     daily_root = root.resolve() / "data" / "staging" / source
     shards = sorted(daily_root.glob("*.parquet"))
     if not shards:
         raise FileNotFoundError("no daily shards are available")
     cutoffs = monthly_cutoffs(start_month, end_month)
+    cutoffs["window_start"] = [
+        _XNYS.sessions_window(pd.Timestamp(cutoff), -lookback_sessions)[0].date()
+        for cutoff in cutoffs["information_cutoff"]
+    ]
     minimum_sessions = int(lookback_sessions * minimum_coverage_ratio + 0.999999)
     connection = duckdb.connect()
     connection.register("cutoffs", cutoffs)
+    if candidate_symbols is not None:
+        normalized = tuple(sorted(set(candidate_symbols)))
+        if not normalized or normalized != candidate_symbols:
+            raise ValueError("candidate_symbols must be non-empty, unique, and sorted")
+        connection.register("candidate_symbols", pd.DataFrame({"symbol": normalized}))
+        symbols_sql = "SELECT symbol FROM candidate_symbols"
+    else:
+        symbols_sql = "SELECT DISTINCT symbol FROM daily"
     parquet_glob = (daily_root / "*.parquet").as_posix()
-    window_preceding = lookback_sessions - 1
     decisions = connection.execute(
         f"""
         WITH daily AS (
@@ -86,40 +109,48 @@ def build_monthly_universe(
           WHERE close IS NOT NULL AND volume IS NOT NULL
           GROUP BY 1, 2
         ),
-        stats AS (
-          SELECT symbol, session_date, close,
-                 count(*) OVER trailing_window AS observed_sessions,
-                 median(close * volume) OVER trailing_window AS median_dollar_volume
-          FROM daily
-          WINDOW trailing_window AS (
-            PARTITION BY symbol ORDER BY session_date
-            ROWS BETWEEN {window_preceding:d} PRECEDING AND CURRENT ROW
-          )
-        ),
-        symbols AS (SELECT DISTINCT symbol FROM daily),
+        symbols AS ({symbols_sql}),
         grid AS (
           SELECT symbols.symbol, cutoffs.month, cutoffs.information_cutoff
+                 , cutoffs.window_start
           FROM symbols CROSS JOIN cutoffs
+        ),
+        stats AS (
+          SELECT grid.symbol, grid.month, grid.information_cutoff,
+                 count(daily.session_date) AS observed_sessions,
+                 median(daily.close * daily.volume) AS median_dollar_volume
+          FROM grid
+          LEFT JOIN daily
+            ON daily.symbol = grid.symbol
+           AND daily.session_date BETWEEN grid.window_start AND grid.information_cutoff
+          GROUP BY 1, 2, 3
+        ),
+        cutoff_bar AS (
+          SELECT grid.symbol, grid.month, max(daily.close) AS close
+          FROM grid
+          LEFT JOIN daily
+            ON daily.symbol = grid.symbol
+           AND daily.session_date = grid.information_cutoff
+          GROUP BY 1, 2
         )
         SELECT grid.symbol, grid.month, grid.information_cutoff,
-               stats.close AS cutoff_close,
+               cutoff_bar.close AS cutoff_close,
                coalesce(stats.observed_sessions, 0) AS observed_sessions,
                stats.median_dollar_volume,
                CASE
-                 WHEN stats.symbol IS NULL THEN 'missing_cutoff_bar'
+                 WHEN cutoff_bar.close IS NULL THEN 'missing_cutoff_bar'
                  WHEN stats.observed_sessions < ? THEN 'insufficient_coverage'
-                 WHEN stats.close < ? THEN 'price_below_floor'
+                 WHEN cutoff_bar.close < ? THEN 'price_below_floor'
                  WHEN stats.median_dollar_volume < ? THEN 'liquidity_below_floor'
                  ELSE 'eligible'
                END AS decision_reason,
-               stats.symbol IS NOT NULL
+               cutoff_bar.close IS NOT NULL
                  AND stats.observed_sessions >= ?
-                 AND stats.close >= ?
+                 AND cutoff_bar.close >= ?
                  AND stats.median_dollar_volume >= ? AS eligible
         FROM grid
-        LEFT JOIN stats
-          ON stats.symbol = grid.symbol
-         AND stats.session_date = grid.information_cutoff
+        LEFT JOIN stats USING (symbol, month, information_cutoff)
+        LEFT JOIN cutoff_bar USING (symbol, month)
         ORDER BY grid.month, grid.symbol
         """,
         [

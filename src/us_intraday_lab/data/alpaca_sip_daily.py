@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import pandas as pd
+import pyarrow.parquet as pq
 
 API_KEY_VARIABLE = "ALPACA_PAPER_API_KEY"
 SECRET_KEY_VARIABLE = "ALPACA_PAPER_SECRET_KEY"
@@ -24,7 +25,7 @@ _REQUIRED_COLUMNS = ("symbol", "timestamp", "open", "high", "low", "close", "vol
 _OPTIONAL_COLUMNS = ("trade_count", "vwap")
 _OUTPUT_COLUMNS = (*_REQUIRED_COLUMNS, *_OPTIONAL_COLUMNS, "asof", "provider", "feed")
 _INVALID_SYMBOL_RESPONSE = re.compile(r"invalid symbol:\s*([^\"}]+)", re.IGNORECASE)
-SIP_DAILY_NAMESPACE = "alpaca_sip_1day_v1"
+SIP_DAILY_NAMESPACE = "alpaca_sip_1day_v2"
 
 
 class HistoricalBarsClient(Protocol):
@@ -124,6 +125,67 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _month_ranges(start: date, end: date) -> tuple[tuple[date, date], ...]:
+    ranges: list[tuple[date, date]] = []
+    cursor = start
+    while cursor <= end:
+        next_month = date(cursor.year + (cursor.month == 12), cursor.month % 12 + 1, 1)
+        period_end = min(end, next_month - timedelta(days=1))
+        ranges.append((cursor, period_end))
+        cursor = period_end + timedelta(days=1)
+    return tuple(ranges)
+
+
+def _request_identity(
+    *, symbols: tuple[str, ...], start: date, end: date, asof: date
+) -> dict[str, object]:
+    return {
+        "provider": "alpaca",
+        "feed": "sip",
+        "bar_size": "1day",
+        "adjustment": "split",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "asof": asof.isoformat(),
+        "symbols": list(symbols),
+    }
+
+
+def _identity_hash(identity: dict[str, object]) -> str:
+    payload = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _quality(
+    frame: pd.DataFrame, *, requested: tuple[str, ...], start: date, end: date
+) -> dict[str, object]:
+    if frame.empty:
+        return {
+            "returned_rows": 0,
+            "returned_symbols": 0,
+            "duplicate_symbol_sessions": 0,
+            "missing_required_values": 0,
+        }
+    returned = set(frame["symbol"].astype(str).str.upper())
+    unexpected = sorted(returned.difference(requested))
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True)
+    outside = frame.loc[(timestamps.dt.date < start) | (timestamps.dt.date > end)]
+    duplicates = int(frame.duplicated(["symbol", "timestamp"]).sum())
+    missing = int(frame.loc[:, _REQUIRED_COLUMNS].isna().any(axis=1).sum())
+    if unexpected or not outside.empty or duplicates or missing:
+        raise ValueError(
+            "SIP daily quality failure: "
+            f"unexpected_symbols={unexpected}, outside_bounds={len(outside)}, "
+            f"duplicates={duplicates}, missing_required={missing}"
+        )
+    return {
+        "returned_rows": len(frame),
+        "returned_symbols": len(returned),
+        "duplicate_symbol_sessions": duplicates,
+        "missing_required_values": missing,
+    }
+
+
 def acquire_sip_daily_shards(
     *,
     root: Path,
@@ -134,7 +196,7 @@ def acquire_sip_daily_shards(
     batch_size: int = 100,
     sleep: Callable[[float], None] = time_module.sleep,
 ) -> list[dict[str, object]]:
-    """Publish deterministic year/batch SIP shards and safely resume them."""
+    """Publish deterministic month/batch SIP shards and safely resume them."""
     if start > end:
         raise ValueError("daily acquisition start must not exceed end")
     if not symbols or len(symbols) != len(set(symbols)) or tuple(sorted(symbols)) != symbols:
@@ -145,19 +207,27 @@ def acquire_sip_daily_shards(
     output_root = root.resolve() / "data" / "staging" / SIP_DAILY_NAMESPACE
     output_root.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, object]] = []
-    for year in range(start.year, end.year + 1):
-        period_start = max(start, date(year, 1, 1))
-        period_end = min(end, date(year, 12, 31))
+    for period_start, period_end in _month_ranges(start, end):
         for offset in range(0, len(symbols), batch_size):
             batch = symbols[offset : offset + batch_size]
-            identity = hashlib.sha256(",".join(batch).encode()).hexdigest()[:16]
-            stem = f"{year}-batch-{offset // batch_size:04d}-{identity}"
+            request_identity = _request_identity(
+                symbols=batch, start=period_start, end=period_end, asof=period_end
+            )
+            identity_hash = _identity_hash(request_identity)
+            stem = (
+                f"{period_start:%Y-%m}-batch-{offset // batch_size:04d}-"
+                f"{identity_hash[:16]}"
+            )
             parquet = output_root / f"{stem}.parquet"
             manifest_path = output_root / f"{stem}.json"
             if parquet.is_file() and manifest_path.is_file():
                 record = json.loads(manifest_path.read_text("utf-8"))
                 if record["content_sha256"] != _sha256_file(parquet):
                     raise ValueError(f"SIP daily shard hash mismatch: {parquet}")
+                if record.get("request_identity_sha256") != identity_hash:
+                    raise ValueError(f"SIP daily request identity mismatch: {stem}")
+                if record.get("request") != request_identity:
+                    raise ValueError(f"SIP daily request manifest mismatch: {stem}")
                 records.append(record)
                 continue
             if parquet.exists() or manifest_path.exists():
@@ -189,18 +259,23 @@ def acquire_sip_daily_shards(
             else:
                 frame = pd.DataFrame(columns=_OUTPUT_COLUMNS)
 
+            quality = _quality(
+                frame, requested=tuple(remaining), start=period_start, end=period_end
+            )
+            retrieved_at = datetime.now(UTC).isoformat()
             temporary = parquet.with_suffix(".tmp.parquet")
             frame.to_parquet(temporary, index=False, compression="zstd")
             temporary.replace(parquet)
             record = {
-                "schema_version": "1.0.0",
+                "schema_version": "2.0.0",
                 "source_namespace": SIP_DAILY_NAMESPACE,
                 "request_end_semantics": "exclusive_end_plus_one_day",
                 "provider": "alpaca",
                 "feed": "sip",
                 "bar_size": "1day",
                 "adjustment": "split",
-                "year": year,
+                "year": period_start.year,
+                "month": period_start.month,
                 "start": period_start.isoformat(),
                 "end": period_end.isoformat(),
                 "asof": period_end.isoformat(),
@@ -209,6 +284,10 @@ def acquire_sip_daily_shards(
                 "row_count": len(frame),
                 "content_sha256": _sha256_file(parquet),
                 "read_only_market_data": True,
+                "request": request_identity,
+                "request_identity_sha256": identity_hash,
+                "retrieved_at": retrieved_at,
+                "quality": quality,
             }
             temporary_manifest = manifest_path.with_suffix(".tmp")
             temporary_manifest.write_text(
@@ -217,3 +296,35 @@ def acquire_sip_daily_shards(
             temporary_manifest.replace(manifest_path)
             records.append(record)
     return records
+
+
+def validate_sip_daily_source(*, root: Path) -> dict[str, int]:
+    """Validate every immutable v2 partition before downstream consumption."""
+    source = root.resolve() / "data" / "staging" / SIP_DAILY_NAMESPACE
+    parquet_by_stem = {path.stem: path for path in source.glob("*.parquet")}
+    manifest_by_stem = {path.stem: path for path in source.glob("*.json")}
+    partials = tuple(source.glob("*.tmp")) + tuple(source.glob("*.tmp.parquet"))
+    if not parquet_by_stem and not manifest_by_stem:
+        raise ValueError("SIP daily source is empty")
+    if parquet_by_stem.keys() != manifest_by_stem.keys() or partials:
+        raise ValueError("SIP daily partition pairing failure")
+
+    total_rows = 0
+    for stem, parquet in sorted(parquet_by_stem.items()):
+        record = json.loads(manifest_by_stem[stem].read_text("utf-8"))
+        request = record.get("request")
+        if not isinstance(request, dict):
+            raise TypeError(f"SIP daily request manifest missing: {stem}")
+        if (
+            record.get("source_namespace") != SIP_DAILY_NAMESPACE
+            or record.get("feed") != "sip"
+            or request.get("feed") != "sip"
+            or record.get("request_identity_sha256") != _identity_hash(request)
+            or record.get("content_sha256") != _sha256_file(parquet)
+        ):
+            raise ValueError(f"SIP daily provenance failure: {stem}")
+        rows = int(pq.ParquetFile(parquet).metadata.num_rows)
+        if rows != int(record.get("row_count", -1)):
+            raise ValueError(f"SIP daily row-count failure: {stem}")
+        total_rows += rows
+    return {"partitions": len(parquet_by_stem), "rows": total_rows}

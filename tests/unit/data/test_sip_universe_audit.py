@@ -43,3 +43,20 @@ def test_audit_reports_sip_to_iex_volume_ratio_without_splicing() -> None:
 
     assert result["source_bias"]["median_sip_to_iex_volume_ratio"] == pytest.approx(40.0)
     assert result["rows_spliced"] == 0
+
+
+def test_audit_never_passes_empty_daily_or_unaudited_event_grid() -> None:
+    result = audit_sip_universe(
+        expected_months=(date(2022, 1, 1),),
+        observed_months=(date(2022, 1, 1),),
+        sip_daily=pd.DataFrame(),
+        iex_daily=pd.DataFrame(),
+        independent_historical_master=True,
+        hashes_valid=True,
+        partial_partitions=0,
+    )
+
+    assert result["daily_universe_permitted"] is False
+    assert result["strategy_metrics_permitted"] is False
+    assert "SIP_DAILY_EMPTY" in result["rejection_reasons"]
+    assert "DECISION_EVENT_GRID_NOT_AUDITED" in result["rejection_reasons"]
