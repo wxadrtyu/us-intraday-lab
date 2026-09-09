@@ -1,0 +1,47 @@
+{
+  "schema_version": "2.0.0",
+  "protocol_id": "us-market-full-market-quote-grid-v2",
+  "status": "FROZEN_BEFORE_BULK_ACQUISITION",
+  "authorized_design": "2026-09-09-alpaca-sip-full-market-data-design",
+  "provider": "alpaca",
+  "feed": "sip",
+  "source_endpoint": "historical multi-symbol stock quotes",
+  "execution_capability": "FORBIDDEN",
+  "parent_universe_dataset_id": "us-market-monthly-universe-sip-v2-3dc89bc9ab09e193372b2071",
+  "universe": {
+    "scope": "every eligible symbol crossed with every XNYS session in its eligible month",
+    "ranking_semantics": "all eligible symbols remain in the same session and decision-clock cross-section",
+    "missing_policy": "explicit unavailable row; no fill, cash substitution, provider splice, or silent symbol removal"
+  },
+  "clock_grid": {
+    "decision_bars": [2, 5, 11, 17, 23],
+    "holding_bars": [1, 2, 4, 6],
+    "decision_prior": "last valid SIP quote strictly before completed signal bar, maximum age 120 seconds",
+    "entry": "first valid SIP quote at or after signal cutoff, maximum wait 120 seconds",
+    "delay_entry_5m": "first valid SIP quote at or after signal cutoff plus five minutes, maximum wait 120 seconds",
+    "exits": "first valid SIP quote at or after each frozen holding horizon, maximum wait 120 seconds"
+  },
+  "date_roles": {
+    "fit": ["2022-01-01", "2023-12-31"],
+    "development_selection": ["2024-01-01", "2025-12-31"],
+    "historical_stress_only": ["2018-01-01", "2020-12-31"],
+    "consumed_diagnostic_only": ["2026-01-01", "2026-03-31"]
+  },
+  "acceptance": {
+    "aggregate_coverage_floor": 0.95,
+    "required_breakdowns": [
+      "month",
+      "symbol",
+      "exchange",
+      "liquidity_decile",
+      "price_decile",
+      "current_snapshot_active_status"
+    ],
+    "strategy_metrics_permitted_before_pass": false
+  },
+  "immutability": {
+    "partitioning": "calendar month, session date, decision bar, deterministic symbol batch",
+    "resume": "request-identity and content-hash verified",
+    "raw_data_tracked_in_git": false
+  }
+}
