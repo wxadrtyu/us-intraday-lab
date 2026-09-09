@@ -60,3 +60,23 @@ def test_audit_never_passes_empty_daily_or_unaudited_event_grid() -> None:
     assert result["strategy_metrics_permitted"] is False
     assert "SIP_DAILY_EMPTY" in result["rejection_reasons"]
     assert "DECISION_EVENT_GRID_NOT_AUDITED" in result["rejection_reasons"]
+
+
+def test_audit_blocks_candidate_symbols_missing_from_decision_grid() -> None:
+    sip = pd.DataFrame(
+        {"symbol": ["A"], "session_date": [date(2022, 1, 3)], "volume": [100.0]}
+    )
+    result = audit_sip_universe(
+        expected_months=(date(2022, 1, 1),),
+        observed_months=(date(2022, 1, 1),),
+        sip_daily=sip,
+        iex_daily=pd.DataFrame(),
+        independent_historical_master=True,
+        hashes_valid=True,
+        partial_partitions=0,
+        expected_candidate_symbols=("A", "DEAD"),
+        decision_symbols=("A",),
+    )
+
+    assert result["missing_candidate_symbols"] == ["DEAD"]
+    assert "CANDIDATE_SYMBOL_DECISIONS_MISSING" in result["rejection_reasons"]

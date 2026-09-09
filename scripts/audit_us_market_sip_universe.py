@@ -60,20 +60,6 @@ def _select_universe(root: Path, start_month: date, end_month: date) -> tuple[Pa
     return candidates[0]
 
 
-def _historical_master_is_valid(path: Path | None) -> bool:
-    if path is None or not path.is_file():
-        return False
-    record = json.loads(path.read_text("utf-8"))
-    data_path_value = record.get("data_path")
-    if not isinstance(data_path_value, str):
-        return False
-    data_path = Path(data_path_value)
-    return bool(
-        record.get("point_in_time") is True
-        and record.get("content_sha256") == _sha256_file(data_path)
-    )
-
-
 def _write_immutable(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
@@ -110,7 +96,6 @@ def main() -> None:
     parser.add_argument("--assets", required=True, type=Path)
     parser.add_argument("--start-month", default=date(2018, 4, 1), type=date.fromisoformat)
     parser.add_argument("--end-month", default=date(2026, 3, 1), type=date.fromisoformat)
-    parser.add_argument("--historical-master-manifest", type=Path)
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -121,9 +106,15 @@ def main() -> None:
     expected = tuple(monthly_cutoffs(args.start_month, args.end_month)["month"])
     observed = tuple(sorted(pd.to_datetime(decisions["month"]).dt.date.unique()))
     sip_root = root / "data" / "staging" / "alpaca_sip_1day_v2"
-    validation = validate_sip_daily_source(root=root)
-    sip_daily = _daily_frame(sip_root)
     candidates = primary_exchange_symbols(pd.read_parquet(args.assets))
+    validation = validate_sip_daily_source(
+        root=root,
+        symbols=candidates,
+        start=date(2018, 1, 1),
+        end=date(2026, 3, 31),
+        batch_size=1000,
+    )
+    sip_daily = _daily_frame(sip_root)
     calendar = exchange_calendars.get_calendar("XNYS")
     expected_sessions = tuple(
         timestamp.date()
@@ -132,20 +123,33 @@ def main() -> None:
         )
     )
     observed_sessions = tuple(sorted(pd.to_datetime(sip_daily["session_date"]).dt.date.unique()))
+    month_counts = decisions.groupby("month", observed=True).size()
+    decision_grid_complete = bool(
+        len(decisions) == len(candidates) * len(expected)
+        and len(month_counts) == len(expected)
+        and month_counts.eq(len(candidates)).all()
+        and not decisions.duplicated(["month", "symbol"]).any()
+    )
+    universe_hash_valid = bool(
+        universe_manifest.get("content_sha256")
+        == _sha256_file(universe_path / "decisions.parquet")
+    )
     result = audit_sip_universe(
         expected_months=expected,
         observed_months=observed,
         sip_daily=sip_daily,
         iex_daily=_daily_frame(root / "data" / "staging" / "alpaca_iex_1day_v2"),
-        independent_historical_master=_historical_master_is_valid(
-            args.historical_master_manifest
-        ),
+        # No independent master validator exists yet. This must remain false;
+        # a metadata flag or caller assertion is not sufficient provenance.
+        independent_historical_master=False,
         hashes_valid=True,
         partial_partitions=0,
         expected_candidate_symbols=candidates,
         decision_symbols=tuple(sorted(decisions["symbol"].astype(str).unique())),
         expected_sessions=expected_sessions,
         observed_sessions=observed_sessions,
+        decision_grid_complete=decision_grid_complete,
+        universe_hash_valid=universe_hash_valid,
     )
     result["universe_dataset_id"] = universe_manifest["dataset_id"]
     result["validated_partitions"] = validation["partitions"]

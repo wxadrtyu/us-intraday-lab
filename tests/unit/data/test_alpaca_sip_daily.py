@@ -156,3 +156,31 @@ def test_sip_daily_source_validation_rejects_orphan_partition(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="partition pairing failure"):
         validate_sip_daily_source(root=tmp_path)
+
+
+def test_sip_daily_source_validation_requires_complete_expected_grid(tmp_path) -> None:
+    class FakeDownloader:
+        def fetch(self, *, symbols, start, end, asof):
+            return pd.DataFrame(columns=[*_daily_frame().columns, "asof", "provider", "feed"])
+
+    acquire_sip_daily_shards(
+        root=tmp_path,
+        downloader=FakeDownloader(),
+        symbols=("AAPL",),
+        start=date(2022, 1, 1),
+        end=date(2022, 2, 28),
+        sleep=lambda _: None,
+    )
+    source = tmp_path / "data" / "staging" / "alpaca_sip_1day_v2"
+    january_manifest = next(source.glob("2022-01-*.json"))
+    january_manifest.with_suffix(".parquet").unlink()
+    january_manifest.unlink()
+
+    with pytest.raises(ValueError, match="expected acquisition grid mismatch"):
+        validate_sip_daily_source(
+            root=tmp_path,
+            symbols=("AAPL",),
+            start=date(2022, 1, 1),
+            end=date(2022, 2, 28),
+            batch_size=100,
+        )

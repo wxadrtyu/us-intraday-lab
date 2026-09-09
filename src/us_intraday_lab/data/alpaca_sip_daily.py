@@ -156,6 +156,15 @@ def _identity_hash(identity: dict[str, object]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _partition_stem(
+    *, period_start: date, offset: int, batch_size: int, identity_hash: str
+) -> str:
+    return (
+        f"{period_start:%Y-%m}-batch-{offset // batch_size:04d}-"
+        f"{identity_hash[:16]}"
+    )
+
+
 def _quality(
     frame: pd.DataFrame, *, requested: tuple[str, ...], start: date, end: date
 ) -> dict[str, object]:
@@ -214,9 +223,11 @@ def acquire_sip_daily_shards(
                 symbols=batch, start=period_start, end=period_end, asof=period_end
             )
             identity_hash = _identity_hash(request_identity)
-            stem = (
-                f"{period_start:%Y-%m}-batch-{offset // batch_size:04d}-"
-                f"{identity_hash[:16]}"
+            stem = _partition_stem(
+                period_start=period_start,
+                offset=offset,
+                batch_size=batch_size,
+                identity_hash=identity_hash,
             )
             parquet = output_root / f"{stem}.parquet"
             manifest_path = output_root / f"{stem}.json"
@@ -298,7 +309,14 @@ def acquire_sip_daily_shards(
     return records
 
 
-def validate_sip_daily_source(*, root: Path) -> dict[str, int]:
+def validate_sip_daily_source(
+    *,
+    root: Path,
+    symbols: tuple[str, ...] | None = None,
+    start: date | None = None,
+    end: date | None = None,
+    batch_size: int | None = None,
+) -> dict[str, int]:
     """Validate every immutable v2 partition before downstream consumption."""
     source = root.resolve() / "data" / "staging" / SIP_DAILY_NAMESPACE
     parquet_by_stem = {path.stem: path for path in source.glob("*.parquet")}
@@ -308,6 +326,32 @@ def validate_sip_daily_source(*, root: Path) -> dict[str, int]:
         raise ValueError("SIP daily source is empty")
     if parquet_by_stem.keys() != manifest_by_stem.keys() or partials:
         raise ValueError("SIP daily partition pairing failure")
+    grid_args = (symbols, start, end, batch_size)
+    if any(value is not None for value in grid_args) and not all(
+        value is not None for value in grid_args
+    ):
+        raise ValueError("complete expected grid arguments are required")
+    if symbols is not None and start is not None and end is not None and batch_size is not None:
+        expected: set[str] = set()
+        for period_start, period_end in _month_ranges(start, end):
+            for offset in range(0, len(symbols), batch_size):
+                batch = symbols[offset : offset + batch_size]
+                identity = _request_identity(
+                    symbols=batch,
+                    start=period_start,
+                    end=period_end,
+                    asof=period_end,
+                )
+                expected.add(
+                    _partition_stem(
+                        period_start=period_start,
+                        offset=offset,
+                        batch_size=batch_size,
+                        identity_hash=_identity_hash(identity),
+                    )
+                )
+        if parquet_by_stem.keys() != expected:
+            raise ValueError("SIP daily expected acquisition grid mismatch")
 
     total_rows = 0
     for stem, parquet in sorted(parquet_by_stem.items()):
@@ -315,16 +359,46 @@ def validate_sip_daily_source(*, root: Path) -> dict[str, int]:
         request = record.get("request")
         if not isinstance(request, dict):
             raise TypeError(f"SIP daily request manifest missing: {stem}")
+        request_hash = _identity_hash(request)
+        request_start = str(request.get("start", ""))
         if (
             record.get("source_namespace") != SIP_DAILY_NAMESPACE
+            or record.get("provider") != "alpaca"
             or record.get("feed") != "sip"
+            or record.get("bar_size") != "1day"
+            or record.get("adjustment") != "split"
             or request.get("feed") != "sip"
-            or record.get("request_identity_sha256") != _identity_hash(request)
+            or request.get("provider") != record.get("provider")
+            or request.get("bar_size") != record.get("bar_size")
+            or request.get("adjustment") != record.get("adjustment")
+            or request.get("start") != record.get("start")
+            or request.get("end") != record.get("end")
+            or request.get("asof") != record.get("asof")
+            or request.get("symbols") != record.get("symbols")
+            or record.get("request_identity_sha256") != request_hash
+            or not stem.startswith(f"{request_start[:7]}-batch-")
+            or not stem.endswith(request_hash[:16])
             or record.get("content_sha256") != _sha256_file(parquet)
         ):
             raise ValueError(f"SIP daily provenance failure: {stem}")
         rows = int(pq.ParquetFile(parquet).metadata.num_rows)
         if rows != int(record.get("row_count", -1)):
             raise ValueError(f"SIP daily row-count failure: {stem}")
+        if rows:
+            columns = [*_REQUIRED_COLUMNS, "asof", "provider", "feed"]
+            frame = pq.read_table(parquet, columns=columns).to_pandas()
+            requested = set(request["symbols"])
+            timestamps = pd.to_datetime(frame["timestamp"], utc=True)
+            if (
+                set(frame["symbol"].astype(str).str.upper()).difference(requested)
+                or set(frame["provider"].astype(str)) != {"alpaca"}
+                or set(frame["feed"].astype(str)) != {"sip"}
+                or set(frame["asof"].astype(str)) != {str(request["asof"])}
+                or timestamps.dt.date.min() < date.fromisoformat(str(request["start"]))
+                or timestamps.dt.date.max() > date.fromisoformat(str(request["end"]))
+                or frame.duplicated(["symbol", "timestamp"]).any()
+                or frame.loc[:, _REQUIRED_COLUMNS].isna().any(axis=None)
+            ):
+                raise ValueError(f"SIP daily parquet provenance failure: {stem}")
         total_rows += rows
     return {"partitions": len(parquet_by_stem), "rows": total_rows}

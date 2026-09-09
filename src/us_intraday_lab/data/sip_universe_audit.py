@@ -43,6 +43,8 @@ def audit_sip_universe(
     decision_symbols: tuple[str, ...] | None = None,
     expected_sessions: tuple[date, ...] | None = None,
     observed_sessions: tuple[date, ...] | None = None,
+    decision_grid_complete: bool | None = None,
+    universe_hash_valid: bool | None = None,
 ) -> dict[str, Any]:
     """Return an auditable gate; data sources are compared but never spliced."""
     missing_months = sorted(set(expected_months).difference(observed_months))
@@ -69,6 +71,10 @@ def audit_sip_universe(
         missing_sessions = sorted(set(expected_sessions).difference(observed_sessions or ()))
         if missing_sessions:
             daily_reasons.append("EXPECTED_XNYS_SESSION_MISSING")
+    if decision_grid_complete is not True:
+        daily_reasons.append("CANDIDATE_MONTH_DECISION_GRID_NOT_VERIFIED")
+    if universe_hash_valid is not True:
+        daily_reasons.append("UNIVERSE_HASH_NOT_VERIFIED")
     reasons = list(daily_reasons)
     if event_grid_coverage_ratio is None:
         reasons.append("DECISION_EVENT_GRID_NOT_AUDITED")
@@ -87,6 +93,8 @@ def audit_sip_universe(
         "missing_candidate_symbols": missing_symbols,
         "missing_session_count": len(missing_sessions),
         "missing_sessions": [session.isoformat() for session in missing_sessions],
+        "decision_grid_complete": decision_grid_complete,
+        "universe_hash_valid": universe_hash_valid,
         "sip_daily_rows": len(sip_daily),
         "iex_daily_rows": len(iex_daily),
         "hashes_valid": hashes_valid,

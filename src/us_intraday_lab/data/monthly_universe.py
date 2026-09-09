@@ -70,13 +70,24 @@ def build_monthly_universe(
     source: str = "alpaca_iex_1day_v2",
     candidate_symbols: tuple[str, ...] | None = None,
     verify_source: bool = True,
+    source_start: date | None = None,
+    source_end: date | None = None,
+    source_batch_size: int | None = None,
 ) -> dict[str, object]:
     """Publish all symbol-month decisions; missing cutoff data fails closed."""
     if source not in _DAILY_SOURCES:
         raise ValueError(f"unsupported daily source: {source}")
     source_label, output_namespace, source_feed, dataset_infix = _DAILY_SOURCES[source]
     if source == "alpaca_sip_1day_v2" and verify_source:
-        validate_sip_daily_source(root=root)
+        if candidate_symbols is None:
+            raise ValueError("candidate_symbols are required for verified SIP v2")
+        validate_sip_daily_source(
+            root=root,
+            symbols=candidate_symbols,
+            start=source_start,
+            end=source_end,
+            batch_size=source_batch_size,
+        )
     daily_root = root.resolve() / "data" / "staging" / source
     shards = sorted(daily_root.glob("*.parquet"))
     if not shards:
