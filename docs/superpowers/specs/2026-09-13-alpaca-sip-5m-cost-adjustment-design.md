@@ -39,8 +39,9 @@ must not be relabeled as a completed production dataset.
 - Candidate request set: all 15,399 symbols in the frozen Alpaca asset snapshot,
   including inactive records; current active or tradable flags cannot remove a
   historical request.
-- Historical mapping: every monthly request carries an explicit month-end
-  `asof` value.
+- Historical mapping: every production request carries its declared end as an
+  explicit `asof` value. That is calendar month-end for complete months and the
+  requested end for a deliberately bounded pilot or final partial month.
 - Namespace: `data/staging/alpaca_sip_5min_v1` under the external data root.
 - Partition key: calendar month and deterministic symbol batch.
 - Resume identity: provider, feed, timeframe, adjustment, start, end, asof,
@@ -48,6 +49,11 @@ must not be relabeled as a completed production dataset.
 - Every Parquet partition has a paired JSON manifest containing the exact
   request, row count, content SHA-256, retrieval timestamp, provider rejections,
   and quality findings.
+- Alpaca's endpoint includes extended-hours bars. The normalization boundary
+  deterministically retains only timestamps within each XNYS session's actual
+  open and close (including half days), and every manifest records both the
+  provider row count and the excluded extended-hours row count. This is an
+  explicit source transformation, not silent data repair.
 - Existing complete partitions are reused only after request-identity and
   content validation. Partial or conflicting partitions fail closed.
 
@@ -101,8 +107,9 @@ Before version `v18010` or any later strategy is created, an audit must prove:
 4. Coverage is reported by month, symbol, current exchange, liquidity decile,
    price decile, and current-snapshot active status. No segment can be omitted
    to improve the aggregate ratio.
-5. Duplicate symbol-timestamps, off-grid bars, out-of-session bars, invalid
-   OHLC relationships, nonpositive prices, and negative sizes fail the affected
+5. After the declared regular-session normalization, duplicate
+   symbol-timestamps, off-grid or residual out-of-session bars, invalid OHLC
+   relationships, nonpositive prices, and negative sizes fail the affected
    partition; they are never silently repaired.
 6. SIP and IEX can be compared for source-bias diagnostics but their rows are
    never spliced.
@@ -153,4 +160,3 @@ publish the exact expected/observed grid and segmented coverage, confirm source
 is SIP only, verify the historical-master gate, and demonstrate that date-role
 separation is enforced. Passing framework tests alone does not permit strategy
 metrics.
-

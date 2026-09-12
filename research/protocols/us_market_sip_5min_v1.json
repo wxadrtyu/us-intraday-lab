@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "us-market-sip-5min-v1",
+  "status": "FROZEN_BEFORE_BULK_ACQUISITION",
+  "provider": "alpaca",
+  "feed": "sip",
+  "bar_size": "5min",
+  "adjustment": "split",
+  "source_namespace": "alpaca_sip_5min_v1",
+  "date_range": ["2018-01-01", "2026-03-31"],
+  "asof_policy": "calendar_month_end_or_requested_end",
+  "candidate_asset_snapshot": "alpaca-us-equity-assets-4cf36da00fead42b3b669620",
+  "candidate_symbols": 15399,
+  "candidate_symbols_sha256": "03af744e8cd30ef307251e9484ac08ec6d79fa4c8a4607a768cf45ba672d61c9",
+  "current_status_filters_forbidden": true,
+  "partitioning": "calendar_month_and_deterministic_symbol_batch",
+  "request_identity": "provider_feed_bar_adjustment_bounds_asof_batch_size_and_symbols",
+  "missing_data_policy": "preserve_missing_no_fill_no_cash_substitution",
+  "provider_splicing": "FORBIDDEN",
+  "execution_capability": "FORBIDDEN",
+  "paper_activation": false,
+  "date_roles": {
+    "fit": ["2022-01-01", "2023-12-31"],
+    "development_selection": ["2024-01-01", "2025-12-31"],
+    "historical_stress_only": ["2018-01-01", "2020-12-31"],
+    "consumed_diagnostic_only": ["2026-01-01", "2026-03-31"]
+  },
+  "research_clocks": {
+    "decision_bars": [2, 5, 11, 17, 23],
+    "holding_bars": [1, 2, 4, 6],
+    "standard_entry": "next_observable_bar_open",
+    "delay_stress": "one_additional_five_minute_bar"
+  },
+  "coverage_floor": 0.95,
+  "independent_historical_master_required": true,
+  "strategy_metrics_permitted_before_audit": false
+}

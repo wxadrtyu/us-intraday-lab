@@ -14,7 +14,8 @@
 - Source is exactly Alpaca SIP five-minute split-adjusted bars; no IEX/SIP splicing.
 - Raw data root is `E:\us-intraday-lab-data\us-market`; raw data and runtime state stay untracked.
 - Candidate requests use all 15,399 frozen asset-snapshot symbols, including inactive records.
-- Every monthly request carries an explicit month-end `asof`.
+- Every production request carries its declared end as explicit `asof`—calendar
+  month-end for complete months and requested end for a bounded pilot/partial month.
 - Missing data is preserved; no fill, cash substitution, or silent symbol/session removal.
 - Fit is 2022-2023; selection is 2024-2025; 2018-2020 and 2026 are post-freeze diagnostics only.
 - `strategy_metrics_permitted` remains false until five-minute coverage and an independently validated historical security master both pass.
@@ -122,7 +123,11 @@ def test_capacity_estimate_scales_observed_symbol_sessions():
 
 Run: `$env:PYTHONPATH='src'; python -m pytest tests/unit/data/test_sip_five_minute_capacity.py -q`
 
-The pilot samples one complete closed session across liquidity deciles, measures rows, bytes, API time, and free disk, and writes only aggregate statistics. It must stop before bulk launch if projected bytes exceed 70% of free space.
+The pilot samples one complete closed session across liquidity deciles in the
+isolated external root `E:\us-intraday-lab-data\us-market-sip-5min-pilot`,
+measures rows, bytes, API time, and free disk, and writes only aggregate
+statistics. The pilot root must never be copied into the production namespace.
+It must stop before bulk launch if projected bytes exceed 70% of free space.
 
 - [ ] **Step 3: Run a one-session SIP pilot**
 
