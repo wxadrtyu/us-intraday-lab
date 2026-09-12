@@ -128,6 +128,10 @@ isolated external root `E:\us-intraday-lab-data\us-market-sip-5min-pilot`,
 measures rows, bytes, API time, and free disk, and writes only aggregate
 statistics. The pilot root must never be copied into the production namespace.
 It must stop before bulk launch if projected bytes exceed 70% of free space.
+The capacity report also gates the empirical row-scaled completion estimate at
+seven days using four disjoint workers and a 2x time safety factor; the
+unattainable all-symbol/all-session 78-bar time upper bound is disclosed but is
+not substituted for the stratified empirical estimate.
 
 - [ ] **Step 3: Run a one-session SIP pilot**
 
