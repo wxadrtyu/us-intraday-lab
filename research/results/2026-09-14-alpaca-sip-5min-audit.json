@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "status": "BLOCKED",
+  "source_namespace": "alpaca_sip_5min_v1",
+  "source_validation": {
+    "passed": true,
+    "partitions": 15246,
+    "rows": 732753899,
+    "request_grid_valid": true,
+    "partition_pairing_valid": true,
+    "content_hashes_valid": true,
+    "partial_partitions": 0
+  },
+  "coverage_audit": {
+    "core_contract_tests_passed": 2,
+    "production_event_grid_completed": false,
+    "coverage_ratio": null
+  },
+  "survivorship": {
+    "independent_historical_master_validated": false,
+    "evidence_path": "research/results/2026-09-09-alpaca-sip-universe-v2-audit.json",
+    "evidence_sha256": "659f0067460a97720a4a23f08af005f6387a579b02aca4afbcd4dc808605502f"
+  },
+  "strategy_metrics_permitted": false,
+  "rejection_reasons": [
+    "INDEPENDENT_HISTORICAL_MASTER_MISSING",
+    "REQUIRED_CLOCK_COVERAGE_NOT_COMPLETED"
+  ],
+  "rows_spliced": 0,
+  "missing_data_policy": "preserve_missing_no_fill_no_cash_substitution",
+  "decision": "FAIL_CLOSED_NO_STRATEGY_RESEARCH"
+}
