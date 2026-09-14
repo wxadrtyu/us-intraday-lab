@@ -203,7 +203,7 @@ def normalize_page(
     for raw in raw_results:
         if not isinstance(raw, Mapping):
             raise TypeError("POLYGON_PAGE_RESULT_NOT_OBJECT")
-        ticker = str(raw.get("ticker", "")).strip().upper()
+        ticker = str(raw.get("ticker", "")).strip()
         if not ticker:
             raise ValueError("POLYGON_TICKER_MISSING")
         if raw.get("market") != "stocks" or raw.get("locale") != "us":

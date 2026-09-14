@@ -140,13 +140,13 @@ def test_page_url_rejects_unsafe_destinations(url: str, reason: str) -> None:
         validate_page_url(url)
 
 
-def test_normalize_preserves_nulls_and_provenance() -> None:
+def test_normalize_preserves_case_nulls_and_provenance() -> None:
     frame = normalize_page(
         {
             "status": "OK",
             "results": [
                 {
-                    "ticker": "abc",
+                    "ticker": "AbC",
                     "name": "ABC Corp",
                     "market": "stocks",
                     "locale": "us",
@@ -158,10 +158,38 @@ def test_normalize_preserves_nulls_and_provenance() -> None:
         active=False,
     )
 
-    assert frame.loc[0, "ticker"] == "ABC"
+    assert frame.loc[0, "ticker"] == "AbC"
     assert pd.isna(frame.loc[0, "primary_exchange"])
     assert frame.loc[0, "asof"] == date(2018, 1, 31)
     assert frame.loc[0, "provider"] == "polygon"
+
+
+def test_case_distinct_historical_tickers_remain_distinct() -> None:
+    frame = normalize_page(
+        {
+            "status": "OK",
+            "results": [
+                {
+                    "ticker": "CPK",
+                    "market": "stocks",
+                    "locale": "us",
+                    "active": True,
+                    "type": "CS",
+                },
+                {
+                    "ticker": "CpK",
+                    "market": "stocks",
+                    "locale": "us",
+                    "active": True,
+                    "type": "PFD",
+                },
+            ],
+        },
+        asof=date(2018, 1, 31),
+        active=True,
+    )
+
+    assert frame["ticker"].tolist() == ["CPK", "CpK"]
 
 
 def test_normalize_rejects_provider_or_state_mismatch() -> None:
