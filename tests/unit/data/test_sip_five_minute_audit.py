@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from scripts.audit_us_market_sip_five_minute import _markdown
+from scripts.audit_us_market_sip_five_minute import (
+    _historical_master_validation,
+    _markdown,
+)
 from us_intraday_lab.data.sip_five_minute_audit import (
     _bar_sources_by_month,
     audit_sip_five_minute,
@@ -156,3 +161,47 @@ def test_bar_sources_are_partitioned_by_calendar_month(tmp_path) -> None:
         date(2025, 1, 1): january.as_posix(),
         date(2025, 2, 1): february.as_posix(),
     }
+
+
+def _complete_master_validation() -> dict[str, object]:
+    return {
+        "schema_version": "1.0.0",
+        "source_namespace": "polygon_reference_tickers_v1",
+        "provider": "polygon",
+        "start": "2018-01-01",
+        "end": "2026-03-31",
+        "months": 99,
+        "raw_pages": 200,
+        "rows": 900_000,
+        "active_rows": 600_000,
+        "inactive_rows": 300_000,
+        "content_hashes_valid": True,
+        "page_chains_valid": True,
+        "snapshots_reconstructed": True,
+        "partial_files": 0,
+        "provider_splicing": "FORBIDDEN",
+        "rejection_reasons": [],
+        "passed": True,
+    }
+
+
+def test_historical_master_gate_rejects_self_attestation(tmp_path: Path) -> None:
+    path = tmp_path / "master.json"
+    path.write_text('{"passed": true}', encoding="utf-8")
+
+    with pytest.raises(
+        RuntimeError, match="HISTORICAL_MASTER_VALIDATION_INCOMPLETE"
+    ):
+        _historical_master_validation(path)
+
+
+def test_historical_master_gate_accepts_complete_validator_evidence(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "master.json"
+    path.write_text(json.dumps(_complete_master_validation()), encoding="utf-8")
+
+    result = _historical_master_validation(path)
+
+    assert result["months"] == 99
+    assert len(str(result["validation_report_sha256"])) == 64

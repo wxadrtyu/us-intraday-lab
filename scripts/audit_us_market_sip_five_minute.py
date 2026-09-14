@@ -9,6 +9,9 @@ from typing import Any
 import exchange_calendars as xcals
 import pandas as pd
 
+from us_intraday_lab.data.polygon_historical_master import (
+    load_historical_master_validation,
+)
 from us_intraday_lab.data.sip_five_minute_audit import audit_sip_five_minute_files
 
 
@@ -61,6 +64,10 @@ def _source_validation(path: Path) -> dict[str, int | bool]:
     }
 
 
+def _historical_master_validation(path: Path) -> dict[str, object]:
+    return load_historical_master_validation(path)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Audit Alpaca SIP five-minute full-market readiness."
@@ -69,6 +76,9 @@ def main() -> None:
     parser.add_argument("--decisions", required=True, type=Path)
     parser.add_argument("--assets", required=True, type=Path)
     parser.add_argument("--source-validation", required=True, type=Path)
+    parser.add_argument(
+        "--historical-master-validation", required=True, type=Path
+    )
     parser.add_argument("--output-json", required=True, type=Path)
     parser.add_argument("--output-md", required=True, type=Path)
     parser.add_argument("--start", default=date(2018, 4, 1), type=date.fromisoformat)
@@ -82,6 +92,9 @@ def main() -> None:
             pd.Timestamp(args.start), pd.Timestamp(args.end)
         )
     )
+    historical_master = _historical_master_validation(
+        args.historical_master_validation.resolve()
+    )
     result = audit_sip_five_minute_files(
         bars_glob=(
             args.root.resolve()
@@ -93,11 +106,15 @@ def main() -> None:
         decisions_path=args.decisions.resolve(),
         assets_path=args.assets.resolve(),
         expected_sessions=expected_sessions,
-        # No independent historical-master validator exists yet. A caller-provided
-        # boolean or metadata flag is not sufficient independent provenance.
-        historical_master_validated=False,
+        historical_master_validated=True,
         source_validation=_source_validation(args.source_validation.resolve()),
     )
+    result["historical_master_source_namespace"] = historical_master[
+        "source_namespace"
+    ]
+    result["historical_master_validation_report_sha256"] = historical_master[
+        "validation_report_sha256"
+    ]
     _write_immutable(
         args.output_json,
         json.dumps(result, indent=2, sort_keys=True, default=str) + "\n",

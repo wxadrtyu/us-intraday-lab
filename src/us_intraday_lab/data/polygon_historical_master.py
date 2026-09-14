@@ -627,3 +627,44 @@ def validate_historical_master(
         "rejection_reasons": reasons,
         "passed": not reasons,
     }
+
+
+def load_historical_master_validation(path: Path) -> dict[str, object]:
+    """Accept only complete frozen-range evidence emitted by the validator."""
+    content = path.read_bytes()
+    try:
+        value = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise RuntimeError("HISTORICAL_MASTER_VALIDATION_INCOMPLETE") from error
+    if not isinstance(value, dict):
+        raise TypeError("HISTORICAL_MASTER_VALIDATION_INCOMPLETE")
+    if value.get("passed") is False or value.get("rejection_reasons"):
+        raise RuntimeError("HISTORICAL_MASTER_VALIDATION_FAILED")
+    complete = (
+        value.get("schema_version") == "1.0.0"
+        and value.get("source_namespace") == POLYGON_REFERENCE_NAMESPACE
+        and value.get("provider") == "polygon"
+        and value.get("start") == "2018-01-01"
+        and value.get("end") == "2026-03-31"
+        and value.get("months") == 99
+        and isinstance(value.get("raw_pages"), int)
+        and int(value["raw_pages"]) > 0
+        and isinstance(value.get("rows"), int)
+        and int(value["rows"]) > 0
+        and isinstance(value.get("active_rows"), int)
+        and int(value["active_rows"]) > 0
+        and isinstance(value.get("inactive_rows"), int)
+        and int(value["inactive_rows"]) > 0
+        and value.get("content_hashes_valid") is True
+        and value.get("page_chains_valid") is True
+        and value.get("snapshots_reconstructed") is True
+        and value.get("partial_files") == 0
+        and value.get("provider_splicing") == "FORBIDDEN"
+        and value.get("rejection_reasons") == []
+        and value.get("passed") is True
+    )
+    if not complete:
+        raise RuntimeError("HISTORICAL_MASTER_VALIDATION_INCOMPLETE")
+    result = dict(value)
+    result["validation_report_sha256"] = _sha256_bytes(content)
+    return result

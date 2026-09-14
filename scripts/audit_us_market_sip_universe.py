@@ -13,6 +13,9 @@ import pandas as pd
 
 from us_intraday_lab.data.alpaca_sip_daily import validate_sip_daily_source
 from us_intraday_lab.data.monthly_universe import monthly_cutoffs
+from us_intraday_lab.data.polygon_historical_master import (
+    load_historical_master_validation,
+)
 from us_intraday_lab.data.sip_universe_audit import audit_sip_universe
 from us_intraday_lab.data.us_market_acquisition import primary_exchange_symbols
 
@@ -69,6 +72,10 @@ def _write_immutable(path: Path, content: str) -> None:
     path.write_text(content, "utf-8")
 
 
+def _historical_master_validation(path: Path) -> dict[str, object]:
+    return load_historical_master_validation(path)
+
+
 def _markdown(result: dict[str, Any]) -> str:
     permitted = "YES" if result["strategy_metrics_permitted"] else "NO"
     reasons = result["rejection_reasons"] or ["none"]
@@ -94,11 +101,17 @@ def main() -> None:
     parser.add_argument("--output-json", required=True, type=Path)
     parser.add_argument("--output-md", required=True, type=Path)
     parser.add_argument("--assets", required=True, type=Path)
+    parser.add_argument(
+        "--historical-master-validation", required=True, type=Path
+    )
     parser.add_argument("--start-month", default=date(2018, 4, 1), type=date.fromisoformat)
     parser.add_argument("--end-month", default=date(2026, 3, 1), type=date.fromisoformat)
     args = parser.parse_args()
 
     root = args.root.resolve()
+    historical_master = _historical_master_validation(
+        args.historical_master_validation.resolve()
+    )
     universe_path, universe_manifest = _select_universe(root, args.start_month, args.end_month)
     decisions = pd.read_parquet(
         universe_path / "decisions.parquet", columns=["month", "symbol"]
@@ -139,9 +152,7 @@ def main() -> None:
         observed_months=observed,
         sip_daily=sip_daily,
         iex_daily=_daily_frame(root / "data" / "staging" / "alpaca_iex_1day_v2"),
-        # No independent master validator exists yet. This must remain false;
-        # a metadata flag or caller assertion is not sufficient provenance.
-        independent_historical_master=False,
+        independent_historical_master=True,
         hashes_valid=True,
         partial_partitions=0,
         expected_candidate_symbols=candidates,
@@ -153,6 +164,12 @@ def main() -> None:
     )
     result["universe_dataset_id"] = universe_manifest["dataset_id"]
     result["validated_partitions"] = validation["partitions"]
+    result["historical_master_source_namespace"] = historical_master[
+        "source_namespace"
+    ]
+    result["historical_master_validation_report_sha256"] = historical_master[
+        "validation_report_sha256"
+    ]
     json_content = json.dumps(result, indent=2, sort_keys=True) + "\n"
     _write_immutable(args.output_json, json_content)
     _write_immutable(args.output_md, _markdown(result))

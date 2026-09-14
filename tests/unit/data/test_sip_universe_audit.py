@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from scripts.audit_us_market_sip_universe import _historical_master_validation
 from us_intraday_lab.data.sip_universe_audit import audit_sip_universe
 
 
@@ -80,3 +83,34 @@ def test_audit_blocks_candidate_symbols_missing_from_decision_grid() -> None:
 
     assert result["missing_candidate_symbols"] == ["DEAD"]
     assert "CANDIDATE_SYMBOL_DECISIONS_MISSING" in result["rejection_reasons"]
+
+
+def test_universe_historical_master_gate_rejects_failed_report(tmp_path: Path) -> None:
+    path = tmp_path / "master.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "source_namespace": "polygon_reference_tickers_v1",
+                "provider": "polygon",
+                "start": "2018-01-01",
+                "end": "2026-03-31",
+                "months": 99,
+                "raw_pages": 200,
+                "rows": 900_000,
+                "active_rows": 600_000,
+                "inactive_rows": 300_000,
+                "content_hashes_valid": True,
+                "page_chains_valid": True,
+                "snapshots_reconstructed": True,
+                "partial_files": 0,
+                "provider_splicing": "FORBIDDEN",
+                "rejection_reasons": ["SNAPSHOT_CONTENT_HASH_MISMATCH"],
+                "passed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="HISTORICAL_MASTER_VALIDATION_FAILED"):
+        _historical_master_validation(path)
