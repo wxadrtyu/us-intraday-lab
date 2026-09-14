@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "polygon-historical-master-v1",
+  "status": "FROZEN_BEFORE_BULK_ACQUISITION",
+  "provider": "polygon",
+  "endpoint": "/v3/reference/tickers",
+  "source_namespace": "polygon_reference_tickers_v1",
+  "date_range": ["2018-01-01", "2026-03-31"],
+  "asof_policy": "calendar_month_end_or_requested_end",
+  "query": {
+    "market": "stocks",
+    "locale": "us",
+    "activity_states": [false, true],
+    "limit": 1000,
+    "sort": "ticker",
+    "order": "asc"
+  },
+  "credential_transport": "POLYGON_API_KEY_IN_AUTHORIZATION_HEADER_ONLY",
+  "raw_pages_immutable": true,
+  "canonical_snapshot_derivation": "exact_verified_raw_page_chain",
+  "missing_data_policy": "preserve_nulls_no_fill_no_inference",
+  "provider_splicing": "FORBIDDEN",
+  "independent_reconstruction_validation_required": true,
+  "execution_capability": "FORBIDDEN",
+  "paper_activation": false
+}
