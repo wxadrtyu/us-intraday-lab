@@ -115,7 +115,8 @@ class PolygonReferenceClient:
                 if attempt == 4:
                     raise RuntimeError(f"POLYGON_HTTP_RETRIES_EXHAUSTED:{status}")
                 retry_after = _retry_after_seconds(response_headers)
-                self._sleep(retry_after if retry_after is not None else float(2**attempt))
+                fallback = 15.0 if status == 429 else float(2**attempt)
+                self._sleep(retry_after if retry_after is not None else fallback)
                 continue
             raise RuntimeError(f"POLYGON_HTTP_STATUS:{status}")
         raise AssertionError("unreachable")
@@ -380,7 +381,7 @@ def acquire_activity_pages(
         records.append(record)
         url = next_url
         page_number += 1
-        if url is not None and minimum_request_interval_seconds:
+        if minimum_request_interval_seconds:
             sleep(minimum_request_interval_seconds)
 
     _validate_existing_raw_directory(directory)

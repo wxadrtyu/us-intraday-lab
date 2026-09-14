@@ -238,6 +238,25 @@ def test_client_retries_transient_status_without_disclosing_secret() -> None:
     assert delays == [2.0, 2.0]
 
 
+def test_client_waits_across_rate_window_when_retry_after_is_absent() -> None:
+    statuses = iter((429, 429, 200))
+    delays: list[float] = []
+
+    def transport(
+        url: str, headers: Mapping[str, str]
+    ) -> tuple[int, bytes, Mapping[str, str]]:
+        status = next(statuses)
+        body = b'{"status":"OK","results":[]}' if status == 200 else b"limited"
+        return status, body, {}
+
+    client = PolygonReferenceClient(
+        "secret", transport=transport, sleep=delays.append
+    )
+    client.get_page("https://api.polygon.io/v3/reference/tickers?limit=1000")
+
+    assert delays == [15.0, 15.0]
+
+
 def test_client_does_not_retry_authentication_failure() -> None:
     calls = 0
 
@@ -358,6 +377,31 @@ def test_acquisition_rejects_unsafe_next_url(tmp_path: Path) -> None:
         acquire_activity_pages(
             root=tmp_path, client=client, asof=date(2018, 1, 31), active=True
         )
+
+
+def test_acquisition_paces_every_network_page_including_final_page(
+    tmp_path: Path,
+) -> None:
+    delays: list[float] = []
+    client = PolygonReferenceClient(
+        "secret",
+        transport=lambda url, headers: (
+            200,
+            _payload("AAA", active=True),
+            {},
+        ),
+    )
+
+    acquire_activity_pages(
+        root=tmp_path,
+        client=client,
+        asof=date(2018, 1, 31),
+        active=True,
+        sleep=delays.append,
+        minimum_request_interval_seconds=13.0,
+    )
+
+    assert delays == [13.0]
 
 
 def test_snapshot_is_exact_deterministic_derivation(tmp_path: Path) -> None:

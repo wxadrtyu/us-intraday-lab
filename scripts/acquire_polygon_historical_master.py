@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import time
 from datetime import date
 from pathlib import Path
 
@@ -22,7 +21,7 @@ def main() -> None:
     parser.add_argument("--start", required=True, type=date.fromisoformat)
     parser.add_argument("--end", required=True, type=date.fromisoformat)
     parser.add_argument(
-        "--minimum-request-interval-seconds", default=0.75, type=float
+        "--minimum-request-interval-seconds", default=13.0, type=float
     )
     args = parser.parse_args()
     if args.minimum_request_interval_seconds < 0:
@@ -31,7 +30,7 @@ def main() -> None:
     client = PolygonReferenceClient.from_environment()
     for asof in month_end_dates(args.start, args.end):
         page_count = 0
-        for index, active in enumerate((False, True)):
+        for active in (False, True):
             records = acquire_activity_pages(
                 root=args.root,
                 client=client,
@@ -42,8 +41,6 @@ def main() -> None:
                 ),
             )
             page_count += len(records)
-            if index == 0 and args.minimum_request_interval_seconds:
-                time.sleep(args.minimum_request_interval_seconds)
         manifest = build_month_snapshot(args.root, asof)
         print(
             json.dumps(
