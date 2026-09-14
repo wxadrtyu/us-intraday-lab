@@ -11,10 +11,12 @@ import pytest
 from us_intraday_lab.data.polygon_historical_master import (
     PolygonReferenceClient,
     acquire_activity_pages,
+    build_month_snapshot,
     initial_request_identity,
     month_end_dates,
     normalize_page,
     request_url,
+    validate_historical_master,
     validate_page_url,
 )
 
@@ -42,6 +44,43 @@ def _payload(
     if next_url is not None:
         value["next_url"] = next_url
     return json.dumps(value).encode()
+
+
+def _publish_fixture_pages(root: Path, *, asof: date) -> None:
+    for active, tickers in ((False, ("AAA",)), (True, ("AAA", "BBB"))):
+        results = [
+            {
+                "ticker": ticker,
+                "name": f"{ticker} Corp",
+                "market": "stocks",
+                "locale": "us",
+                "active": active,
+            }
+            for ticker in tickers
+        ]
+        body = json.dumps(
+            {
+                "status": "OK",
+                "request_id": f"request-{str(active).lower()}",
+                "results": results,
+            }
+        ).encode()
+        client = PolygonReferenceClient(
+            "secret", transport=lambda url, headers, body=body: (200, body, {})
+        )
+        acquire_activity_pages(root=root, client=client, asof=asof, active=active)
+
+
+def _snapshot_path(root: Path, asof: date) -> Path:
+    return (
+        root
+        / "data"
+        / "staging"
+        / "polygon_reference_tickers_v1"
+        / "snapshots"
+        / f"asof={asof.isoformat()}"
+        / "tickers.parquet"
+    )
 
 
 def test_month_ends_are_complete_and_clamped() -> None:
@@ -319,3 +358,101 @@ def test_acquisition_rejects_unsafe_next_url(tmp_path: Path) -> None:
         acquire_activity_pages(
             root=tmp_path, client=client, asof=date(2018, 1, 31), active=True
         )
+
+
+def test_snapshot_is_exact_deterministic_derivation(tmp_path: Path) -> None:
+    asof = date(2018, 1, 31)
+    _publish_fixture_pages(tmp_path, asof=asof)
+
+    manifest = build_month_snapshot(tmp_path, asof)
+    frame = pd.read_parquet(_snapshot_path(tmp_path, asof))
+
+    assert list(frame[["ticker", "active"]].itertuples(index=False, name=None)) == [
+        ("AAA", False),
+        ("AAA", True),
+        ("BBB", True),
+    ]
+    assert manifest["row_count"] == 3
+    assert manifest["raw_page_count"] == 2
+    assert len(manifest["raw_content_sha256"]) == 2
+
+
+def test_snapshot_reuses_identical_and_rejects_changed_raw_derivation(
+    tmp_path: Path,
+) -> None:
+    asof = date(2018, 1, 31)
+    _publish_fixture_pages(tmp_path, asof=asof)
+    first = build_month_snapshot(tmp_path, asof)
+    assert build_month_snapshot(tmp_path, asof) == first
+
+    raw_page = next(
+        (
+            tmp_path
+            / "data"
+            / "staging"
+            / "polygon_reference_tickers_v1"
+            / "raw"
+            / "asof=2018-01-31"
+        ).glob("active=true/page-*.json")
+    )
+    raw_page.write_bytes(_payload("CHANGED", active=True))
+    with pytest.raises(ValueError, match="POLYGON_RAW_PAGE_PROVENANCE_FAILURE"):
+        build_month_snapshot(tmp_path, asof)
+
+
+def test_validator_reconstructs_grid_and_rejects_snapshot_tampering(
+    tmp_path: Path,
+) -> None:
+    asof = date(2018, 1, 31)
+    _publish_fixture_pages(tmp_path, asof=asof)
+    build_month_snapshot(tmp_path, asof)
+
+    result = validate_historical_master(
+        tmp_path, start=date(2018, 1, 1), end=asof
+    )
+    assert result["passed"]
+    assert result["months"] == 1
+    assert result["raw_pages"] == 2
+    assert result["rows"] == 3
+    assert result["active_rows"] == 2
+    assert result["inactive_rows"] == 1
+    assert result["snapshots_reconstructed"]
+
+    _snapshot_path(tmp_path, asof).write_bytes(b"tampered")
+    result = validate_historical_master(
+        tmp_path, start=date(2018, 1, 1), end=asof
+    )
+    assert not result["passed"]
+    assert "SNAPSHOT_CONTENT_HASH_MISMATCH" in result["rejection_reasons"]
+
+
+def test_validator_rejects_missing_activity_chain_and_temporary_files(
+    tmp_path: Path,
+) -> None:
+    asof = date(2018, 1, 31)
+    body = _payload("AAA", active=True)
+    acquire_activity_pages(
+        root=tmp_path,
+        client=PolygonReferenceClient(
+            "secret", transport=lambda url, headers: (200, body, {})
+        ),
+        asof=asof,
+        active=True,
+    )
+    temporary = (
+        tmp_path
+        / "data"
+        / "staging"
+        / "polygon_reference_tickers_v1"
+        / "orphan.tmp"
+    )
+    temporary.write_text("partial", encoding="utf-8")
+
+    result = validate_historical_master(
+        tmp_path, start=date(2018, 1, 1), end=asof
+    )
+
+    assert not result["passed"]
+    assert result["partial_files"] == 1
+    assert "ACTIVITY_CHAIN_MISSING" in result["rejection_reasons"]
+    assert "PARTIAL_FILES_PRESENT" in result["rejection_reasons"]
