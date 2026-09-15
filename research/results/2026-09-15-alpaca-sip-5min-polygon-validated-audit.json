@@ -1,0 +1,180 @@
+{
+  "coverage_by_bar_number": [
+    {
+      "bar_number": 2,
+      "expected": 4520552,
+      "observed": 4357040
+    },
+    {
+      "bar_number": 3,
+      "expected": 4520552,
+      "observed": 4387601
+    },
+    {
+      "bar_number": 4,
+      "expected": 4520552,
+      "observed": 4389066
+    },
+    {
+      "bar_number": 5,
+      "expected": 4520552,
+      "observed": 4388286
+    },
+    {
+      "bar_number": 6,
+      "expected": 4520552,
+      "observed": 4425585
+    },
+    {
+      "bar_number": 7,
+      "expected": 4520552,
+      "observed": 4416167
+    },
+    {
+      "bar_number": 8,
+      "expected": 4520552,
+      "observed": 4416801
+    },
+    {
+      "bar_number": 9,
+      "expected": 4520552,
+      "observed": 4411793
+    },
+    {
+      "bar_number": 10,
+      "expected": 4520552,
+      "observed": 4410820
+    },
+    {
+      "bar_number": 11,
+      "expected": 4520552,
+      "observed": 4409866
+    },
+    {
+      "bar_number": 12,
+      "expected": 4520552,
+      "observed": 4420013
+    },
+    {
+      "bar_number": 13,
+      "expected": 4520552,
+      "observed": 4417555
+    },
+    {
+      "bar_number": 14,
+      "expected": 4520552,
+      "observed": 4413984
+    },
+    {
+      "bar_number": 15,
+      "expected": 4520552,
+      "observed": 4414076
+    },
+    {
+      "bar_number": 16,
+      "expected": 4520552,
+      "observed": 4413341
+    },
+    {
+      "bar_number": 17,
+      "expected": 4520552,
+      "observed": 4414254
+    },
+    {
+      "bar_number": 18,
+      "expected": 4520552,
+      "observed": 4416666
+    },
+    {
+      "bar_number": 19,
+      "expected": 4520552,
+      "observed": 4410077
+    },
+    {
+      "bar_number": 20,
+      "expected": 4520552,
+      "observed": 4410282
+    },
+    {
+      "bar_number": 21,
+      "expected": 4520552,
+      "observed": 4408129
+    },
+    {
+      "bar_number": 22,
+      "expected": 4520552,
+      "observed": 4408471
+    },
+    {
+      "bar_number": 23,
+      "expected": 4520552,
+      "observed": 4407236
+    },
+    {
+      "bar_number": 24,
+      "expected": 4520552,
+      "observed": 4409788
+    },
+    {
+      "bar_number": 25,
+      "expected": 4520552,
+      "observed": 4401294
+    },
+    {
+      "bar_number": 26,
+      "expected": 4520552,
+      "observed": 4398334
+    },
+    {
+      "bar_number": 27,
+      "expected": 4520552,
+      "observed": 4394801
+    },
+    {
+      "bar_number": 28,
+      "expected": 4520552,
+      "observed": 4397945
+    },
+    {
+      "bar_number": 29,
+      "expected": 4520552,
+      "observed": 4394209
+    },
+    {
+      "bar_number": 30,
+      "expected": 4520552,
+      "observed": 4397090
+    },
+    {
+      "bar_number": 31,
+      "expected": 4520552,
+      "observed": 4389159
+    }
+  ],
+  "duplicate_evidence": "validated disjoint request grid and per-partition keys",
+  "duplicate_rows": 0,
+  "historical_master_source_namespace": "polygon_reference_tickers_v1",
+  "historical_master_validated": true,
+  "historical_master_validation_report_sha256": "f12a825f1800bdbf274ad3a8cfc39c336bd9abd4933852aae6cd0707ec4aeceb",
+  "invalid_ohlcv_rows": 0,
+  "missing_data_policy": "preserve_missing_no_fill_no_cash_substitution",
+  "observed_required_clock_count": 132149729,
+  "off_grid_rows": 0,
+  "rejection_reasons": [],
+  "required_clock_count": 135616560,
+  "required_clock_coverage_ratio": 0.9744365216165342,
+  "rows": 714742115,
+  "rows_spliced": 0,
+  "schema_version": "1.0.0",
+  "source_validation": {
+    "content_hashes_valid": true,
+    "partial_partitions": 0,
+    "partition_pairing_valid": true,
+    "partitions": 15246,
+    "request_grid_valid": true,
+    "rows": 732753899
+  },
+  "strategy_metrics_permitted": true,
+  "unknown_eligible_symbols": [],
+  "wrong_source_rows": 0
+}
