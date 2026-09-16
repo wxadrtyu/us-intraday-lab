@@ -112,6 +112,16 @@ def test_rejects_hash_mismatch_and_nontraining_rows(tmp_path: Path) -> None:
             expected_event_sha256="0" * 64,
             expected_feature_sha256=_sha256(features),
         )
+    frame = pd.read_parquet(features)
+    frame["session_date"] = date(2024, 1, 2)
+    frame.to_parquet(features, index=False)
+    with pytest.raises(RuntimeError, match="FINRA_DIAGNOSTIC_TRAINING_BOUNDARY"):
+        run_diagnostic(
+            events_path=events,
+            features_path=features,
+            expected_event_sha256=_sha256(events),
+            expected_feature_sha256=_sha256(features),
+        )
 
 
 def test_markdown_preserves_research_only_boundary() -> None:
@@ -136,13 +146,3 @@ def test_markdown_preserves_research_only_boundary() -> None:
     assert "Strategy versions created: **0**" in markdown
     assert "Development or consumed data loaded: **false**" in markdown
     assert "Order route: **FORBIDDEN**" in markdown
-    frame = pd.read_parquet(features)
-    frame["session_date"] = date(2024, 1, 2)
-    frame.to_parquet(features, index=False)
-    with pytest.raises(RuntimeError, match="FINRA_DIAGNOSTIC_TRAINING_BOUNDARY"):
-        run_diagnostic(
-            events_path=events,
-            features_path=features,
-            expected_event_sha256=_sha256(events),
-            expected_feature_sha256=_sha256(features),
-        )
