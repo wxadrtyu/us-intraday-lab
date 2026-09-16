@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from scripts.acquire_finra_short_volume_training import load_training_sessions
-from scripts.audit_finra_short_volume_training import build_coverage
+from scripts.audit_finra_short_volume_training import build_coverage, render_markdown
 
 
 def test_coverage_uses_prior_session_exact_symbol_and_last_modified() -> None:
@@ -97,3 +97,25 @@ def test_load_training_sessions_filters_arrow_date32(tmp_path) -> None:
         "2021-01-04",
         "2023-12-29",
     ]
+
+
+def test_coverage_markdown_preserves_gate_and_execution_boundary() -> None:
+    markdown = render_markdown(
+        {
+            "status": "COMPLETE",
+            "coverage_gate": "PASS",
+            "event_rows": 100,
+            "covered_event_rows": 96,
+            "event_coverage": 0.96,
+            "covered_sessions": 600,
+            "covered_years": [2021, 2022, 2023],
+            "reason_counts": {"COVERED": 96, "SYMBOL_NOT_FOUND": 4},
+            "coverage_sha256": "a" * 64,
+            "paper_activation": False,
+            "order_route": "FORBIDDEN",
+        }
+    )
+
+    assert "Coverage gate: **PASS**" in markdown
+    assert "Paper activation: **false**" in markdown
+    assert "Order route: **FORBIDDEN**" in markdown

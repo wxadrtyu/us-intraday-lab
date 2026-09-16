@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import date
 from itertools import pairwise
@@ -11,6 +12,37 @@ from pathlib import Path
 import pandas as pd
 
 from us_intraday_lab.data.quote_feature_acquisition import decision_timestamp
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def render_markdown(summary: dict[str, object]) -> str:
+    years = ", ".join(str(year) for year in summary["covered_years"])
+    reasons = json.dumps(summary["reason_counts"], sort_keys=True)
+    return "\n".join(
+        [
+            "# FINRA Short-Volume Training Coverage",
+            "",
+            f"- Status: **{summary['status']}**",
+            f"- Coverage gate: **{summary['coverage_gate']}**",
+            f"- Covered event rows: {summary['covered_event_rows']:,} / {summary['event_rows']:,}",
+            f"- Event coverage: {float(summary['event_coverage']):.6%}",
+            f"- Covered sessions: {summary['covered_sessions']:,}",
+            f"- Covered years: {years}",
+            f"- Missingness evidence: `{reasons}`",
+            f"- Coverage SHA-256: `{summary['coverage_sha256']}`",
+            "- Development or consumed data loaded: **false**",
+            f"- Paper activation: **{str(summary['paper_activation']).lower()}**",
+            f"- Order route: **{summary['order_route']}**",
+            "",
+        ]
+    )
 
 
 def build_coverage(
@@ -140,6 +172,8 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--events", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--report-json", required=True, type=Path)
+    parser.add_argument("--report-md", required=True, type=Path)
     return parser.parse_args()
 
 
@@ -159,6 +193,12 @@ def main() -> int:
     temporary = arguments.output.with_suffix(".tmp.parquet")
     coverage.to_parquet(temporary, index=False, compression="zstd")
     temporary.replace(arguments.output)
+    summary["coverage_sha256"] = _sha256_file(arguments.output)
+    arguments.report_json.parent.mkdir(parents=True, exist_ok=True)
+    arguments.report_json.write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    arguments.report_md.write_text(render_markdown(summary), encoding="utf-8")
     print(json.dumps(summary, sort_keys=True))
     return 0 if summary["coverage_gate"] == "PASS" else 2
 
