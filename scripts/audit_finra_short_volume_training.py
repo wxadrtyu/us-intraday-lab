@@ -73,13 +73,22 @@ def build_coverage(
         utc=True,
     )
 
-    manifest_frame = manifests.loc[:, ["trade_date", "last_modified"]].copy()
+    manifest_columns = ["trade_date", "last_modified"]
+    if "causal_available_at" in manifests.columns:
+        manifest_columns.append("causal_available_at")
+    manifest_frame = manifests.loc[:, manifest_columns].copy()
     manifest_frame["trade_date"] = pd.to_datetime(
         manifest_frame["trade_date"]
     ).dt.date
     manifest_frame["last_modified"] = pd.to_datetime(
         manifest_frame["last_modified"], utc=True
     )
+    if "causal_available_at" in manifest_frame.columns:
+        manifest_frame["causal_available_at"] = pd.to_datetime(
+            manifest_frame["causal_available_at"], utc=True
+        )
+    else:
+        manifest_frame["causal_available_at"] = manifest_frame["last_modified"]
     if manifest_frame["trade_date"].duplicated().any():
         raise ValueError("FINRA_MANIFEST_DATE_DUPLICATE")
     result = result.merge(
@@ -104,8 +113,8 @@ def build_coverage(
         validate="many_to_one",
         sort=False,
     ).drop(columns=["trade_date"])
-    available = result["last_modified"].notna() & (
-        result["last_modified"] < result["decision_timestamp"]
+    available = result["causal_available_at"].notna() & (
+        result["causal_available_at"] < result["decision_timestamp"]
     )
     matched = result["total_volume"].notna()
     result["coverage_reason"] = "COVERED"
@@ -113,11 +122,11 @@ def build_coverage(
         "MISSING_PRIOR_SESSION"
     )
     result.loc[
-        result["source_date"].notna() & result["last_modified"].isna(),
+        result["source_date"].notna() & result["causal_available_at"].isna(),
         "coverage_reason",
     ] = "MISSING_SESSION"
     result.loc[
-        result["last_modified"].notna() & ~available, "coverage_reason"
+        result["causal_available_at"].notna() & ~available, "coverage_reason"
     ] = "SOURCE_NOT_YET_AVAILABLE"
     result.loc[available & ~matched, "coverage_reason"] = "SYMBOL_NOT_FOUND"
     covered = result["coverage_reason"].eq("COVERED")
@@ -156,12 +165,24 @@ def build_coverage(
     return result, summary
 
 
-def load_staging(root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_staging(
+    root: Path, listing_audit_path: Path
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     staging = root / "data/staging/finra_short_volume_v1"
     manifest_paths = sorted(staging.glob("????/*.json"))
     manifests = pd.DataFrame(
         [json.loads(path.read_text(encoding="utf-8")) for path in manifest_paths]
     )
+    listing = pd.read_parquet(
+        listing_audit_path, columns=["trade_date", "causal_available_at"]
+    )
+    manifests["trade_date"] = pd.to_datetime(manifests["trade_date"]).dt.date
+    listing["trade_date"] = pd.to_datetime(listing["trade_date"]).dt.date
+    manifests = manifests.merge(
+        listing, how="left", on="trade_date", validate="one_to_one"
+    )
+    if manifests["causal_available_at"].isna().any():
+        raise ValueError("FINRA_LISTING_AUDIT_COVERAGE_MISSING")
     partitions = [pd.read_parquet(path) for path in sorted(staging.glob("????/*.parquet"))]
     flow = pd.concat(partitions, ignore_index=True) if partitions else pd.DataFrame()
     return flow, manifests
@@ -171,6 +192,7 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--events", required=True, type=Path)
+    parser.add_argument("--listing-audit", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--report-json", required=True, type=Path)
     parser.add_argument("--report-md", required=True, type=Path)
@@ -187,7 +209,9 @@ def main() -> int:
             ("session_date", "<=", date(2023, 12, 31)),
         ],
     )
-    flow, manifests = load_staging(arguments.root.resolve())
+    flow, manifests = load_staging(
+        arguments.root.resolve(), arguments.listing_audit.resolve()
+    )
     coverage, summary = build_coverage(events, flow, manifests)
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_suffix(".tmp.parquet")

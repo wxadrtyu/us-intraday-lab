@@ -83,6 +83,37 @@ def test_coverage_preserves_event_order_and_rejects_duplicate_keys() -> None:
     assert covered["bar_idx"].tolist() == [5, 2]
 
 
+def test_coverage_uses_evidence_derived_causal_availability() -> None:
+    events = pd.DataFrame(
+        {
+            "symbol": ["ABC", "ABC"],
+            "session_date": ["2021-01-04", "2021-01-05"],
+            "bar_idx": [2, 2],
+        }
+    )
+    flow = pd.DataFrame(
+        {
+            "trade_date": [pd.Timestamp("2021-01-04").date()],
+            "symbol": ["ABC"],
+            "short_volume": [50.0],
+            "short_exempt_volume": [0.0],
+            "total_volume": [100.0],
+            "market": ["Q"],
+        }
+    )
+    manifests = pd.DataFrame(
+        {
+            "trade_date": ["2021-01-04"],
+            "last_modified": ["2021-05-21T07:41:28Z"],
+            "causal_available_at": ["2021-01-04T23:00:00Z"],
+        }
+    )
+
+    covered, _ = build_coverage(events, flow, manifests)
+
+    assert covered.loc[1, "coverage_reason"] == "COVERED"
+
+
 def test_load_training_sessions_filters_arrow_date32(tmp_path) -> None:
     path = tmp_path / "events.parquet"
     pd.DataFrame(
