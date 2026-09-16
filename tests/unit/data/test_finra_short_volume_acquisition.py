@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from http.client import RemoteDisconnected
 from urllib.error import HTTPError
 
 import pandas as pd
@@ -91,6 +92,29 @@ def test_fetch_daily_file_retries_and_records_causal_availability() -> None:
     assert manifest["last_modified"] == "2022-01-03T22:19:58+00:00"
     assert manifest["complete"] is True
     assert len(str(manifest["response_sha256"])) == 64
+
+
+def test_fetch_daily_file_retries_remote_disconnect() -> None:
+    calls = 0
+
+    def transport(day: date) -> HttpPayload:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RemoteDisconnected("peer closed")
+        return _payload(_body(f"{day:%Y%m%d}|ABC|50|2|100|Q"))
+
+    sleeps: list[float] = []
+    frame, _ = fetch_daily_file(
+        transport,
+        date(2022, 1, 3),
+        sleep=sleeps.append,
+        base_backoff_seconds=0.5,
+    )
+
+    assert len(frame) == 1
+    assert calls == 2
+    assert sleeps == [0.5]
 
 
 def test_acquire_sessions_resumes_hash_verified_partition(tmp_path) -> None:

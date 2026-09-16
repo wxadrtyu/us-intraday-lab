@@ -10,6 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from email.utils import parsedate_to_datetime
+from http.client import RemoteDisconnected
 from pathlib import Path
 from typing import Protocol, cast
 from urllib.error import HTTPError, URLError
@@ -126,7 +127,7 @@ def fetch_daily_file(
             if error.code not in TRANSIENT_HTTP_CODES or attempt + 1 >= max_attempts:
                 raise
             sleep(base_backoff_seconds * 2**attempt)
-        except (URLError, TimeoutError):
+        except (URLError, TimeoutError, RemoteDisconnected):
             if attempt + 1 >= max_attempts:
                 raise
             sleep(base_backoff_seconds * 2**attempt)
