@@ -51,13 +51,29 @@ outside Git.
 ## Causal Availability and Corrections
 
 FINRA states that daily files are posted no later than 18:00 ET on the trade
-date and may rarely be updated later. The historical body currently available
-is usable only from the response's official `Last-Modified` timestamp onward.
+date and may rarely be updated later. FINRA's monthly official index page lists
+both original and updated files and explicitly labels updated entries.
+
+The training probe found that CDN `Last-Modified` cannot by itself represent
+economic availability: 96 files from 2021-01-04 through 2021-05-20 share one
+2021-05-21 modification date, while the corresponding official monthly index
+pages list those files as originals and do not label them `Updated`. Therefore:
+
+- when `Last-Modified` is on the trade date, use it as the conservative precise
+  availability timestamp;
+- when it is later, require a hash-recorded official monthly index snapshot;
+- if the index lists that exact file once without `Updated`, use 18:00 ET on
+  the trade date, matching FINRA's published original-file deadline;
+- if the index labels it `Updated`, omits it, duplicates it, or cannot be
+  acquired, use the later `Last-Modified` timestamp and fail closed.
+
+This rule separates CDN object migration from provider-declared corrections;
+it never infers original availability from a timestamp pattern alone.
 
 For an event at `decision_cutoff`, source date `d` is eligible only when:
 
 1. `d < event session_date`;
-2. `Last-Modified < decision_cutoff`;
+2. the evidence-derived causal availability timestamp is before the cutoff;
 3. the body and footer validate completely; and
 4. no later source date is skipped and silently treated as zero.
 

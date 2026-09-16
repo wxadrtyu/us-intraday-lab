@@ -72,6 +72,11 @@ Run: `git add -- src/us_intraday_lab/data/finra_short_volume_acquisition.py test
 - Produces: `build_coverage(events, partitions, manifests) -> tuple[pd.DataFrame, dict[str, object]]`
 - Produces: `research/results/2026-09-16-finra-short-volume-training-coverage.{json,md}`.
 
+For any file whose CDN `Last-Modified` is after its trade date, snapshot the
+official FINRA monthly index and record its response hash. An exact file listed
+once without `Updated` receives the documented 18:00 ET original availability;
+all other cases retain the later CDN timestamp and fail closed.
+
 - [ ] **Step 1: Write failing audit tests**
 
 Create events on two sessions and source files with one same-day publication and one later correction. Assert strict `last_modified < decision_cutoff`, exact-symbol matching, preserved event row order, null reasons (`MISSING_SESSION`, `SOURCE_NOT_YET_AVAILABLE`, `SYMBOL_NOT_FOUND`), year/session counts, and a blocked result below 95%.
