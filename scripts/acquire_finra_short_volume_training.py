@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -21,14 +22,21 @@ def _arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def load_training_sessions(events_path: Path) -> list[date]:
+    dates = pd.read_parquet(
+        events_path,
+        columns=["session_date"],
+        filters=[
+            ("session_date", ">=", date(2021, 1, 1)),
+            ("session_date", "<=", date(2023, 12, 31)),
+        ],
+    )["session_date"]
+    return sorted(set(pd.to_datetime(dates).dt.date))
+
+
 def main() -> int:
     arguments = _arguments()
-    dates = pd.read_parquet(
-        arguments.events,
-        columns=["session_date"],
-        filters=[("session_date", ">=", "2021-01-01"), ("session_date", "<=", "2023-12-31")],
-    )["session_date"]
-    sessions = sorted(set(pd.to_datetime(dates).dt.date))
+    sessions = load_training_sessions(arguments.events)
     manifests = acquire_sessions(
         arguments.root.resolve(), sessions, FinraShortVolumeHttpTransport()
     )

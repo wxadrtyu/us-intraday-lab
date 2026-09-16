@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import date
 from itertools import pairwise
 from pathlib import Path
 
@@ -147,7 +148,10 @@ def main() -> int:
     events = pd.read_parquet(
         arguments.events,
         columns=["symbol", "session_date", "bar_idx"],
-        filters=[("session_date", ">=", "2021-01-01"), ("session_date", "<=", "2023-12-31")],
+        filters=[
+            ("session_date", ">=", date(2021, 1, 1)),
+            ("session_date", "<=", date(2023, 12, 31)),
+        ],
     )
     flow, manifests = load_staging(arguments.root.resolve())
     coverage, summary = build_coverage(events, flow, manifests)

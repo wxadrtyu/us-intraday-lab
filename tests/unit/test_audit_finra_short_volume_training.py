@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from scripts.acquire_finra_short_volume_training import load_training_sessions
 from scripts.audit_finra_short_volume_training import build_coverage
 
 
@@ -80,3 +81,19 @@ def test_coverage_preserves_event_order_and_rejects_duplicate_keys() -> None:
 
     assert covered["symbol"].tolist() == ["ZZZ", "AAA"]
     assert covered["bar_idx"].tolist() == [5, 2]
+
+
+def test_load_training_sessions_filters_arrow_date32(tmp_path) -> None:
+    path = tmp_path / "events.parquet"
+    pd.DataFrame(
+        {
+            "session_date": pd.to_datetime(
+                ["2020-12-31", "2021-01-04", "2023-12-29", "2024-01-02"]
+            ).date
+        }
+    ).to_parquet(path, index=False)
+
+    assert [day.isoformat() for day in load_training_sessions(path)] == [
+        "2021-01-04",
+        "2023-12-29",
+    ]
