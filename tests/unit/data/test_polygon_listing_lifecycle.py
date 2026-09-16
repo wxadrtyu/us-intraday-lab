@@ -13,6 +13,7 @@ from us_intraday_lab.data.polygon_listing_lifecycle import (
     derive_lifecycle_history,
     lifecycle_bucket,
     normalize_ticker,
+    publish_lifecycle_catalog,
 )
 
 
@@ -294,3 +295,41 @@ def test_decision_normalization_collision_blocks_coverage(
     assert {row["reason"] for row in audit["exceptions"]} == {
         "NORMALIZATION_COLLISION"
     }
+
+
+def test_publish_is_hash_addressed_and_immutable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("A", True)])
+    _write_decisions(
+        tmp_path,
+        [("A", date(2019, 1, 1), True, date(2018, 12, 31))],
+    )
+    validation = _validation(tmp_path)
+
+    first = publish_lifecycle_catalog(root=tmp_path, validation_path=validation)
+    second = publish_lifecycle_catalog(root=tmp_path, validation_path=validation)
+
+    assert first == second
+    assert str(first["dataset_id"]).startswith("polygon-listing-lifecycle-v1-")
+    assert _sha256(Path(str(first["mapping_path"]))) == first["mapping_sha256"]
+    assert _sha256(Path(str(first["exceptions_path"]))) == first["exceptions_sha256"]
+    assert first["strategy_evaluation_permitted"] is True
+
+
+def test_publish_rejects_existing_content_collision(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("A", True)])
+    _write_decisions(
+        tmp_path,
+        [("A", date(2019, 1, 1), True, date(2018, 12, 31))],
+    )
+    validation = _validation(tmp_path)
+    manifest = publish_lifecycle_catalog(root=tmp_path, validation_path=validation)
+    Path(str(manifest["mapping_path"])).write_bytes(b"corrupt")
+
+    with pytest.raises(RuntimeError, match="LIFECYCLE_CATALOG_COLLISION"):
+        publish_lifecycle_catalog(root=tmp_path, validation_path=validation)

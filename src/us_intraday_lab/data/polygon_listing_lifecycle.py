@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import exchange_calendars as xcals  # type: ignore[import-untyped]
 import pandas as pd
@@ -403,3 +407,94 @@ def build_lifecycle_coverage(
         "paper_activation": False,
     }
     return mapping, audit
+
+
+def _catalog_result(directory: Path, manifest: dict[str, object]) -> dict[str, object]:
+    result = dict(manifest)
+    result["mapping_path"] = str((directory / "lifecycle.parquet").resolve())
+    result["exceptions_path"] = str((directory / "exceptions.parquet").resolve())
+    result["manifest_path"] = str((directory / "manifest.json").resolve())
+    return result
+
+
+def _validate_existing_catalog(
+    directory: Path, *, dataset_id: str
+) -> dict[str, object]:
+    manifest_path = directory / "manifest.json"
+    mapping_path = directory / "lifecycle.parquet"
+    exceptions_path = directory / "exceptions.parquet"
+    try:
+        manifest = json.loads(manifest_path.read_text("utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError("LIFECYCLE_CATALOG_COLLISION") from error
+    valid = (
+        manifest.get("dataset_id") == dataset_id
+        and mapping_path.is_file()
+        and exceptions_path.is_file()
+        and manifest.get("mapping_sha256") == _sha256(mapping_path)
+        and manifest.get("exceptions_sha256") == _sha256(exceptions_path)
+    )
+    if not valid:
+        raise RuntimeError("LIFECYCLE_CATALOG_COLLISION")
+    return _catalog_result(directory, manifest)
+
+
+def publish_lifecycle_catalog(
+    *, root: Path, validation_path: Path
+) -> dict[str, object]:
+    """Publish or validate a hash-addressed immutable lifecycle catalog."""
+    mapping, audit = build_lifecycle_coverage(
+        root=root, validation_path=validation_path
+    )
+    identity_payload = {
+        "contract": audit["contract"],
+        "historical_master_validation_report_sha256": audit[
+            "historical_master_validation_report_sha256"
+        ],
+        "universe_dataset_id": audit["universe_dataset_id"],
+        "universe_sha256": audit["universe_sha256"],
+        "snapshot_lineage": audit["snapshot_lineage"],
+        "calendar": f"XNYS@{version('exchange-calendars')}",
+    }
+    identity = hashlib.sha256(
+        json.dumps(identity_payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()[:24]
+    dataset_id = f"polygon-listing-lifecycle-v1-{identity}"
+    parent = root.resolve() / "data" / "catalog" / "polygon_listing_lifecycle_v1"
+    directory = parent / dataset_id
+    if directory.exists():
+        return _validate_existing_catalog(directory, dataset_id=dataset_id)
+
+    parent.mkdir(parents=True, exist_ok=True)
+    temporary = parent / f".{dataset_id}.{uuid4().hex}.tmp"
+    temporary.mkdir()
+    mapping_path = temporary / "lifecycle.parquet"
+    exceptions_path = temporary / "exceptions.parquet"
+    try:
+        mapping.to_parquet(mapping_path, index=False, compression="zstd")
+        exceptions = pd.DataFrame.from_records(
+            audit["exceptions"], columns=["month", "symbol", "reason"]
+        )
+        exceptions.to_parquet(exceptions_path, index=False, compression="zstd")
+        manifest: dict[str, object] = {
+            **audit,
+            "dataset_id": dataset_id,
+            "calendar": identity_payload["calendar"],
+            "mapping_file": mapping_path.name,
+            "mapping_sha256": _sha256(mapping_path),
+            "exceptions_file": exceptions_path.name,
+            "exceptions_sha256": _sha256(exceptions_path),
+            "exception_reason_counts": dict(
+                sorted(Counter(exceptions["reason"]).items())
+            ),
+        }
+        (temporary / "manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(directory)
+    except Exception:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        raise
+    return _catalog_result(directory, manifest)
