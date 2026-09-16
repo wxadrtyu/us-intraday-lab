@@ -27,6 +27,7 @@ _MAPPING_COLUMNS = (
     "month",
     "symbol",
     "ticker_normalized",
+    "normalization_collision",
     "snapshot_asof",
     "active",
     "first_observed_active_month",
@@ -124,8 +125,9 @@ def _load_snapshot(directory: Path) -> tuple[pd.DataFrame, SnapshotLineage]:
     )
     if frame.duplicated(["ticker", "active"]).any():
         raise ValueError("LIFECYCLE_DUPLICATE_TICKER_ACTIVITY")
-    if frame.duplicated("ticker_normalized", keep=False).any():
-        raise ValueError("LIFECYCLE_NORMALIZATION_COLLISION")
+    frame["normalization_collision"] = frame.duplicated(
+        "ticker_normalized", keep=False
+    )
     lineage = SnapshotLineage(
         asof=asof,
         parquet_path=str(parquet.resolve()),
@@ -169,9 +171,9 @@ def derive_lifecycle_history(
             normalized = str(row.ticker_normalized)
             asof = row.snapshot_asof
             active = bool(row.active)
-            if active and normalized not in first_active:
-                first_active[normalized] = asof
-            observed_first = first_active.get(normalized)
+            if active and ticker not in first_active:
+                first_active[ticker] = asof
+            observed_first = first_active.get(ticker)
             left_censored = bool(active and observed_first == first_snapshot)
             tenure = (
                 _elapsed_months(observed_first, asof)
@@ -182,13 +184,14 @@ def derive_lifecycle_history(
                 {
                     "ticker": ticker,
                     "ticker_normalized": normalized,
+                    "normalization_collision": bool(row.normalization_collision),
                     "snapshot_asof": asof,
                     "active": active,
                     "first_observed_active_month": observed_first,
                     "active_tenure_months": tenure,
                     "left_censored": left_censored,
                     "reactivated_this_month": bool(
-                        active and previous_active.get(normalized) is False
+                        active and previous_active.get(ticker) is False
                     ),
                     "lifecycle_bucket": (
                         lifecycle_bucket(tenure=tenure, left_censored=left_censored)
@@ -199,7 +202,7 @@ def derive_lifecycle_history(
                 }
             )
         previous_active = dict(
-            zip(snapshot["ticker_normalized"], snapshot["active"], strict=True)
+            zip(snapshot["ticker"], snapshot["active"], strict=True)
         )
         rows.append(pd.DataFrame.from_records(current_rows))
         lineage.append(snapshot_lineage)
@@ -280,6 +283,19 @@ def build_lifecycle_coverage(
     mapping_parts: list[pd.DataFrame] = []
     exceptions: list[dict[str, str]] = []
     monthly: list[dict[str, object]] = []
+    source_collision_frame = history.loc[
+        history["normalization_collision"].eq(True),
+        ["snapshot_asof", "ticker", "ticker_normalized", "active"],
+    ].sort_values(["snapshot_asof", "ticker_normalized", "ticker"], kind="stable")
+    source_collisions = [
+        {
+            "snapshot_asof": row.snapshot_asof.isoformat(),
+            "ticker": str(row.ticker),
+            "ticker_normalized": str(row.ticker_normalized),
+            "active": bool(row.active),
+        }
+        for row in source_collision_frame.itertuples(index=False)
+    ]
     for month, eligible in decisions.groupby("month", sort=True):
         month_date = month if isinstance(month, date) else pd.Timestamp(month).date()
         denominator = len(eligible)
@@ -312,8 +328,22 @@ def build_lifecycle_coverage(
         month_mapping = pd.DataFrame(columns=_MAPPING_COLUMNS)
         if cutoff is not None and not candidates.empty:
             source = history.loc[history["snapshot_asof"].eq(cutoff)].copy()
-            merged = candidates.merge(
-                source,
+            collision_norms = set(
+                source.loc[
+                    source["normalization_collision"].eq(True), "ticker_normalized"
+                ]
+            )
+            source_collision = candidates["ticker_normalized"].isin(collision_norms)
+            month_exceptions.extend(
+                _exception(
+                    month=month_date,
+                    symbol=str(row.symbol),
+                    reason="NORMALIZATION_COLLISION",
+                )
+                for row in candidates.loc[source_collision].itertuples(index=False)
+            )
+            merged = candidates.loc[~source_collision].merge(
+                source.loc[source["normalization_collision"].eq(False)],
                 how="left",
                 on="ticker_normalized",
                 validate="one_to_one",
@@ -370,12 +400,19 @@ def build_lifecycle_coverage(
     mapped_rows = len(mapping)
     exception_rows = len(exceptions)
     coverage_ratio = mapped_rows / eligible_rows if eligible_rows else 0.0
-    permitted = bool(
+    source_collision_rows = len(source_collisions)
+    coverage_complete = bool(
         eligible_rows > 0
         and mapped_rows + exception_rows == eligible_rows
         and coverage_ratio == 1.0
         and all(item["coverage_ratio"] == 1.0 for item in monthly)
     )
+    permitted = coverage_complete and source_collision_rows == 0
+    rejection_reasons: list[str] = []
+    if not coverage_complete:
+        rejection_reasons.append("BLOCKED_LIFECYCLE_COVERAGE")
+    if source_collision_rows:
+        rejection_reasons.append("BLOCKED_LIFECYCLE_NORMALIZATION_COLLISION")
     audit: dict[str, object] = {
         "schema_version": "1.0.0",
         "contract": "polygon-listing-lifecycle-coverage-v1",
@@ -399,10 +436,12 @@ def build_lifecycle_coverage(
         "coverage_ratio": coverage_ratio,
         "monthly_coverage": monthly,
         "exceptions": exceptions,
+        "source_normalization_collision_rows": source_collision_rows,
+        "source_normalization_collisions": source_collisions,
         "missing_data_policy": "preserve_nulls_no_fill_no_inference",
         "provider_splicing": "FORBIDDEN",
         "order_route": "FORBIDDEN",
-        "rejection_reasons": [] if permitted else ["BLOCKED_LIFECYCLE_COVERAGE"],
+        "rejection_reasons": rejection_reasons,
         "strategy_evaluation_permitted": permitted,
         "paper_activation": False,
     }

@@ -29,6 +29,7 @@ def _manifest(tmp_path: Path, *, permitted: bool) -> dict[str, object]:
         "exception_rows": 0 if permitted else 1,
         "coverage_ratio": 1.0 if permitted else 0.5,
         "exception_reason_counts": {} if permitted else {"UNMATCHED": 1},
+        "source_normalization_collision_rows": 0,
         "provider_splicing": "FORBIDDEN",
         "order_route": "FORBIDDEN",
         "strategy_evaluation_permitted": permitted,

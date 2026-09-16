@@ -40,6 +40,10 @@ def render_markdown(manifest: dict[str, Any]) -> str:
             ),
             f"- Exception rows: {manifest['exception_rows']:,}",
             f"- Exception reasons: {exception_text}",
+            (
+                "- Polygon uppercase-normalization collision rows: "
+                f"{manifest['source_normalization_collision_rows']:,}"
+            ),
             f"- Rejection reasons: {', '.join(reasons)}",
             f"- Strategy evaluation permitted: **{permitted}**",
             f"- Historical-master audit SHA-256: `{manifest['historical_master_validation_report_sha256']}`",

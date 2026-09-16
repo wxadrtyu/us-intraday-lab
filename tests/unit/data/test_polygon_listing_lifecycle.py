@@ -177,14 +177,18 @@ def test_missing_previous_ticker_is_not_reactivation(
     assert not bool(row["reactivated_this_month"])
 
 
-def test_rejects_normalization_collision(
+def test_preserves_and_flags_normalization_collision(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _trust_validation(monkeypatch)
     _write_snapshot(tmp_path, date(2018, 1, 31), [("abc", True), ("ABC", False)])
 
-    with pytest.raises(ValueError, match="LIFECYCLE_NORMALIZATION_COLLISION"):
-        derive_lifecycle_history(root=tmp_path, validation_path=_validation(tmp_path))
+    frame, _ = derive_lifecycle_history(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert set(frame["ticker"]) == {"abc", "ABC"}
+    assert frame["normalization_collision"].eq(True).all()
 
 
 def test_rejects_snapshot_hash_mismatch(
@@ -295,6 +299,33 @@ def test_decision_normalization_collision_blocks_coverage(
     assert {row["reason"] for row in audit["exceptions"]} == {
         "NORMALIZATION_COLLISION"
     }
+
+
+def test_polygon_normalization_collision_blocks_without_silent_deduplication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(
+        tmp_path,
+        date(2018, 12, 31),
+        [("SAFE", True), ("abc", True), ("ABC", False)],
+    )
+    _write_decisions(
+        tmp_path,
+        [("SAFE", date(2019, 1, 1), True, date(2018, 12, 31))],
+    )
+
+    mapping, audit = build_lifecycle_coverage(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert list(mapping["symbol"]) == ["SAFE"]
+    assert audit["coverage_ratio"] == 1.0
+    assert audit["source_normalization_collision_rows"] == 2
+    assert audit["strategy_evaluation_permitted"] is False
+    assert audit["rejection_reasons"] == [
+        "BLOCKED_LIFECYCLE_NORMALIZATION_COLLISION"
+    ]
 
 
 def test_publish_is_hash_addressed_and_immutable(
