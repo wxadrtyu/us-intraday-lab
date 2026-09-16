@@ -1,0 +1,33 @@
+{
+  "audit_status": "BLOCKED_BEFORE_STRATEGY_EVALUATION",
+  "contract": "polygon-listing-lifecycle-coverage-v1",
+  "dataset_id": "polygon-listing-lifecycle-v1-2b918188c8cda2feaf298eb3",
+  "eligible_rows": 215895,
+  "exception_reason_counts": {
+    "MISSING_LIFECYCLE_STATE": 66,
+    "NORMALIZATION_COLLISION": 1163,
+    "UNMATCHED": 100
+  },
+  "exception_rows": 1329,
+  "exceptions_sha256": "cea16f305010c8aa2ff999cffae9f986eff4b588ef2ac194787bb743c28869a6",
+  "exact_case_diagnostic": {
+    "coverage_ratio": 0.9992311077143982,
+    "mapped_rows": 215729,
+    "missing_lifecycle_state_rows": 66,
+    "unmatched_rows": 100
+  },
+  "historical_master_validation_report_sha256": "f12a825f1800bdbf274ad3a8cfc39c336bd9abd4933852aae6cd0707ec4aeceb",
+  "mapped_rows": 214566,
+  "mapping_sha256": "78966bfe580206b6ab9ba51863054ea15d49a345bc85517115ff02904a5f05bf",
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "provider_splicing": "FORBIDDEN",
+  "rejection_reasons": [
+    "BLOCKED_LIFECYCLE_COVERAGE",
+    "BLOCKED_LIFECYCLE_NORMALIZATION_COLLISION"
+  ],
+  "source_normalization_collision_rows": 19490,
+  "strategy_evaluation_permitted": false,
+  "strategy_versions_evaluated": 0,
+  "uppercase_normalized_coverage_ratio": 0.993844229833947
+}
