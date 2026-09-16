@@ -1,0 +1,64 @@
+{
+  "best_cell": {
+    "cost_18bp": {
+      "annualized_return": -0.1849131665555246,
+      "calendar_year_returns": {
+        "2021": -0.15820700597172366,
+        "2022": -0.34753638025788336,
+        "2023": -0.011658294282466786
+      },
+      "information_ratio": -0.3856584619436009,
+      "max_drawdown": 0.5228557391981878,
+      "positive_calendar_years": 0
+    },
+    "decision_bar": 2,
+    "delay_5m_9bp": {
+      "annualized_return": 0.002685525230013308,
+      "calendar_year_returns": {
+        "2021": 0.1041374856324706,
+        "2022": 0.08112003472649087,
+        "2023": -0.15553179916071858
+      },
+      "information_ratio": 0.15485839775024102,
+      "max_drawdown": 0.37095449973076144,
+      "positive_calendar_years": 2
+    },
+    "family": "recent_attention_continuation",
+    "holding_bars": 6,
+    "retention_floor_passed": false,
+    "signal_sessions": 753,
+    "standard_9bp": {
+      "annualized_return": 0.02272988019740252,
+      "calendar_year_returns": {
+        "2021": 0.05622292762669745,
+        "2022": -0.18187889050973272,
+        "2023": 0.23763745097944966
+      },
+      "information_ratio": 0.23388034008458952,
+      "max_drawdown": 0.3977615338358226,
+      "positive_calendar_years": 2
+    },
+    "standard_annualized_return": 0.02272988019740252,
+    "standard_information_ratio": 0.23388034008458952,
+    "top_count": 1
+  },
+  "calendar_sessions": 753,
+  "cells_completed": 400,
+  "cells_path": "E:\\us-intraday-lab-data\\us-market\\research\\news-training-feasibility-v1.parquet",
+  "cells_sha256": "ddbe5887ee9d6566bfc57036ae7bb0f4e519676fee0b6c3b26bd62037832dee4",
+  "decision": "ABANDON_NEWS_CONTRACT_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "point-in-time-news-training-feasibility-v1",
+  "elapsed_seconds": 5.516458899999634,
+  "event_rows": 388745,
+  "event_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "feature_sha256": "d5b83060c7bb5e8cc4d97192e1df2518e3313b269b3591d5715f5fc88180b209",
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "period": "2021-01-01/2023-12-31",
+  "retained_cells": 0,
+  "retained_families": [],
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}

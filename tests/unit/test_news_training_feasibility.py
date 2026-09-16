@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from scripts.diagnose_news_training_feasibility import render_markdown
 from us_intraday_lab.news_training_feasibility import (
     FAMILIES,
     run_diagnostic,
@@ -135,3 +136,26 @@ def test_rejects_nontraining_rows(tmp_path: Path) -> None:
             expected_event_sha256=_sha256(events),
             expected_feature_sha256=_sha256(features),
         )
+
+
+def test_markdown_preserves_research_only_boundary() -> None:
+    markdown = render_markdown(
+        {
+            "status": "COMPLETE",
+            "decision": "ABANDON_NEWS_CONTRACT_NO_VERSION_CREATED",
+            "event_rows": 10,
+            "cells_completed": 400,
+            "retained_cells": 0,
+            "retained_families": [],
+            "event_sha256": "a" * 64,
+            "feature_sha256": "b" * 64,
+            "cells_sha256": "c" * 64,
+            "strategy_versions_created": 0,
+            "paper_activation": False,
+            "order_route": "FORBIDDEN",
+        }
+    )
+
+    assert "Strategy versions created: **0**" in markdown
+    assert "Paper activation: **false**" in markdown
+    assert "Order route: **FORBIDDEN**" in markdown
