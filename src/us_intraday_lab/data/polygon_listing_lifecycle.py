@@ -4,15 +4,35 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import Any
 
+import exchange_calendars as xcals  # type: ignore[import-untyped]
 import pandas as pd
 
 from us_intraday_lab.data.polygon_historical_master import (
     POLYGON_REFERENCE_NAMESPACE,
     load_historical_master_validation,
+)
+
+_XNYS = xcals.get_calendar("XNYS")
+_MAPPING_COLUMNS = (
+    "month",
+    "symbol",
+    "ticker_normalized",
+    "snapshot_asof",
+    "active",
+    "first_observed_active_month",
+    "active_tenure_months",
+    "left_censored",
+    "reactivated_this_month",
+    "lifecycle_bucket",
+    "snapshot_sha256",
+    "universe_dataset_id",
+    "information_cutoff",
 )
 
 
@@ -180,3 +200,206 @@ def derive_lifecycle_history(
         rows.append(pd.DataFrame.from_records(current_rows))
         lineage.append(snapshot_lineage)
     return pd.concat(rows, ignore_index=True), tuple(lineage)
+
+
+def _decisions_path(root: Path) -> tuple[Path, dict[str, Any]]:
+    catalog = root.resolve() / "data" / "catalog" / "monthly_universe_sip_v2"
+    candidates: list[tuple[Path, dict[str, Any]]] = []
+    for manifest_path in catalog.glob("*/manifest.json"):
+        try:
+            manifest = json.loads(manifest_path.read_text("utf-8"))
+        except json.JSONDecodeError as error:
+            raise ValueError("LIFECYCLE_UNIVERSE_MANIFEST_INVALID") from error
+        if (
+            manifest.get("start_month") == "2018-04-01"
+            and manifest.get("end_month") == "2026-03-01"
+        ):
+            candidates.append((manifest_path.parent / "decisions.parquet", manifest))
+    if len(candidates) != 1:
+        raise RuntimeError(f"LIFECYCLE_UNIVERSE_AMBIGUOUS:{len(candidates)}")
+    decisions_path, manifest = candidates[0]
+    if (
+        not decisions_path.is_file()
+        or manifest.get("content_sha256") != _sha256(decisions_path)
+        or not manifest.get("dataset_id")
+    ):
+        raise RuntimeError("LIFECYCLE_UNIVERSE_HASH_MISMATCH")
+    return decisions_path, manifest
+
+
+def first_xnys_session(month: date) -> date:
+    """Return the first official XNYS session in a calendar month."""
+    end = (pd.Timestamp(month) + pd.offsets.MonthEnd(0)).date()
+    sessions = _XNYS.sessions_in_range(pd.Timestamp(month), pd.Timestamp(end))
+    if sessions.empty:
+        raise RuntimeError("LIFECYCLE_XNYS_MONTH_EMPTY")
+    return sessions[0].date()
+
+
+def select_cutoff(asofs: Sequence[date], first_session: date) -> date:
+    """Select the latest source snapshot strictly before a decision month."""
+    eligible = [value for value in asofs if value < first_session]
+    if not eligible:
+        raise RuntimeError("LIFECYCLE_PRIOR_SNAPSHOT_MISSING")
+    return max(eligible)
+
+
+def _exception(*, month: date, symbol: str, reason: str) -> dict[str, str]:
+    return {"month": month.isoformat(), "symbol": symbol, "reason": reason}
+
+
+def build_lifecycle_coverage(
+    *, root: Path, validation_path: Path
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Map every eligible symbol to one causal lifecycle row and audit coverage."""
+    validation = load_historical_master_validation(validation_path.resolve())
+    history, lineage = derive_lifecycle_history(
+        root=root, validation_path=validation_path
+    )
+    decisions_path, universe_manifest = _decisions_path(root)
+    decisions = pd.read_parquet(
+        decisions_path,
+        columns=["symbol", "month", "eligible", "information_cutoff"],
+    )
+    decisions = decisions.loc[decisions["eligible"].eq(True)].copy()
+    decisions["symbol"] = decisions["symbol"].astype(str).str.strip()
+    decisions["month"] = pd.to_datetime(decisions["month"], errors="raise").dt.date
+    decisions["information_cutoff"] = pd.to_datetime(
+        decisions["information_cutoff"], errors="raise"
+    ).dt.date
+    decisions["ticker_normalized"] = decisions["symbol"].map(normalize_ticker)
+    decisions = decisions.sort_values(["month", "symbol"], kind="stable").reset_index(
+        drop=True
+    )
+
+    asofs = tuple(item.asof for item in lineage)
+    mapping_parts: list[pd.DataFrame] = []
+    exceptions: list[dict[str, str]] = []
+    monthly: list[dict[str, object]] = []
+    for month, eligible in decisions.groupby("month", sort=True):
+        month_date = month if isinstance(month, date) else pd.Timestamp(month).date()
+        denominator = len(eligible)
+        month_exceptions: list[dict[str, str]] = []
+        collision = eligible.duplicated("ticker_normalized", keep=False)
+        if collision.any():
+            month_exceptions.extend(
+                _exception(
+                    month=month_date,
+                    symbol=str(row.symbol),
+                    reason="NORMALIZATION_COLLISION",
+                )
+                for row in eligible.loc[collision].itertuples(index=False)
+            )
+        candidates = eligible.loc[~collision].copy()
+        try:
+            cutoff = select_cutoff(asofs, first_xnys_session(month_date))
+        except RuntimeError:
+            month_exceptions.extend(
+                _exception(
+                    month=month_date,
+                    symbol=str(row.symbol),
+                    reason="CUTOFF_NOT_CAUSAL",
+                )
+                for row in candidates.itertuples(index=False)
+            )
+            candidates = candidates.iloc[0:0]
+            cutoff = None
+
+        month_mapping = pd.DataFrame(columns=_MAPPING_COLUMNS)
+        if cutoff is not None and not candidates.empty:
+            source = history.loc[history["snapshot_asof"].eq(cutoff)].copy()
+            merged = candidates.merge(
+                source,
+                how="left",
+                on="ticker_normalized",
+                validate="one_to_one",
+                suffixes=("_decision", "_polygon"),
+            )
+            unmatched = merged["ticker"].isna()
+            missing_state = (~unmatched) & (
+                merged["active"].ne(True) | merged["lifecycle_bucket"].isna()
+            )
+            month_exceptions.extend(
+                _exception(
+                    month=month_date,
+                    symbol=str(row.symbol),
+                    reason="UNMATCHED",
+                )
+                for row in merged.loc[unmatched].itertuples(index=False)
+            )
+            month_exceptions.extend(
+                _exception(
+                    month=month_date,
+                    symbol=str(row.symbol),
+                    reason="MISSING_LIFECYCLE_STATE",
+                )
+                for row in merged.loc[missing_state].itertuples(index=False)
+            )
+            valid = merged.loc[~unmatched & ~missing_state].copy()
+            valid["month"] = month_date
+            valid["universe_dataset_id"] = str(universe_manifest["dataset_id"])
+            month_mapping = valid.loc[:, _MAPPING_COLUMNS]
+            mapping_parts.append(month_mapping)
+        mapped = len(month_mapping)
+        exceptions.extend(month_exceptions)
+        monthly.append(
+            {
+                "month": month_date.isoformat(),
+                "eligible_rows": denominator,
+                "mapped_rows": mapped,
+                "exception_rows": len(month_exceptions),
+                "coverage_ratio": mapped / denominator if denominator else 0.0,
+                "snapshot_asof": cutoff.isoformat() if cutoff is not None else None,
+            }
+        )
+
+    mapping = (
+        pd.concat(mapping_parts, ignore_index=True)
+        if mapping_parts
+        else pd.DataFrame(columns=_MAPPING_COLUMNS)
+    )
+    mapping = mapping.sort_values(["month", "symbol"], kind="stable").reset_index(
+        drop=True
+    )
+    exceptions.sort(key=lambda row: (row["month"], row["symbol"], row["reason"]))
+    eligible_rows = len(decisions)
+    mapped_rows = len(mapping)
+    exception_rows = len(exceptions)
+    coverage_ratio = mapped_rows / eligible_rows if eligible_rows else 0.0
+    permitted = bool(
+        eligible_rows > 0
+        and mapped_rows + exception_rows == eligible_rows
+        and coverage_ratio == 1.0
+        and all(item["coverage_ratio"] == 1.0 for item in monthly)
+    )
+    audit: dict[str, object] = {
+        "schema_version": "1.0.0",
+        "contract": "polygon-listing-lifecycle-coverage-v1",
+        "historical_master_validation_report_sha256": validation[
+            "validation_report_sha256"
+        ],
+        "universe_dataset_id": universe_manifest["dataset_id"],
+        "universe_sha256": universe_manifest["content_sha256"],
+        "snapshot_lineage": [
+            {
+                "asof": item.asof.isoformat(),
+                "content_sha256": item.content_sha256,
+                "rows": item.rows,
+            }
+            for item in lineage
+        ],
+        "months": len(monthly),
+        "eligible_rows": eligible_rows,
+        "mapped_rows": mapped_rows,
+        "exception_rows": exception_rows,
+        "coverage_ratio": coverage_ratio,
+        "monthly_coverage": monthly,
+        "exceptions": exceptions,
+        "missing_data_policy": "preserve_nulls_no_fill_no_inference",
+        "provider_splicing": "FORBIDDEN",
+        "order_route": "FORBIDDEN",
+        "rejection_reasons": [] if permitted else ["BLOCKED_LIFECYCLE_COVERAGE"],
+        "strategy_evaluation_permitted": permitted,
+        "paper_activation": False,
+    }
+    return mapping, audit

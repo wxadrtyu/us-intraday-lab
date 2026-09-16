@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from us_intraday_lab.data.polygon_listing_lifecycle import (
+    build_lifecycle_coverage,
     derive_lifecycle_history,
     lifecycle_bucket,
     normalize_ticker,
@@ -61,6 +62,35 @@ def _validation(path: Path) -> Path:
     validation = path / "validation.json"
     validation.write_text("{}", encoding="utf-8")
     return validation
+
+
+def _write_decisions(
+    root: Path, rows: list[tuple[str, date, bool, date]]
+) -> None:
+    directory = (
+        root
+        / "data"
+        / "catalog"
+        / "monthly_universe_sip_v2"
+        / "test-universe"
+    )
+    directory.mkdir(parents=True)
+    decisions = pd.DataFrame(
+        rows, columns=["symbol", "month", "eligible", "information_cutoff"]
+    )
+    path = directory / "decisions.parquet"
+    decisions.to_parquet(path, index=False)
+    (directory / "manifest.json").write_text(
+        json.dumps(
+            {
+                "dataset_id": "test-universe",
+                "start_month": "2018-04-01",
+                "end_month": "2026-03-01",
+                "content_sha256": _sha256(path),
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _trust_validation(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -168,3 +198,99 @@ def test_rejects_snapshot_hash_mismatch(
 
     with pytest.raises(ValueError, match="LIFECYCLE_SNAPSHOT_HASH_MISMATCH"):
         derive_lifecycle_history(root=tmp_path, validation_path=_validation(tmp_path))
+
+
+def test_coverage_uses_latest_snapshot_strictly_before_first_xnys_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("A", True), ("B", True)])
+    _write_snapshot(tmp_path, date(2019, 1, 31), [("A", True), ("B", False)])
+    _write_decisions(
+        tmp_path,
+        [
+            ("A", date(2019, 1, 1), True, date(2018, 12, 31)),
+            ("B", date(2019, 1, 1), True, date(2018, 12, 31)),
+        ],
+    )
+
+    mapping, audit = build_lifecycle_coverage(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert set(mapping["snapshot_asof"]) == {date(2018, 12, 31)}
+    assert audit["coverage_ratio"] == 1.0
+    assert audit["eligible_rows"] == 2
+    assert audit["mapped_rows"] == 2
+    assert audit["exception_rows"] == 0
+    assert audit["strategy_evaluation_permitted"] is True
+
+
+def test_one_unmatched_symbol_blocks_entire_campaign(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("A", True)])
+    _write_decisions(
+        tmp_path,
+        [
+            ("A", date(2019, 1, 1), True, date(2018, 12, 31)),
+            ("MISSING", date(2019, 1, 1), True, date(2018, 12, 31)),
+            ("IGNORED", date(2019, 1, 1), False, date(2018, 12, 31)),
+        ],
+    )
+
+    mapping, audit = build_lifecycle_coverage(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert list(mapping["symbol"]) == ["A"]
+    assert audit["strategy_evaluation_permitted"] is False
+    assert audit["rejection_reasons"] == ["BLOCKED_LIFECYCLE_COVERAGE"]
+    assert audit["eligible_rows"] == 2
+    assert audit["mapped_rows"] == 1
+    assert audit["exception_rows"] == 1
+    assert audit["exceptions"] == [
+        {"month": "2019-01-01", "symbol": "MISSING", "reason": "UNMATCHED"}
+    ]
+
+
+def test_inactive_polygon_record_is_missing_lifecycle_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("A", False)])
+    _write_decisions(
+        tmp_path,
+        [("A", date(2019, 1, 1), True, date(2018, 12, 31))],
+    )
+
+    mapping, audit = build_lifecycle_coverage(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert mapping.empty
+    assert audit["exceptions"][0]["reason"] == "MISSING_LIFECYCLE_STATE"
+
+
+def test_decision_normalization_collision_blocks_coverage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _trust_validation(monkeypatch)
+    _write_snapshot(tmp_path, date(2018, 12, 31), [("ABC", True)])
+    _write_decisions(
+        tmp_path,
+        [
+            ("abc", date(2019, 1, 1), True, date(2018, 12, 31)),
+            ("ABC", date(2019, 1, 1), True, date(2018, 12, 31)),
+        ],
+    )
+
+    mapping, audit = build_lifecycle_coverage(
+        root=tmp_path, validation_path=_validation(tmp_path)
+    )
+
+    assert mapping.empty
+    assert {row["reason"] for row in audit["exceptions"]} == {
+        "NORMALIZATION_COLLISION"
+    }
