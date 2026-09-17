@@ -16,6 +16,7 @@ from us_intraday_lab.data.sec_fundamental_filings import (
     parse_companyfacts,
     parse_submissions,
     parse_ticker_map,
+    training_sample_symbols,
 )
 
 
@@ -312,3 +313,14 @@ def test_event_features_start_next_session_and_expire_after_five_sessions() -> N
     assert aaa.loc[1:5, "coverage_reason"].eq("COVERED").all()
     assert aaa.loc[6, "coverage_reason"] == "SEC_NO_ACTIVE_FILING"
     assert qqq["coverage_reason"].eq("SEC_IDENTITY_UNAVAILABLE").all()
+
+
+def test_training_sample_symbols_excludes_later_event_periods() -> None:
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA", "BBB", "CCC"],
+            "session_date": ["2021-01-04", "2023-12-29", "2024-01-02"],
+        }
+    )
+
+    assert training_sample_symbols(events) == {"AAA", "BBB"}

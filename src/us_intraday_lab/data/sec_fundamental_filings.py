@@ -30,6 +30,20 @@ CONCEPTS = (
 Fetch = Callable[[str], bytes]
 
 
+def training_sample_symbols(events: pd.DataFrame) -> set[str]:
+    """Return symbols present inside the exact 2021-2023 training boundary."""
+    required = {"symbol", "session_date"}
+    if missing := required.difference(events.columns):
+        raise ValueError(f"SEC_SAMPLE_COLUMNS_MISSING:{sorted(missing)}")
+    dates = pd.to_datetime(events["session_date"], errors="coerce").dt.date
+    if dates.isna().any():
+        raise ValueError("SEC_SAMPLE_DATE_INVALID")
+    selected = events.loc[
+        dates.map(lambda value: TRAIN_START <= value <= TRAIN_END), "symbol"
+    ]
+    return set(selected.astype(str))
+
+
 def _sha256(body: bytes) -> str:
     return hashlib.sha256(body).hexdigest()
 

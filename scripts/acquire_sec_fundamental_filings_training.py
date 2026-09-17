@@ -13,7 +13,10 @@ from uuid import uuid4
 import pandas as pd
 
 from scripts.acquire_cboe_volatility_training import _sha256, _write_immutable
-from us_intraday_lab.data.sec_fundamental_filings import acquire_training_snapshot
+from us_intraday_lab.data.sec_fundamental_filings import (
+    acquire_training_snapshot,
+    training_sample_symbols,
+)
 
 USER_AGENT = "QuantResearch/1.0 research-team@example.com"
 
@@ -52,8 +55,8 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--manifest", required=True, type=Path)
     arguments = parser.parse_args()
-    symbols = set(
-        pd.read_parquet(arguments.events, columns=["symbol"])["symbol"].astype(str)
+    symbols = training_sample_symbols(
+        pd.read_parquet(arguments.events, columns=["symbol", "session_date"])
     )
     if len(symbols) != 527:
         raise RuntimeError(f"SEC_SAMPLE_SYMBOL_COUNT:{len(symbols)}")
