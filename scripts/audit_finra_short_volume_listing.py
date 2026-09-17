@@ -62,7 +62,11 @@ def _arguments() -> argparse.Namespace:
 def main() -> int:
     arguments = _arguments()
     audit = build_listing_audit(
-        load_manifests(arguments.root.resolve()), FinraMonthlyListingHttpTransport()
+        load_manifests(arguments.root.resolve()),
+        FinraMonthlyListingHttpTransport(
+            cache_root=arguments.root.resolve()
+            / "research/cache/finra_short_volume_listing_v1"
+        ),
     )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = arguments.output.with_suffix(".tmp.parquet")

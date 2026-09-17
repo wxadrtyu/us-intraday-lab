@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable
 from datetime import date, datetime
 from datetime import time as wall_time
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -105,13 +106,25 @@ def build_listing_audit(
 class FinraMonthlyListingHttpTransport:
     """Low-rate official-index transport for the frozen 2021-2023 audit."""
 
-    def __init__(self, *, delay_seconds: float = 5.0) -> None:
+    def __init__(
+        self, *, delay_seconds: float = 5.0, cache_root: Path | None = None
+    ) -> None:
         self._delay_seconds = delay_seconds
+        self._cache_root = cache_root
         self._called = False
 
     def __call__(self, year: int, month: int) -> bytes:
         if year not in YEAR_FILTER_VALUES or not 1 <= month <= 12:
             raise ValueError("FINRA_LISTING_TRAINING_MONTH_INVALID")
+        cache_path = (
+            self._cache_root / f"{year}-{month:02d}.html"
+            if self._cache_root is not None
+            else None
+        )
+        if cache_path is not None and cache_path.is_file():
+            body = cache_path.read_bytes()
+            parse_month_listing(body)
+            return body
         if self._called:
             time.sleep(self._delay_seconds)
         self._called = True
@@ -120,7 +133,14 @@ class FinraMonthlyListingHttpTransport:
         for attempt in range(5):
             try:
                 with urlopen(request, timeout=30) as response:
-                    return response.read()
+                    body = response.read()
+                parse_month_listing(body)
+                if cache_path is not None:
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    temporary = cache_path.with_suffix(".tmp")
+                    temporary.write_bytes(body)
+                    temporary.replace(cache_path)
+                return body
             except HTTPError as error:
                 if error.code != 429 or attempt == 4:
                     raise

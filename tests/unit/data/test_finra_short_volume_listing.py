@@ -4,7 +4,12 @@ from datetime import date
 
 import pandas as pd
 
-from us_intraday_lab.data.finra_short_volume_listing import build_listing_audit, parse_month_listing
+import us_intraday_lab.data.finra_short_volume_listing as listing_module
+from us_intraday_lab.data.finra_short_volume_listing import (
+    FinraMonthlyListingHttpTransport,
+    build_listing_audit,
+    parse_month_listing,
+)
 
 MONTH_HTML = b"""
 <h2>FINRA Consolidated NMS</h2>
@@ -61,3 +66,33 @@ def test_build_listing_audit_separates_original_migration_from_update() -> None:
         "2021-07-01T21:21:13Z"
     )
     assert audit.loc[0, "index_sha256"] == audit.loc[1, "index_sha256"]
+
+
+def test_month_transport_caches_valid_official_page(tmp_path, monkeypatch) -> None:
+    calls = 0
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self) -> bytes:
+            return MONTH_HTML
+
+    def fake_urlopen(_request, timeout):
+        nonlocal calls
+        assert timeout == 30
+        calls += 1
+        return Response()
+
+    monkeypatch.setattr(listing_module, "urlopen", fake_urlopen)
+    transport = FinraMonthlyListingHttpTransport(
+        delay_seconds=0, cache_root=tmp_path
+    )
+
+    assert transport(2021, 1) == MONTH_HTML
+    assert transport(2021, 1) == MONTH_HTML
+    assert calls == 1
+    assert (tmp_path / "2021-01.html").read_bytes() == MONTH_HTML
