@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 
 import pandas as pd
@@ -79,11 +80,24 @@ def test_month_transport_caches_valid_official_page(tmp_path, monkeypatch) -> No
             return None
 
         def read(self) -> bytes:
-            return MONTH_HTML
+            return json.dumps(
+                [
+                    {"command": "settings", "settings": {}},
+                    {
+                        "command": "insert",
+                        "method": "replaceWith",
+                        "data": MONTH_HTML.decode(),
+                    },
+                ]
+            ).encode()
 
-    def fake_urlopen(_request, timeout):
+    def fake_urlopen(request, timeout):
         nonlocal calls
         assert timeout == 30
+        assert request.full_url.endswith("/views/ajax?_wrapper_format=drupal_ajax")
+        assert b"view_name=transparency_services" in request.data
+        assert b"custom_month%5Bmonth%5D=01" in request.data
+        assert b"custom_year%5Byear%5D=5" in request.data
         calls += 1
         return Response()
 

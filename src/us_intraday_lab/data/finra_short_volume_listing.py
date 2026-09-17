@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import time
 from collections.abc import Callable
@@ -16,10 +17,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-INDEX_URL = (
-    "https://www.finra.org/finra-data/browse-catalog/short-sale-volume-data/"
-    "daily-short-sale-volume-files"
-)
+AJAX_URL = "https://www.finra.org/views/ajax?_wrapper_format=drupal_ajax"
 YEAR_FILTER_VALUES = {2021: "5", 2022: "4", 2023: "3"}
 FetchMonth = Callable[[int, int], bytes]
 _SECTION = re.compile(
@@ -48,6 +46,20 @@ def parse_month_listing(body: bytes) -> dict[date, bool]:
     if not result:
         raise ValueError("FINRA_LISTING_NMS_FILES_MISSING")
     return result
+
+
+def _extract_ajax_listing(body: bytes) -> bytes:
+    commands = json.loads(body)
+    for command in commands:
+        data = command.get("data")
+        if command.get("command") == "insert" and isinstance(data, str):
+            candidate = data.encode()
+            try:
+                parse_month_listing(candidate)
+            except ValueError:
+                continue
+            return candidate
+    raise ValueError("FINRA_LISTING_AJAX_INSERT_MISSING")
 
 
 def build_listing_audit(
@@ -128,12 +140,32 @@ class FinraMonthlyListingHttpTransport:
         if self._called:
             time.sleep(self._delay_seconds)
         self._called = True
-        url = f"{INDEX_URL}?{urlencode({'custom_month[month]': f'{month:02d}', 'custom_year[year]': YEAR_FILTER_VALUES[year]})}"
-        request = Request(url, headers={"User-Agent": "us-intraday-lab-research/1.0"})
+        payload = urlencode(
+            {
+                "view_name": "transparency_services",
+                "view_display_id": "reg_sho_daily",
+                "view_args": "",
+                "view_path": "/node/189486",
+                "pager_element": "0",
+                "custom_month[month]": f"{month:02d}",
+                "custom_year[year]": YEAR_FILTER_VALUES[year],
+                "_drupal_ajax": "1",
+            }
+        ).encode()
+        request = Request(
+            AJAX_URL,
+            data=payload,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "us-intraday-lab-research/1.0",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        )
         for attempt in range(5):
             try:
                 with urlopen(request, timeout=30) as response:
-                    body = response.read()
+                    body = _extract_ajax_listing(response.read())
                 parse_month_listing(body)
                 if cache_path is not None:
                     cache_path.parent.mkdir(parents=True, exist_ok=True)
