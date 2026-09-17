@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+from collections.abc import Callable
 from datetime import date
+from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
 
@@ -22,6 +26,29 @@ CONCEPTS = (
     "Assets",
     "Liabilities",
 )
+Fetch = Callable[[str], bytes]
+
+
+def _sha256(body: bytes) -> str:
+    return hashlib.sha256(body).hexdigest()
+
+
+def _load_or_fetch(path: Path, url: str, fetch: Fetch) -> bytes:
+    if path.exists():
+        return path.read_bytes()
+    body = fetch(url)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+    temporary.write_bytes(body)
+    try:
+        if path.exists():
+            if path.read_bytes() != body:
+                raise RuntimeError(f"SEC_RAW_IMMUTABLE_COLLISION:{path}")
+        else:
+            temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return body
 
 
 def parse_ticker_map(
@@ -144,3 +171,93 @@ def parse_companyfacts(body: bytes, cik: int) -> pd.DataFrame:
         .sort_values(["accession", "concept", "end_date"])
         .reset_index(drop=True)
     )
+
+
+def acquire_training_snapshot(
+    symbols: set[str], fetch: Fetch, raw_root: Path
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Acquire exact-matched SEC sources and normalize original 10-Q facts."""
+    ticker_path = raw_root / "company_tickers_exchange.json"
+    ticker_body = _load_or_fetch(ticker_path, TICKER_MAP_URL, fetch)
+    identities, missing = parse_ticker_map(ticker_body, symbols)
+    sources: list[dict[str, object]] = [
+        {
+            "url": TICKER_MAP_URL,
+            "raw_path": str(ticker_path.resolve()),
+            "bytes": len(ticker_body),
+            "sha256": _sha256(ticker_body),
+        }
+    ]
+    normalized: list[pd.DataFrame] = []
+    for identity in identities.itertuples(index=False):
+        cik = int(identity.cik)
+        submissions_url = SUBMISSIONS_URL.format(cik=cik)
+        facts_url = COMPANYFACTS_URL.format(cik=cik)
+        submissions_path = raw_root / "submissions" / f"CIK{cik:010d}.json"
+        facts_path = raw_root / "companyfacts" / f"CIK{cik:010d}.json"
+        submissions_body = _load_or_fetch(submissions_path, submissions_url, fetch)
+        facts_body = _load_or_fetch(facts_path, facts_url, fetch)
+        sources.extend(
+            [
+                {
+                    "url": submissions_url,
+                    "raw_path": str(submissions_path.resolve()),
+                    "bytes": len(submissions_body),
+                    "sha256": _sha256(submissions_body),
+                },
+                {
+                    "url": facts_url,
+                    "raw_path": str(facts_path.resolve()),
+                    "bytes": len(facts_body),
+                    "sha256": _sha256(facts_body),
+                },
+            ]
+        )
+        filings = parse_submissions(submissions_body, cik)
+        facts = parse_companyfacts(facts_body, cik)
+        if filings.empty or facts.empty:
+            continue
+        joined = facts.merge(
+            filings,
+            how="inner",
+            on=["cik", "accession"],
+            validate="many_to_one",
+            suffixes=("_fact", "_filing"),
+        )
+        if joined.empty:
+            continue
+        joined.insert(0, "symbol", str(identity.symbol))
+        normalized.append(joined)
+    snapshot = (
+        pd.concat(normalized, ignore_index=True)
+        if normalized
+        else pd.DataFrame(
+            columns=[
+                "symbol",
+                "cik",
+                "accession",
+                "concept",
+                "unit",
+                "start_date",
+                "end_date",
+                "filed_date",
+                "form_fact",
+                "value",
+                "filing_date",
+                "report_date",
+                "form_filing",
+            ]
+        )
+    )
+    snapshot = snapshot.sort_values(
+        ["symbol", "filing_date", "accession", "concept", "end_date"]
+    ).reset_index(drop=True)
+    manifest: dict[str, object] = {
+        "requested_symbols": len(set(symbols)),
+        "matched_symbols": len(identities),
+        "unmatched_symbols": missing["symbol"].tolist(),
+        "normalized_fact_rows": len(snapshot),
+        "sources": sources,
+        "training_only": True,
+    }
+    return snapshot, manifest

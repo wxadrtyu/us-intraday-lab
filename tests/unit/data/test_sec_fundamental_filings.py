@@ -5,6 +5,10 @@ import json
 import pytest
 
 from us_intraday_lab.data.sec_fundamental_filings import (
+    COMPANYFACTS_URL,
+    SUBMISSIONS_URL,
+    TICKER_MAP_URL,
+    acquire_training_snapshot,
     parse_companyfacts,
     parse_submissions,
     parse_ticker_map,
@@ -126,3 +130,90 @@ def test_companyfacts_rejects_cik_mismatch() -> None:
 
     with pytest.raises(ValueError, match="SEC_COMPANYFACTS_CIK_MISMATCH"):
         parse_companyfacts(body, 320193)
+
+
+def test_acquisition_requests_only_exact_identities_and_resumes_raw_bytes(
+    tmp_path,
+) -> None:
+    ticker_body = json.dumps(
+        {
+            "fields": ["cik", "name", "ticker", "exchange"],
+            "data": [[320193, "Apple Inc.", "AAPL", "Nasdaq"]],
+        }
+    ).encode()
+    submissions_body = json.dumps(
+        {
+            "cik": "320193",
+            "filings": {
+                "recent": {
+                    "accessionNumber": ["0000320193-22-000070"],
+                    "filingDate": ["2022-07-29"],
+                    "reportDate": ["2022-06-25"],
+                    "form": ["10-Q"],
+                }
+            },
+        }
+    ).encode()
+    facts_body = json.dumps(
+        {
+            "cik": 320193,
+            "facts": {
+                "us-gaap": {
+                    "Revenues": {
+                        "units": {
+                            "USD": [
+                                {
+                                    "start": "2022-03-27",
+                                    "end": "2022-06-25",
+                                    "val": 10,
+                                    "accn": "0000320193-22-000070",
+                                    "form": "10-Q",
+                                    "filed": "2022-07-29",
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+        }
+    ).encode()
+    responses = {
+        TICKER_MAP_URL: ticker_body,
+        SUBMISSIONS_URL.format(cik=320193): submissions_body,
+        COMPANYFACTS_URL.format(cik=320193): facts_body,
+    }
+    requested: list[str] = []
+
+    def fetch(url: str) -> bytes:
+        requested.append(url)
+        return responses[url]
+
+    snapshot, manifest = acquire_training_snapshot(
+        {"AAPL", "QQQ"}, fetch, tmp_path / "raw"
+    )
+
+    assert requested == list(responses)
+    assert snapshot[["symbol", "accession", "concept", "value"]].to_dict(
+        "records"
+    ) == [
+        {
+            "symbol": "AAPL",
+            "accession": "0000320193-22-000070",
+            "concept": "Revenues",
+            "value": 10.0,
+        }
+    ]
+    assert manifest["requested_symbols"] == 2
+    assert manifest["matched_symbols"] == 1
+    assert manifest["unmatched_symbols"] == ["QQQ"]
+    assert len(manifest["sources"]) == 3
+
+    def forbidden_fetch(_url: str) -> bytes:
+        raise AssertionError("resume must use frozen raw bytes")
+
+    resumed, resumed_manifest = acquire_training_snapshot(
+        {"AAPL", "QQQ"}, forbidden_fetch, tmp_path / "raw"
+    )
+
+    assert resumed.equals(snapshot)
+    assert resumed_manifest == manifest
