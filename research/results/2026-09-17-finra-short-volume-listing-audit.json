@@ -1,0 +1,18 @@
+{
+  "audit_sha256": "78afcf33c245be4010aac02b87c03e8d14b9d632e5a17bc1b790f3f643b4107c",
+  "audited_files": 753,
+  "evidence_counts": {
+    "NOT_LISTED_OFFICIAL_INDEX": 13,
+    "ORIGINAL_OFFICIAL_INDEX": 97,
+    "SAME_DAY_LAST_MODIFIED": 643
+  },
+  "late_cdn_timestamps": 110,
+  "official_index_missing": 13,
+  "official_index_originals": 97,
+  "official_index_updates": 0,
+  "official_page_hashes": 14,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "status": "COMPLETE",
+  "training_only": true
+}
