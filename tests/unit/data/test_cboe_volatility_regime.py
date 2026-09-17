@@ -31,9 +31,14 @@ def test_parse_training_csv_accepts_single_value_schema() -> None:
 def test_event_features_use_only_immediately_prior_equity_session() -> None:
     events = pd.DataFrame(
         {
-            "symbol": ["AAA", "AAA", "AAA"],
-            "session_date": [date(2021, 1, 4), date(2021, 1, 5), date(2021, 1, 7)],
-            "bar_idx": [2, 2, 2],
+            "symbol": ["AAA", "AAA", "AAA", "AAA"],
+            "session_date": [
+                date(2021, 1, 4),
+                date(2021, 1, 5),
+                date(2021, 1, 7),
+                date(2024, 1, 3),
+            ],
+            "bar_idx": [2, 2, 2, 2],
         }
     )
     indices = pd.DataFrame(
@@ -50,7 +55,7 @@ def test_event_features_use_only_immediately_prior_equity_session() -> None:
 
     result = build_event_features(events, indices)
 
+    assert len(result) == 3
     assert pd.isna(result.loc[0, "source_date"])
     assert result.loc[1, "source_date"] == date(2021, 1, 4)
     assert result.loc[2, "source_date"] == date(2021, 1, 5)
-

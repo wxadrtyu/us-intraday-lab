@@ -94,10 +94,17 @@ def build_event_features(events: pd.DataFrame, indices: pd.DataFrame) -> pd.Data
         raise ValueError(f"CBOE_INDEX_COLUMNS_MISSING:{sorted(missing)}")
     result = events.copy()
     result["session_date"] = pd.to_datetime(result["session_date"]).dt.date
+    result = result.loc[
+        result["session_date"].map(lambda value: TRAIN_START <= value <= TRAIN_END)
+    ].copy()
     if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
         raise ValueError("CBOE_EVENT_KEY_DUPLICATE")
     source = indices.copy()
     source["source_date"] = pd.to_datetime(source["source_date"]).dt.date
+    if not source["source_date"].map(
+        lambda value: TRAIN_START <= value <= TRAIN_END
+    ).all():
+        raise ValueError("CBOE_SOURCE_TRAINING_BOUNDARY")
     if source["source_date"].duplicated().any():
         raise ValueError("CBOE_SOURCE_DATE_DUPLICATE")
     source = source.sort_values("source_date").reset_index(drop=True)
