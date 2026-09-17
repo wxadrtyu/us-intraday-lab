@@ -1,0 +1,64 @@
+{
+  "best_cell": {
+    "cost_18bp": {
+      "annualized_return": 0.0021818870299121773,
+      "calendar_year_returns": {
+        "2021": -0.14372452215517628,
+        "2022": 0.264324408575626,
+        "2023": -0.07027105888478746
+      },
+      "information_ratio": 0.12206995013652185,
+      "max_drawdown": 0.37902338545019476,
+      "positive_calendar_years": 1
+    },
+    "decision_bar": 5,
+    "delay_5m_9bp": {
+      "annualized_return": 0.09498743656307829,
+      "calendar_year_returns": {
+        "2021": -0.10765386685250644,
+        "2022": 0.39524898125497665,
+        "2023": 0.05335119517092268
+      },
+      "information_ratio": 0.5301218054050357,
+      "max_drawdown": 0.31528736722007944,
+      "positive_calendar_years": 2
+    },
+    "family": "oil_volatility_shock_continuation",
+    "holding_bars": 6,
+    "retention_floor_passed": false,
+    "signal_sessions": 382,
+    "standard_9bp": {
+      "annualized_return": 0.12435011996996126,
+      "calendar_year_returns": {
+        "2021": -0.04251987000370927,
+        "2022": 0.4286203193596123,
+        "2023": 0.03765300405285865
+      },
+      "information_ratio": 0.6243283699494524,
+      "max_drawdown": 0.3448853871397459,
+      "positive_calendar_years": 2
+    },
+    "standard_annualized_return": 0.12435011996996126,
+    "standard_information_ratio": 0.6243283699494524,
+    "top_count": 1
+  },
+  "calendar_sessions": 753,
+  "cells_completed": 400,
+  "cells_sha256": "cc5b4c94d1ed4e76a8ed5350e04f7efa9b2d439fb6a2a087e5ead7195698460a",
+  "covered_event_rows": 376076,
+  "decision": "ABANDON_CBOE_VOLATILITY_REGIME_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "cboe-volatility-regime-training-feasibility-v1",
+  "elapsed_seconds": 4.909863900000346,
+  "event_rows": 388745,
+  "event_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "feature_sha256": "7d9fea6abfdaec838ccc7e2e3fad1697f3967ee40293785bbbe9c2cadd1ec1b4",
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "period": "2021-01-01/2023-12-31",
+  "retained_cells": 0,
+  "retained_families": [],
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}
