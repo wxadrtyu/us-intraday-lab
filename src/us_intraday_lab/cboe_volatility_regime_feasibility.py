@@ -68,11 +68,15 @@ def _percentile(frame: pd.DataFrame, values: pd.Series) -> pd.Series:
     )
 
 
-def score_family(frame: pd.DataFrame, family: str) -> pd.Series:
+def score_family(
+    frame: pd.DataFrame,
+    family: str,
+    family_features: dict[str, tuple[str, str]] = FAMILY_FEATURES,
+) -> pd.Series:
     """Score one exogenous stress regime without emitting quiet-regime signals."""
-    if family not in FAMILY_FEATURES:
+    if family not in family_features:
         raise ValueError(f"CBOE_DIAGNOSTIC_FAMILY_INVALID:{family}")
-    feature, direction = FAMILY_FEATURES[family]
+    feature, direction = family_features[family]
     active = pd.to_numeric(frame[feature], errors="coerce").where(lambda value: value > 0)
     current = _percentile(frame, frame["session_return"])
     base = current if direction == "continuation" else 1.0 - current
@@ -83,7 +87,11 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _validate_and_merge(events_path: Path, features_path: Path) -> pd.DataFrame:
+def _validate_and_merge(
+    events_path: Path,
+    features_path: Path,
+    family_features: dict[str, tuple[str, str]],
+) -> pd.DataFrame:
     event_columns = [
         "symbol", "session_date", "bar_idx", "session_return", "p1_open",
         "p2_open", "p3_open", "p5_open", "p7_open", "p8_open",
@@ -105,7 +113,7 @@ def _validate_and_merge(events_path: Path, features_path: Path) -> pd.DataFrame:
             raise RuntimeError("CBOE_DIAGNOSTIC_EVENT_KEY_DUPLICATE")
     if set(events["event_key"]) != set(features["event_key"]):
         raise RuntimeError("CBOE_DIAGNOSTIC_EVENT_KEY_COVERAGE")
-    columns = ["event_key", "coverage_reason", *[item[0] for item in FAMILY_FEATURES.values()]]
+    columns = ["event_key", "coverage_reason", *[item[0] for item in family_features.values()]]
     return events.merge(
         features.loc[:, columns], on="event_key", how="inner", validate="one_to_one"
     )
@@ -114,6 +122,11 @@ def _validate_and_merge(events_path: Path, features_path: Path) -> pd.DataFrame:
 def run_diagnostic(
     *, events_path: Path, features_path: Path,
     expected_event_sha256: str, expected_feature_sha256: str,
+    families: tuple[str, ...] = FAMILIES,
+    family_features: dict[str, tuple[str, str]] = FAMILY_FEATURES,
+    diagnostic_id: str = "cboe-volatility-regime-training-feasibility-v1",
+    proceed_decision: str = "ACQUIRE_DEVELOPMENT_CBOE_VOLATILITY_REGIME",
+    abandon_decision: str = "ABANDON_CBOE_VOLATILITY_REGIME_NO_VERSION_CREATED",
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     """Evaluate exactly 400 frozen training cells under immutable hashes."""
     started = time.perf_counter()
@@ -121,11 +134,11 @@ def run_diagnostic(
     feature_sha256 = _sha256(features_path)
     if event_sha256 != expected_event_sha256 or feature_sha256 != expected_feature_sha256:
         raise RuntimeError("CBOE_DIAGNOSTIC_INPUT_HASH_MISMATCH")
-    merged = _validate_and_merge(events_path, features_path)
+    merged = _validate_and_merge(events_path, features_path, family_features)
     calendar = pd.DatetimeIndex(sorted(merged["session_date"].unique()))
     records: list[dict[str, Any]] = []
-    for family in FAMILIES:
-        merged["score"] = score_family(merged, family)
+    for family in families:
+        merged["score"] = score_family(merged, family, family_features)
         for decision in DECISION_BARS:
             subset = merged.loc[
                 merged["bar_idx"].eq(decision) & merged["score"].notna()
@@ -181,13 +194,13 @@ def run_diagnostic(
     proceed = len(retained_families) >= 2
     return cells, {
         "schema_version": "1.0.0", "status": "COMPLETE",
-        "diagnostic_id": "cboe-volatility-regime-training-feasibility-v1",
+        "diagnostic_id": diagnostic_id,
         "period": "2021-01-01/2023-12-31", "event_sha256": event_sha256,
         "feature_sha256": feature_sha256, "event_rows": len(merged),
         "covered_event_rows": int(merged["coverage_reason"].eq("COVERED").sum()),
         "calendar_sessions": len(calendar), "cells_completed": len(cells),
         "retained_cells": len(retained), "retained_families": retained_families,
-        "decision": "ACQUIRE_DEVELOPMENT_CBOE_VOLATILITY_REGIME" if proceed else "ABANDON_CBOE_VOLATILITY_REGIME_NO_VERSION_CREATED",
+        "decision": proceed_decision if proceed else abandon_decision,
         "best_cell": ranked.iloc[0].to_dict() if not ranked.empty else None,
         "development_or_consumed_loaded": False, "strategy_versions_created": 0,
         "paper_activation": False, "order_route": "FORBIDDEN",
