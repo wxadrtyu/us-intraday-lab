@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 
+import pandas as pd
 import pytest
 
 from us_intraday_lab.data.sec_fundamental_filings import (
@@ -9,6 +11,8 @@ from us_intraday_lab.data.sec_fundamental_filings import (
     SUBMISSIONS_URL,
     TICKER_MAP_URL,
     acquire_training_snapshot,
+    build_event_features,
+    derive_filing_features,
     parse_companyfacts,
     parse_submissions,
     parse_ticker_map,
@@ -217,3 +221,94 @@ def test_acquisition_requests_only_exact_identities_and_resumes_raw_bytes(
 
     assert resumed.equals(snapshot)
     assert resumed_manifest == manifest
+
+
+def _quarterly_filing_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
+    filings: list[dict[str, object]] = []
+    facts: list[dict[str, object]] = []
+    quarter_ends = [
+        date(2021, 3, 31),
+        date(2021, 6, 30),
+        date(2021, 9, 30),
+        date(2022, 3, 31),
+        date(2022, 6, 30),
+        date(2022, 9, 30),
+        date(2023, 3, 31),
+        date(2023, 6, 30),
+    ]
+    revenues = [100.0, 105.0, 110.0, 120.0, 140.0, 150.0, 145.0, 180.0]
+    for index, (end, revenue) in enumerate(zip(quarter_ends, revenues, strict=True)):
+        accession = f"acc-{index}"
+        filing_date = end + timedelta(days=30)
+        filings.append(
+            {
+                "symbol": "AAA",
+                "cik": 1,
+                "accession": accession,
+                "filing_date": filing_date,
+                "report_date": end,
+            }
+        )
+        values = {
+            "RevenueFromContractWithCustomerExcludingAssessedTax": revenue,
+            "GrossProfit": revenue * (0.40 + index * 0.005),
+            "OperatingIncomeLoss": revenue * (0.15 + index * 0.002),
+            "CashAndCashEquivalentsAtCarryingValue": 20.0 + index * 2,
+            "Assets": 100.0 + index * 3,
+            "Liabilities": 60.0 - index,
+        }
+        for concept, value in values.items():
+            duration = concept in {
+                "RevenueFromContractWithCustomerExcludingAssessedTax",
+                "GrossProfit",
+                "OperatingIncomeLoss",
+            }
+            facts.append(
+                {
+                    "cik": 1,
+                    "accession": accession,
+                    "concept": concept,
+                    "start_date": end - timedelta(days=89) if duration else None,
+                    "end_date": end,
+                    "value": value,
+                }
+            )
+    return pd.DataFrame(filings), pd.DataFrame(facts)
+
+
+def test_filing_features_use_exact_period_comparisons() -> None:
+    filings, facts = _quarterly_filing_inputs()
+
+    result = derive_filing_features(filings, facts)
+
+    row = result.loc[result["accession"].eq("acc-4")].iloc[0]
+    assert row["gross_margin_expansion"] == pytest.approx(0.015)
+    assert row["operating_margin_expansion"] == pytest.approx(0.006)
+    assert row["cash_asset_improvement"] > 0
+    assert row["deleveraging"] > 0
+    assert row["revenue_growth_acceleration"] > 0
+
+
+def test_event_features_start_next_session_and_expire_after_five_sessions() -> None:
+    filings, facts = _quarterly_filing_inputs()
+    filing_features = derive_filing_features(filings, facts)
+    target = filing_features.loc[filing_features["accession"].eq("acc-4")].copy()
+    filing_day = target["filing_date"].iat[0]
+    sessions = [filing_day + timedelta(days=offset) for offset in range(7)]
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA"] * len(sessions) + ["QQQ"] * len(sessions),
+            "session_date": sessions * 2,
+            "bar_idx": [2] * (2 * len(sessions)),
+        }
+    )
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    result = build_event_features(events, target, identity)
+
+    aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
+    qqq = result.loc[result["symbol"].eq("QQQ")]
+    assert aaa.loc[0, "coverage_reason"] == "SEC_NO_ACTIVE_FILING"
+    assert aaa.loc[1:5, "coverage_reason"].eq("COVERED").all()
+    assert aaa.loc[6, "coverage_reason"] == "SEC_NO_ACTIVE_FILING"
+    assert qqq["coverage_reason"].eq("SEC_IDENTITY_UNAVAILABLE").all()

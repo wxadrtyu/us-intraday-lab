@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
+import numpy as np
 import pandas as pd
 
 TRAIN_START = date(2021, 1, 1)
@@ -261,3 +262,258 @@ def acquire_training_snapshot(
         "training_only": True,
     }
     return snapshot, manifest
+
+
+_REVENUE_PRIORITY = (
+    "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "Revenues",
+    "SalesRevenueNet",
+)
+_FEATURE_COLUMNS = (
+    "revenue_growth_acceleration",
+    "gross_margin_expansion",
+    "operating_margin_expansion",
+    "cash_asset_improvement",
+    "deleveraging",
+)
+
+
+def _fact_value(
+    facts: pd.DataFrame,
+    concepts: tuple[str, ...],
+    *,
+    duration: bool,
+) -> float:
+    for concept in concepts:
+        selected = facts.loc[facts["concept"].eq(concept)].copy()
+        if duration:
+            days = (
+                pd.to_datetime(selected["end_date"])
+                - pd.to_datetime(selected["start_date"])
+            ).dt.days
+            selected = selected.loc[days.between(70, 110)]
+        if selected.empty:
+            continue
+        values = pd.to_numeric(selected["value"], errors="coerce").dropna().unique()
+        if len(values) == 1:
+            return float(values[0])
+        if len(values) > 1:
+            return float("nan")
+    return float("nan")
+
+
+def _nearest_prior_index(
+    frame: pd.DataFrame, index: int, minimum_days: int, maximum_days: int
+) -> int | None:
+    current = frame.loc[index, "report_date"]
+    candidates = frame.loc[: index - 1, "report_date"].map(
+        lambda prior: (current - prior).days
+    )
+    candidates = candidates.loc[candidates.between(minimum_days, maximum_days)]
+    if candidates.empty:
+        return None
+    return int((candidates - (minimum_days + maximum_days) / 2).abs().idxmin())
+
+
+def derive_filing_features(
+    filings: pd.DataFrame, facts: pd.DataFrame
+) -> pd.DataFrame:
+    """Derive frozen issuer accounting changes from exact filing accessions."""
+    filing_required = {
+        "symbol",
+        "cik",
+        "accession",
+        "filing_date",
+        "report_date",
+    }
+    fact_required = {
+        "cik",
+        "accession",
+        "concept",
+        "start_date",
+        "end_date",
+        "value",
+    }
+    if missing := filing_required.difference(filings.columns):
+        raise ValueError(f"SEC_FILING_COLUMNS_MISSING:{sorted(missing)}")
+    if missing := fact_required.difference(facts.columns):
+        raise ValueError(f"SEC_FACT_COLUMNS_MISSING:{sorted(missing)}")
+    source_filings = filings.copy()
+    source_filings["filing_date"] = pd.to_datetime(
+        source_filings["filing_date"]
+    ).dt.date
+    source_filings["report_date"] = pd.to_datetime(
+        source_filings["report_date"]
+    ).dt.date
+    if source_filings["accession"].duplicated().any():
+        raise ValueError("SEC_FILING_ACCESSION_DUPLICATE")
+    source_facts = facts.copy()
+    source_facts["end_date"] = pd.to_datetime(source_facts["end_date"]).dt.date
+    records: list[dict[str, object]] = []
+    for filing in source_filings.itertuples(index=False):
+        selected = source_facts.loc[
+            source_facts["cik"].eq(filing.cik)
+            & source_facts["accession"].eq(filing.accession)
+            & source_facts["end_date"].eq(filing.report_date)
+        ]
+        revenue = _fact_value(selected, _REVENUE_PRIORITY, duration=True)
+        gross_profit = _fact_value(selected, ("GrossProfit",), duration=True)
+        operating_income = _fact_value(
+            selected, ("OperatingIncomeLoss",), duration=True
+        )
+        cash = _fact_value(
+            selected, ("CashAndCashEquivalentsAtCarryingValue",), duration=False
+        )
+        assets = _fact_value(selected, ("Assets",), duration=False)
+        liabilities = _fact_value(selected, ("Liabilities",), duration=False)
+        records.append(
+            {
+                "symbol": str(filing.symbol),
+                "cik": int(filing.cik),
+                "accession": str(filing.accession),
+                "filing_date": filing.filing_date,
+                "report_date": filing.report_date,
+                "revenue": revenue,
+                "gross_margin": gross_profit / revenue if revenue > 0 else np.nan,
+                "operating_margin": (
+                    operating_income / revenue if revenue > 0 else np.nan
+                ),
+                "cash_assets": cash / assets if assets > 0 else np.nan,
+                "liabilities_assets": (
+                    liabilities / assets if assets > 0 else np.nan
+                ),
+            }
+        )
+    result = pd.DataFrame.from_records(records)
+    if result.empty:
+        return result
+    feature_frames: list[pd.DataFrame] = []
+    for _symbol, group in result.groupby("symbol", sort=True, observed=True):
+        group = group.sort_values(["report_date", "accession"]).reset_index(drop=True)
+        group["revenue_yoy_growth"] = np.nan
+        group["gross_margin_expansion"] = np.nan
+        group["operating_margin_expansion"] = np.nan
+        group["cash_asset_improvement"] = np.nan
+        group["deleveraging"] = np.nan
+        prior_quarters: dict[int, int | None] = {}
+        for index in group.index:
+            prior_year = _nearest_prior_index(group, index, 330, 400)
+            prior_quarter = _nearest_prior_index(group, index, 70, 110)
+            prior_quarters[int(index)] = prior_quarter
+            if prior_year is not None:
+                prior_revenue = group.loc[prior_year, "revenue"]
+                if pd.notna(prior_revenue) and prior_revenue > 0:
+                    group.loc[index, "revenue_yoy_growth"] = (
+                        group.loc[index, "revenue"] / prior_revenue - 1.0
+                    )
+                group.loc[index, "gross_margin_expansion"] = (
+                    group.loc[index, "gross_margin"]
+                    - group.loc[prior_year, "gross_margin"]
+                )
+                group.loc[index, "operating_margin_expansion"] = (
+                    group.loc[index, "operating_margin"]
+                    - group.loc[prior_year, "operating_margin"]
+                )
+            if prior_quarter is not None:
+                group.loc[index, "cash_asset_improvement"] = (
+                    group.loc[index, "cash_assets"]
+                    - group.loc[prior_quarter, "cash_assets"]
+                )
+                group.loc[index, "deleveraging"] = (
+                    group.loc[prior_quarter, "liabilities_assets"]
+                    - group.loc[index, "liabilities_assets"]
+                )
+        group["revenue_growth_acceleration"] = np.nan
+        for index, prior_quarter in prior_quarters.items():
+            if prior_quarter is not None:
+                group.loc[index, "revenue_growth_acceleration"] = (
+                    group.loc[index, "revenue_yoy_growth"]
+                    - group.loc[prior_quarter, "revenue_yoy_growth"]
+                )
+        feature_frames.append(group)
+    return pd.concat(feature_frames, ignore_index=True)[
+        [
+            "symbol",
+            "cik",
+            "accession",
+            "filing_date",
+            "report_date",
+            *_FEATURE_COLUMNS,
+        ]
+    ]
+
+
+def build_event_features(
+    events: pd.DataFrame,
+    filing_features: pd.DataFrame,
+    identity: pd.DataFrame,
+) -> pd.DataFrame:
+    """Activate a filing on the next five event sessions and rank positive changes."""
+    required = {"symbol", "session_date", "bar_idx"}
+    if missing := required.difference(events.columns):
+        raise ValueError(f"SEC_EVENT_COLUMNS_MISSING:{sorted(missing)}")
+    result = events.copy()
+    result["session_date"] = pd.to_datetime(result["session_date"]).dt.date
+    if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
+        raise ValueError("SEC_EVENT_KEY_DUPLICATE")
+    sessions = sorted(result["session_date"].unique())
+    session_index = {session: index for index, session in enumerate(sessions)}
+    active_records: list[dict[str, object]] = []
+    features = filing_features.copy()
+    features["filing_date"] = pd.to_datetime(features["filing_date"]).dt.date
+    for filing in features.itertuples(index=False):
+        available = next(
+            (session for session in sessions if session > filing.filing_date), None
+        )
+        if available is None:
+            continue
+        start = session_index[available]
+        for session in sessions[start : start + 5]:
+            active_records.append(
+                {
+                    "symbol": str(filing.symbol),
+                    "session_date": session,
+                    "filing_date": filing.filing_date,
+                    "accession": filing.accession,
+                    **{
+                        column: getattr(filing, column)
+                        for column in _FEATURE_COLUMNS
+                    },
+                }
+            )
+    active = pd.DataFrame.from_records(active_records)
+    if not active.empty:
+        active = (
+            active.sort_values(["symbol", "session_date", "filing_date", "accession"])
+            .drop_duplicates(["symbol", "session_date"], keep="last")
+            .drop(columns="filing_date")
+        )
+        result = result.merge(
+            active, how="left", on=["symbol", "session_date"], validate="many_to_one"
+        )
+    else:
+        result["accession"] = pd.NA
+        for column in _FEATURE_COLUMNS:
+            result[column] = np.nan
+    for column in _FEATURE_COLUMNS:
+        raw = pd.to_numeric(result[column], errors="coerce").where(lambda value: value > 0)
+        grouped = raw.groupby(result["session_date"], observed=True)
+        lower = grouped.transform(lambda value: value.quantile(0.01))
+        upper = grouped.transform(lambda value: value.quantile(0.99))
+        winsorized = raw.clip(lower=lower, upper=upper)
+        result[column] = winsorized.groupby(
+            result["session_date"], observed=True
+        ).rank(method="average", pct=True)
+    known = result["symbol"].isin(set(identity["symbol"].astype(str)))
+    active_filing = result["accession"].notna()
+    any_feature = result[list(_FEATURE_COLUMNS)].notna().any(axis=1)
+    result["coverage_reason"] = np.select(
+        [~known, ~active_filing, ~any_feature],
+        [
+            "SEC_IDENTITY_UNAVAILABLE",
+            "SEC_NO_ACTIVE_FILING",
+            "SEC_FEATURE_MISSING",
+        ],
+        default="COVERED",
+    )
+    return result
