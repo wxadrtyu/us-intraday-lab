@@ -48,6 +48,15 @@ _REQUIRED_COLUMNS = {
         "DIRECT_INDIRECT_OWNERSHIP",
     },
 }
+TRAIN_START = pd.Timestamp("2021-01-01").date()
+TRAIN_END = pd.Timestamp("2023-12-31").date()
+FEATURE_COLUMNS = (
+    "insider_purchase_notional",
+    "insider_purchase_holding_fraction",
+    "insider_purchase_owner_cluster",
+    "insider_officer_director_purchase",
+    "insider_net_purchase_balance",
+)
 
 
 def quarter_urls() -> tuple[str, ...]:
@@ -286,3 +295,174 @@ def normalize_form4_filings(
         drop=True
     )
     return filings, rejected.reset_index(drop=True)
+
+
+def build_event_features(
+    events: pd.DataFrame,
+    filings: pd.DataFrame,
+    identities: pd.DataFrame,
+) -> pd.DataFrame:
+    """Project filing states causally onto five subsequent training sessions."""
+    event_required = {"symbol", "session_date", "bar_idx"}
+    if missing := event_required.difference(events.columns):
+        raise ValueError(f"SEC_FORM4_EVENT_COLUMNS_MISSING:{sorted(missing)}")
+    filing_required = {
+        "symbol",
+        "accession",
+        "filing_date",
+        "purchase_notional",
+        "sale_notional",
+        "net_open_market_balance",
+        "unique_purchasing_owners",
+        "officer_director_purchase_share",
+        "purchase_to_post_holding",
+    }
+    if missing := filing_required.difference(filings.columns):
+        raise ValueError(f"SEC_FORM4_FILING_COLUMNS_MISSING:{sorted(missing)}")
+    result = events.copy()
+    result["session_date"] = pd.to_datetime(
+        result["session_date"], errors="coerce"
+    ).dt.date
+    if result["session_date"].isna().any():
+        raise ValueError("SEC_FORM4_EVENT_DATE_INVALID")
+    result = result.loc[
+        result["session_date"].map(lambda value: TRAIN_START <= value <= TRAIN_END)
+    ].copy()
+    if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
+        raise ValueError("SEC_FORM4_EVENT_KEY_DUPLICATE")
+    source = filings.copy()
+    source["filing_date"] = pd.to_datetime(
+        source["filing_date"], errors="coerce"
+    ).dt.date
+    if source["filing_date"].isna().any():
+        raise ValueError("SEC_FORM4_FILING_DATE_INVALID")
+    if source.duplicated(["symbol", "accession"]).any():
+        raise ValueError("SEC_FORM4_FILING_KEY_DUPLICATE")
+    inventory = (
+        source[["symbol", "accession"]]
+        .drop_duplicates()
+        .groupby("symbol", observed=True)
+        .size()
+    )
+    result["sec_form4_qualifying_filing_count"] = (
+        result["symbol"].map(inventory).fillna(0).astype("int64")
+    )
+    sessions = sorted(result["session_date"].unique())
+    session_index = {session: index for index, session in enumerate(sessions)}
+    active_records: list[dict[str, object]] = []
+    for filing in source.itertuples(index=False):
+        available = next(
+            (session for session in sessions if session > filing.filing_date), None
+        )
+        if available is None:
+            continue
+        start = session_index[available]
+        for session in sessions[start : start + 5]:
+            active_records.append(
+                {
+                    "symbol": str(filing.symbol),
+                    "session_date": session,
+                    "accession": str(filing.accession),
+                    "filing_date": filing.filing_date,
+                    "purchase_notional": float(filing.purchase_notional),
+                    "sale_notional": float(filing.sale_notional),
+                    "unique_purchasing_owners": float(
+                        filing.unique_purchasing_owners
+                    ),
+                    "officer_director_purchase_share": float(
+                        filing.officer_director_purchase_share
+                    ),
+                    "purchase_to_post_holding": float(
+                        filing.purchase_to_post_holding
+                    ),
+                }
+            )
+    if active_records:
+        active = pd.DataFrame.from_records(active_records)
+        grouped_records: list[dict[str, object]] = []
+        for (symbol, session), group in active.groupby(
+            ["symbol", "session_date"], sort=True, observed=True
+        ):
+            purchase = float(group["purchase_notional"].sum())
+            sale = float(group["sale_notional"].sum())
+            absolute = purchase + sale
+            officer_weight = (
+                float(
+                    np.average(
+                        group["officer_director_purchase_share"],
+                        weights=group["purchase_notional"],
+                    )
+                )
+                if purchase > 0
+                else np.nan
+            )
+            holding = pd.to_numeric(
+                group["purchase_to_post_holding"], errors="coerce"
+            )
+            grouped_records.append(
+                {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "active_accessions": "|".join(sorted(group["accession"].unique())),
+                    "latest_filing_date": max(group["filing_date"]),
+                    "insider_purchase_notional": (
+                        float(np.log1p(purchase)) if purchase > 0 else np.nan
+                    ),
+                    "insider_purchase_holding_fraction": (
+                        float(holding.max())
+                        if purchase > 0 and holding.notna().any()
+                        else np.nan
+                    ),
+                    "insider_purchase_owner_cluster": (
+                        float(group["unique_purchasing_owners"].sum())
+                        if purchase > 0
+                        else np.nan
+                    ),
+                    "insider_officer_director_purchase": officer_weight,
+                    "insider_net_purchase_balance": (
+                        (purchase - sale) / absolute
+                        if purchase > 0 and absolute > 0
+                        else np.nan
+                    ),
+                }
+            )
+        active_state = pd.DataFrame.from_records(grouped_records)
+        active_state["sec_form4_feature_bearing"] = active_state[
+            list(FEATURE_COLUMNS)
+        ].notna().any(axis=1)
+        for column in FEATURE_COLUMNS:
+            raw = pd.to_numeric(active_state[column], errors="coerce").where(
+                lambda value: value > 0
+            )
+            grouped = raw.groupby(active_state["session_date"], observed=True)
+            lower = grouped.transform(lambda value: value.quantile(0.01))
+            upper = grouped.transform(lambda value: value.quantile(0.99))
+            winsorized = raw.clip(lower=lower, upper=upper)
+            active_state[column] = winsorized.groupby(
+                active_state["session_date"], observed=True
+            ).rank(method="average", pct=True)
+        result = result.merge(
+            active_state,
+            how="left",
+            on=["symbol", "session_date"],
+            validate="many_to_one",
+        )
+    else:
+        result["active_accessions"] = pd.NA
+        result["latest_filing_date"] = pd.NaT
+        result["sec_form4_feature_bearing"] = False
+        for column in FEATURE_COLUMNS:
+            result[column] = np.nan
+    known = result["symbol"].isin(set(identities["symbol"].astype(str)))
+    active = result["active_accessions"].notna()
+    feature = result["sec_form4_feature_bearing"].eq(True)
+    result["coverage_reason"] = np.select(
+        [~known, ~active, ~feature],
+        [
+            "SEC_FORM4_IDENTITY_UNAVAILABLE",
+            "SEC_FORM4_NO_ACTIVE_FILING",
+            "SEC_FORM4_FEATURE_MISSING",
+        ],
+        default="COVERED",
+    )
+    return result

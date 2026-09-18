@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
 from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -7,6 +8,7 @@ import pandas as pd
 import pytest
 
 from us_intraday_lab.data.sec_form4_insider_flow import (
+    build_event_features,
     normalize_form4_filings,
     parse_quarter_zip,
     quarter_urls,
@@ -147,3 +149,83 @@ def test_normalizer_rejects_broken_accession_relationship() -> None:
 
     with pytest.raises(ValueError, match="SEC_FORM4_TRANSACTION_ACCESSION_ORPHAN"):
         normalize_form4_filings(tables, _identities())
+
+
+def _filing(accession: str = "acc-1", filing_date: date = date(2022, 7, 29)):
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "cik": [1],
+            "accession": [accession],
+            "filing_date": [filing_date],
+            "period_of_report": [filing_date - timedelta(days=1)],
+            "purchase_notional": [10_000.0],
+            "sale_notional": [0.0],
+            "net_open_market_balance": [1.0],
+            "unique_purchasing_owners": [2],
+            "officer_director_purchase_share": [1.0],
+            "purchase_to_post_holding": [0.2],
+            "transaction_filing_lag_days": [1],
+            "late_reported": [False],
+            "qualifying_transaction_count": [2],
+            "source": ["2022q3_form345.zip"],
+        }
+    )
+
+
+def test_event_features_start_next_session_and_expire_after_five() -> None:
+    filing_day = date(2022, 7, 29)
+    sessions = [filing_day + timedelta(days=offset) for offset in range(7)]
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA"] * 7 + ["QQQ"] * 7,
+            "session_date": sessions * 2,
+            "bar_idx": [2] * 14,
+        }
+    )
+
+    result = build_event_features(events, _filing(), _identities())
+
+    aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
+    qqq = result.loc[result["symbol"].eq("QQQ")]
+    assert aaa.loc[0, "coverage_reason"] == "SEC_FORM4_NO_ACTIVE_FILING"
+    assert aaa.loc[1:5, "coverage_reason"].eq("COVERED").all()
+    assert aaa.loc[6, "coverage_reason"] == "SEC_FORM4_NO_ACTIVE_FILING"
+    assert aaa.loc[1:5, "active_accessions"].eq("acc-1").all()
+    assert qqq["coverage_reason"].eq("SEC_FORM4_IDENTITY_UNAVAILABLE").all()
+
+
+def test_raw_inventory_survives_lossy_event_projection() -> None:
+    filings = pd.concat(
+        [
+            _filing(f"acc-{index}", date(2022, 7, 25) + timedelta(days=index))
+            for index in range(4)
+        ],
+        ignore_index=True,
+    )
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "session_date": [date(2022, 8, 1)],
+            "bar_idx": [2],
+        }
+    )
+
+    result = build_event_features(events, filings, _identities())
+
+    assert result.loc[0, "sec_form4_qualifying_filing_count"] == 4
+    assert result.loc[0, "active_accessions"] == "acc-0|acc-1|acc-2|acc-3"
+
+
+def test_event_features_exclude_dates_after_training_boundary() -> None:
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA", "AAA"],
+            "session_date": ["2023-12-29", "2024-01-02"],
+            "bar_idx": [2, 2],
+        }
+    )
+
+    result = build_event_features(events, _filing(), _identities())
+
+    assert result["session_date"].tolist() == [date(2023, 12, 29)]
