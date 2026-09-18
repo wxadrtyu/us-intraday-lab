@@ -382,6 +382,7 @@ def test_event_features_preserve_raw_availability_for_negative_changes() -> None
     result = build_event_features(events, filing_features, identity)
 
     assert result["sec_feature_bearing"].tolist() == [True]
+    assert result["sec_feature_bearing_filing_count"].tolist() == [1]
     assert result["revenue_growth_acceleration"].isna().all()
     assert result["coverage_reason"].tolist() == ["SEC_FEATURE_MISSING"]
 

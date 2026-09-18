@@ -487,6 +487,16 @@ def build_event_features(
     session_index = {session: index for index, session in enumerate(sessions)}
     active_records: list[dict[str, object]] = []
     features = filing_features.copy()
+    feature_bearing = features[list(_FEATURE_COLUMNS)].notna().any(axis=1)
+    feature_bearing_counts = (
+        features.loc[feature_bearing, ["symbol", "accession"]]
+        .drop_duplicates()
+        .groupby("symbol", observed=True)
+        .size()
+    )
+    result["sec_feature_bearing_filing_count"] = (
+        result["symbol"].map(feature_bearing_counts).fillna(0).astype("int64")
+    )
     features["filing_date"] = pd.to_datetime(features["filing_date"]).dt.date
     for filing in features.itertuples(index=False):
         available = next(

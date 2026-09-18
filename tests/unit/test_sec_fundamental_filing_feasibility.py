@@ -11,8 +11,8 @@ from us_intraday_lab.sec_fundamental_filing_feasibility import (
 )
 
 
-def test_corrected_diagnostic_has_distinct_v2_identity() -> None:
-    assert DIAGNOSTIC_ID == "sec-fundamental-filing-training-feasibility-v2"
+def test_corrected_diagnostic_has_distinct_v3_identity() -> None:
+    assert DIAGNOSTIC_ID == "sec-fundamental-filing-training-feasibility-v3"
 
 
 def _feature_events(issuers: int, filings_each: int) -> pd.DataFrame:
@@ -24,6 +24,7 @@ def _feature_events(issuers: int, filings_each: int) -> pd.DataFrame:
                     "symbol": f"S{issuer:03d}",
                     "accession": f"A{issuer:03d}-{filing}",
                     "sec_feature_bearing": True,
+                    "sec_feature_bearing_filing_count": filings_each,
                     "revenue_growth_acceleration": 0.8,
                     "gross_margin_expansion": pd.NA,
                     "operating_margin_expansion": pd.NA,
@@ -58,6 +59,16 @@ def test_coverage_gate_counts_finite_raw_features_not_positive_signals() -> None
     frame = _feature_events(300, 4)
     for column in FAMILY_FEATURES.values():
         frame[column[0]] = pd.NA
+
+    result = coverage_gate(frame)
+
+    assert result["passed"] is True
+    assert result["qualified_issuers"] == 300
+    assert result["feature_bearing_events"] == 1200
+
+
+def test_coverage_gate_uses_issuer_inventory_not_projected_event_rows() -> None:
+    frame = _feature_events(300, 4).drop_duplicates("symbol")
 
     result = coverage_gate(frame)
 

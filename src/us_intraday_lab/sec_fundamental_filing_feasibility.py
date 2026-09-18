@@ -17,7 +17,7 @@ from us_intraday_lab.cboe_volatility_regime_feasibility import (
     run_diagnostic as run_configured_diagnostic,
 )
 
-DIAGNOSTIC_ID = "sec-fundamental-filing-training-feasibility-v2"
+DIAGNOSTIC_ID = "sec-fundamental-filing-training-feasibility-v3"
 FAMILIES = (
     "revenue_acceleration",
     "gross_margin_expansion",
@@ -43,17 +43,21 @@ FAMILY_FEATURES = {
 
 def coverage_gate(features: pd.DataFrame) -> dict[str, object]:
     """Fail closed unless issuer and feature-bearing filing floors are met."""
-    required = {"symbol", "accession", "sec_feature_bearing"}
+    count_column = "sec_feature_bearing_filing_count"
+    required = {"symbol", count_column}
     if missing := required.difference(features.columns):
         raise ValueError(f"SEC_COVERAGE_COLUMNS_MISSING:{sorted(missing)}")
-    bearing = features.loc[
-        features["accession"].notna()
-        & features["sec_feature_bearing"].fillna(False).astype(bool),
-        ["symbol", "accession"],
-    ].drop_duplicates()
-    counts = bearing.groupby("symbol", observed=True).size()
+    counts_numeric = pd.to_numeric(features[count_column], errors="coerce")
+    if counts_numeric.isna().any() or counts_numeric.lt(0).any():
+        raise ValueError("SEC_COVERAGE_COUNT_INVALID")
+    inventory = features.assign(_feature_bearing_count=counts_numeric).groupby(
+        "symbol", observed=True
+    )["_feature_bearing_count"]
+    if inventory.nunique().gt(1).any():
+        raise ValueError("SEC_COVERAGE_COUNT_INCONSISTENT")
+    counts = inventory.max().astype("int64")
     qualified_issuers = int(counts.ge(4).sum())
-    feature_bearing_events = len(bearing)
+    feature_bearing_events = int(counts.sum())
     return {
         "passed": bool(qualified_issuers >= 300 and feature_bearing_events >= 1200),
         "qualified_issuers": qualified_issuers,
