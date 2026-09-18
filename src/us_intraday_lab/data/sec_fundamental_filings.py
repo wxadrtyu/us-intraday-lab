@@ -111,6 +111,7 @@ def parse_submissions(body: bytes, cik: int) -> pd.DataFrame:
     if len(lengths) != 1:
         raise ValueError("SEC_SUBMISSIONS_COLUMN_LENGTH_MISMATCH")
     frame = pd.DataFrame({column: recent[column] for column in columns})
+    frame = frame.loc[frame["form"].astype(str).eq("10-Q")].copy()
     filing_dates = pd.to_datetime(frame["filingDate"], errors="coerce")
     report_dates = pd.to_datetime(frame["reportDate"], errors="coerce")
     if filing_dates.isna().any() or report_dates.isna().any():
@@ -125,8 +126,7 @@ def parse_submissions(body: bytes, cik: int) -> pd.DataFrame:
         }
     )
     result = result.loc[
-        result["form"].eq("10-Q")
-        & result["filing_date"].map(lambda value: TRAIN_START <= value <= TRAIN_END)
+        result["filing_date"].map(lambda value: TRAIN_START <= value <= TRAIN_END)
     ].copy()
     if result["accession"].duplicated().any():
         raise ValueError("SEC_SUBMISSIONS_ACCESSION_DUPLICATE")
