@@ -185,8 +185,9 @@ def normalize_8k_filings(
                 )
                 acceptance_timestamp = pd.to_datetime(
                     str(recent["acceptanceDateTime"][index]),
-                    format="%Y%m%d%H%M%S",
+                    format="mixed",
                     errors="raise",
+                    utc=True,
                 )
                 size = int(recent["size"][index])
             except (TypeError, ValueError):

@@ -130,3 +130,19 @@ def test_normalizer_rejects_conflicting_duplicate_accession() -> None:
 
     with pytest.raises(ValueError, match="SEC_8K_ACCESSION_CONFLICT"):
         normalize_8k_filings([("first", first), ("second", second)], identities)
+
+
+def test_normalizer_accepts_official_iso_acceptance_timestamp() -> None:
+    recent = {key: list(value) for key, value in REQUIRED_RECENT.items()}
+    recent["acceptanceDateTime"] = ["2022-02-01T16:30:00.000Z"]
+    identities = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    filings, rejected = normalize_8k_filings(
+        [("current", submission_payload(recent=recent))], identities
+    )
+
+    assert len(filings) == 1
+    assert filings.loc[0, "acceptance_timestamp"].isoformat() == (
+        "2022-02-01T16:30:00+00:00"
+    )
+    assert rejected.empty
