@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = (
@@ -231,3 +232,131 @@ def normalize_8k_filings(
         rejected, columns=["source", "cik", "accession_number", "reason"]
     )
     return filings, rejection_frame
+
+
+def build_event_features(
+    events: pd.DataFrame,
+    filings: pd.DataFrame,
+    identities: pd.DataFrame,
+) -> pd.DataFrame:
+    """Project accepted 8-K categories onto the next three sample sessions."""
+    event_required = {"symbol", "session_date", "bar_idx"}
+    if missing := event_required.difference(events.columns):
+        raise ValueError(f"SEC_8K_EVENT_COLUMNS_MISSING:{sorted(missing)}")
+    filing_required = {
+        "symbol",
+        "cik",
+        "accession_number",
+        "acceptance_timestamp",
+        "items",
+        "size",
+        *CATEGORY_ITEMS,
+    }
+    if missing := filing_required.difference(filings.columns):
+        raise ValueError(f"SEC_8K_FILING_COLUMNS_MISSING:{sorted(missing)}")
+    result = events.copy()
+    result["symbol"] = result["symbol"].astype(str)
+    result["session_date"] = pd.to_datetime(
+        result["session_date"], errors="raise"
+    ).dt.date
+    result = result.loc[
+        result["session_date"].map(
+            lambda value: date(2021, 1, 1) <= value <= date(2023, 12, 31)
+        )
+    ].copy()
+    if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
+        raise ValueError("SEC_8K_EVENT_KEY_DUPLICATE")
+    source = filings.copy()
+    source["symbol"] = source["symbol"].astype(str)
+    source["acceptance_timestamp"] = pd.to_datetime(
+        source["acceptance_timestamp"], errors="raise", utc=True
+    )
+    if source.duplicated(["symbol", "accession_number"]).any():
+        raise ValueError("SEC_8K_SYMBOL_ACCESSION_DUPLICATE")
+    filing_counts = (
+        source.groupby("symbol", observed=True)["accession_number"].nunique()
+    )
+    result["sec_8k_categorized_filing_count"] = (
+        result["symbol"].map(filing_counts).fillna(0).astype("int64")
+    )
+    sessions = sorted(result["session_date"].unique())
+    session_positions = {session: index for index, session in enumerate(sessions)}
+    active_records: list[dict[str, object]] = []
+    for filing in source.itertuples(index=False):
+        acceptance_date = filing.acceptance_timestamp.date()
+        available = next(
+            (session for session in sessions if session > acceptance_date), None
+        )
+        if available is None:
+            continue
+        start = session_positions[available]
+        for session in sessions[start : start + 3]:
+            active_records.append(
+                {
+                    "symbol": filing.symbol,
+                    "session_date": session,
+                    "accession_number": filing.accession_number,
+                    "acceptance_timestamp": filing.acceptance_timestamp,
+                    "item_count": len(filing.items),
+                    "size": filing.size,
+                    **{
+                        category: bool(getattr(filing, category))
+                        for category in CATEGORY_ITEMS
+                    },
+                }
+            )
+    active = pd.DataFrame.from_records(active_records)
+    if not active.empty:
+        records: list[dict[str, object]] = []
+        for (symbol, session), group in active.groupby(
+            ["symbol", "session_date"], sort=True, observed=True
+        ):
+            latest = group["acceptance_timestamp"].max()
+            records.append(
+                {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "sec_8k_active_accessions": tuple(
+                        sorted(group["accession_number"].astype(str).unique())
+                    ),
+                    "sec_8k_latest_acceptance_timestamp": latest,
+                    "sec_8k_active_filing_count": int(
+                        group["accession_number"].nunique()
+                    ),
+                    "sec_8k_active_item_count": int(group["item_count"].sum()),
+                    "sec_8k_log1p_size": float(
+                        np.log1p(pd.to_numeric(group["size"]).sum())
+                    ),
+                    "sec_8k_days_since_latest_acceptance": int(
+                        (session - latest.date()).days
+                    ),
+                    **{
+                        f"sec_8k_{category}": int(group[category].any())
+                        for category in CATEGORY_ITEMS
+                    },
+                }
+            )
+        aggregated = pd.DataFrame.from_records(records)
+        result = result.merge(
+            aggregated,
+            how="left",
+            on=["symbol", "session_date"],
+            validate="many_to_one",
+        )
+    else:
+        result["sec_8k_active_accessions"] = pd.NA
+        result["sec_8k_latest_acceptance_timestamp"] = pd.NaT
+        result["sec_8k_active_filing_count"] = np.nan
+        result["sec_8k_active_item_count"] = np.nan
+        result["sec_8k_log1p_size"] = np.nan
+        result["sec_8k_days_since_latest_acceptance"] = np.nan
+        for category in CATEGORY_ITEMS:
+            result[f"sec_8k_{category}"] = np.nan
+    known = result["symbol"].isin(set(identities["symbol"].astype(str)))
+    active_mask = result["sec_8k_active_filing_count"].notna()
+    result["coverage_reason"] = np.select(
+        [~known, ~active_mask],
+        ["SEC_IDENTITY_UNAVAILABLE", "SEC_8K_NO_ACTIVE_FILING"],
+        default="COVERED",
+    )
+    return result

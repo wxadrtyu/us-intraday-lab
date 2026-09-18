@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from us_intraday_lab.data.sec_8k_events import (
+    build_event_features,
     normalize_8k_filings,
     parse_items,
     select_training_fragments,
@@ -146,3 +147,73 @@ def test_normalizer_accepts_official_iso_acceptance_timestamp() -> None:
         "2022-02-01T16:30:00+00:00"
     )
     assert rejected.empty
+
+
+def _event_sessions() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA"] * 5 + ["QQQ"] * 5,
+            "session_date": pd.to_datetime(
+                [
+                    "2022-01-03",
+                    "2022-01-04",
+                    "2022-01-05",
+                    "2022-01-06",
+                    "2022-01-07",
+                ]
+                * 2
+            ).date,
+            "bar_idx": [2] * 10,
+        }
+    )
+
+
+def _filing(accession: str = "acc-1") -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "cik": [1],
+            "accession_number": [accession],
+            "filing_date": [date(2022, 1, 3)],
+            "report_date": [date(2022, 1, 3)],
+            "acceptance_timestamp": [pd.Timestamp("2022-01-03T12:00:00Z")],
+            "items": [("2.02", "8.01")],
+            "size": [999],
+            "earnings_results": [True],
+            "material_agreement": [False],
+            "acquisition_disposition": [False],
+            "director_officer_change": [False],
+            "other_material_event": [True],
+        }
+    )
+
+
+def test_event_state_starts_next_session_and_expires_after_three() -> None:
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    result = build_event_features(_event_sessions(), _filing(), identity)
+
+    aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
+    qqq = result.loc[result["symbol"].eq("QQQ")]
+    assert aaa.loc[0, "coverage_reason"] == "SEC_8K_NO_ACTIVE_FILING"
+    assert aaa.loc[1:3, "sec_8k_earnings_results"].eq(1).all()
+    assert aaa.loc[1:3, "sec_8k_other_material_event"].eq(1).all()
+    assert aaa.loc[4, "coverage_reason"] == "SEC_8K_NO_ACTIVE_FILING"
+    assert qqq["coverage_reason"].eq("SEC_IDENTITY_UNAVAILABLE").all()
+
+
+def test_raw_filing_inventory_survives_event_projection() -> None:
+    filings = pd.concat(
+        [_filing("acc-1"), _filing("acc-2"), _filing("acc-3")],
+        ignore_index=True,
+    )
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    result = build_event_features(_event_sessions(), filings, identity)
+
+    aaa = result.loc[result["symbol"].eq("AAA")]
+    assert aaa["sec_8k_categorized_filing_count"].eq(3).all()
+    active = aaa.loc[aaa["coverage_reason"].eq("COVERED")].iloc[0]
+    assert active["sec_8k_active_filing_count"] == 3
+    assert active["sec_8k_active_item_count"] == 6
+    assert active["sec_8k_active_accessions"] == ("acc-1", "acc-2", "acc-3")
