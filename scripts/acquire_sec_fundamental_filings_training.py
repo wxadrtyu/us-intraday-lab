@@ -6,7 +6,7 @@ import argparse
 import json
 import time
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from uuid import uuid4
 
@@ -42,6 +42,11 @@ class SecFetcher:
                 self._last_request = time.monotonic()
                 if error.code != 429 and error.code < 500:
                     raise
+                if attempt == 3:
+                    raise
+                time.sleep(2**attempt)
+            except URLError:
+                self._last_request = time.monotonic()
                 if attempt == 3:
                     raise
                 time.sleep(2**attempt)
