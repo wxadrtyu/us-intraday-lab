@@ -214,6 +214,7 @@ def test_raw_inventory_survives_lossy_event_projection() -> None:
     result = build_event_features(events, filings, _identities())
 
     assert result.loc[0, "sec_form4_qualifying_filing_count"] == 4
+    assert result.loc[0, "sec_form4_qualifying_filing_years"] == "2022"
     assert result.loc[0, "active_accessions"] == "acc-0|acc-1|acc-2|acc-3"
 
 

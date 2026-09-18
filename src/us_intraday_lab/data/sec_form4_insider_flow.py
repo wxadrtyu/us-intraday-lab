@@ -347,6 +347,10 @@ def build_event_features(
     result["sec_form4_qualifying_filing_count"] = (
         result["symbol"].map(inventory).fillna(0).astype("int64")
     )
+    filing_years = sorted({value.year for value in source["filing_date"]})
+    result["sec_form4_qualifying_filing_years"] = "|".join(
+        str(year) for year in filing_years
+    )
     sessions = sorted(result["session_date"].unique())
     session_index = {session: index for index, session in enumerate(sessions)}
     active_records: list[dict[str, object]] = []
