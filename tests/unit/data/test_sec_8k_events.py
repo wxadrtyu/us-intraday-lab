@@ -196,6 +196,7 @@ def test_event_state_starts_next_session_and_expires_after_three() -> None:
     aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
     qqq = result.loc[result["symbol"].eq("QQQ")]
     assert aaa.loc[0, "coverage_reason"] == "SEC_8K_NO_ACTIVE_FILING"
+    assert aaa["sec_8k_cik"].eq(1).all()
     assert aaa.loc[1:3, "sec_8k_earnings_results"].eq(1).all()
     assert aaa.loc[1:3, "sec_8k_other_material_event"].eq(1).all()
     assert aaa.loc[4, "coverage_reason"] == "SEC_8K_NO_ACTIVE_FILING"

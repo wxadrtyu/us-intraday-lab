@@ -1,0 +1,9 @@
+# SEC 8-K structured-event training feasibility conclusion (local fallback)
+
+- summary: The fixed 527-symbol 2021-2023 sample is coverage-limited and is not full market. Official SEC current submissions and every exact declared historical fragment were frozen with hashes; 65 symbols remained unmatched without inference. The canonical snapshot produced 12,487 categorized symbol-filings across all three years, with 413 unique exact-mapped CIK issuers having at least three filings, so the preregistered 300-issuer and 5,000-event gate passed. The five-family, 400-cell training-only cost and delay diagnostic completed with zero retained cells and zero retained families. The best-ranked cell was acquisition/disposition continuation at decision bar 5, six-bar holding, top three, but it had only 71 signal sessions, 3.8830% standard annualized return, 0.3594 information ratio, one positive calendar year, 1.6870% annualized return at 18 bp, and 2.6042% under one-bar delay. The SEC 8-K family is abandoned without local tuning, development/consumed loading, version creation, Paper activation, pool mutation, or order routing. Full-suite verification recorded 1,355 passes and the same 16 unrelated pre-existing campaign failures.
+- stage: training-feasibility
+- kpi_version: sec-8k-event-training-feasibility-v1
+- tags: project:quant-agent-team, market:cn_a, freq:daily, market:us, freq:5min, stage:training-feasibility, strategy:sec-8k-event, status:abandoned
+- next_step: Preserve source, failed-v1, canonical-v2, feature, and 400-cell hashes. Do not tune SEC 8-K or load later periods. Preregister and test a genuinely different free auditable point-in-time causal source while keeping all execution and Paper paths forbidden.
+
+MCP memory was unavailable in this session, so this file is the required local fallback and should be copied into MCP when that service is restored.

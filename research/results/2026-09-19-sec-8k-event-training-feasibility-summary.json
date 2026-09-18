@@ -1,0 +1,77 @@
+{
+  "best_cell": {
+    "cost_18bp": {
+      "annualized_return": 0.01686986086744846,
+      "calendar_year_returns": {
+        "2021": -0.06182401017005579,
+        "2022": 0.14036420048380482,
+        "2023": -0.01738872184175111
+      },
+      "information_ratio": 0.19006090832252379,
+      "max_drawdown": 0.1269135631246261,
+      "positive_calendar_years": 1
+    },
+    "decision_bar": 5,
+    "delay_5m_9bp": {
+      "annualized_return": 0.02604225483539402,
+      "calendar_year_returns": {
+        "2021": -0.03290370961120459,
+        "2022": 0.11311207941845125,
+        "2023": 0.0031230422952090997
+      },
+      "information_ratio": 0.4031701158785305,
+      "max_drawdown": 0.06011894031325116,
+      "positive_calendar_years": 2
+    },
+    "family": "acquisition_disposition",
+    "holding_bars": 6,
+    "retention_floor_passed": false,
+    "signal_sessions": 71,
+    "standard_9bp": {
+      "annualized_return": 0.03883015104148191,
+      "calendar_year_returns": {
+        "2021": -0.031758601267275366,
+        "2022": 0.16933475438492596,
+        "2023": -0.010275835081679396
+      },
+      "information_ratio": 0.359412380516001,
+      "max_drawdown": 0.11334954075422332,
+      "positive_calendar_years": 1
+    },
+    "standard_annualized_return": 0.03883015104148191,
+    "standard_information_ratio": 0.359412380516001,
+    "top_count": 3
+  },
+  "calendar_sessions": 753,
+  "categorized_symbol_filing_event_floor": 5000,
+  "categorized_symbol_filing_events": 12487,
+  "cells_completed": 400,
+  "cells_sha256": "8d53f2489ab784d940c8e69e401a5b8b4fcaabc8e686f034aac1d0819fae14a3",
+  "covered_event_rows": 42871,
+  "decision": "ABANDON_SEC_8K_EVENT_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "sec-8k-event-training-feasibility-v1",
+  "elapsed_seconds": 4.322392699999909,
+  "event_rows": 388745,
+  "event_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "feature_sha256": "bc16da01fc834a634605f989b72dbd7e4310c145a01ee980fdf530092cde1422",
+  "filing_years": [
+    2021,
+    2022,
+    2023
+  ],
+  "manifest_sha256": "fde72a1057a1a82f34e00c9749234436b3fdb5622d6bdd0a97f893ebe7d5e27b",
+  "minimum_filings_per_issuer": 3,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "passed": true,
+  "period": "2021-01-01/2023-12-31",
+  "qualified_issuer_floor": 300,
+  "qualified_issuers": 413,
+  "required_sources_complete": true,
+  "retained_cells": 0,
+  "retained_families": [],
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}

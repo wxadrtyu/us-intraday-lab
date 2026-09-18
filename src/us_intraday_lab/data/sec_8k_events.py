@@ -256,6 +256,13 @@ def build_event_features(
         raise ValueError(f"SEC_8K_FILING_COLUMNS_MISSING:{sorted(missing)}")
     result = events.copy()
     result["symbol"] = result["symbol"].astype(str)
+    identity_map = identities[["symbol", "cik"]].copy()
+    identity_map["symbol"] = identity_map["symbol"].astype(str)
+    if identity_map["symbol"].duplicated().any():
+        raise ValueError("SEC_8K_IDENTITY_SYMBOL_DUPLICATE")
+    result["sec_8k_cik"] = result["symbol"].map(
+        identity_map.set_index("symbol")["cik"]
+    )
     result["session_date"] = pd.to_datetime(
         result["session_date"], errors="raise"
     ).dt.date
