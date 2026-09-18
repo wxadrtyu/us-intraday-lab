@@ -7,6 +7,7 @@ import json
 from collections.abc import Callable
 from datetime import date
 from pathlib import Path
+from urllib.error import HTTPError
 from uuid import uuid4
 
 import numpy as np
@@ -204,6 +205,7 @@ def acquire_training_snapshot(
         }
     ]
     normalized: list[pd.DataFrame] = []
+    companyfacts_unavailable: list[str] = []
     for identity in identities.itertuples(index=False):
         cik = int(identity.cik)
         submissions_url = SUBMISSIONS_URL.format(cik=cik)
@@ -211,22 +213,29 @@ def acquire_training_snapshot(
         submissions_path = raw_root / "submissions" / f"CIK{cik:010d}.json"
         facts_path = raw_root / "companyfacts" / f"CIK{cik:010d}.json"
         submissions_body = _load_or_fetch(submissions_path, submissions_url, fetch)
-        facts_body = _load_or_fetch(facts_path, facts_url, fetch)
-        sources.extend(
-            [
-                {
-                    "url": submissions_url,
-                    "raw_path": str(submissions_path.resolve()),
-                    "bytes": len(submissions_body),
-                    "sha256": _sha256(submissions_body),
-                },
-                {
-                    "url": facts_url,
-                    "raw_path": str(facts_path.resolve()),
-                    "bytes": len(facts_body),
-                    "sha256": _sha256(facts_body),
-                },
-            ]
+        sources.append(
+            {
+                "url": submissions_url,
+                "raw_path": str(submissions_path.resolve()),
+                "bytes": len(submissions_body),
+                "sha256": _sha256(submissions_body),
+            }
+        )
+        try:
+            facts_body = _load_or_fetch(facts_path, facts_url, fetch)
+        except HTTPError as error:
+            if error.code != 404:
+                raise
+            companyfacts_unavailable.append(str(identity.symbol))
+            sources.append({"url": facts_url, "status": 404})
+            continue
+        sources.append(
+            {
+                "url": facts_url,
+                "raw_path": str(facts_path.resolve()),
+                "bytes": len(facts_body),
+                "sha256": _sha256(facts_body),
+            }
         )
         filings = parse_submissions(submissions_body, cik)
         facts = parse_companyfacts(facts_body, cik)
@@ -271,6 +280,7 @@ def acquire_training_snapshot(
         "requested_symbols": len(set(symbols)),
         "matched_symbols": len(identities),
         "unmatched_symbols": missing["symbol"].tolist(),
+        "companyfacts_unavailable_symbols": companyfacts_unavailable,
         "normalized_fact_rows": len(snapshot),
         "sources": sources,
         "training_only": True,

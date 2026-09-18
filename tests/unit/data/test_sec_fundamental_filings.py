@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import date, timedelta
+from urllib.error import HTTPError
 
 import pandas as pd
 import pytest
@@ -228,6 +229,41 @@ def test_acquisition_requests_only_exact_identities_and_resumes_raw_bytes(
 
     assert resumed.equals(snapshot)
     assert resumed_manifest == manifest
+
+
+def test_acquisition_preserves_companyfacts_404_as_structural_missing(tmp_path) -> None:
+    ticker_body = json.dumps(
+        {
+            "fields": ["cik", "name", "ticker", "exchange"],
+            "data": [[1041130, "Unavailable Corp.", "MISS", "NYSE"]],
+        }
+    ).encode()
+    submissions_body = json.dumps(
+        {
+            "cik": "1041130",
+            "filings": {
+                "recent": {
+                    "accessionNumber": [],
+                    "filingDate": [],
+                    "reportDate": [],
+                    "form": [],
+                }
+            },
+        }
+    ).encode()
+
+    def fetch(url: str) -> bytes:
+        if url == TICKER_MAP_URL:
+            return ticker_body
+        if url == SUBMISSIONS_URL.format(cik=1041130):
+            return submissions_body
+        raise HTTPError(url, 404, "Not Found", None, None)
+
+    snapshot, manifest = acquire_training_snapshot({"MISS"}, fetch, tmp_path / "raw")
+
+    assert snapshot.empty
+    assert manifest["companyfacts_unavailable_symbols"] == ["MISS"]
+    assert manifest["sources"][-1]["status"] == 404
 
 
 def _quarterly_filing_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
