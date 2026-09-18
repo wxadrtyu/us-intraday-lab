@@ -4,10 +4,15 @@ import pandas as pd
 
 from us_intraday_lab.cboe_volatility_regime_feasibility import score_family
 from us_intraday_lab.sec_fundamental_filing_feasibility import (
+    DIAGNOSTIC_ID,
     FAMILY_FEATURES,
     coverage_gate,
     specifications,
 )
+
+
+def test_corrected_diagnostic_has_distinct_v2_identity() -> None:
+    assert DIAGNOSTIC_ID == "sec-fundamental-filing-training-feasibility-v2"
 
 
 def _feature_events(issuers: int, filings_each: int) -> pd.DataFrame:

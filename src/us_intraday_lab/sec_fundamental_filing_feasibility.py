@@ -17,6 +17,7 @@ from us_intraday_lab.cboe_volatility_regime_feasibility import (
     run_diagnostic as run_configured_diagnostic,
 )
 
+DIAGNOSTIC_ID = "sec-fundamental-filing-training-feasibility-v2"
 FAMILIES = (
     "revenue_acceleration",
     "gross_margin_expansion",
@@ -96,7 +97,7 @@ def run_diagnostic(
         return pd.DataFrame(), {
             "schema_version": "1.0.0",
             "status": "COMPLETE",
-            "diagnostic_id": "sec-fundamental-filing-training-feasibility-v1",
+            "diagnostic_id": DIAGNOSTIC_ID,
             "period": "2021-01-01/2023-12-31",
             "event_sha256": event_sha256,
             "feature_sha256": feature_sha256,
@@ -124,7 +125,7 @@ def run_diagnostic(
         expected_feature_sha256=expected_feature_sha256,
         families=FAMILIES,
         family_features=FAMILY_FEATURES,
-        diagnostic_id="sec-fundamental-filing-training-feasibility-v1",
+        diagnostic_id=DIAGNOSTIC_ID,
         proceed_decision="ACQUIRE_DEVELOPMENT_SEC_FUNDAMENTAL_FILINGS",
         abandon_decision="ABANDON_SEC_FUNDAMENTAL_FILINGS_NO_VERSION_CREATED",
     )
