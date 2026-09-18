@@ -393,3 +393,15 @@ def test_event_features_exclude_dates_after_training_boundary() -> None:
     result = build_event_features(events, filing_features, identity)
 
     assert result["session_date"].tolist() == [date(2023, 12, 29)]
+
+
+def test_filing_features_allow_one_accession_for_two_share_classes() -> None:
+    filings, facts = _quarterly_filing_inputs()
+    second_class = filings.copy()
+    second_class["symbol"] = "AAB"
+    shared_filings = pd.concat([filings, second_class], ignore_index=True)
+
+    result = derive_filing_features(shared_filings, facts)
+
+    assert set(result["symbol"]) == {"AAA", "AAB"}
+    assert len(result) == 2 * len(filings)

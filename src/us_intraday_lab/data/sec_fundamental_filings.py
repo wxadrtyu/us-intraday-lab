@@ -369,7 +369,7 @@ def derive_filing_features(
     source_filings["report_date"] = pd.to_datetime(
         source_filings["report_date"]
     ).dt.date
-    if source_filings["accession"].duplicated().any():
+    if source_filings.duplicated(["symbol", "accession"]).any():
         raise ValueError("SEC_FILING_ACCESSION_DUPLICATE")
     source_facts = facts.copy()
     source_facts["end_date"] = pd.to_datetime(source_facts["end_date"]).dt.date
