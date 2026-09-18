@@ -1,0 +1,9 @@
+# SEC Form 4 insider-flow training feasibility conclusion (local fallback)
+
+- summary: The fixed 527-symbol 2021-2023 training sample is coverage-limited and is not full market. Twelve official SEC quarterly Insider Transactions ZIP files were acquired sequentially with immutable hashes. Exact CIK matching retained 462 symbols and preserved 65 unmatched symbols. Normalization produced 27,100 qualifying original Form 4 issuer-filing events across 411 symbols; 409 issuers had at least three qualifying filings, so the preregistered 300-issuer and 3,000-event coverage gate passed across 2021, 2022, and 2023. The frozen five-family, 400-cell cost and delay diagnostic completed with zero retained cells and zero retained families. The best cell was net purchase balance at decision bar 17, six-bar holding, and top one, but it had -4.4898% standard annualized return, -0.3414 information ratio, -17.2559% annualized return at 18 bp, and -6.7072% annualized return under one-bar delay. The Form 4 clue is abandoned without loading development or consumed periods, creating a strategy version, activating Paper, modifying a pool, or enabling an order route.
+- stage: training-feasibility
+- kpi_version: sec-form4-insider-flow-training-feasibility-v1
+- tags: project:quant-agent-team, market:cn_a, freq:daily, market:us, freq:5min, stage:training-feasibility, strategy:sec-form4-insider-flow, status:abandoned
+- next_step: Preserve the 12 raw ZIP hashes, 65 unmatched symbols, normalized snapshot hash, rejection hash, causal feature hash, and 400-cell result. Do not tune the Form 4 family or load development-period insider data. Continue with a separately preregistered, genuinely different causal source while keeping execution and Paper paths forbidden.
+
+MCP memory was unavailable in this session, so this file is the required local fallback and should be copied into MCP when that service is restored.

@@ -1,0 +1,75 @@
+{
+  "best_cell": {
+    "cost_18bp": {
+      "annualized_return": -0.1725592695468342,
+      "calendar_year_returns": {
+        "2021": -0.1676603557513463,
+        "2022": -0.1276705053363567,
+        "2023": -0.21799618723116287
+      },
+      "information_ratio": -1.5816511473398809,
+      "max_drawdown": 0.43520265305024153,
+      "positive_calendar_years": 0
+    },
+    "decision_bar": 17,
+    "delay_5m_9bp": {
+      "annualized_return": -0.0670723217623247,
+      "calendar_year_returns": {
+        "2021": -0.045624319066883245,
+        "2022": -0.029031177409619024,
+        "2023": -0.12304312486621338
+      },
+      "information_ratio": -0.5480478589602773,
+      "max_drawdown": 0.23008594392166126,
+      "positive_calendar_years": 0
+    },
+    "family": "net_purchase_balance",
+    "holding_bars": 6,
+    "retention_floor_passed": false,
+    "signal_sessions": 476,
+    "standard_9bp": {
+      "annualized_return": -0.0448978583667099,
+      "calendar_year_returns": {
+        "2021": -0.07761665379312843,
+        "2022": 0.060522075831600075,
+        "2023": -0.10883977903844433
+      },
+      "information_ratio": -0.34139210437771933,
+      "max_drawdown": 0.17106808515750416,
+      "positive_calendar_years": 1
+    },
+    "standard_annualized_return": -0.0448978583667099,
+    "standard_information_ratio": -0.34139210437771933,
+    "top_count": 1
+  },
+  "calendar_sessions": 753,
+  "cells_completed": 400,
+  "cells_sha256": "f8283309ba67f14ba6a7a20b51c4afb67f5dfbfb869366f1dd1c7eb6974900cd",
+  "covered_event_rows": 6380,
+  "decision": "ABANDON_SEC_FORM4_INSIDER_FLOW_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "sec-form4-insider-flow-training-feasibility-v1",
+  "elapsed_seconds": 4.233236100000795,
+  "event_rows": 388745,
+  "event_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "feature_sha256": "891a9cb8dfb0d5ce001c05bf8162ec56e2fd8ba57bdac93225afcda6184f2f36",
+  "filing_years": [
+    2021,
+    2022,
+    2023
+  ],
+  "minimum_filings_per_issuer": 3,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "passed": true,
+  "period": "2021-01-01/2023-12-31",
+  "qualified_issuer_floor": 300,
+  "qualified_issuers": 409,
+  "qualifying_filing_event_floor": 3000,
+  "qualifying_filing_events": 27100,
+  "retained_cells": 0,
+  "retained_families": [],
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}
