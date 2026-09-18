@@ -42,12 +42,12 @@ FAMILY_FEATURES = {
 
 def coverage_gate(features: pd.DataFrame) -> dict[str, object]:
     """Fail closed unless issuer and feature-bearing filing floors are met."""
-    columns = [item[0] for item in FAMILY_FEATURES.values()]
-    required = {"symbol", "accession", *columns}
+    required = {"symbol", "accession", "sec_feature_bearing"}
     if missing := required.difference(features.columns):
         raise ValueError(f"SEC_COVERAGE_COLUMNS_MISSING:{sorted(missing)}")
     bearing = features.loc[
-        features["accession"].notna() & features[columns].notna().any(axis=1),
+        features["accession"].notna()
+        & features["sec_feature_bearing"].fillna(False).astype(bool),
         ["symbol", "accession"],
     ].drop_duplicates()
     counts = bearing.groupby("symbol", observed=True).size()

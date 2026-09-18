@@ -357,6 +357,35 @@ def test_event_features_start_next_session_and_expire_after_five_sessions() -> N
     assert qqq["coverage_reason"].eq("SEC_IDENTITY_UNAVAILABLE").all()
 
 
+def test_event_features_preserve_raw_availability_for_negative_changes() -> None:
+    filing_features = pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "accession": ["acc-negative"],
+            "filing_date": [date(2022, 7, 29)],
+            "revenue_growth_acceleration": [-0.2],
+            "gross_margin_expansion": [pd.NA],
+            "operating_margin_expansion": [pd.NA],
+            "cash_asset_improvement": [pd.NA],
+            "deleveraging": [pd.NA],
+        }
+    )
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "session_date": [date(2022, 8, 1)],
+            "bar_idx": [2],
+        }
+    )
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    result = build_event_features(events, filing_features, identity)
+
+    assert result["sec_feature_bearing"].tolist() == [True]
+    assert result["revenue_growth_acceleration"].isna().all()
+    assert result["coverage_reason"].tolist() == ["SEC_FEATURE_MISSING"]
+
+
 def test_training_sample_symbols_excludes_later_event_periods() -> None:
     events = pd.DataFrame(
         {

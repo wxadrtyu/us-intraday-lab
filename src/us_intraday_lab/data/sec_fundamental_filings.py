@@ -522,6 +522,9 @@ def build_event_features(
         result["accession"] = pd.NA
         for column in _FEATURE_COLUMNS:
             result[column] = np.nan
+    result["sec_feature_bearing"] = (
+        result[list(_FEATURE_COLUMNS)].notna().any(axis=1)
+    )
     for column in _FEATURE_COLUMNS:
         raw = pd.to_numeric(result[column], errors="coerce").where(lambda value: value > 0)
         grouped = raw.groupby(result["session_date"], observed=True)

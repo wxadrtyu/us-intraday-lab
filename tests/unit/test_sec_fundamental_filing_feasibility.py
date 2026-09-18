@@ -18,6 +18,7 @@ def _feature_events(issuers: int, filings_each: int) -> pd.DataFrame:
                 {
                     "symbol": f"S{issuer:03d}",
                     "accession": f"A{issuer:03d}-{filing}",
+                    "sec_feature_bearing": True,
                     "revenue_growth_acceleration": 0.8,
                     "gross_margin_expansion": pd.NA,
                     "operating_margin_expansion": pd.NA,
@@ -46,6 +47,18 @@ def test_grid_has_exactly_four_hundred_unique_cells() -> None:
 
     assert len(grid) == 400
     assert len(set(grid)) == 400
+
+
+def test_coverage_gate_counts_finite_raw_features_not_positive_signals() -> None:
+    frame = _feature_events(300, 4)
+    for column in FAMILY_FEATURES.values():
+        frame[column[0]] = pd.NA
+
+    result = coverage_gate(frame)
+
+    assert result["passed"] is True
+    assert result["qualified_issuers"] == 300
+    assert result["feature_bearing_events"] == 1200
 
 
 def test_positive_revenue_change_ranks_intraday_winner_above_loser() -> None:
