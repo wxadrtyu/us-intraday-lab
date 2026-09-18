@@ -478,6 +478,9 @@ def build_event_features(
         raise ValueError(f"SEC_EVENT_COLUMNS_MISSING:{sorted(missing)}")
     result = events.copy()
     result["session_date"] = pd.to_datetime(result["session_date"]).dt.date
+    result = result.loc[
+        result["session_date"].map(lambda value: TRAIN_START <= value <= TRAIN_END)
+    ].copy()
     if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
         raise ValueError("SEC_EVENT_KEY_DUPLICATE")
     sessions = sorted(result["session_date"].unique())

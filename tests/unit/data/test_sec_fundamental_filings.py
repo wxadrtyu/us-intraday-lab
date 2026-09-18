@@ -366,3 +366,30 @@ def test_training_sample_symbols_excludes_later_event_periods() -> None:
     )
 
     assert training_sample_symbols(events) == {"AAA", "BBB"}
+
+
+def test_event_features_exclude_dates_after_training_boundary() -> None:
+    events = pd.DataFrame(
+        {
+            "symbol": ["AAA", "AAA"],
+            "session_date": ["2023-12-29", "2024-01-02"],
+            "bar_idx": [2, 2],
+        }
+    )
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+    filing_features = pd.DataFrame(
+        columns=[
+            "symbol",
+            "accession",
+            "filing_date",
+            "revenue_growth_acceleration",
+            "gross_margin_expansion",
+            "operating_margin_expansion",
+            "cash_asset_improvement",
+            "deleveraging",
+        ]
+    )
+
+    result = build_event_features(events, filing_features, identity)
+
+    assert result["session_date"].tolist() == [date(2023, 12, 29)]
