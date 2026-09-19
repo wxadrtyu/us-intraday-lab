@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
 from us_intraday_lab.data.sec_8k_events import REQUIRED_COLUMNS, validate_submission_response
@@ -120,3 +121,154 @@ def normalize_filings(
         columns=["source", "cik", "accession_number", "form", "reason"],
     )
     return filings, rejection_frame
+
+
+def build_event_features(
+    events: pd.DataFrame,
+    filings: pd.DataFrame,
+    identities: pd.DataFrame,
+) -> pd.DataFrame:
+    """Project accepted ownership filings onto five causal sample sessions."""
+    event_required = {"symbol", "session_date", "bar_idx"}
+    if missing := event_required.difference(events.columns):
+        raise ValueError(f"SEC_BENEFICIAL_EVENT_COLUMNS_MISSING:{sorted(missing)}")
+    filing_required = {
+        "symbol",
+        "cik",
+        "accession_number",
+        "acceptance_timestamp",
+        *FORM_FLAGS.values(),
+    }
+    if missing := filing_required.difference(filings.columns):
+        raise ValueError(f"SEC_BENEFICIAL_FILING_COLUMNS_MISSING:{sorted(missing)}")
+    if missing := {"symbol", "cik"}.difference(identities.columns):
+        raise ValueError(f"SEC_BENEFICIAL_IDENTITY_COLUMNS_MISSING:{sorted(missing)}")
+
+    result = events.copy()
+    result["symbol"] = result["symbol"].astype(str)
+    result["session_date"] = pd.to_datetime(
+        result["session_date"], errors="raise"
+    ).dt.date
+    result = result.loc[
+        result["session_date"].map(
+            lambda value: date(2021, 1, 1) <= value <= date(2023, 12, 31)
+        )
+    ].copy()
+    if result.duplicated(["symbol", "session_date", "bar_idx"]).any():
+        raise ValueError("SEC_BENEFICIAL_EVENT_KEY_DUPLICATE")
+
+    identity = identities[["symbol", "cik"]].copy()
+    identity["symbol"] = identity["symbol"].astype(str)
+    identity["cik"] = pd.to_numeric(identity["cik"], errors="raise").astype("int64")
+    if identity["symbol"].duplicated().any():
+        raise ValueError("SEC_BENEFICIAL_IDENTITY_SYMBOL_DUPLICATE")
+    identity_map = identity.set_index("symbol")["cik"]
+    result["sec_beneficial_cik"] = result["symbol"].map(identity_map)
+
+    source = filings.copy()
+    source["symbol"] = source["symbol"].astype(str)
+    source["cik"] = pd.to_numeric(source["cik"], errors="raise").astype("int64")
+    source["acceptance_timestamp"] = pd.to_datetime(
+        source["acceptance_timestamp"], errors="raise", utc=True
+    )
+    if source.duplicated(["symbol", "accession_number"]).any():
+        raise ValueError("SEC_BENEFICIAL_SYMBOL_ACCESSION_DUPLICATE")
+    expected_cik = source["symbol"].map(identity_map)
+    if expected_cik.isna().any() or not expected_cik.astype("int64").equals(source["cik"]):
+        raise ValueError("SEC_BENEFICIAL_FILING_IDENTITY_MISMATCH")
+
+    filing_counts = source.groupby("symbol", observed=True)[
+        "accession_number"
+    ].nunique()
+    result["sec_beneficial_qualifying_filing_count"] = (
+        result["symbol"].map(filing_counts).fillna(0).astype("int64")
+    )
+    sessions = sorted(result["session_date"].unique())
+    session_positions = {session: index for index, session in enumerate(sessions)}
+    availability: dict[str, list[int]] = {}
+    active_records: list[dict[str, object]] = []
+    for filing in source.itertuples(index=False):
+        available = next(
+            (
+                session
+                for session in sessions
+                if session > filing.acceptance_timestamp.date()
+            ),
+            None,
+        )
+        if available is None:
+            continue
+        start = session_positions[available]
+        availability.setdefault(str(filing.symbol), []).append(start)
+        for session in sessions[start : start + 5]:
+            active_records.append(
+                {
+                    "symbol": filing.symbol,
+                    "session_date": session,
+                    "accession_number": filing.accession_number,
+                    "acceptance_timestamp": filing.acceptance_timestamp,
+                    **{
+                        flag: bool(getattr(filing, flag))
+                        for flag in FORM_FLAGS.values()
+                    },
+                }
+            )
+
+    active = pd.DataFrame.from_records(active_records)
+    if not active.empty:
+        records: list[dict[str, object]] = []
+        for (symbol, session), group in active.groupby(
+            ["symbol", "session_date"], sort=True, observed=True
+        ):
+            latest = group["acceptance_timestamp"].max()
+            position = session_positions[session]
+            prior_count = sum(
+                position - 19 <= value <= position
+                for value in availability[str(symbol)]
+            )
+            records.append(
+                {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "sec_beneficial_active_accessions": tuple(
+                        sorted(group["accession_number"].astype(str).unique())
+                    ),
+                    "sec_beneficial_latest_acceptance_timestamp": latest,
+                    "sec_beneficial_active_filing_count": int(
+                        group["accession_number"].nunique()
+                    ),
+                    "sec_beneficial_days_since_latest_acceptance": int(
+                        (session - latest.date()).days
+                    ),
+                    "sec_beneficial_prior_20_session_filing_count": prior_count,
+                    "sec_beneficial_clustered": int(prior_count >= 2),
+                    **{
+                        f"sec_beneficial_{flag}": int(group[flag].any())
+                        for flag in FORM_FLAGS.values()
+                    },
+                }
+            )
+        result = result.merge(
+            pd.DataFrame.from_records(records),
+            how="left",
+            on=["symbol", "session_date"],
+            validate="many_to_one",
+        )
+    else:
+        result["sec_beneficial_active_accessions"] = pd.NA
+        result["sec_beneficial_latest_acceptance_timestamp"] = pd.NaT
+        result["sec_beneficial_active_filing_count"] = np.nan
+        result["sec_beneficial_days_since_latest_acceptance"] = np.nan
+        result["sec_beneficial_prior_20_session_filing_count"] = np.nan
+        result["sec_beneficial_clustered"] = np.nan
+        for flag in FORM_FLAGS.values():
+            result[f"sec_beneficial_{flag}"] = np.nan
+
+    known = result["symbol"].isin(set(identity["symbol"]))
+    active_mask = result["sec_beneficial_active_filing_count"].notna()
+    result["coverage_reason"] = np.select(
+        [~known, ~active_mask],
+        ["SEC_IDENTITY_UNAVAILABLE", "SEC_BENEFICIAL_NO_ACTIVE_FILING"],
+        default="COVERED",
+    )
+    return result

@@ -6,8 +6,14 @@ import json
 import pandas as pd
 import pytest
 
+from scripts.build_sec_beneficial_ownership_training_features import (
+    build_feature_cache,
+)
 from scripts.build_sec_beneficial_ownership_training_snapshot import build_snapshot
-from us_intraday_lab.data.sec_beneficial_ownership import normalize_filings
+from us_intraday_lab.data.sec_beneficial_ownership import (
+    build_event_features,
+    normalize_filings,
+)
 
 
 def _recent(forms: list[str], accessions: list[str] | None = None) -> dict[str, list[object]]:
@@ -123,3 +129,81 @@ def test_snapshot_rejects_source_hash_mismatch(tmp_path) -> None:
 
     with pytest.raises(RuntimeError, match="SEC_BENEFICIAL_SOURCE_HASH_MISMATCH"):
         build_snapshot(source_manifest, identities, tmp_path / "output")
+
+
+def _event_sessions(count: int = 7) -> pd.DataFrame:
+    sessions = pd.bdate_range("2022-01-03", periods=count).date
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA"] * count + ["QQQ"] * count,
+            "session_date": list(sessions) * 2,
+            "bar_idx": [2] * (count * 2),
+        }
+    )
+
+
+def _filing(
+    accession: str = "acc-1",
+    acceptance: str = "2022-01-03T12:00:00Z",
+    form: str = "SC 13D",
+) -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "cik": [1],
+            "accession_number": [accession],
+            "filing_date": [pd.Timestamp(acceptance).date()],
+            "acceptance_timestamp": [pd.Timestamp(acceptance)],
+            "form": [form],
+            "source": ["source"],
+            "sc13d": [form == "SC 13D"],
+            "sc13d_amendment": [form == "SC 13D/A"],
+            "sc13g": [form == "SC 13G"],
+            "sc13g_amendment": [form == "SC 13G/A"],
+        }
+    )
+
+
+def test_state_starts_next_session_and_expires_after_five() -> None:
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+
+    result = build_event_features(_event_sessions(), _filing(), identity)
+
+    aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
+    qqq = result.loc[result["symbol"].eq("QQQ")]
+    assert aaa.loc[0, "coverage_reason"] == "SEC_BENEFICIAL_NO_ACTIVE_FILING"
+    assert aaa["sec_beneficial_cik"].eq(1).all()
+    assert aaa.loc[1:5, "sec_beneficial_sc13d"].eq(1).all()
+    assert aaa.loc[6, "coverage_reason"] == "SEC_BENEFICIAL_NO_ACTIVE_FILING"
+    assert qqq["coverage_reason"].eq("SEC_IDENTITY_UNAVAILABLE").all()
+
+
+def test_cluster_uses_only_causally_available_prior_twenty_sessions() -> None:
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+    filings = pd.concat(
+        [
+            _filing("acc-1", "2022-01-03T12:00:00Z", "SC 13D"),
+            _filing("acc-2", "2022-01-05T12:00:00Z", "SC 13G/A"),
+        ],
+        ignore_index=True,
+    )
+
+    result = build_event_features(_event_sessions(22), filings, identity)
+
+    aaa = result.loc[result["symbol"].eq("AAA")].reset_index(drop=True)
+    assert aaa.loc[1, "sec_beneficial_clustered"] == 0
+    assert aaa.loc[3, "sec_beneficial_clustered"] == 1
+    assert aaa.loc[3, "sec_beneficial_active_accessions"] == ("acc-1", "acc-2")
+
+
+def test_feature_cache_resumes_identical_atomic_output(tmp_path) -> None:
+    identity = pd.DataFrame({"symbol": ["AAA"], "cik": [1]})
+    output = tmp_path / "features.parquet"
+
+    first = build_feature_cache(_event_sessions(), _filing(), identity, output)
+    second = build_feature_cache(_event_sessions(), _filing(), identity, output)
+
+    assert first["status"] == "COMPLETE"
+    assert first["rows"] == 14
+    assert first["qualifying_symbol_filings"] == 1
+    assert first["output_sha256"] == second["output_sha256"]
