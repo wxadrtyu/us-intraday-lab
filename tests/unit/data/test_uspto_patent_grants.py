@@ -194,6 +194,7 @@ def test_snapshot_verifies_archives_and_resumes_identical_output(tmp_path: Path)
         root,
         patent_md5,
         assignee_md5,
+        source_fingerprints={"event_cube_sha256": "a" * 64, "sec_ticker_sha256": "b" * 64},
     )
     second = build_snapshot(
         patent_archive,
@@ -202,6 +203,7 @@ def test_snapshot_verifies_archives_and_resumes_identical_output(tmp_path: Path)
         root,
         patent_md5,
         assignee_md5,
+        source_fingerprints={"event_cube_sha256": "a" * 64, "sec_ticker_sha256": "b" * 64},
     )
 
     assert first[0][["symbol", "patent_id"]].to_dict("records") == [
@@ -209,6 +211,10 @@ def test_snapshot_verifies_archives_and_resumes_identical_output(tmp_path: Path)
     ]
     assert first[3]["status"] == "COMPLETE"
     assert first[3]["source_hashes_verified"] is True
+    assert first[3]["source_fingerprints"] == {
+        "event_cube_sha256": "a" * 64,
+        "sec_ticker_sha256": "b" * 64,
+    }
     assert second[0].equals(first[0])
     assert second[3] == first[3]
 

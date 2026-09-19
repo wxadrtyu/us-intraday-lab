@@ -20,6 +20,15 @@ from us_intraday_lab.data.uspto_patent_grants import (
 
 PATENT_MEMBER = "g_patent.tsv"
 ASSIGNEE_MEMBER = "g_assignee_not_disambiguated.tsv"
+EVENT_CUBE_SHA256 = "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9"
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        while chunk := source.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _chunks(
@@ -71,6 +80,7 @@ def build_snapshot(
     expected_patent_md5: str,
     expected_assignee_md5: str,
     sec_unmatched: pd.DataFrame | None = None,
+    source_fingerprints: dict[str, str] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
     """Verify, normalize, and atomically publish the training snapshot."""
     sources = [
@@ -160,6 +170,7 @@ def build_snapshot(
         "training_only": True,
         "source_hashes_verified": True,
         "sources": sources,
+        "source_fingerprints": source_fingerprints or {},
         "requested_symbols": int(sec_identities["symbol"].nunique()) + len(sec_unmatched),
         "sec_unmatched_symbols": len(sec_unmatched),
         "mapped_symbols": int(grants["symbol"].nunique()),
@@ -206,6 +217,10 @@ def main() -> int:
     parser.add_argument("--expected-assignee-md5", required=True)
     parser.add_argument("--root", required=True, type=Path)
     arguments = parser.parse_args()
+    event_sha256 = _sha256_file(arguments.events)
+    if event_sha256 != EVENT_CUBE_SHA256:
+        raise RuntimeError("USPTO_EVENT_CUBE_SHA256_MISMATCH")
+    sec_ticker_sha256 = _sha256_file(arguments.ticker_map)
     symbols = _training_symbols(arguments.events)
     identities, missing = _parse_sec_identities(arguments.ticker_map, symbols)
     _grants, _mapping, _rejections, manifest = build_snapshot(
@@ -216,6 +231,10 @@ def main() -> int:
         arguments.expected_patent_md5,
         arguments.expected_assignee_md5,
         sec_unmatched=missing,
+        source_fingerprints={
+            "event_cube_sha256": event_sha256,
+            "sec_ticker_sha256": sec_ticker_sha256,
+        },
     )
     print(json.dumps(manifest, sort_keys=True), flush=True)
     return 0
