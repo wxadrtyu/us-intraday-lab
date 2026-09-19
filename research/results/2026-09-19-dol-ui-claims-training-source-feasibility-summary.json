@@ -1,0 +1,21 @@
+{
+  "status": "ABANDON_DOL_UI_CLAIMS_COVERAGE_GATE",
+  "sample_scope": "527 training-period symbols from the frozen event cube; coverage-limited, not full market",
+  "source": "Official DOL OUI archive, release-specific PDF URLs frozen before retrieval",
+  "source_manifest_sha256": "fd2f0da47c5fce9c3b4991ab1c37ea7ed156ad7fdf81fb6494ba6b8c69c9fb8b",
+  "pdf_manifest_sha256": "1a38d3a4d6ee868f1bb3ebf020f51508bfb01740441018e341bb228082cb4204",
+  "pdfs_by_year": {"2021": 52, "2022": 52, "2023": 52},
+  "pdfs_captured": 156,
+  "pdf_hash_mismatches": 0,
+  "first_pages_parsed": 153,
+  "first_page_failures": [
+    {"release_date": "2022-04-14", "reason": "PDF text extraction splits the initial-claims advance label; exact first-page phrase is absent after whitespace normalization"},
+    {"release_date": "2022-10-06", "reason": "PDF text extraction splits the initial-claims advance label; exact first-page phrase is absent after whitespace normalization"},
+    {"release_date": "2023-04-06", "reason": "First page is a seasonal-adjustment methodology notice and has neither preregistered advance measure"}
+  ],
+  "source_gate_required": "156/156 first pages with both unambiguous first-publication seasonally adjusted measures",
+  "source_gate_passed": false,
+  "cells_completed": 0,
+  "post_availability_outcomes_loaded": false,
+  "decision": "Freeze this line at the source gate; do not read later PDF pages, fill missing measures, relax parsing, or tune the strategy."
+}
