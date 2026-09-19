@@ -1,0 +1,19 @@
+{
+  "stage": "source-inventory-frozen-before-training-pdf",
+  "sample_scope": "2021-2023 frozen event-cube 527-symbol coverage-limited sample; not full market",
+  "source": "https://oui.doleta.gov/unemploy/claims_arch.asp",
+  "source_manifest_external_path": "E:\\us-intraday-lab-data\\us-market\\research\\cache\\dol_ui_claims_training_v1\\source_manifest.json",
+  "source_manifest_sha256": "fd2f0da47c5fce9c3b4991ab1c37ea7ed156ad7fdf81fb6494ba6b8c69c9fb8b",
+  "annual_index_sha256": {
+    "2021": "8fa59f0199e96add3a09342c9318149bb782fd56cfb9c6cc8f37328f2f7ebff0",
+    "2022": "8441a3dedbd4f87be48bd547c9cc38e5620749d0deaf4292ab9353a7d9021188",
+    "2023": "ea2f7c13d8416774253e2fb534ef8ee67258c56b41e5fb46153232cf0cff79f1"
+  },
+  "pdf_links_by_year": {"2021": 52, "2022": 52, "2023": 52},
+  "pdf_links_total": 156,
+  "unique_release_dates": 156,
+  "annual_index_hashes_match_external_manifest": true,
+  "training_pdfs_fetched_at_this_stage": false,
+  "post_availability_outcomes_loaded": false,
+  "cells_completed": 0
+}
