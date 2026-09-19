@@ -1,0 +1,55 @@
+{
+  "status": "COMPLETE",
+  "decision": "ABANDON_USPTO_PATENT_GRANT_COVERAGE_GATE",
+  "sample_scope": "coverage-limited 527-symbol frozen 2021-2023 training sample; not full market",
+  "event_cube_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "sec_ticker_sha256": "44e7e15596937fe353d2148e6e775c41b83e27f9196d980bbeb44bd873d5f5b1",
+  "sources": [
+    {
+      "record": "https://zenodo.org/records/15058362",
+      "filename": "g_patent.tsv.zip",
+      "bytes": 223192856,
+      "publisher_md5": "f74fbde4b2adbf980b8e4ed5394f16d2",
+      "local_sha256": "46586069f04a24265f8e80e36bfa38d97ed1b703fa0e63918f001038c563e7cf"
+    },
+    {
+      "record": "https://zenodo.org/records/15058362",
+      "filename": "g_assignee_not_disambiguated.tsv.zip",
+      "bytes": 476589877,
+      "publisher_md5": "6154c6d989206de65b1367b886f744d3",
+      "local_sha256": "a95000e94079d738a646669e763df9f3ea9ae03141b6acdd62e40e84b91b0f8f"
+    }
+  ],
+  "source_hashes_verified": true,
+  "snapshot_sha256": "668ec335b08d94d4860492ff0fe8f6718ed8479ba4312bfddeff114609255354",
+  "issuer_map_sha256": "5171ec84f5cfe04613fa94d94cbb3c61523068093d8bdd069a93288f7ef48fc9",
+  "rejections_sha256": "f953ddc926d9a5ee6122a8252b78d5eb02fdeccafb6f718f0f42d0742799f51f",
+  "sec_unmatched_sha256": "aeee0a43da521414caafa7012db6eedd0c2592d6d935b7c793f97d4dbb25141e",
+  "requested_training_symbols": 527,
+  "sec_exact_matched_symbols": 462,
+  "sec_unmatched_symbols": 65,
+  "strict_mapped_issuers": 45,
+  "issuers_with_training_grants": 15,
+  "issuers_with_at_least_three_grants": 5,
+  "required_issuers_with_at_least_three_grants": 100,
+  "qualifying_symbol_patent_events": 521,
+  "required_symbol_patent_events": 5000,
+  "grant_years": [2021, 2022, 2023],
+  "rejected_raw_assignee_names": 826062,
+  "rejection_reasons": {
+    "USPTO_ASSIGNEE_KEY_AMBIGUOUS": 378559,
+    "USPTO_ASSIGNEE_ORGANIZATION_BLANK": 7,
+    "USPTO_ASSIGNEE_UNMAPPED": 447496
+  },
+  "coverage_gate_passed": false,
+  "coverage_failure_reasons": [
+    "ISSUERS_WITH_THREE_GRANTS_BELOW_100",
+    "SYMBOL_PATENT_EVENTS_BELOW_5000"
+  ],
+  "return_data_loaded": false,
+  "development_or_consumed_loaded": false,
+  "cells_completed": 0,
+  "versions_created": 0,
+  "paper_activation": false,
+  "order_route": "FORBIDDEN"
+}

@@ -1,0 +1,9 @@
+# USPTO Patent-Grant Event coverage rejection (local fallback)
+
+- summary: The fixed 527-symbol 2021-2023 training sample is coverage-limited, not full market. Both exact USPTO-authored Zenodo 15058362 archives matched the publisher MD5 and were given local SHA-256; event cube, SEC ticker source, normalized snapshot, issuer map, rejections, and the 65 SEC-unmatched symbols have recorded immutable hashes. Mechanical one-to-one issuer-title/raw-assignee matching yielded 45 mapped issuers, but only 15 issuers had training grants and 5 had at least three grants versus the pre-registered minimum of 100. There were 521 qualifying symbol-patent events versus the minimum of 5000; all three training years were present. The coverage gate failed, so no returns were loaded, no 400-cell grid was run, and no version was created. Independent summary-vs-snapshot assertions, 12 focused tests, Ruff, and diff checks passed. Full repository pytest recorded 1379 passed, 16 known unrelated campaign-definition failures, and 2 warnings; no USPTO test failed. Freeze this family without fuzzy matching or local tuning. Terminal decision is `ABANDON_USPTO_PATENT_GRANT_COVERAGE_GATE`.
+- stage: coverage-gate
+- kpi_version: uspto-patent-grant-training-feasibility-v1
+- tags: project:quant-agent-team, market:cn_a, freq:daily, market:us, freq:5min, stage:coverage-gate, strategy:uspto-patent-grant, status:rejected
+- next_step: Preregister a genuinely different free, auditable point-in-time causal source; freeze source and mapping contract, coverage gate, train grid, and cost/delay hard gates before acquiring training data. Do not reopen this USPTO family or previously rejected SEC/news/FINRA/Cboe/Fed/CFTC lines.
+
+MCP memory was unavailable in this session, so this is the required local fallback to backfill when restored.
