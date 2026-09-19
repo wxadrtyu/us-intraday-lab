@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import zipfile
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from scripts.build_uspto_patent_grant_training_snapshot import build_snapshot
+from scripts.build_uspto_patent_grant_training_snapshot import (
+    _parse_sec_identities,
+    build_snapshot,
+)
 from us_intraday_lab.data.uspto_patent_grants import (
     build_issuer_map,
     canonicalize_organization,
@@ -19,6 +23,24 @@ from us_intraday_lab.data.uspto_patent_grants import (
 def test_canonicalization_is_mechanical_and_suffix_limited() -> None:
     assert canonicalize_organization("Acme, Inc.") == "ACME"
     assert canonicalize_organization("A.C.M.E. Holdings") == "A C M E HOLDINGS"
+
+
+def test_parser_uses_frozen_sec_name_and_retains_unmatched(tmp_path: Path) -> None:
+    source = tmp_path / "company_tickers_exchange.json"
+    source.write_text(
+        json.dumps(
+            {
+                "fields": ["cik", "name", "ticker", "exchange"],
+                "data": [[123, "Acme Incorporated", "AAA", "Nasdaq"]],
+            }
+        ),
+        encoding="utf-8",
+    )
+    identities, missing = _parse_sec_identities(source, {"AAA", "BBB"})
+    assert identities[["symbol", "title"]].to_dict("records") == [
+        {"symbol": "AAA", "title": "Acme Incorporated"}
+    ]
+    assert missing["symbol"].tolist() == ["BBB"]
 
 
 def test_mapping_accepts_unique_key() -> None:
@@ -177,3 +199,37 @@ def test_snapshot_verifies_archives_and_resumes_identical_output(tmp_path: Path)
     assert first[3]["source_hashes_verified"] is True
     assert second[0].equals(first[0])
     assert second[3] == first[3]
+
+
+def test_snapshot_preserves_sec_unmatched_inventory(tmp_path: Path) -> None:
+    patent_archive = tmp_path / "g_patent.tsv.zip"
+    patent_md5 = _write_zip(
+        patent_archive,
+        "g_patent.tsv",
+        "patent_id\tpatent_type\tpatent_date\tpatent_title\n"
+        "1\tutility\t2022-01-04\tUseful thing\n",
+    )
+    assignee_archive = tmp_path / "g_assignee_not_disambiguated.tsv.zip"
+    assignee_md5 = _write_zip(
+        assignee_archive,
+        "g_assignee_not_disambiguated.tsv",
+        "patent_id\tassignee_sequence\tassignee_organization\n"
+        "1\t0\tAcme Inc\n",
+    )
+    root = tmp_path / "output"
+    _grants, _mapping, _rejected, manifest = build_snapshot(
+        patent_archive,
+        assignee_archive,
+        pd.DataFrame({"symbol": ["AAA"], "title": ["Acme Incorporated"]}),
+        root,
+        patent_md5,
+        assignee_md5,
+        sec_unmatched=pd.DataFrame(
+            {"symbol": ["BBB"], "coverage_reason": ["SEC_IDENTITY_UNAVAILABLE"]}
+        ),
+    )
+    assert manifest["requested_symbols"] == 2
+    assert manifest["sec_unmatched_symbols"] == 1
+    assert pd.read_parquet(root / "sec_unmatched.parquet")["symbol"].tolist() == [
+        "BBB"
+    ]

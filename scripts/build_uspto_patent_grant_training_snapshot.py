@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import pandas as pd
 
+from us_intraday_lab.data.sec_fundamental_filings import parse_ticker_map
 from us_intraday_lab.data.uspto_patent_grants import (
     build_issuer_map,
     normalize_grants,
@@ -69,6 +70,7 @@ def build_snapshot(
     root: Path,
     expected_patent_md5: str,
     expected_assignee_md5: str,
+    sec_unmatched: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
     """Verify, normalize, and atomically publish the training snapshot."""
     sources = [
@@ -138,19 +140,26 @@ def build_snapshot(
     ]
 
     root.mkdir(parents=True, exist_ok=True)
+    if sec_unmatched is None:
+        sec_unmatched = pd.DataFrame(columns=["symbol", "coverage_reason"])
+    if sec_unmatched["symbol"].duplicated().any():
+        raise ValueError("USPTO_SEC_UNMATCHED_DUPLICATE")
     snapshot_path = root / "uspto_patent_grant_training_v1.parquet"
     map_path = root / "issuer_map.parquet"
     rejection_path = root / "rejections.parquet"
+    unmatched_path = root / "sec_unmatched.parquet"
     _write_parquet_immutable(snapshot_path, grants)
     _write_parquet_immutable(map_path, issuer_map)
     _write_parquet_immutable(rejection_path, rejections)
+    _write_parquet_immutable(unmatched_path, sec_unmatched)
     manifest = {
         "schema_version": "1.0.0",
         "status": "COMPLETE",
         "training_only": True,
         "source_hashes_verified": True,
         "sources": sources,
-        "requested_symbols": int(sec_identities["symbol"].nunique()),
+        "requested_symbols": int(sec_identities["symbol"].nunique()) + len(sec_unmatched),
+        "sec_unmatched_symbols": len(sec_unmatched),
         "mapped_symbols": int(grants["symbol"].nunique()),
         "mapped_issuers": int(issuer_map["issuer_key"].nunique()),
         "qualifying_symbol_patents": len(
@@ -162,6 +171,7 @@ def build_snapshot(
         "snapshot_sha256": hashlib.sha256(snapshot_path.read_bytes()).hexdigest(),
         "issuer_map_sha256": hashlib.sha256(map_path.read_bytes()).hexdigest(),
         "rejections_sha256": hashlib.sha256(rejection_path.read_bytes()).hexdigest(),
+        "sec_unmatched_sha256": hashlib.sha256(unmatched_path.read_bytes()).hexdigest(),
         "development_or_consumed_loaded": False,
         "paper_activation": False,
         "order_route": "FORBIDDEN",
@@ -170,14 +180,11 @@ def build_snapshot(
     return grants, issuer_map, rejections, manifest
 
 
-def _parse_sec_identities(path: Path, symbols: set[str]) -> pd.DataFrame:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    records = [
-        {"symbol": str(row["ticker"]), "title": str(row["title"])}
-        for row in payload.values()
-        if str(row.get("ticker", "")) in symbols
-    ]
-    return pd.DataFrame.from_records(records, columns=["symbol", "title"])
+def _parse_sec_identities(
+    path: Path, symbols: set[str]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    matched, missing = parse_ticker_map(path.read_bytes(), symbols)
+    return matched.rename(columns={"name": "title"}), missing
 
 
 def main() -> int:
@@ -193,7 +200,7 @@ def main() -> int:
     symbols = set(
         pd.read_parquet(arguments.events, columns=["symbol"])["symbol"].astype(str)
     )
-    identities = _parse_sec_identities(arguments.ticker_map, symbols)
+    identities, missing = _parse_sec_identities(arguments.ticker_map, symbols)
     _grants, _mapping, _rejections, manifest = build_snapshot(
         arguments.patent_archive,
         arguments.assignee_archive,
@@ -201,6 +208,7 @@ def main() -> int:
         arguments.root,
         arguments.expected_patent_md5,
         arguments.expected_assignee_md5,
+        sec_unmatched=missing,
     )
     print(json.dumps(manifest, sort_keys=True), flush=True)
     return 0
