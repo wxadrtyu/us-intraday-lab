@@ -2,6 +2,8 @@
 
 from bisect import bisect_right
 from datetime import date
+from hashlib import sha256
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -16,6 +18,21 @@ FAMILIES = {
     "distillate": ROWS[2],
     "total": ROWS[3],
 }
+
+
+def load_training_event_cube(path: Path, expected_sha256: str) -> pd.DataFrame:
+    """Verify the cube and push down the 2021-23 filter before reading values."""
+    digest = sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    if digest.hexdigest() != expected_sha256:
+        raise ValueError("event cube hash mismatch")
+    return pd.read_parquet(
+        path,
+        columns=["symbol", "session_date", "bar_idx", "session_return"],
+        filters=[[("session_date", ">=", TRAIN_START), ("session_date", "<=", TRAIN_END)]],
+    )
 
 
 def _states(releases: pd.DataFrame, sessions: list[date]) -> pd.DataFrame:

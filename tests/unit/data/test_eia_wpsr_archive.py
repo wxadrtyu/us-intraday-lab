@@ -8,6 +8,7 @@ from us_intraday_lab.data.eia_wpsr_archive import (
     acquire_csv_from_frozen,
     discover_releases,
     discover_table4,
+    load_verified_snapshot,
     parse_table4,
     preserve_raw,
 )
@@ -164,3 +165,32 @@ def test_csv_stage_uses_only_frozen_links_without_refetching_index_or_pages(tmp_
     (tmp_path / 'raw' / 'pages' / '2021-01-06.html').write_bytes(b'tampered')
     with pytest.raises(ValueError, match='hash'):
         acquire_csv_from_frozen(tmp_path, csv_fetch)
+
+
+def test_load_verified_snapshot_rejects_mutated_csv(tmp_path):
+    issue = ROOT + '2021/2021_01_06/wpsr_2021_01_06.php'
+    csv_url = ROOT + '2021/2021_01_06/csv/table4.csv'
+    bodies = {
+        ARCHIVE: f'<a href="{issue_link("2021_01_06")}">6</a>'.encode(),
+        issue: b'Release Date: January 6, 2021 <a href="csv/table4.csv">CSV</a>',
+        csv_url: (
+            b'STUB_1,Difference\n'
+            b'Commercial (Excluding SPR),1.0\n'
+            b'Total Motor Gasoline,-2.0\n'
+            b'Distillate Fuel Oil,3.0\n'
+            b'Total Stocks (Excluding SPR),-4.0\n'
+        ),
+    }
+
+    def fetch(url):
+        return bodies[url], {}, 200
+
+    acquire(tmp_path, fetch)
+    acquire_csv_from_frozen(tmp_path, fetch)
+    releases, manifest = load_verified_snapshot(tmp_path)
+    assert len(releases) == 4
+    assert manifest['source_hashes_verified']
+    assert manifest['release_count'] == 1
+    (tmp_path / 'raw' / 'csv' / '2021-01-06.csv').write_bytes(b'tampered')
+    with pytest.raises(ValueError, match='hash'):
+        load_verified_snapshot(tmp_path)

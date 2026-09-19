@@ -219,6 +219,11 @@ def _fetch_csv_records(
 
 def acquire_csv_from_frozen(root: Path, fetch: Fetch) -> dict[str, object]:
     """Fetch only CSVs named in a fully hash-verified frozen source manifest."""
+    source = _load_source_manifest_verified(root)
+    return {**source, "csv_records": _fetch_csv_records(root, fetch, source["releases"])}
+
+
+def _load_source_manifest_verified(root: Path) -> dict[str, object]:
     manifest_path = root / "source_manifest.json"
     if not manifest_path.exists():
         raise ValueError("source manifest must be frozen before CSV acquisition")
@@ -239,4 +244,40 @@ def acquire_csv_from_frozen(root: Path, fetch: Fetch) -> dict[str, object]:
             raise ValueError(f"source page hash mismatch: {day}")
         if discover_table4(page, record["page_url"]) != record["csv_url"]:
             raise ValueError(f"source page Table 4 link mismatch: {day}")
-    return {**source, "csv_records": _fetch_csv_records(root, fetch, records)}
+    return source
+
+
+def load_verified_snapshot(root: Path) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Revalidate all frozen bytes before exposing any training release values."""
+    source = _load_source_manifest_verified(root)
+    csv_manifest_path = root / "csv_manifest.json"
+    if not csv_manifest_path.exists():
+        raise ValueError("missing complete CSV manifest")
+    csv_records = json.loads(csv_manifest_path.read_text(encoding="utf-8"))
+    expected = [(row["release_date"], row["csv_url"]) for row in source["releases"]]
+    actual = [(row["release_date"], row["url"]) for row in csv_records]
+    if actual != expected:
+        raise ValueError("CSV manifest incomplete or out of source order")
+    frames = []
+    for record in csv_records:
+        day = record["release_date"]
+        csv_path = root / "raw" / "csv" / f"{day}.csv"
+        if not csv_path.exists():
+            raise ValueError(f"missing Table 4 CSV: {day}")
+        body = csv_path.read_bytes()
+        if sha256(body).hexdigest() != record["sha256"]:
+            raise ValueError(f"Table 4 CSV hash mismatch: {day}")
+        if len(body) != record["byte_count"] or record["http_status"] != 200:
+            raise ValueError(f"Table 4 CSV metadata mismatch: {day}")
+        frames.append(parse_table4(body, date.fromisoformat(day)))
+    manifest = {
+        "source_hashes_verified": True,
+        "source_manifest_sha256": sha256((root / "source_manifest.json").read_bytes()).hexdigest(),
+        "csv_manifest_sha256": sha256(csv_manifest_path.read_bytes()).hexdigest(),
+        "release_count": len(csv_records),
+        "release_counts_by_year": {
+            str(year): sum(item["release_date"].startswith(str(year)) for item in csv_records)
+            for year in (2021, 2022, 2023)
+        },
+    }
+    return pd.concat(frames, ignore_index=True), manifest

@@ -1,9 +1,13 @@
 from datetime import date
+from hashlib import sha256
 
 import pandas as pd
 import pytest
 
-from us_intraday_lab.data.eia_wpsr_features import build_release_features
+from us_intraday_lab.data.eia_wpsr_features import (
+    build_release_features,
+    load_training_event_cube,
+)
 
 ROWS = (
     'Commercial (Excluding SPR)',
@@ -77,3 +81,18 @@ def test_out_of_training_events_are_not_used_for_exposure_or_symbols():
                            'bar_idx': 5, 'session_return': 1.0}])
     _, exposures = build_release_features(pd.concat([events, later], ignore_index=True), releases)
     assert 'LATER' not in exposures.symbol.unique()
+
+
+def test_training_cube_reader_pushes_period_filter_before_feature_build(tmp_path):
+    path = tmp_path / 'events.parquet'
+    pd.DataFrame([
+        {'session_date': date(2021, 1, 4), 'symbol': 'XLE', 'bar_idx': 5,
+         'session_return': 0.01},
+        {'session_date': date(2024, 1, 2), 'symbol': 'LATER', 'bar_idx': 5,
+         'session_return': 999.0},
+    ]).to_parquet(path)
+    event_hash = sha256(path.read_bytes()).hexdigest()
+    loaded = load_training_event_cube(path, event_hash)
+    assert loaded.symbol.tolist() == ['XLE']
+    with pytest.raises(ValueError, match='hash'):
+        load_training_event_cube(path, '0' * 64)
