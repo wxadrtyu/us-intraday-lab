@@ -1,0 +1,5 @@
+# EIA WPSR source inventory frozen before Table 4 training CSV acquisition
+
+The official archive index and all 154 dated 2021-2023 release pages were acquired sequentially. The count is 52 in 2021, 51 in 2022, and 51 in 2023; release dates and exact page-linked Table 4 URLs are unique. Raw index and page bytes, per-file SHA-256, HTTP metadata, and retrieval times remain in the external staging directory, not Git. The complete source manifest SHA-256 is `7d64803e26acd2ea1e2db1c05c466280155e30d7a235e9220528bd22ba6b9690`; the index SHA-256 is `be4561a91bc7925f22f7a7ec224622e9e06f62eaf1035a7f86a33ae18bf980d6`. A fresh read-only audit found all 154 page hashes consistent with that manifest.
+
+This is a source-stage checkpoint only, not a coverage or return result. No 2021-2023 Table 4 CSV or post-availability return was loaded to generate it, and no diagnostic cell was run. The frozen research sample remains 527 training-period symbols from the event cube, a coverage-limited sample rather than the full market. The next stage may retrieve only the exact CSV links in this manifest, after verifying the frozen source bytes and hashes.

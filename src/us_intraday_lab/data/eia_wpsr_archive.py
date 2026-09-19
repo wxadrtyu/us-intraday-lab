@@ -188,6 +188,12 @@ def acquire(root: Path, fetch: Fetch, *, include_csv: bool = False) -> dict[str,
     preserve_raw(manifest_path, (json.dumps(result, indent=2, sort_keys=True) + "\n").encode())
     if not include_csv:
         return result
+    return {**result, "csv_records": _fetch_csv_records(root, fetch, records)}
+
+
+def _fetch_csv_records(
+    root: Path, fetch: Fetch, records: list[dict[str, object]]
+) -> list[dict[str, object]]:
     csv_records = []
     csv_manifest = root / "csv_manifest.json"
     prior_csv = {
@@ -208,4 +214,29 @@ def acquire(root: Path, fetch: Fetch, *, include_csv: bool = False) -> dict[str,
                                 else datetime.now(UTC).isoformat()
                             )})
     preserve_raw(csv_manifest, (json.dumps(csv_records, indent=2, sort_keys=True) + "\n").encode())
-    return {**result, "csv_records": csv_records}
+    return csv_records
+
+
+def acquire_csv_from_frozen(root: Path, fetch: Fetch) -> dict[str, object]:
+    """Fetch only CSVs named in a fully hash-verified frozen source manifest."""
+    manifest_path = root / "source_manifest.json"
+    if not manifest_path.exists():
+        raise ValueError("source manifest must be frozen before CSV acquisition")
+    source = json.loads(manifest_path.read_text(encoding="utf-8"))
+    index_body = (root / "raw" / "archive_index.html").read_bytes()
+    if sha256(index_body).hexdigest() != source["index_sha256"]:
+        raise ValueError("source index hash mismatch")
+    discovered = discover_releases(index_body)
+    records = source["releases"]
+    expected = [(row.release_date.isoformat(), row.page_url) for row in discovered.itertuples()]
+    actual = [(record["release_date"], record["page_url"]) for record in records]
+    if actual != expected:
+        raise ValueError("source manifest issue inventory mismatch")
+    for record in records:
+        day = record["release_date"]
+        page = (root / "raw" / "pages" / f"{day}.html").read_bytes()
+        if sha256(page).hexdigest() != record["page_sha256"]:
+            raise ValueError(f"source page hash mismatch: {day}")
+        if discover_table4(page, record["page_url"]) != record["csv_url"]:
+            raise ValueError(f"source page Table 4 link mismatch: {day}")
+    return {**source, "csv_records": _fetch_csv_records(root, fetch, records)}

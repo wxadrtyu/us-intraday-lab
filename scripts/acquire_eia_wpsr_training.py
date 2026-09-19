@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from us_intraday_lab.data.eia_wpsr_archive import acquire
+from us_intraday_lab.data.eia_wpsr_archive import acquire, acquire_csv_from_frozen
 
 
 def main() -> None:
@@ -30,7 +30,11 @@ def main() -> None:
                 key: response.headers.get(key, "") for key in ("ETag", "Last-Modified")
             }, response.status
 
-    result = acquire(args.root, fetch, include_csv=args.stage == "csv")
+    result = (
+        acquire(args.root, fetch)
+        if args.stage == "sources"
+        else acquire_csv_from_frozen(args.root, fetch)
+    )
     print(json.dumps({"stage": args.stage, "release_count": len(result["releases"]),
                       "index_sha256": result["index_sha256"]}, sort_keys=True))
 

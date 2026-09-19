@@ -1,0 +1,16 @@
+{
+  "stage": "source-inventory-frozen-before-training-csv",
+  "sample_scope": "2021-2023 frozen event-cube 527-symbol coverage-limited sample; not full market",
+  "source": "https://www.eia.gov/petroleum/supply/weekly/archive/",
+  "source_manifest_external_path": "E:\\us-intraday-lab-data\\us-market\\research\\cache\\eia_wpsr_training_v1\\source_manifest.json",
+  "source_manifest_sha256": "7d64803e26acd2ea1e2db1c05c466280155e30d7a235e9220528bd22ba6b9690",
+  "archive_index_sha256": "be4561a91bc7925f22f7a7ec224622e9e06f62eaf1035a7f86a33ae18bf980d6",
+  "release_pages": 154,
+  "release_pages_by_year": {"2021": 52, "2022": 51, "2023": 51},
+  "unique_release_dates": 154,
+  "unique_page_linked_csv_urls": 154,
+  "all_page_hashes_match_external_manifest": true,
+  "all_training_csv_fetched_at_this_stage": false,
+  "post_availability_returns_loaded": false,
+  "cells_completed": 0
+}

@@ -5,6 +5,7 @@ import pytest
 from us_intraday_lab.data.eia_wpsr_archive import (
     ARCHIVE,
     acquire,
+    acquire_csv_from_frozen,
     discover_releases,
     discover_table4,
     parse_table4,
@@ -128,3 +129,38 @@ def test_csv_stage_parses_and_is_idempotent(tmp_path):
     bodies[csv_url] = rows + b'changed'
     with pytest.raises(ValueError, match='hash'):
         acquire(tmp_path, fetch, include_csv=True)
+
+
+def test_csv_stage_uses_only_frozen_links_without_refetching_index_or_pages(tmp_path):
+    issue = ROOT + '2021/2021_01_06/wpsr_2021_01_06.php'
+    csv_url = ROOT + '2021/2021_01_06/csv/table4.csv'
+    source_bodies = {
+        ARCHIVE: f'<a href="{issue_link("2021_01_06")}">6</a>'.encode(),
+        issue: b'Release Date: January 6, 2021 <a href="csv/table4.csv">CSV</a>',
+    }
+
+    def source_fetch(url):
+        return source_bodies[url], {}, 200
+
+    acquire(tmp_path, source_fetch)
+    csv_body = (
+        b'STUB_1,Difference\n'
+        b'Commercial (Excluding SPR),1.0\n'
+        b'Total Motor Gasoline,-2.0\n'
+        b'Distillate Fuel Oil,3.0\n'
+        b'Total Stocks (Excluding SPR),-4.0\n'
+    )
+    fetched = []
+
+    def csv_fetch(url):
+        fetched.append(url)
+        assert url == csv_url
+        return csv_body, {}, 200
+
+    result = acquire_csv_from_frozen(tmp_path, csv_fetch)
+    assert fetched == [csv_url]
+    assert result['csv_records'][0]['sha256']
+    assert acquire_csv_from_frozen(tmp_path, csv_fetch)['csv_records'] == result['csv_records']
+    (tmp_path / 'raw' / 'pages' / '2021-01-06.html').write_bytes(b'tampered')
+    with pytest.raises(ValueError, match='hash'):
+        acquire_csv_from_frozen(tmp_path, csv_fetch)
