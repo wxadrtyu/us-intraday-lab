@@ -189,6 +189,13 @@ def _parse_sec_identities(
     return matched.rename(columns={"name": "title"}), missing
 
 
+def _training_symbols(events_path: Path) -> set[str]:
+    events = pd.read_parquet(events_path, columns=["symbol", "session_date"])
+    dates = pd.to_datetime(events["session_date"], errors="raise")
+    training = dates.between("2021-01-01", "2023-12-31")
+    return set(events.loc[training, "symbol"].astype(str))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--events", required=True, type=Path)
@@ -199,9 +206,7 @@ def main() -> int:
     parser.add_argument("--expected-assignee-md5", required=True)
     parser.add_argument("--root", required=True, type=Path)
     arguments = parser.parse_args()
-    symbols = set(
-        pd.read_parquet(arguments.events, columns=["symbol"])["symbol"].astype(str)
-    )
+    symbols = _training_symbols(arguments.events)
     identities, missing = _parse_sec_identities(arguments.ticker_map, symbols)
     _grants, _mapping, _rejections, manifest = build_snapshot(
         arguments.patent_archive,

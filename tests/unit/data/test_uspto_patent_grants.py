@@ -10,6 +10,7 @@ import pytest
 
 from scripts.build_uspto_patent_grant_training_snapshot import (
     _parse_sec_identities,
+    _training_symbols,
     build_snapshot,
 )
 from us_intraday_lab.data.uspto_patent_grants import (
@@ -41,6 +42,17 @@ def test_parser_uses_frozen_sec_name_and_retains_unmatched(tmp_path: Path) -> No
         {"symbol": "AAA", "title": "Acme Incorporated"}
     ]
     assert missing["symbol"].tolist() == ["BBB"]
+
+
+def test_training_symbols_exclude_later_event_cube_periods(tmp_path: Path) -> None:
+    events = tmp_path / "events.parquet"
+    pd.DataFrame(
+        {
+            "symbol": ["AAA", "BBB", "CCC"],
+            "session_date": ["2021-01-04", "2023-12-29", "2024-01-02"],
+        }
+    ).to_parquet(events, index=False)
+    assert _training_symbols(events) == {"AAA", "BBB"}
 
 
 def test_mapping_accepts_unique_key() -> None:
