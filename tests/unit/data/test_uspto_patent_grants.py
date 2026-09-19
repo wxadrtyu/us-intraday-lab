@@ -233,3 +233,29 @@ def test_snapshot_preserves_sec_unmatched_inventory(tmp_path: Path) -> None:
     assert pd.read_parquet(root / "sec_unmatched.parquet")["symbol"].tolist() == [
         "BBB"
     ]
+
+
+def test_snapshot_rejects_invalid_source_grant_date_before_filter(tmp_path: Path) -> None:
+    patent_archive = tmp_path / "g_patent.tsv.zip"
+    patent_md5 = _write_zip(
+        patent_archive,
+        "g_patent.tsv",
+        "patent_id\tpatent_type\tpatent_date\tpatent_title\n"
+        "1\tutility\t2022-99-04\tUseful thing\n",
+    )
+    assignee_archive = tmp_path / "g_assignee_not_disambiguated.tsv.zip"
+    assignee_md5 = _write_zip(
+        assignee_archive,
+        "g_assignee_not_disambiguated.tsv",
+        "patent_id\tassignee_sequence\tassignee_organization\n"
+        "1\t0\tAcme Inc\n",
+    )
+    with pytest.raises(ValueError, match="USPTO_PATENT_DATE_INVALID"):
+        build_snapshot(
+            patent_archive,
+            assignee_archive,
+            pd.DataFrame({"symbol": ["AAA"], "title": ["Acme Incorporated"]}),
+            tmp_path / "output",
+            patent_md5,
+            assignee_md5,
+        )

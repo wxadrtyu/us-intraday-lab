@@ -84,6 +84,8 @@ def build_snapshot(
         ["patent_id", "patent_type", "patent_date", "patent_title"],
     ):
         dates = pd.to_datetime(chunk["patent_date"], errors="coerce")
+        if dates.isna().any():
+            raise ValueError("USPTO_PATENT_DATE_INVALID")
         patent_parts.append(
             chunk.loc[dates.between("2021-01-01", "2023-12-31")].copy()
         )
