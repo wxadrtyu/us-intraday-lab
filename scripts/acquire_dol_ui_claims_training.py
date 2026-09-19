@@ -3,10 +3,39 @@
 import argparse
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from us_intraday_lab.data.dol_ui_claims_archive import acquire_pdfs, freeze_year_indexes
+
+
+def _open_official(request: Request, timeout: int) -> tuple[bytes, dict[str, str], int]:
+    with urlopen(request, timeout=timeout) as response:
+        if response.geturl() != request.full_url:
+            raise ValueError(f"DOL archive URL redirected: {request.full_url} -> {response.geturl()}")
+        return response.read(), {
+            key: response.headers.get(key, "")
+            for key in ("ETag", "Last-Modified", "Content-Type")
+        }, response.status
+
+
+def fetch_official_with_retry(
+    request: Request,
+    *,
+    opener: Callable[[Request, int], tuple[bytes, dict[str, str], int]] = _open_official,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> tuple[bytes, dict[str, str], int]:
+    """Retry only transient official-host gateway failures; never change source URL."""
+    for attempt in range(3):
+        try:
+            return opener(request, 45)
+        except HTTPError as error:
+            if error.code not in (502, 503, 504) or attempt == 2:
+                raise
+            sleeper(float(2 ** (attempt + 1)))
+    raise AssertionError("unreachable retry state")
 
 
 def main() -> None:
@@ -32,13 +61,7 @@ def main() -> None:
                 "X-Requested-With": "XMLHttpRequest",
             },
         )
-        with urlopen(request, timeout=45) as response:
-            if response.geturl() != url:
-                raise ValueError(f"DOL archive URL redirected: {url} -> {response.geturl()}")
-            return response.read(), {
-                key: response.headers.get(key, "")
-                for key in ("ETag", "Last-Modified", "Content-Type")
-            }, response.status
+        return fetch_official_with_retry(request)
 
     result = (freeze_year_indexes(fetch, args.root) if args.stage == "indexes"
               else acquire_pdfs(fetch, args.root))
