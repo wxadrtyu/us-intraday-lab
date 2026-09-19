@@ -40,14 +40,17 @@ def _chunks(
         if member not in archive.namelist():
             raise RuntimeError(f"USPTO_ARCHIVE_MEMBER_MISSING:{member}")
         with archive.open(member) as source:
-            yield from pd.read_csv(
+            for chunk in pd.read_csv(
                 source,
                 sep="\t",
                 usecols=columns,
                 dtype="string",
                 chunksize=500_000,
                 keep_default_na=False,
-            )
+            ):
+                yield chunk.rename(
+                    columns={"raw_assignee_organization": "assignee_organization"}
+                )
 
 
 def _write_parquet_immutable(path: Path, frame: pd.DataFrame) -> None:
@@ -105,7 +108,7 @@ def build_snapshot(
     for chunk in _chunks(
         assignee_archive,
         ASSIGNEE_MEMBER,
-        ["assignee_organization"],
+        ["raw_assignee_organization"],
     ):
         names.update(
             value.strip()
@@ -123,7 +126,7 @@ def build_snapshot(
     for chunk in _chunks(
         assignee_archive,
         ASSIGNEE_MEMBER,
-        ["patent_id", "assignee_sequence", "assignee_organization"],
+        ["patent_id", "assignee_sequence", "raw_assignee_organization"],
     ):
         selected = chunk["patent_id"].astype(str).isin(patent_ids) & chunk[
             "assignee_organization"

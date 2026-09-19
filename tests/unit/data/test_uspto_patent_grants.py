@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from scripts.build_uspto_patent_grant_training_snapshot import (
+    _chunks,
     _parse_sec_identities,
     _training_symbols,
     build_snapshot,
@@ -53,6 +54,24 @@ def test_training_symbols_exclude_later_event_cube_periods(tmp_path: Path) -> No
         }
     ).to_parquet(events, index=False)
     assert _training_symbols(events) == {"AAA", "BBB"}
+
+
+def test_assignee_archive_uses_publisher_raw_column(tmp_path: Path) -> None:
+    archive = tmp_path / "g_assignee_not_disambiguated.tsv.zip"
+    _write_zip(
+        archive,
+        "g_assignee_not_disambiguated.tsv",
+        "patent_id\tassignee_sequence\traw_assignee_organization\n"
+        "1\t0\tAcme Inc\n",
+    )
+    chunk = next(
+        _chunks(
+            archive,
+            "g_assignee_not_disambiguated.tsv",
+            ["patent_id", "assignee_sequence", "raw_assignee_organization"],
+        )
+    )
+    assert chunk["assignee_organization"].tolist() == ["Acme Inc"]
 
 
 def test_mapping_accepts_unique_key() -> None:
@@ -179,7 +198,7 @@ def test_snapshot_verifies_archives_and_resumes_identical_output(tmp_path: Path)
     assignee_md5 = _write_zip(
         assignee_archive,
         "g_assignee_not_disambiguated.tsv",
-        "patent_id\tassignee_sequence\tassignee_organization\n"
+        "patent_id\tassignee_sequence\traw_assignee_organization\n"
         "1\t0\tAcme Inc\n",
     )
     identities = pd.DataFrame(
@@ -231,7 +250,7 @@ def test_snapshot_preserves_sec_unmatched_inventory(tmp_path: Path) -> None:
     assignee_md5 = _write_zip(
         assignee_archive,
         "g_assignee_not_disambiguated.tsv",
-        "patent_id\tassignee_sequence\tassignee_organization\n"
+        "patent_id\tassignee_sequence\traw_assignee_organization\n"
         "1\t0\tAcme Inc\n",
     )
     root = tmp_path / "output"
@@ -265,7 +284,7 @@ def test_snapshot_rejects_invalid_source_grant_date_before_filter(tmp_path: Path
     assignee_md5 = _write_zip(
         assignee_archive,
         "g_assignee_not_disambiguated.tsv",
-        "patent_id\tassignee_sequence\tassignee_organization\n"
+        "patent_id\tassignee_sequence\traw_assignee_organization\n"
         "1\t0\tAcme Inc\n",
     )
     with pytest.raises(ValueError, match="USPTO_PATENT_DATE_INVALID"):
