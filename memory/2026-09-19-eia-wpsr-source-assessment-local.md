@@ -1,0 +1,9 @@
+# EIA WPSR source assessment (local fallback)
+
+- summary: After freezing the USPTO patent-grant coverage rejection, assessed a genuinely different physical supply/demand source: the U.S. Energy Information Administration Weekly Petroleum Status Report. EIA maintains a dated previous-issues archive covering each 2021-2023 release (`https://www.eia.gov/petroleum/supply/weekly/archive/`), with a per-release page such as `https://www.eia.gov/petroleum/supply/weekly/archive/2023/2023_01_05/wpsr_2023_01_05.php` that links release-specific Table 4 CSV and records the public release date. EIA says Tables 1-14 CSV are normally posted after 10:30 a.m. ET Wednesday, with holiday exceptions (`https://www.eia.gov/petroleum/supply/weekly/schedule.php`). Nothing has been downloaded or ranked for this line. A read-only sample audit found the fixed training cube has 527 symbols, of which 371 have at least 60 observed sample sessions, and energy ETFs XLE/XOP/OIH are present. This only establishes potential feasibility; archived-file immutability, holiday release timestamps, exact CSV fields, strictly trailing exposure mapping, and a non-tuned coverage threshold must be resolved in a preregistration before acquisition.
+- stage: source-assessment
+- kpi_version: eia-wpsr-supply-shock-training-feasibility-v0
+- tags: project:quant-agent-team, market:cn_a, freq:daily, market:us, freq:5min, stage:source-assessment, strategy:eia-wpsr-supply-shock, status:unregistered
+- next_step: Verify release-specific archived Table 4 CSV URLs and content, determine a causal next-session stock-ranking mechanism using strictly prior sample information, then preregister immutable URLs/hashes, complete release coverage, 527-symbol sample mapping, frozen grid, and 9/18bp plus delayed-entry gates before any training data acquisition.
+
+MCP memory was unavailable in this session, so this is the required local fallback to backfill when restored.
