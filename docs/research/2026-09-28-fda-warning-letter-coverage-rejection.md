@@ -24,4 +24,3 @@ The preregistration requires one complete, hash-frozen official XLSX response be
 The index also advertises a separate batch-export URL. That endpoint was not the preregistered source. Fetching it after observing the standard-export truncation would change the exact source and acquisition contract after inspection. It is not used to rescue this line. No pagination, batch substitution, threshold relaxation, issuer alias, or partial-year inference is permitted.
 
 Final state: `source_complete=false`, `issuer_mapping_performed=false`, `event_cube_opened=false`, `cells_completed=0`, `post_availability_outcomes_loaded=false`. No development or consumed period, strategy version, Paper state, monitoring pool, broker path, order route, or shutdown action was touched.
-
