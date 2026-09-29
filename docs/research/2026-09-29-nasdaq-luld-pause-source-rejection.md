@@ -23,4 +23,3 @@ Official sources:
 Because the complete official historical universe and its version state cannot be proven, event volume and point-in-time symbol coverage were not measured. No current or guessed historical symbol, share-class folding, successor/predecessor relation, subsidiary, parent, brand, former name, abbreviation, fuzzy match, or manual alias may be used to reopen the line.
 
 Final state: `historical_source_gate_passed=false`, `preregistered=false`, `halt_corpus_persisted=false`, `volume_counted=false`, `point_in_time_symbol_mapping_performed=false`, `event_cube_opened=false`, `cells_completed=0`, `post_pause_outcomes_loaded=false`. No development or consumed period, strategy version, Paper state, monitoring pool, broker path, order route, or shutdown action was touched.
-
