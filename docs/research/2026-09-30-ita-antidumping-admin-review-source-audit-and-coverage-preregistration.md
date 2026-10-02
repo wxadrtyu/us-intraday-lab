@@ -1,6 +1,6 @@
 # ITA antidumping administrative-review final-results source audit and coverage preregistration
 
-Status: **SOURCE_FEASIBLE_AND_COVERAGE_PREREGISTERED**. This stage used only official Federal Register metadata and statutory-publication semantics. It did not acquire the 257 GovInfo PDFs, map reviewed exporters or producers to the frozen 527-symbol sample, open the event cube, or read any post-publication return. The sample remains a **527-symbol coverage-limited sample, not the full US market**.
+Status: **SOURCE_FEASIBLE_AND_COVERAGE_PREREGISTERED**, corrected before outcome access. This stage used only official Federal Register metadata and statutory-publication semantics. It did not acquire the 240 admissible GovInfo PDFs, map reviewed exporters or producers to the frozen 527-symbol sample, open the event cube, or read any post-publication return. The sample remains a **527-symbol coverage-limited sample, not the full US market**.
 
 ## Frozen source family
 
@@ -20,9 +20,9 @@ The deterministic homogeneous filter requires:
 
 - `type=Notice`;
 - title matching `Final Results of (the )?Antidumping Duty Administrative Review`, case-insensitively;
-- title not containing `Amended`, `Court Decision`, `Changed Circumstances`, `Sunset`, `New Shipper`, `Preliminary`, `Countervailing`, `Rescission`, or `No Shipments`.
+- title not containing `Amended`, `Court Decision`, `Changed Circumstances`, `Sunset`, `New Shipper`, `Preliminary`, `Countervailing`, `Rescission`, `No Shipments` or `No-Shipments`, `Correction`, `Corrected`, or `Supersed`.
 
-This produces **257 original final-results notices: 80 in 2021, 78 in 2022, and 99 in 2023**. Required publication date, document number, Federal Register page URL, and GovInfo PDF URL have zero missing values; document numbers have zero duplicates. The family passes the fixed high-frequency source floor of 100 total documents and 20 in every training year.
+This produces **240 original final-results notices: 77 in 2021, 69 in 2022, and 94 in 2023**. Required publication date, document number, Federal Register page URL, and GovInfo PDF URL have zero missing values; document numbers have zero duplicates. The family passes the fixed high-frequency source floor of 100 total documents and 20 in every training year. The earlier 257 count incorrectly retained 16 correction-titled notices and one additional `No-Shipments` spelling variant; this explicit-contract defect was found and corrected before any return or post-availability outcome read.
 
 Official sources:
 
@@ -40,7 +40,7 @@ The only admissible exposed entity is a separately reviewed exporter or producer
 
 An event maps only when that complete reviewed-entity legal name is mechanically identical to exactly one frozen SEC issuer identity. No product or country inference, importer exposure, affiliate inference, subsidiary-to-parent or parent-to-subsidiary mapping, former-name substitution, acronym expansion, legal-name reconstruction, fuzzy match, external corporate-tree join, or hand-written alias is permitted. Multiple reviewed entities in one notice may create separate issuer-document pairs only when each entity independently satisfies the exact role and identity rule; the Federal Register document remains one source event for concentration and version auditing.
 
-Before any outcome read, all 257 official GovInfo PDFs must be fetched sequentially and hash-frozen. Missing, non-PDF, duplicate-byte, correction, amendment, or supersession conflicts are preserved. The metadata-only coverage snapshot must then satisfy all of the following:
+Before any outcome read, all 240 admissible official GovInfo PDFs must be fetched sequentially and hash-frozen. Missing, non-PDF, duplicate-byte, correction, amendment, or supersession conflicts are preserved. The metadata-only coverage snapshot must then satisfy all of the following:
 
 - at least 10 distinct frozen issuers;
 - at least 50 exact issuer-document pairs;
@@ -51,4 +51,4 @@ Before any outcome read, all 257 official GovInfo PDFs must be fetched sequentia
 
 Failure of any source, role, identity, calendar, annual, repetition, or concentration gate yields `ABANDON_ITA_AD_ADMIN_REVIEW_COVERAGE_GATE`, with `cells_completed=0` and no return access. Filters, roles, and thresholds may not be altered after observing coverage.
 
-Final state for this stage: `source_complete=true`, `metadata_pages=2`, `broad_search_result_count=1731`, `homogeneous_notice_count=257`, `homogeneous_year_counts=80/78/99`, `required_metadata_missing=0`, `duplicate_document_numbers=0`, `coverage_preregistered=true`, `pdf_corpus_acquired=false`, `reviewed_entity_mapping_performed=false`, `event_cube_opened=false`, `cells_completed=0`, `post_publication_outcomes_loaded=false`. No development or consumed period, Paper state, monitoring pool, broker path, order route, or shutdown action was touched.
+Corrected final state for this preregistration stage: `source_complete=true`, `metadata_pages=2`, `broad_search_result_count=1731`, `homogeneous_notice_count=240`, `homogeneous_year_counts=77/69/94`, `required_metadata_missing=0`, `duplicate_document_numbers=0`, `coverage_preregistered=true`, `pdf_corpus_acquired=false`, `reviewed_entity_mapping_performed=false`, `event_cube_opened=false`, `cells_completed=0`, `post_publication_outcomes_loaded=false`. No development or consumed period, Paper state, monitoring pool, broker path, order route, or shutdown action was touched.
