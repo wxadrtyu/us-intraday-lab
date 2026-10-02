@@ -18,7 +18,7 @@ The frozen identity table has one ambiguous CIK, 1652044, shared by GOOG and GOO
 
 ## Pending acceptance and document-identity gate
 
-For every one of the 871 upper-bound pairs, acquire the immutable SEC full-submission text sequentially from `https://www.sec.gov/Archives/{master-index filename}` and freeze its URL, byte count, and SHA-256. Parse and require:
+For every one of the 871 upper-bound pairs, acquire the immutable official SEC filing-index HTML sequentially at `https://www.sec.gov/Archives/edgar/data/{CIK}/{accession-without-dashes}/{accession}-index.html` and freeze its URL, byte count, and SHA-256. The filing index is the metadata-only source for the accepted timestamp and document table; the full submission and primary-document body remain unopened at this gate. Parse and require:
 
 - one accession number consistent with the master-index path;
 - one valid SEC acceptance datetime;
@@ -26,7 +26,7 @@ For every one of the 871 upper-bound pairs, acquire the immutable SEC full-submi
 - a non-empty primary-document filename for that exact `S-8` block;
 - a first frozen sample trading session strictly after the acceptance calendar date.
 
-A failed fetch, malformed or inconsistent accession, missing acceptance datetime, zero or multiple exact-`S-8` primary documents, duplicate accession with conflicting bytes, or absent later frozen sample session is retained explicitly as missingness and excluded from the admissible pair set. Missing values are never imputed. Any systematic incompleteness, source inconsistency, or unresolvable version chain fails the family rather than being repaired with another source.
+A failed filing-index fetch, malformed or inconsistent accession, missing acceptance datetime, zero or multiple exact-`S-8` primary-document rows, duplicate accession with conflicting bytes, or absent later frozen sample session is retained explicitly as missingness and excluded from the admissible pair set. Missing values are never imputed. Any systematic incompleteness, source inconsistency, or unresolvable version chain fails the family rather than being repaired with another source.
 
 The admissible set must independently retain at least 10 issuers, 50 issuer-document pairs, at least 12 pairs and 5 issuers in each year, at least 6 issuers with 3 events, no issuer above 25%, and a later frozen sample session for every admitted pair. Acceptance coverage is checked before reading filing economics beyond the exact form/document identity and before any return.
 

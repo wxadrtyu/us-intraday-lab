@@ -8,7 +8,7 @@ kpi_version: versionless-sec-original-s8-source-screen
 
 tags: project:quant-agent-team, market:cn_a, freq:daily, stage:source-audit-and-coverage-preregistration, strategy:sec-original-s8, status:pending, source:sec-edgar, sample:coverage-limited-527
 
-next_step: Sequentially acquire and hash all 871 one-to-one direct-CIK full-submission texts. Parse immutable accession, SEC acceptance datetime, and exactly one primary document of type S-8; retain all missingness and exclude invalid or end-censored pairs. Recompute the frozen independent coverage gates on admissible pairs before reading any filing economics or post-acceptance outcome. Fail closed on source inconsistency, systematic missingness, version ambiguity, or any coverage shortfall; never add S-8 POS or another form to rescue coverage.
+next_step: Sequentially acquire and hash all 871 one-to-one direct-CIK official filing-index HTML pages. Parse immutable accession, SEC acceptance datetime, and exactly one primary-document row of type S-8 while leaving the full submission and document body unopened; retain all missingness and exclude invalid or end-censored pairs. Recompute the frozen independent coverage gates on admissible pairs before reading any filing economics or post-acceptance outcome. Fail closed on source inconsistency, systematic missingness, version ambiguity, or any coverage shortfall; never add S-8 POS or another form to rescue coverage.
 
 ## Frozen evidence
 
