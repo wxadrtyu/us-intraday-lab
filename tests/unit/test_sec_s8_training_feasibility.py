@@ -15,6 +15,8 @@ from us_intraday_lab.sec_s8_training_feasibility import (
     TOP_COUNTS,
     build_event_states,
     load_coverage,
+    run_diagnostic,
+    score_family,
     specifications,
 )
 
@@ -167,3 +169,142 @@ def test_repeat_windows_use_strictly_prior_availability_sessions() -> None:
     assert not bool(repeat_start["clustered_repeat_63"])
     assert bool(cluster_start["repeat_252"])
     assert bool(cluster_start["clustered_repeat_63"])
+
+
+def _score_fixture() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["AAA", "BBB", "CCC"],
+            "session_date": [date(2021, 1, 5)] * 3,
+            "bar_idx": [2] * 3,
+            "session_return": [-0.02, 0.01, 0.03],
+            "first_or_renewal_252": [True, True, True],
+            "repeat_252": [False, False, False],
+            "clustered_repeat_63": [False, False, False],
+        }
+    )
+
+
+def _training_fixture(
+    tmp_path: Path, *, missing_selected_exit: bool = False
+) -> tuple[Path, Path, str, str]:
+    periods = 260
+    start = date(2021, 1, 1)
+    sessions = [start + timedelta(days=index) for index in range(periods)]
+    rows: list[dict[str, object]] = []
+    for symbol, signal_return in (("AAA", 0.03), ("BBB", 0.01)):
+        for session_index, session in enumerate(sessions):
+            for bar_idx in DECISION_BARS:
+                row: dict[str, object] = {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "bar_idx": bar_idx,
+                    "session_return": signal_return,
+                    "p1_open": 100.0,
+                    "p2_open": 101.0,
+                    "p3_open": 102.0,
+                    "p5_open": 104.0,
+                    "p7_open": 106.0,
+                    "p8_open": 107.0,
+                }
+                if (
+                    missing_selected_exit
+                    and symbol == "AAA"
+                    and session_index == 255
+                    and bar_idx == 2
+                ):
+                    row["p2_open"] = float("nan")
+                rows.append(row)
+    event_cube = tmp_path / "events.parquet"
+    pd.DataFrame(rows).to_parquet(event_cube, index=False)
+    event_hash = hashlib.sha256(event_cube.read_bytes()).hexdigest()
+
+    payload = {
+        "status": "ACCEPTANCE_COVERAGE_COMPLETE",
+        "source": {"original_s8": 7909, "excluded_s8_pos": 5375},
+        "acquisition": {"requested": 2, "admissible": 2, "missing_or_invalid": 0},
+        "coverage": {
+            "passed": True,
+            "issuer_document_pairs": 2,
+            "distinct_issuers": 2,
+        },
+        "admissible_rows": [
+            {
+                "symbol": symbol,
+                "cik": cik,
+                "accession": f"000000000{cik}-21-000001",
+                "accepted": f"{sessions[254].isoformat()}T16:00:00",
+                "form": "S-8",
+                "next_sample_session": sessions[255].isoformat(),
+                "admissible": True,
+            }
+            for symbol, cik in (("AAA", 1), ("BBB", 2))
+        ],
+    }
+    coverage = tmp_path / "coverage.json"
+    coverage_hash = _write_json(coverage, payload)
+    return event_cube, coverage, event_hash, coverage_hash
+
+
+def test_continuation_and_reversal_order_active_names_oppositely() -> None:
+    frame = _score_fixture()
+
+    continuation = score_family(frame, "all_event_continuation")
+    reversal = score_family(frame, "all_event_reversal")
+
+    assert continuation.idxmax() == frame.index[frame["symbol"].eq("CCC")][0]
+    assert reversal.idxmax() == frame.index[frame["symbol"].eq("AAA")][0]
+
+
+def test_family_predicates_exclude_ineligible_active_names() -> None:
+    frame = _score_fixture()
+
+    score = score_family(frame, "repeat_252_continuation")
+
+    assert score.isna().all()
+
+
+def test_selected_missing_price_fails_cell_closed(tmp_path: Path) -> None:
+    event_cube, coverage, event_hash, coverage_hash = _training_fixture(
+        tmp_path, missing_selected_exit=True
+    )
+
+    cells, summary = run_diagnostic(
+        event_cube_path=event_cube,
+        coverage_path=coverage,
+        expected_event_sha256=event_hash,
+        expected_coverage_sha256=coverage_hash,
+    )
+
+    assert cells["valid"].eq(False).any()
+    assert int(summary["invalid_cells"]) > 0
+    assert not cells.loc[cells["valid"].eq(False), "retention_floor_passed"].any()
+
+
+def test_diagnostic_uses_frozen_cost_delay_and_no_execution_contract(
+    tmp_path: Path,
+) -> None:
+    event_cube, coverage, event_hash, coverage_hash = _training_fixture(tmp_path)
+
+    cells, summary = run_diagnostic(
+        event_cube_path=event_cube,
+        coverage_path=coverage,
+        expected_event_sha256=event_hash,
+        expected_coverage_sha256=coverage_hash,
+    )
+    cell = cells.loc[
+        cells["family"].eq("all_event_continuation")
+        & cells["decision_bar"].eq(2)
+        & cells["holding_bars"].eq(1)
+        & cells["top_count"].eq(1)
+    ].iloc[0]
+
+    assert len(cells) == 400
+    assert cell["standard_cost_bp"] == 9
+    assert cell["stress_cost_bp"] == 18
+    assert cell["delay_bars"] == 1
+    assert summary["cells_completed"] == 400
+    assert summary["strategy_versions_created"] == 0
+    assert summary["development_or_consumed_loaded"] is False
+    assert summary["paper_activation"] is False
+    assert summary["order_route"] == "FORBIDDEN"
