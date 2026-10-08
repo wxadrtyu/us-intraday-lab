@@ -13,7 +13,7 @@
 - Event cube SHA-256: `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`.
 - Coverage artifact SHA-256: `62943eb65d564e07960efcd206563adf1baebd5715d0c2db30a56cbe15be2ca8`.
 - SEC identity SHA-256: `44e7e15596937fe353d2148e6e775c41b83e27f9196d980bbeb44bd873d5f5b1` remains provenance evidence; the diagnostic consumes the already-frozen symbol/CIK mapping from the coverage artifact and performs no new entity resolution.
-- Use only 2021-01-01 through 2023-12-31 and reject any event-cube row outside that boundary.
+- Use only 2021-01-01 through 2023-12-31. The immutable container may hold later periods: read only `session_date` across the container for boundary audit, apply Parquet date filters before loading outcome columns, record the excluded row count, and reject any evaluated row outside the training boundary.
 - Use only the 482 frozen admissible coverage rows; preserve 138 missing-next-session rows as audit counts and never impute them.
 - Event life is exactly three observed symbol sessions beginning at `next_sample_session`.
 - Evaluate exactly five families x decision bars `(2,5,11,17,23)` x holding bars `(1,2,4,6)` x top counts `(1,3,5,10)` = 400 cells.
@@ -231,8 +231,10 @@ def test_summary_never_creates_version_or_authorizes_execution(tmp_path: Path) -
 
 Read exactly these cube columns after validating the file hash:
 `symbol`, `session_date`, `bar_idx`, `session_return`, `p1_open`, `p2_open`,
-`p3_open`, `p5_open`, `p7_open`, `p8_open`. Reject duplicate
-`(symbol,session_date,bar_idx)` keys and any row outside training. Construct the
+`p3_open`, `p5_open`, `p7_open`, `p8_open`. Audit the container with its
+`session_date` column only, then apply Parquet date filters before loading those
+outcome columns. Reject duplicate `(symbol,session_date,bar_idx)` keys and any
+evaluated row outside training, and record the excluded container-row count. Construct the
 full unique sample-session calendar. For each specification, select up to K
 names, equal-weight valid names, and fail the cell if any selected entry or exit
 is missing/nonpositive. Standard enters `p1_open`, stress uses the same path,

@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import scripts.diagnose_sec_s8_training_feasibility as script
 from us_intraday_lab.sec_s8_training_feasibility import (
     DECISION_BARS,
     FAMILIES,
@@ -186,7 +187,10 @@ def _score_fixture() -> pd.DataFrame:
 
 
 def _training_fixture(
-    tmp_path: Path, *, missing_selected_exit: bool = False
+    tmp_path: Path,
+    *,
+    missing_selected_exit: bool = False,
+    include_container_row_after_training: bool = False,
 ) -> tuple[Path, Path, str, str]:
     periods = 260
     start = date(2021, 1, 1)
@@ -215,6 +219,21 @@ def _training_fixture(
                 ):
                     row["p2_open"] = float("nan")
                 rows.append(row)
+    if include_container_row_after_training:
+        rows.append(
+            {
+                "symbol": "AAA",
+                "session_date": date(2024, 1, 2),
+                "bar_idx": 2,
+                "session_return": 99.0,
+                "p1_open": 1.0,
+                "p2_open": 100.0,
+                "p3_open": 100.0,
+                "p5_open": 100.0,
+                "p7_open": 100.0,
+                "p8_open": 100.0,
+            }
+        )
     event_cube = tmp_path / "events.parquet"
     pd.DataFrame(rows).to_parquet(event_cube, index=False)
     event_hash = hashlib.sha256(event_cube.read_bytes()).hexdigest()
@@ -308,3 +327,104 @@ def test_diagnostic_uses_frozen_cost_delay_and_no_execution_contract(
     assert summary["development_or_consumed_loaded"] is False
     assert summary["paper_activation"] is False
     assert summary["order_route"] == "FORBIDDEN"
+
+
+def test_diagnostic_projects_wider_immutable_container_to_training_only(
+    tmp_path: Path,
+) -> None:
+    event_cube, coverage, event_hash, coverage_hash = _training_fixture(
+        tmp_path, include_container_row_after_training=True
+    )
+
+    cells, summary = run_diagnostic(
+        event_cube_path=event_cube,
+        coverage_path=coverage,
+        expected_event_sha256=event_hash,
+        expected_coverage_sha256=coverage_hash,
+    )
+
+    assert len(cells) == 400
+    assert summary["period"] == "2021-01-01/2023-12-31"
+    assert summary["container_rows_excluded_outside_training"] == 1
+
+
+def _frozen_result() -> tuple[pd.DataFrame, dict[str, object]]:
+    cells = pd.DataFrame(
+        [
+            {
+                "family": item.family,
+                "decision_bar": item.decision_bar,
+                "holding_bars": item.holding_bars,
+                "top_count": item.top_count,
+                "valid": True,
+                "signal_sessions": 0,
+                "standard_cost_bp": 9,
+                "stress_cost_bp": 18,
+                "delay_bars": 1,
+                "standard_9bp": {
+                    "annualized_return": 0.0,
+                    "information_ratio": 0.0,
+                    "max_drawdown": 0.0,
+                    "positive_calendar_years": 0,
+                    "calendar_year_returns": {},
+                },
+                "cost_18bp": {"annualized_return": 0.0},
+                "delay_1bar_9bp": {"annualized_return": 0.0},
+                "retention_floor_passed": False,
+            }
+            for item in specifications()
+        ]
+    )
+    return cells, {
+        "schema_version": "1.0.0",
+        "status": "COMPLETE",
+        "diagnostic_id": "sec-original-s8-training-feasibility-v1",
+        "period": "2021-01-01/2023-12-31",
+        "event_cube_sha256": "1" * 64,
+        "coverage_sha256": "2" * 64,
+        "coverage": {"issuer_document_pairs": 482, "distinct_issuers": 258},
+        "event_rows": 1,
+        "active_state_rows": 1,
+        "calendar_sessions": 1,
+        "cells_completed": 400,
+        "invalid_cells": 0,
+        "retained_cells": 0,
+        "retained_families": [],
+        "decision": "ABANDON_SEC_S8_NO_VERSION_CREATED",
+        "strategy_versions_created": 0,
+        "development_or_consumed_loaded": False,
+        "primary_document_bodies_opened": False,
+        "paper_activation": False,
+        "order_route": "FORBIDDEN",
+        "runtime_seconds": 0.1,
+    }
+
+
+def test_cli_writes_complete_versionless_outputs_atomically(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(script, "run_diagnostic", lambda **_: _frozen_result())
+    args = [
+        "--event-cube",
+        str(tmp_path / "events.parquet"),
+        "--coverage",
+        str(tmp_path / "coverage.json"),
+        "--output-json",
+        str(tmp_path / "summary.json"),
+        "--output-parquet",
+        str(tmp_path / "cells.parquet"),
+        "--output-md",
+        str(tmp_path / "summary.md"),
+    ]
+
+    assert script.run(args) == 0
+    summary = json.loads((tmp_path / "summary.json").read_text("utf-8"))
+
+    assert summary["status"] == "COMPLETE"
+    assert summary["cells_completed"] == 400
+    assert summary["strategy_versions_created"] == 0
+    assert summary["paper_activation"] is False
+    assert summary["order_route"] == "FORBIDDEN"
+    assert (tmp_path / "cells.parquet").exists()
+    assert (tmp_path / "summary.md").exists()
+    assert not list(tmp_path.glob("*.tmp"))

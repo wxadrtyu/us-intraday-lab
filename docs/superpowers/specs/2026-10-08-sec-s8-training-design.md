@@ -171,15 +171,20 @@ or permits development/consumed data access.
 Source-hash, accession, CIK, timestamp, exact-form, duplicate, training-boundary,
 lookback, event-lifetime, grid-cardinality, or price-validity failures are
 preserved and fail closed. Interrupted outputs are written atomically and never
-replace a completed artifact. The evaluator must reject any date outside
-2021-2023 and any input hash not explicitly frozen in the implementation plan.
+replace a completed artifact. The immutable event container may include later
+periods: the evaluator reads only `session_date` across that container for the
+boundary audit, applies Parquet date filters before loading outcome columns,
+records the metadata-only count excluded outside training, and rejects any
+evaluated date outside 2021-2023. Every input hash remains explicitly frozen in
+the implementation plan.
 
 Tests must cover immutable input hashes, exact 400-cell identity, next-session
 availability, three-session expiry, same-session multi-accession handling,
 252-session left censoring, 252- and 63-session repetition labels, opposite
 continuation/reversal ordering, deterministic tie-breaking, up-to-K weighting,
 9/18 bp costs, one-bar delay, full-calendar metrics, every retention predicate,
-terminal decisions, and absence of execution or pool mutation paths.
+training-only projection from the wider immutable event container, terminal
+decisions, and absence of execution or pool mutation paths.
 
 No primary-document body, post-acceptance return, development period, consumed
 period, broker, submit/cancel function, Paper state, monitoring pool, order

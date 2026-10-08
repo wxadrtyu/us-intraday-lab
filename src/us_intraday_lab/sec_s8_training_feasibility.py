@@ -330,7 +330,7 @@ def _daily_returns(
     return daily, len(raw), True
 
 
-def _load_event_cube(path: Path, expected_sha256: str) -> pd.DataFrame:
+def _load_event_cube(path: Path, expected_sha256: str) -> tuple[pd.DataFrame, int]:
     if _sha256(path) != expected_sha256:
         raise RuntimeError("SEC_S8_EVENT_CUBE_HASH_MISMATCH")
     columns = [
@@ -345,17 +345,31 @@ def _load_event_cube(path: Path, expected_sha256: str) -> pd.DataFrame:
         "p7_open",
         "p8_open",
     ]
-    cube = pd.read_parquet(path, columns=columns)
+    container_dates = pd.to_datetime(
+        pd.read_parquet(path, columns=["session_date"])["session_date"]
+    ).dt.date
+    in_training = container_dates.map(
+        lambda value: TRAIN_START <= value <= TRAIN_END
+    )
+    excluded_outside_training = int((~in_training).sum())
+    cube = pd.read_parquet(
+        path,
+        columns=columns,
+        filters=[
+            ("session_date", ">=", TRAIN_START),
+            ("session_date", "<=", TRAIN_END),
+        ],
+    )
     cube["symbol"] = cube["symbol"].astype(str)
     cube["session_date"] = pd.to_datetime(cube["session_date"]).dt.date
-    if not cube["session_date"].map(
+    if cube.empty or not cube["session_date"].map(
         lambda value: TRAIN_START <= value <= TRAIN_END
     ).all():
         raise RuntimeError("SEC_S8_TRAINING_BOUNDARY")
     cube = cube.loc[cube["bar_idx"].isin(DECISION_BARS)].copy()
     if cube[["symbol", "session_date", "bar_idx"]].duplicated().any():
         raise RuntimeError("SEC_S8_EVENT_KEY_DUPLICATE")
-    return cube
+    return cube, excluded_outside_training
 
 
 def run_diagnostic(
@@ -370,7 +384,9 @@ def run_diagnostic(
     coverage_rows, coverage_audit = load_coverage(
         coverage_path, expected_coverage_sha256
     )
-    cube = _load_event_cube(event_cube_path, expected_event_sha256)
+    cube, excluded_outside_training = _load_event_cube(
+        event_cube_path, expected_event_sha256
+    )
     symbol_sessions = cube.loc[:, ["symbol", "session_date"]].drop_duplicates()
     states = build_event_states(coverage_rows, symbol_sessions)
     active = cube.merge(
@@ -464,6 +480,7 @@ def run_diagnostic(
         "coverage_sha256": expected_coverage_sha256,
         "coverage": coverage_audit,
         "event_rows": len(cube),
+        "container_rows_excluded_outside_training": excluded_outside_training,
         "active_state_rows": len(states),
         "calendar_sessions": len(calendar),
         "cells_completed": len(cells),
