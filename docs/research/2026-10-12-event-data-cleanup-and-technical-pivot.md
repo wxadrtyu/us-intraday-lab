@@ -27,10 +27,11 @@ SIP bars and executes against the existing intraday cube. It does not use news,
 filings, agency releases, or issuer events.
 
 - Daily source: `alpaca_sip_1day_v2`
+- Daily source period: 2020-07 through 2023-12 only
 - Daily source tree SHA-256:
-  `00cf180747d9174e104dbcb84b7c5911d4e89cd1c6fec9696d3200e524c4ed6c`
-- Daily source files: 1,584 parquet plus 1,584 JSON manifests
-- Daily source bytes: 596,431,311
+  `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`
+- Daily source files: 672 parquet plus 672 JSON manifests
+- Daily source bytes: 243,705,913
 - Execution cube SHA-256:
   `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`
 - Training scope: 2021-2023, 527-symbol coverage-limited sample; not the full
@@ -48,3 +49,8 @@ bar and 46 have fewer than 60 earlier bars; they remain explicit missingness.
 No development or consumed-period data was read or ranked during cleanup and
 source coverage. No Paper pool, broker path, order route, or monitoring state was
 changed.
+
+The first metadata pass computed an identity over the whole source directory,
+including later files. Before any training outcome access, the contract was
+corrected to the explicit 2020-07 through 2023-12 filename boundary above. Later
+files are excluded from both the production hash and data loader.

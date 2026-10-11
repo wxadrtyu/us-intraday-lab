@@ -17,14 +17,17 @@ computed from a completed daily bar strictly before the execution session.
 ## Immutable inputs
 
 - Daily SIP source root: `alpaca_sip_1day_v2`
+- Daily source filenames: only monthly batches from 2020-07 through 2023-12
 - Daily source tree SHA-256:
-  `00cf180747d9174e104dbcb84b7c5911d4e89cd1c6fec9696d3200e524c4ed6c`
+  `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`
 - Execution cube SHA-256:
   `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`
 - Training dates: 2021-01-01 through 2023-12-31
 - Warm-up bars may begin 2020-07-01, but no warm-up outcome contributes to
   reported performance.
 - Development, consumed, and blind-period files are forbidden.
+- Files after 2023-12 are excluded before hashing and cannot be opened by the
+  diagnostic.
 
 ## Point-in-time feature contract
 

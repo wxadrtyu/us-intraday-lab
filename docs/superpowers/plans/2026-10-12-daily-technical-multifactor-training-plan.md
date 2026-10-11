@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Use only 2021-2023 outcomes from the 527-symbol coverage-limited sample.
-- Daily source tree SHA-256 is `00cf180747d9174e104dbcb84b7c5911d4e89cd1c6fec9696d3200e524c4ed6c`.
+- Daily source tree SHA-256 for filenames from 2020-07 through 2023-12 is `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`.
 - Execution cube SHA-256 is `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`.
 - Evaluate exactly 400 cells with 9/18 bp costs and one-bar delay.
 - Never read development/consumed outcomes or change Paper, broker, order-route, or monitoring state.
@@ -42,7 +42,7 @@
 - Modify: `tests/unit/test_daily_technical_multifactor.py`
 
 **Interfaces:**
-- Produces: `run_diagnostic(*, daily_root: Path, event_cube_path: Path, expected_daily_sha256: str, expected_event_sha256: str) -> tuple[pd.DataFrame, dict[str, object]]`.
+- Produces: `run_diagnostic(*, daily_root: Path, event_cube_path: Path, expected_daily_sha256: str, expected_event_sha256: str) -> tuple[pd.DataFrame, dict[str, object]]`; the loader enumerates only 2020-07 through 2023-12 monthly files before hashing or opening them.
 
 - [ ] **Step 1: Add failing tests** for cell count 400, standard/stress/delay price mapping, invalid-price rejection, the 500-session floor, and the two-family recommendation rule.
 - [ ] **Step 2: Run the focused test module** and confirm the new assertions fail before implementation.
