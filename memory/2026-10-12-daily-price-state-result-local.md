@@ -1,0 +1,27 @@
+# Local fallback memory: daily price-state multi-factor result
+
+- type: `failed-experiment`
+- summary: The frozen 2021-2023 sparse daily price-state diagnostic completed 400 cells with zero invalid cells and retained none. The best standard-cost cell was compression_uptrend at decision bar 23, six-bar hold, top 5, with -4.78% annualized return, -1.65 information ratio, and only 262 signal sessions. The family is frozen rejected and no strategy version was created.
+- stage: `training-result`
+- kpi_version: `daily-price-state-multifactor-training-v1`
+- tags:
+  - `project:quant-agent-team`
+  - `market:cn_a`
+  - `freq:daily`
+  - `stage:training-result`
+  - `strategy:daily-price-state-multifactor-v1`
+  - `status:rejected`
+- immutable_inputs:
+  - daily_source_sha256: `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`
+  - event_cube_sha256: `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`
+  - cells_sha256: `9aee46a214abdab04ba9d143af0a4c4eb2edb53f97f2aafa54c3d48d166f96c3`
+- evidence:
+  - cells_completed: 400
+  - invalid_cells: 0
+  - retained_cells: 0
+  - retained_families: 0
+  - development_or_consumed_loaded: false
+  - strategy_versions_created: 0
+  - paper_activation: false
+  - order_route: `FORBIDDEN`
+- next_step: Do not tune this family. Existing same-session OHLCV technical contracts are already frozen exhausted; move to a distinct multi-day daily technical allocation horizon using only training-period daily bars.

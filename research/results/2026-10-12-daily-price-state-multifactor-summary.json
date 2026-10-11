@@ -1,0 +1,155 @@
+{
+  "best_training_cells": [
+    {
+      "decision_bar": 23,
+      "family": "compression_uptrend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 262,
+      "standard_annualized_return": -0.04778435846592899,
+      "standard_information_ratio": -1.6462326995279077,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 23,
+      "family": "compression_uptrend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 262,
+      "standard_annualized_return": -0.049150138101481944,
+      "standard_information_ratio": -1.7092520773734143,
+      "top_count": 20
+    },
+    {
+      "decision_bar": 23,
+      "family": "compression_uptrend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 262,
+      "standard_annualized_return": -0.0492390023935253,
+      "standard_information_ratio": -1.713061056717694,
+      "top_count": 40
+    },
+    {
+      "decision_bar": 23,
+      "family": "compression_uptrend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 262,
+      "standard_annualized_return": -0.049533949428045454,
+      "standard_information_ratio": -1.725589893633943,
+      "top_count": 10
+    },
+    {
+      "decision_bar": 2,
+      "family": "compression_uptrend",
+      "holding_bars": 2,
+      "retention_floor_passed": false,
+      "signal_sessions": 298,
+      "standard_annualized_return": -0.049974839720870134,
+      "standard_information_ratio": -1.1313503611979865,
+      "top_count": 10
+    },
+    {
+      "decision_bar": 2,
+      "family": "compression_uptrend",
+      "holding_bars": 2,
+      "retention_floor_passed": false,
+      "signal_sessions": 298,
+      "standard_annualized_return": -0.05152373710188585,
+      "standard_information_ratio": -1.167657649560772,
+      "top_count": 20
+    },
+    {
+      "decision_bar": 2,
+      "family": "compression_uptrend",
+      "holding_bars": 2,
+      "retention_floor_passed": false,
+      "signal_sessions": 298,
+      "standard_annualized_return": -0.05166877167344397,
+      "standard_information_ratio": -1.1711258018629178,
+      "top_count": 40
+    },
+    {
+      "decision_bar": 2,
+      "family": "compression_uptrend",
+      "holding_bars": 2,
+      "retention_floor_passed": false,
+      "signal_sessions": 298,
+      "standard_annualized_return": -0.05425590566705385,
+      "standard_information_ratio": -1.2298964338176415,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 5,
+      "family": "capitulation_recovery",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 397,
+      "standard_annualized_return": -0.05771187301064129,
+      "standard_information_ratio": -0.4494281577840963,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 2,
+      "family": "compression_uptrend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 298,
+      "standard_annualized_return": -0.05844574210122089,
+      "standard_information_ratio": -0.8424310911124598,
+      "top_count": 40
+    }
+  ],
+  "calendar_sessions": 753,
+  "cells_completed": 400,
+  "cells_path": "E:\\us-intraday-lab-data\\us-market\\research\\daily-price-state-multifactor-v1.parquet",
+  "cells_sha256": "9aee46a214abdab04ba9d143af0a4c4eb2edb53f97f2aafa54c3d48d166f96c3",
+  "container_rows_excluded_outside_training": 411054,
+  "daily_source_bytes": 243705913,
+  "daily_source_files": 1344,
+  "daily_source_sha256": "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701",
+  "decision": "ABANDON_DAILY_PRICE_STATE_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "daily-price-state-multifactor-training-v1",
+  "event_cube_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "event_rows": 388745,
+  "family_eligibility": {
+    "capitulation_recovery": {
+      "pairs": 1668,
+      "sessions": 465,
+      "symbols": 374
+    },
+    "compression_uptrend": {
+      "pairs": 1529,
+      "sessions": 354,
+      "symbols": 334
+    },
+    "downside_exhaustion": {
+      "pairs": 5013,
+      "sessions": 672,
+      "symbols": 447
+    },
+    "failed_breakdown_recovery": {
+      "pairs": 3559,
+      "sessions": 520,
+      "symbols": 421
+    },
+    "volume_accumulation": {
+      "pairs": 5241,
+      "sessions": 674,
+      "symbols": 458
+    }
+  },
+  "invalid_cells": 0,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "period": "2021-01-01/2023-12-31",
+  "retained_cells": 0,
+  "retained_families": [],
+  "runtime_seconds": 29.65191700000014,
+  "sample_scope": "527-symbol coverage-limited sample; not full market",
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}
