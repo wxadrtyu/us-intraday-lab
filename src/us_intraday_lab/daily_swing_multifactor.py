@@ -152,6 +152,124 @@ def _turnover(previous: dict[str, float], current: dict[str, float]) -> float:
     return 0.5 * (stock_change + abs(current_cash - previous_cash))
 
 
+@dataclass(frozen=True, slots=True)
+class _PreparedMarket:
+    calendar: pd.DatetimeIndex
+    open_by_date: dict[pd.Timestamp, pd.Series]
+
+
+def _prepare_market(opens: pd.DataFrame) -> _PreparedMarket:
+    required = {"symbol", "session_date", "open"}
+    if not required.issubset(opens.columns):
+        raise ValueError("DAILY_SWING_PORTFOLIO_SCHEMA_INVALID")
+    frame = opens.loc[:, ["symbol", "session_date", "open"]].copy()
+    frame["session_date"] = pd.to_datetime(frame["session_date"]).astype(
+        "datetime64[ns]"
+    )
+    if frame[["symbol", "session_date"]].duplicated().any():
+        raise ValueError("DAILY_SWING_PORTFOLIO_KEY_DUPLICATE")
+    frame["open"] = pd.to_numeric(frame["open"], errors="coerce")
+    if not np.isfinite(frame["open"]).all() or not frame["open"].gt(0).all():
+        raise ValueError("DAILY_SWING_OPEN_INVALID")
+    return _PreparedMarket(
+        calendar=pd.DatetimeIndex(sorted(frame["session_date"].unique())),
+        open_by_date={
+            session: group.set_index("symbol")["open"]
+            for session, group in frame.groupby("session_date", observed=True)
+        },
+    )
+
+
+def _prepare_scores(scores: pd.DataFrame) -> dict[pd.Timestamp, pd.DataFrame]:
+    required = {"symbol", "session_date", "score"}
+    if not required.issubset(scores.columns):
+        raise ValueError("DAILY_SWING_PORTFOLIO_SCHEMA_INVALID")
+    frame = scores.loc[:, ["symbol", "session_date", "score"]].copy()
+    frame["session_date"] = pd.to_datetime(frame["session_date"]).astype(
+        "datetime64[ns]"
+    )
+    if frame[["symbol", "session_date"]].duplicated().any():
+        raise ValueError("DAILY_SWING_PORTFOLIO_KEY_DUPLICATE")
+    return {
+        session: group.loc[group["score"].notna(), ["symbol", "score"]]
+        for session, group in frame.groupby("session_date", observed=True)
+    }
+
+
+def _cohort_sequence(
+    market: _PreparedMarket,
+    score_by_date: dict[pd.Timestamp, pd.DataFrame],
+    *,
+    top_count: int,
+    signal_lag: int,
+) -> tuple[list[dict[str, float]], int]:
+    cohorts: list[dict[str, float]] = []
+    signal_sessions = 0
+    for index in range(len(market.calendar) - 1):
+        current_date = market.calendar[index]
+        if index < signal_lag:
+            cohorts.append({})
+            continue
+        signal_date = market.calendar[index - signal_lag]
+        candidates = score_by_date.get(signal_date, pd.DataFrame())
+        if not candidates.empty:
+            candidates = candidates.loc[
+                candidates["symbol"].isin(market.open_by_date[current_date].index)
+            ].sort_values(
+                ["score", "symbol"], ascending=[False, True], kind="stable"
+            )
+        selected = candidates.head(top_count)
+        cohort = (
+            {symbol: 1.0 / len(selected) for symbol in selected["symbol"]}
+            if not selected.empty
+            else {}
+        )
+        cohorts.append(cohort)
+        signal_sessions += bool(cohort)
+    return cohorts, signal_sessions
+
+
+def _returns_from_cohorts(
+    market: _PreparedMarket,
+    cohort_sequence: list[dict[str, float]],
+    *,
+    holding_sessions: int,
+    cost_rate: float,
+    evaluation_start: date | None,
+    evaluation_end: date | None,
+) -> tuple[pd.Series, bool]:
+    active_cohorts: deque[dict[str, float]] = deque(maxlen=holding_sessions)
+    previous: dict[str, float] = {}
+    values: list[float] = []
+    value_dates: list[pd.Timestamp] = []
+    for index, cohort in enumerate(cohort_sequence):
+        current_date = market.calendar[index]
+        next_date = market.calendar[index + 1]
+        active_cohorts.append(cohort)
+        target = _target_weights(active_cohorts, holding_sessions)
+        next_opens = market.open_by_date[next_date]
+        if any(symbol not in next_opens.index for symbol in target):
+            return pd.Series(dtype=float), False
+        gross = sum(
+            weight
+            * (
+                float(next_opens[symbol])
+                / float(market.open_by_date[current_date][symbol])
+                - 1.0
+            )
+            for symbol, weight in target.items()
+        )
+        net = gross - cost_rate * _turnover(previous, target)
+        if (
+            (evaluation_start is None or current_date.date() >= evaluation_start)
+            and (evaluation_end is None or current_date.date() <= evaluation_end)
+        ):
+            values.append(net)
+            value_dates.append(current_date)
+        previous = target
+    return pd.Series(values, index=pd.DatetimeIndex(value_dates), dtype=float), True
+
+
 def portfolio_returns(
     scores: pd.DataFrame,
     opens: pd.DataFrame,
@@ -163,81 +281,22 @@ def portfolio_returns(
     evaluation_start: date | None = None,
     evaluation_end: date | None = None,
 ) -> tuple[pd.Series, int, bool]:
-    required_scores = {"symbol", "session_date", "score"}
-    required_opens = {"symbol", "session_date", "open"}
-    if not required_scores.issubset(scores.columns) or not required_opens.issubset(
-        opens.columns
-    ):
-        raise ValueError("DAILY_SWING_PORTFOLIO_SCHEMA_INVALID")
-    score_frame = scores.loc[:, ["symbol", "session_date", "score"]].copy()
-    open_frame = opens.loc[:, ["symbol", "session_date", "open"]].copy()
-    for frame in (score_frame, open_frame):
-        frame["session_date"] = pd.to_datetime(frame["session_date"]).astype(
-            "datetime64[ns]"
-        )
-    if score_frame[["symbol", "session_date"]].duplicated().any() or open_frame[
-        ["symbol", "session_date"]
-    ].duplicated().any():
-        raise ValueError("DAILY_SWING_PORTFOLIO_KEY_DUPLICATE")
-    open_frame["open"] = pd.to_numeric(open_frame["open"], errors="coerce")
-    if not np.isfinite(open_frame["open"]).all() or not open_frame["open"].gt(0).all():
-        raise ValueError("DAILY_SWING_OPEN_INVALID")
-
-    calendar = pd.DatetimeIndex(sorted(open_frame["session_date"].unique()))
-    score_by_date = {
-        session: group.loc[group["score"].notna(), ["symbol", "score"]]
-        for session, group in score_frame.groupby("session_date", observed=True)
-    }
-    open_by_date = {
-        session: group.set_index("symbol")["open"]
-        for session, group in open_frame.groupby("session_date", observed=True)
-    }
-    cohorts: deque[dict[str, float]] = deque(maxlen=holding_sessions)
-    previous: dict[str, float] = {}
-    values: list[float] = []
-    value_dates: list[pd.Timestamp] = []
-    signal_sessions = 0
-    for index in range(len(calendar) - 1):
-        current_date = calendar[index]
-        next_date = calendar[index + 1]
-        if index >= signal_lag:
-            signal_date = calendar[index - signal_lag]
-            candidates = score_by_date.get(signal_date, pd.DataFrame())
-            current_opens = open_by_date[current_date]
-            if not candidates.empty:
-                candidates = candidates.loc[
-                    candidates["symbol"].isin(current_opens.index)
-                ].sort_values(
-                    ["score", "symbol"], ascending=[False, True], kind="stable"
-                )
-            selected = candidates.head(top_count)
-            cohort = (
-                {symbol: 1.0 / len(selected) for symbol in selected["symbol"]}
-                if not selected.empty
-                else {}
-            )
-        else:
-            cohort = {}
-        cohorts.append(cohort)
-        if cohort:
-            signal_sessions += 1
-        target = _target_weights(cohorts, holding_sessions)
-        next_opens = open_by_date[next_date]
-        if any(symbol not in next_opens.index for symbol in target):
-            return pd.Series(dtype=float), signal_sessions, False
-        gross = sum(
-            weight * (float(next_opens[symbol]) / float(open_by_date[current_date][symbol]) - 1.0)
-            for symbol, weight in target.items()
-        )
-        net = gross - cost_rate * _turnover(previous, target)
-        if (
-            (evaluation_start is None or current_date.date() >= evaluation_start)
-            and (evaluation_end is None or current_date.date() <= evaluation_end)
-        ):
-            values.append(net)
-            value_dates.append(current_date)
-        previous = target
-    return pd.Series(values, index=pd.DatetimeIndex(value_dates), dtype=float), signal_sessions, True
+    market = _prepare_market(opens)
+    sequence, signal_sessions = _cohort_sequence(
+        market,
+        _prepare_scores(scores),
+        top_count=top_count,
+        signal_lag=signal_lag,
+    )
+    returns, valid = _returns_from_cohorts(
+        market,
+        sequence,
+        holding_sessions=holding_sessions,
+        cost_rate=cost_rate,
+        evaluation_start=evaluation_start,
+        evaluation_end=evaluation_end,
+    )
+    return returns, signal_sessions, valid
 
 
 def evaluate_grid(
@@ -250,29 +309,47 @@ def evaluate_grid(
     required = {"symbol", "feature_date", *FAMILIES}
     if not required.issubset(feature_scores.columns):
         raise ValueError("DAILY_SWING_SCORE_SCHEMA_INVALID")
+    market = _prepare_market(opens)
+    prepared_scores = {
+        family: _prepare_scores(
+            feature_scores.loc[:, ["symbol", "feature_date", family]].rename(
+                columns={"feature_date": "session_date", family: "score"}
+            )
+        )
+        for family in FAMILIES
+    }
+    sequence_cache = {
+        (family, lag, top_count): _cohort_sequence(
+            market,
+            prepared_scores[family],
+            top_count=top_count,
+            signal_lag=lag,
+        )
+        for family in FAMILIES
+        for lag in (*SIGNAL_LAGS, max(SIGNAL_LAGS) + 1, 4)
+        for top_count in TOP_COUNTS
+    }
     records: list[dict[str, object]] = []
     for spec in specifications():
-        family_scores = feature_scores.loc[:, ["symbol", "feature_date", spec.family]].rename(
-            columns={"feature_date": "session_date", spec.family: "score"}
-        )
-        kwargs = {
-            "top_count": spec.top_count,
+        sequence, signal_sessions = sequence_cache[
+            (spec.family, spec.signal_lag, spec.top_count)
+        ]
+        delayed_sequence, _ = sequence_cache[
+            (spec.family, spec.signal_lag + 1, spec.top_count)
+        ]
+        common = {
             "holding_sessions": spec.holding_sessions,
-            "signal_lag": spec.signal_lag,
             "evaluation_start": evaluation_start,
             "evaluation_end": evaluation_end,
         }
-        standard, signal_sessions, standard_valid = portfolio_returns(
-            family_scores, opens, cost_rate=0.0009, **kwargs
+        standard, standard_valid = _returns_from_cohorts(
+            market, sequence, cost_rate=0.0009, **common
         )
-        stress, _, stress_valid = portfolio_returns(
-            family_scores, opens, cost_rate=0.0018, **kwargs
+        stress, stress_valid = _returns_from_cohorts(
+            market, sequence, cost_rate=0.0018, **common
         )
-        delayed, _, delay_valid = portfolio_returns(
-            family_scores,
-            opens,
-            cost_rate=0.0009,
-            **{**kwargs, "signal_lag": spec.signal_lag + 1},
+        delayed, delay_valid = _returns_from_cohorts(
+            market, delayed_sequence, cost_rate=0.0009, **common
         )
         valid = standard_valid and stress_valid and delay_valid
         standard_metrics = _metrics(standard)
