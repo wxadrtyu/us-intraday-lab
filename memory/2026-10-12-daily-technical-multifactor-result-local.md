@@ -1,0 +1,29 @@
+# Local fallback memory: daily technical multi-factor v1 result
+
+- type: `failed-experiment`
+- summary: The frozen 2021-2023 daily technical multi-factor training diagnostic completed all 400 cells with zero invalid cells, but retained zero cells and zero families. The best standard-cost cell was `balanced_trend`, decision bar 17, six-bar hold, top 5, with -16.85% annualized return and -3.98 information ratio. The continuous prior-day trend-ranking hypothesis is frozen rejected; no strategy version was created.
+- stage: `training-result`
+- kpi_version: `daily-technical-multifactor-training-v1`
+- tags:
+  - `project:quant-agent-team`
+  - `market:cn_a`
+  - `freq:daily`
+  - `stage:training-result`
+  - `strategy:daily-technical-multifactor-v1`
+  - `status:rejected`
+- immutable_inputs:
+  - daily_source_sha256: `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`
+  - event_cube_sha256: `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`
+  - cells_sha256: `2d8f78b9e4a8e21f2f71841f5e4d22e40c5e76cc6fefe7954d5f0a6cd09efed5`
+- evidence:
+  - cells_completed: 400
+  - invalid_cells: 0
+  - retained_cells: 0
+  - retained_families: 0
+  - eligible_symbol_sessions: 133859
+  - eligible_symbols: 526
+  - development_or_consumed_loaded: false
+  - strategy_versions_created: 0
+  - paper_activation: false
+  - order_route: `FORBIDDEN`
+- next_step: Preregister a genuinely distinct sparse daily price-state family based on completed-bar candlestick geometry, range compression, and volume shocks; do not tune or rescue the rejected continuous trend ranks.

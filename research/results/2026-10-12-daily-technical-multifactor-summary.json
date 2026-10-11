@@ -1,0 +1,147 @@
+{
+  "best_training_cells": [
+    {
+      "decision_bar": 17,
+      "family": "balanced_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.1685294430000197,
+      "standard_information_ratio": -3.9767542355125256,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 23,
+      "family": "balanced_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.1739521191803347,
+      "standard_information_ratio": -4.26416395457955,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 17,
+      "family": "residual_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.1751157486111291,
+      "standard_information_ratio": -4.49755876618018,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 17,
+      "family": "balanced_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.17888900436825583,
+      "standard_information_ratio": -4.688283449910123,
+      "top_count": 10
+    },
+    {
+      "decision_bar": 17,
+      "family": "residual_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.17995682433247673,
+      "standard_information_ratio": -4.680217010860366,
+      "top_count": 10
+    },
+    {
+      "decision_bar": 17,
+      "family": "quiet_pullback",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.18080832599640095,
+      "standard_information_ratio": -5.444026352607114,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 23,
+      "family": "balanced_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.181978900728043,
+      "standard_information_ratio": -4.931280579111624,
+      "top_count": 10
+    },
+    {
+      "decision_bar": 17,
+      "family": "volume_confirmed_trend",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.1821159594113131,
+      "standard_information_ratio": -5.198241188274916,
+      "top_count": 40
+    },
+    {
+      "decision_bar": 17,
+      "family": "defensive_momentum",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.1821966325664538,
+      "standard_information_ratio": -5.664828576472498,
+      "top_count": 5
+    },
+    {
+      "decision_bar": 17,
+      "family": "quiet_pullback",
+      "holding_bars": 6,
+      "retention_floor_passed": false,
+      "signal_sessions": 753,
+      "standard_annualized_return": -0.18276397557771418,
+      "standard_information_ratio": -5.847217569889869,
+      "top_count": 10
+    }
+  ],
+  "calendar_sessions": 753,
+  "cells_completed": 400,
+  "cells_path": "E:\\us-intraday-lab-data\\us-market\\research\\daily-technical-multifactor-v1.parquet",
+  "cells_sha256": "2d8f78b9e4a8e21f2f71841f5e4d22e40c5e76cc6fefe7954d5f0a6cd09efed5",
+  "container_rows_excluded_outside_training": 411054,
+  "coverage_by_year": {
+    "2021": {
+      "pairs": 45290,
+      "sessions": 252,
+      "symbols": 402
+    },
+    "2022": {
+      "pairs": 52906,
+      "sessions": 251,
+      "symbols": 457
+    },
+    "2023": {
+      "pairs": 35663,
+      "sessions": 250,
+      "symbols": 362
+    }
+  },
+  "daily_source_bytes": 243705913,
+  "daily_source_files": 1344,
+  "daily_source_sha256": "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701",
+  "decision": "ABANDON_DAILY_TECHNICAL_NO_VERSION_CREATED",
+  "development_or_consumed_loaded": false,
+  "diagnostic_id": "daily-technical-multifactor-training-v1",
+  "eligible_symbol_sessions": 133859,
+  "eligible_symbols": 526,
+  "event_cube_sha256": "399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9",
+  "event_rows": 388745,
+  "invalid_cells": 0,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "period": "2021-01-01/2023-12-31",
+  "retained_cells": 0,
+  "retained_families": [],
+  "runtime_seconds": 77.15305119999994,
+  "sample_scope": "527-symbol coverage-limited sample; not full market",
+  "schema_version": "1.0.0",
+  "status": "COMPLETE",
+  "strategy_versions_created": 0
+}
