@@ -1,0 +1,27 @@
+# Local fallback memory: daily swing multi-factor result
+
+- type: `failed-experiment`
+- summary: The frozen 2021-2023 daily swing multi-factor diagnostic completed 400 cells but 297 failed closed because a selected held symbol lacked a required next-session open. No cell retained. The best valid cell, short_reversal lag 1/hold 1/top 5, showed 106.61% annualized return but IR 0.75 and 30.04% drawdown. Breakout_volume lag 2/hold 1/top 5 showed 43.07% annualized and IR 0.97 but 43.35% drawdown and negative delayed return. These are informative training observations, not qualified strategies.
+- stage: `training-result`
+- kpi_version: `daily-swing-multifactor-training-v1`
+- tags:
+  - `project:quant-agent-team`
+  - `market:cn_a`
+  - `freq:daily`
+  - `stage:training-result`
+  - `strategy:daily-swing-multifactor-v1`
+  - `status:rejected`
+- immutable_inputs:
+  - daily_source_sha256: `0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701`
+  - symbol_container_sha256: `399020c0abbdd554e4f4652593debcf33a2090bcc684c5d78bc1e27da92889a9`
+  - cells_sha256: `fea31ff1ba3d4c1ddfdd35b85c970e8724de2c621e6f214a3935c5a17ffb6e74`
+- evidence:
+  - cells_completed: 400
+  - invalid_cells: 297
+  - retained_cells: 0
+  - retained_families: 0
+  - development_or_consumed_loaded: false
+  - strategy_versions_created: 0
+  - paper_activation: false
+  - order_route: `FORBIDDEN`
+- next_step: Freeze this family. Continue with a genuinely distinct risk-controlled technical allocation hypothesis that uses only causal, point-in-time tradability and liquidity information; do not erase missing opens, treat them as cash, or rescue these cells by post-hoc parameter changes.
