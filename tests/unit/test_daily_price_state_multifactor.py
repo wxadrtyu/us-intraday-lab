@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -144,3 +148,17 @@ def test_cli_markdown_discloses_zero_side_effect_contract() -> None:
     assert "Development or consumed data loaded: **false**" in markdown
     assert "Strategy versions created: **0**" in markdown
     assert "Order route: **FORBIDDEN**" in markdown
+
+
+def test_cli_can_start_as_a_direct_script() -> None:
+    root = Path(__file__).resolve().parents[2]
+    completed = subprocess.run(
+        [sys.executable, "scripts/diagnose_daily_price_state_multifactor.py", "--help"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "daily price-state" in completed.stdout

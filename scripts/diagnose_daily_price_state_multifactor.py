@@ -6,13 +6,22 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from scripts.diagnose_daily_technical_multifactor import (
-    _best_cells,
-    _json_safe,
-    _parquet_bytes,
-    _sha256,
-    _write_immutable,
-)
+try:
+    from scripts.diagnose_daily_technical_multifactor import (
+        _best_cells,
+        _json_safe,
+        _parquet_bytes,
+        _sha256,
+        _write_immutable,
+    )
+except ModuleNotFoundError:
+    from diagnose_daily_technical_multifactor import (
+        _best_cells,
+        _json_safe,
+        _parquet_bytes,
+        _sha256,
+        _write_immutable,
+    )
 from us_intraday_lab.daily_price_state_multifactor import run_diagnostic
 
 DAILY_SOURCE_SHA256 = "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701"
