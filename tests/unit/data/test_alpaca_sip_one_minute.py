@@ -9,7 +9,9 @@ import pytest
 from us_intraday_lab.data.alpaca_sip_one_minute import (
     SIP_ONE_MINUTE_NAMESPACE,
     ReadOnlyAlpacaSipOneMinuteDownloader,
+    normalize_one_minute_bars,
     partition_specs,
+    quality_report,
 )
 
 
@@ -80,3 +82,78 @@ def test_one_minute_partition_grid_is_stable_and_separate() -> None:
 def test_downloader_rejects_missing_credentials() -> None:
     with pytest.raises(RuntimeError, match="ALPACA_SIP_ONE_MINUTE_CREDENTIAL_MISSING"):
         ReadOnlyAlpacaSipOneMinuteDownloader.from_environment(environ={})
+
+
+def _raw_rows() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "symbol": ["aaa", "aaa", "aaa"],
+            "timestamp": [
+                pd.Timestamp("2025-01-02T14:29:00Z"),
+                pd.Timestamp("2025-01-02T14:30:00Z"),
+                pd.Timestamp("2025-01-02T21:00:00Z"),
+            ],
+            "open": [100.0, 100.0, 100.0],
+            "high": [101.0, 101.0, 101.0],
+            "low": [99.0, 99.0, 99.0],
+            "close": [100.5, 100.5, 100.5],
+            "volume": [1000.0, 1000.0, 1000.0],
+            "trade_count": [20.0, 20.0, 20.0],
+            "vwap": [100.2, 100.2, 100.2],
+        }
+    )
+
+
+def test_normalization_retains_only_actual_regular_session_and_accounts_rows() -> None:
+    frame = normalize_one_minute_bars(_raw_rows(), asof=date(2025, 1, 31))
+    assert len(frame) == 1
+    assert frame["symbol"].tolist() == ["AAA"]
+    assert frame.attrs["provider_source_rows"] == 3
+    assert frame.attrs["excluded_out_of_session_rows"] == 2
+    assert quality_report(
+        frame,
+        requested=("AAA",),
+        start=date(2025, 1, 2),
+        end=date(2025, 1, 2),
+        asof=date(2025, 1, 31),
+    )["returned_rows"] == 1
+
+
+@pytest.mark.parametrize(
+    ("column", "value", "reason"),
+    [
+        ("timestamp", pd.Timestamp("2025-01-02T14:30:01Z"), "off_grid"),
+        ("open", 0.0, "invalid_ohlc"),
+        ("high", 99.0, "invalid_ohlc"),
+        ("volume", -1.0, "invalid_ohlc"),
+        ("trade_count", -1.0, "invalid_trade_count"),
+        ("vwap", 0.0, "invalid_vwap"),
+        ("symbol", "BBB", "unexpected_symbols"),
+    ],
+)
+def test_quality_rejects_malformed_source_row(
+    column: str, value: object, reason: str
+) -> None:
+    frame = normalize_one_minute_bars(_raw_rows(), asof=date(2025, 1, 31))
+    frame.loc[frame.index[0], column] = value
+    with pytest.raises(ValueError, match=reason):
+        quality_report(
+            frame,
+            requested=("AAA",),
+            start=date(2025, 1, 2),
+            end=date(2025, 1, 2),
+            asof=date(2025, 1, 31),
+        )
+
+
+def test_quality_rejects_duplicate_symbol_minute() -> None:
+    frame = normalize_one_minute_bars(_raw_rows(), asof=date(2025, 1, 31))
+    duplicate = pd.concat([frame, frame], ignore_index=True)
+    with pytest.raises(ValueError, match="duplicates"):
+        quality_report(
+            duplicate,
+            requested=("AAA",),
+            start=date(2025, 1, 2),
+            end=date(2025, 1, 2),
+            asof=date(2025, 1, 31),
+        )

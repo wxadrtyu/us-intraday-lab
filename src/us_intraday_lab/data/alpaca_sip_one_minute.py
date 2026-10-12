@@ -10,8 +10,10 @@ from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 
+import numpy as np
 import pandas as pd
 
+from us_intraday_lab.data.alpaca_sip_five_minute import _regular_session_mask
 from us_intraday_lab.data.alpaca_sip_five_minute import (
     load_frozen_candidate_symbols as _load_frozen_candidate_symbols,
 )
@@ -19,6 +21,9 @@ from us_intraday_lab.data.alpaca_sip_five_minute import (
 API_KEY_VARIABLE = "ALPACA_PAPER_API_KEY"
 SECRET_KEY_VARIABLE = "ALPACA_PAPER_SECRET_KEY"
 SIP_ONE_MINUTE_NAMESPACE = "alpaca_sip_1min_v1"
+_REQUIRED = ("symbol", "timestamp", "open", "high", "low", "close", "volume")
+_OPTIONAL = ("trade_count", "vwap")
+_OUTPUT = (*_REQUIRED, *_OPTIONAL, "asof", "provider", "feed")
 
 
 def load_frozen_candidate_symbols(
@@ -74,22 +79,90 @@ class ReadOnlyAlpacaSipOneMinuteDownloader:
             feed=DataFeed.SIP,
             asof=asof.isoformat(),
         )
-        frame = self._client.get_stock_bars(request).df.reset_index()
-        if frame.empty:
-            return pd.DataFrame(
-                columns=(
-                    "symbol", "timestamp", "open", "high", "low", "close",
-                    "volume", "trade_count", "vwap", "asof", "provider", "feed",
-                )
-            )
-        result = frame.copy()
-        result["symbol"] = result["symbol"].astype(str).str.upper()
-        result["timestamp"] = pd.to_datetime(result["timestamp"], utc=True)
-        result["asof"] = asof
-        result["provider"] = "alpaca"
-        result["feed"] = "sip"
-        result.attrs["provider_source_rows"] = len(result)
-        return result
+        return normalize_one_minute_bars(
+            self._client.get_stock_bars(request).df.reset_index(), asof=asof
+        )
+
+
+def normalize_one_minute_bars(frame: pd.DataFrame, *, asof: date) -> pd.DataFrame:
+    """Preserve source-row accounting while selecting XNYS regular-session bars."""
+    if frame.empty:
+        empty = pd.DataFrame(columns=_OUTPUT)
+        empty.attrs["provider_source_rows"] = 0
+        empty.attrs["excluded_out_of_session_rows"] = 0
+        return empty
+    missing = sorted(set(_REQUIRED).difference(frame.columns))
+    if missing:
+        raise ValueError(f"Alpaca SIP one-minute response missing columns: {missing}")
+    rows = len(frame)
+    result = frame.loc[:, [column for column in (*_REQUIRED, *_OPTIONAL) if column in frame]].copy()
+    result["symbol"] = result["symbol"].astype(str).str.upper()
+    result["timestamp"] = pd.to_datetime(result["timestamp"], utc=True, errors="raise")
+    for column in ("open", "high", "low", "close", "volume", *_OPTIONAL):
+        if column not in result:
+            result[column] = pd.NA
+        result[column] = pd.to_numeric(result[column], errors="raise")
+    result["asof"] = asof
+    result["provider"] = "alpaca"
+    result["feed"] = "sip"
+    result = result.loc[_regular_session_mask(result["timestamp"]), _OUTPUT]
+    result = result.sort_values(["timestamp", "symbol"], kind="stable").reset_index(drop=True)
+    result.attrs["provider_source_rows"] = rows
+    result.attrs["excluded_out_of_session_rows"] = rows - len(result)
+    return result
+
+
+def quality_report(
+    frame: pd.DataFrame,
+    *,
+    requested: tuple[str, ...],
+    start: date,
+    end: date,
+    asof: date,
+) -> dict[str, int]:
+    """Reject malformed source bars before they can enter a strategy panel."""
+    if frame.empty:
+        return {"returned_rows": 0, "returned_symbols": 0}
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True, errors="raise")
+    unexpected = sorted(set(frame["symbol"].astype(str)).difference(requested))
+    outside = (timestamps.dt.date < start) | (timestamps.dt.date > end)
+    outside_session = ~_regular_session_mask(timestamps)
+    duplicates = int(frame.duplicated(["symbol", "timestamp"]).sum())
+    missing = int(frame.loc[:, _REQUIRED].isna().any(axis=1).sum())
+    prices = frame[["open", "high", "low", "close"]]
+    invalid_ohlc = (
+        prices.le(0).any(axis=1)
+        | frame["high"].lt(prices[["open", "low", "close"]].max(axis=1))
+        | frame["low"].gt(prices[["open", "high", "close"]].min(axis=1))
+        | frame["volume"].lt(0)
+    )
+    off_grid = timestamps.dt.second.ne(0) | timestamps.dt.microsecond.ne(0)
+    nonfinite = sum(
+        int((~np.isfinite(frame[column].dropna().astype(float))).sum())
+        for column in ("open", "high", "low", "close", "volume", *_OPTIONAL)
+    )
+    bad_trade_count = int(frame["trade_count"].dropna().lt(0).sum())
+    bad_vwap = int(frame["vwap"].dropna().le(0).sum())
+    source_bad = (
+        set(frame["provider"].astype(str)) != {"alpaca"}
+        or set(frame["feed"].astype(str)) != {"sip"}
+        or set(frame["asof"].astype(str)) != {asof.isoformat()}
+    )
+    if (
+        unexpected or outside.any() or outside_session.any() or duplicates
+        or missing or invalid_ohlc.any() or off_grid.any() or nonfinite
+        or bad_trade_count or bad_vwap or source_bad
+    ):
+        raise ValueError(
+            "SIP one-minute quality failure: "
+            f"unexpected_symbols={unexpected}, outside_bounds={int(outside.sum())}, "
+            f"outside_session={int(outside_session.sum())}, duplicates={duplicates}, "
+            f"missing_required={missing}, invalid_ohlc={int(invalid_ohlc.sum())}, "
+            f"off_grid={int(off_grid.sum())}, nonfinite={nonfinite}, "
+            f"invalid_trade_count={bad_trade_count}, invalid_vwap={bad_vwap}, "
+            f"source_bad={source_bad}"
+        )
+    return {"returned_rows": len(frame), "returned_symbols": frame["symbol"].nunique()}
 
 
 def _validate_symbols(symbols: tuple[str, ...]) -> None:
