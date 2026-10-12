@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
@@ -291,3 +293,43 @@ def test_shard_records_provider_rejection_and_refuses_ledger_tamper(tmp_path: Pa
     manifest.write_text(json.dumps(record), encoding="utf-8")
     with pytest.raises(ValueError, match="rejection ledger"):
         acquire_sip_one_minute_shards(**kwargs)
+
+
+def test_cli_requires_finite_shard_bounds_before_any_network_access() -> None:
+    repo = Path(__file__).resolve().parents[3]
+    script = repo / "scripts" / "acquire_us_market_sip_one_minute.py"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--root",
+            "unused",
+            "--assets",
+            "unused",
+            "--start",
+            "2025-12-30",
+            "--end",
+            "2025-12-30",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "--shard-start" in result.stderr
+    assert "--shard-stop" in result.stderr
+
+
+def test_one_minute_protocol_freezes_candidate_source_without_execution() -> None:
+    repo = Path(__file__).resolve().parents[3]
+    protocol = json.loads(
+        (repo / "research" / "protocols" / "us_market_sip_1min_v1.json").read_text("utf-8")
+    )
+    assert protocol["candidate_symbols"] == 15399
+    assert (
+        protocol["candidate_symbols_sha256"]
+        == "03af744e8cd30ef307251e9484ac08ec6d79fa4c8a4607a768cf45ba672d61c9"
+    )
+    assert protocol["bar_size"] == "1min"
+    assert protocol["feed"] == "sip"
+    assert protocol["execution_capability"] == "FORBIDDEN"
