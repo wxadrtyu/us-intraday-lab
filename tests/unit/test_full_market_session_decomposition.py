@@ -9,7 +9,9 @@ from us_intraday_lab.full_market_session_decomposition import (
     LOOKBACKS,
     REFRESH_LIFE_PAIRS,
     TOP_COUNTS,
+    Specification,
     build_session_features,
+    evaluate_session_scenarios,
     score_session_families,
     specifications,
 )
@@ -104,3 +106,72 @@ def test_score_session_families_is_causal_and_leaves_short_history_missing() -> 
     assert last[list(FAMILIES)].notna().all(axis=None)
     assert last.set_index("symbol").loc["AAA", "persistent_intraday_drift"] > last.set_index("symbol").loc["BBB", "persistent_intraday_drift"]
 
+
+def _portfolio_panel() -> pd.DataFrame:
+    aaa = _bars("AAA", [10.0, 12.0, 12.0, 12.0], [11.0, 12.5, 12.5, 12.5])
+    flat = [
+        _bars(symbol, [20.0, 20.0, 20.0, 20.0], [20.0, 20.0, 20.0, 20.0])
+        for symbol in ("BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH", "III", "JJJ")
+    ]
+    panel = pd.concat([aaa, *flat], ignore_index=True)
+    for family in FAMILIES:
+        panel[family] = np.nan
+    first_date = panel["session_date"].min()
+    panel.loc[
+        panel["symbol"].eq("AAA") & panel["session_date"].eq(first_date),
+        list(FAMILIES),
+    ] = 1.0
+    first_scores = panel.loc[panel["session_date"].eq(first_date), "symbol"].map(
+        lambda symbol: 1.0 if symbol == "AAA" else 0.0
+    )
+    for family in FAMILIES:
+        panel.loc[panel["session_date"].eq(first_date), family] = first_scores.to_numpy()
+    return panel
+
+
+def test_overnight_family_uses_close_to_next_open_and_shared_selections() -> None:
+    spec = Specification("persistent_overnight_drift", 20, 1, 1, 10)
+
+    scenarios = evaluate_session_scenarios(_portfolio_panel(), spec)
+
+    exposure_date = pd.Timestamp("2021-01-05")
+    expected = ((12.0 / 11.0 - 1.0) / 10.0) - 0.0009
+    assert scenarios["standard_9bp"].daily_returns.loc[exposure_date] == pytest.approx(expected)
+    assert scenarios["cost_18bp"].daily_returns.loc[exposure_date] == pytest.approx(expected - 0.0009)
+    assert scenarios["delay_1session_9bp"].daily_returns.loc[exposure_date] == 0.0
+    assert scenarios["delay_1session_9bp"].daily_returns.loc[
+        pd.Timestamp("2021-01-06")
+    ] == pytest.approx(((12.0 / 12.5 - 1.0) / 10.0) - 0.0009)
+    assert len({scenario.selection_sha256 for scenario in scenarios.values()}) == 1
+
+
+def test_intraday_family_uses_next_open_to_close() -> None:
+    spec = Specification("persistent_intraday_drift", 20, 1, 1, 10)
+
+    scenarios = evaluate_session_scenarios(_portfolio_panel(), spec)
+
+    exposure_date = pd.Timestamp("2021-01-05")
+    assert scenarios["standard_9bp"].daily_returns.loc[exposure_date] == pytest.approx(((12.5 / 12.0 - 1.0) / 10.0) - 0.0009)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "reason"),
+    [
+        ("missing", "SELECTED_EXPOSURE_MISSING"),
+        ("zero_liquidity", "SELECTED_EXPOSURE_ZERO_LIQUIDITY"),
+    ],
+)
+def test_selected_exposure_failure_is_cell_wide(mutation: str, reason: str) -> None:
+    panel = _portfolio_panel()
+    selected_date = pd.Timestamp("2021-01-05")
+    target = panel["symbol"].eq("AAA") & panel["session_date"].eq(selected_date)
+    if mutation == "missing":
+        panel = panel.loc[~target].copy()
+    else:
+        panel.loc[target, ["volume", "trade_count"]] = 0.0
+    spec = Specification("persistent_overnight_drift", 20, 1, 1, 10)
+
+    scenarios = evaluate_session_scenarios(panel, spec)
+
+    assert scenarios["standard_9bp"].valid is False
+    assert scenarios["standard_9bp"].invalid_reason == reason

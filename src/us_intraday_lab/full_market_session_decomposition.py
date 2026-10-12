@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -38,6 +39,16 @@ class Specification:
     refresh_sessions: int
     life_sessions: int
     top_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ScenarioResult:
+    name: str
+    daily_returns: pd.Series
+    valid: bool
+    invalid_reason: str | None
+    cohorts: int
+    selection_sha256: str
 
 
 def specifications() -> tuple[Specification, ...]:
@@ -211,3 +222,189 @@ def score_session_families(features: pd.DataFrame, lookback: int) -> pd.DataFram
         ranks["divergence"] + ranks["vwap_frequency"] + ranks["dollar_volume"]
     ) / 3.0
     return result
+
+
+def _selection_rows(
+    panel: pd.DataFrame,
+    spec: Specification,
+    calendar: pd.DatetimeIndex,
+) -> pd.DataFrame:
+    latest_signal_ordinal = len(calendar) - spec.life_sessions - 2
+    if latest_signal_ordinal < 0:
+        return pd.DataFrame(columns=["signal_date", "symbol", "selection_rank"])
+    signal_dates = set(calendar[: latest_signal_ordinal + 1 : spec.refresh_sessions])
+    candidates = panel.loc[
+        panel["session_date"].isin(signal_dates) & panel[spec.family].notna(),
+        ["symbol", "session_date", spec.family],
+    ].sort_values(
+        ["session_date", spec.family, "symbol"],
+        ascending=[True, False, True],
+        kind="stable",
+    )
+    candidates["selection_rank"] = (
+        candidates.groupby("session_date", observed=True).cumcount() + 1
+    )
+    counts = candidates.groupby("session_date", observed=True)["symbol"].transform(
+        "size"
+    )
+    selected = candidates.loc[
+        counts.ge(spec.top_count) & candidates["selection_rank"].le(spec.top_count)
+    ].rename(columns={"session_date": "signal_date"})
+    return selected.loc[:, ["signal_date", "symbol", "selection_rank"]].reset_index(
+        drop=True
+    )
+
+
+def _selection_sha256(selected: pd.DataFrame) -> str:
+    digest = hashlib.sha256()
+    for row in selected.itertuples(index=False):
+        digest.update(
+            f"{row.signal_date.isoformat()}|{row.selection_rank}|{row.symbol}\n".encode()
+        )
+    return digest.hexdigest()
+
+
+def _scenario_result(
+    *,
+    name: str,
+    panel: pd.DataFrame,
+    selected: pd.DataFrame,
+    calendar: pd.DatetimeIndex,
+    spec: Specification,
+    cost: float,
+    delay_sessions: int,
+    selection_sha256: str,
+) -> ScenarioResult:
+    empty = pd.Series(0.0, index=calendar, dtype=float, name=name)
+    if selected.empty:
+        return ScenarioResult(
+            name, empty, False, "NO_COMPLETE_COHORTS", 0, selection_sha256
+        )
+    overnight_family = spec.family in {
+        "persistent_overnight_drift",
+        "overnight_underreaction",
+        "session_divergence",
+    }
+    session_ordinals = {session: ordinal for ordinal, session in enumerate(calendar)}
+    price_lookup = panel.set_index(["symbol", "session_date"])[
+        ["open", "close", "volume", "trade_count"]
+    ]
+    daily_contributions: dict[pd.Timestamp, list[float]] = {}
+    cohorts = 0
+    for signal_date, cohort in selected.groupby(
+        "signal_date", sort=True, observed=True
+    ):
+        signal_ordinal = session_ordinals[pd.Timestamp(signal_date)]
+        entry_ordinal = signal_ordinal + 1 + delay_sessions
+        end_ordinal = entry_ordinal + spec.life_sessions
+        if end_ordinal > len(calendar):
+            raise AssertionError("FULL_MARKET_SESSION_SELECTION_HORIZON_INVALID")
+        exposure_dates = calendar[entry_ordinal:end_ordinal]
+        cohort_daily = {session: [] for session in exposure_dates}
+        for symbol in cohort["symbol"]:
+            for exposure_date in exposure_dates:
+                exposure_ordinal = session_ordinals[exposure_date]
+                exposure_key = (symbol, exposure_date)
+                if exposure_key not in price_lookup.index:
+                    return ScenarioResult(
+                        name,
+                        empty,
+                        False,
+                        "SELECTED_EXPOSURE_MISSING",
+                        cohorts,
+                        selection_sha256,
+                    )
+                exposure = price_lookup.loc[exposure_key]
+                if exposure[["volume", "trade_count"]].le(0).any():
+                    return ScenarioResult(
+                        name,
+                        empty,
+                        False,
+                        "SELECTED_EXPOSURE_ZERO_LIQUIDITY",
+                        cohorts,
+                        selection_sha256,
+                    )
+                if overnight_family:
+                    prior_date = calendar[exposure_ordinal - 1]
+                    prior_key = (symbol, prior_date)
+                    if prior_key not in price_lookup.index:
+                        return ScenarioResult(
+                            name,
+                            empty,
+                            False,
+                            "SELECTED_EXPOSURE_MISSING",
+                            cohorts,
+                            selection_sha256,
+                        )
+                    leg_return = float(
+                        exposure["open"] / price_lookup.loc[prior_key]["close"]
+                        - 1.0
+                        - cost
+                    )
+                else:
+                    leg_return = float(exposure["close"] / exposure["open"] - 1.0 - cost)
+                cohort_daily[exposure_date].append(leg_return)
+        for session, symbol_returns in cohort_daily.items():
+            daily_contributions.setdefault(session, []).append(
+                float(np.mean(symbol_returns))
+            )
+        cohorts += 1
+    daily = empty.copy()
+    for session, cohort_returns in daily_contributions.items():
+        daily.loc[session] = float(np.mean(cohort_returns))
+    return ScenarioResult(name, daily, True, None, cohorts, selection_sha256)
+
+
+def evaluate_session_scenarios(
+    panel: pd.DataFrame,
+    spec: Specification,
+) -> dict[str, ScenarioResult]:
+    """Evaluate fixed selections under session-specific exposure legs."""
+    required = {
+        "symbol",
+        "session_date",
+        "open",
+        "close",
+        "volume",
+        "trade_count",
+        *FAMILIES,
+    }
+    missing = required.difference(panel.columns)
+    if missing:
+        raise ValueError(f"SESSION_PORTFOLIO_SCHEMA_MISSING:{sorted(missing)}")
+    if spec not in specifications():
+        raise ValueError("SESSION_SPECIFICATION_NOT_FROZEN")
+    frame = panel.loc[:, sorted(required)].copy()
+    frame["symbol"] = frame["symbol"].astype(str).str.upper()
+    frame["session_date"] = pd.to_datetime(frame["session_date"], errors="raise")
+    if frame.duplicated(["symbol", "session_date"]).any():
+        raise ValueError("SESSION_PORTFOLIO_KEY_DUPLICATE")
+    numeric = ["open", "close", "volume", "trade_count"]
+    frame[numeric] = frame[numeric].apply(pd.to_numeric, errors="coerce")
+    if (
+        not np.isfinite(frame[numeric]).all(axis=1).all()
+        or not frame[["open", "close"]].gt(0).all(axis=1).all()
+        or not frame[["volume", "trade_count"]].ge(0).all(axis=1).all()
+    ):
+        raise ValueError("SESSION_PORTFOLIO_PRICE_INVALID")
+    calendar = pd.DatetimeIndex(sorted(frame["session_date"].unique()))
+    selected = _selection_rows(frame, spec, calendar)
+    selection_sha256 = _selection_sha256(selected)
+    definitions = (
+        ("standard_9bp", 0.0009, 0),
+        ("cost_18bp", 0.0018, 0),
+        ("delay_1session_9bp", 0.0009, 1),
+    )
+    return {
+        name: _scenario_result(
+            name=name,
+            panel=frame,
+            selected=selected,
+            calendar=calendar,
+            spec=spec,
+            cost=cost,
+            delay_sessions=delay,
+            selection_sha256=selection_sha256,
+        )
+        for name, cost, delay in definitions
+    }
