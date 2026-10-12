@@ -135,6 +135,27 @@ def test_attach_point_in_time_eligibility_rejects_forbidden_columns() -> None:
         attach_point_in_time_eligibility(bars, _universe())
 
 
+def test_zero_liquidity_source_row_preserves_missing_vwap() -> None:
+    bars = pd.DataFrame(
+        {
+            "symbol": ["AAA"],
+            "session_date": pd.to_datetime(["2021-01-15"]),
+            "open": [10.0],
+            "high": [10.0],
+            "low": [10.0],
+            "close": [10.0],
+            "volume": [0.0],
+            "vwap": [0.0],
+            "trade_count": [0.0],
+        }
+    )
+
+    attached = attach_point_in_time_eligibility(bars, _universe())
+
+    assert len(attached) == 1
+    assert np.isnan(attached.iloc[0]["vwap"])
+
+
 def _feature_bars(count: int = 300) -> pd.DataFrame:
     dates = pd.bdate_range("2020-01-02", periods=count)
     rows: list[dict[str, object]] = []
@@ -213,6 +234,8 @@ def _portfolio_panel() -> pd.DataFrame:
                     "session_date": session,
                     "open": open_price,
                     "close": open_price + 1.0,
+                    "volume": 1_000_000.0,
+                    "trade_count": 10_000.0,
                     **{family: score for family in FAMILIES},
                 }
             )
@@ -249,6 +272,23 @@ def test_scenarios_fail_closed_when_selected_path_has_missing_bar() -> None:
 
     assert all(not result.valid for result in scenarios.values())
     assert all(result.invalid_reason == "SELECTED_PATH_MISSING" for result in scenarios.values())
+
+
+def test_scenarios_fail_closed_when_selected_path_has_zero_liquidity() -> None:
+    panel = _portfolio_panel()
+    mask = panel["symbol"].eq("AAA") & panel["session_date"].eq(
+        pd.Timestamp("2021-01-07")
+    )
+    panel.loc[mask, ["volume", "trade_count"]] = 0.0
+    spec = Specification("residual_momentum", 5, 5, 1)
+
+    scenarios = evaluate_scenarios(panel, spec)
+
+    assert all(not result.valid for result in scenarios.values())
+    assert all(
+        result.invalid_reason == "SELECTED_PATH_ZERO_LIQUIDITY"
+        for result in scenarios.values()
+    )
 
 
 def _run_identity(code_sha256: str = "c" * 64) -> RunIdentity:

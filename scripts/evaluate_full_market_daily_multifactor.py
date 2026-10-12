@@ -116,7 +116,7 @@ def prepare_panel() -> tuple[pd.DataFrame, dict[str, object]]:
     ]
     outcomes = daily.loc[
         pd.to_datetime(daily["session_date"]).between("2021-01-01", "2023-12-31"),
-        ["symbol", "session_date", "open", "close"],
+        ["symbol", "session_date", "open", "close", "volume", "trade_count"],
     ]
     panel = outcomes.merge(
         scores,

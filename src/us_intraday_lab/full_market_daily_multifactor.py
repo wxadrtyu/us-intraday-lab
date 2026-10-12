@@ -208,10 +208,22 @@ def _validate_daily_bars(daily_bars: pd.DataFrame) -> pd.DataFrame:
     for column in numeric:
         result[column] = pd.to_numeric(result[column], errors="coerce")
     finite = np.isfinite(result[numeric]).all(axis=1)
-    positive = result[["open", "high", "low", "close", "vwap"]].gt(0).all(axis=1)
+    positive_prices = result[["open", "high", "low", "close"]].gt(0).all(axis=1)
     nonnegative = result[["volume", "trade_count"]].ge(0).all(axis=1)
-    if not finite.all() or not positive.all() or not nonnegative.all():
+    zero_liquidity = (
+        result["volume"].eq(0)
+        & result["trade_count"].eq(0)
+        & result["vwap"].eq(0)
+    )
+    valid_vwap = result["vwap"].gt(0) | zero_liquidity
+    if (
+        not finite.all()
+        or not positive_prices.all()
+        or not nonnegative.all()
+        or not valid_vwap.all()
+    ):
         raise ValueError("FULL_MARKET_DAILY_VALUES_INVALID")
+    result.loc[zero_liquidity, "vwap"] = np.nan
     return result.sort_values(["session_date", "symbol"], kind="stable", ignore_index=True)
 
 
@@ -486,7 +498,9 @@ def _scenario_result(
     if selected.empty:
         return ScenarioResult(name, empty, False, "NO_COMPLETE_COHORTS", 0, selection_sha256)
     session_ordinals = {session: ordinal for ordinal, session in enumerate(calendar)}
-    price_lookup = panel.set_index(["symbol", "session_date"])[["open", "close"]]
+    price_lookup = panel.set_index(["symbol", "session_date"])[
+        ["open", "close", "volume", "trade_count"]
+    ]
     daily_contributions: dict[pd.Timestamp, list[float]] = {}
     cohorts = 0
     for signal_date, cohort in selected.groupby("signal_date", sort=True, observed=True):
@@ -520,6 +534,15 @@ def _scenario_result(
                     cohorts,
                     selection_sha256,
                 )
+            if prices[["volume", "trade_count"]].le(0).any(axis=1).any():
+                return ScenarioResult(
+                    name,
+                    empty,
+                    False,
+                    "SELECTED_PATH_ZERO_LIQUIDITY",
+                    cohorts,
+                    selection_sha256,
+                )
             entry_return = float(prices.iloc[0]["close"] / prices.iloc[0]["open"] - 1.0 - cost)
             cohort_daily[path_dates[0]].append(entry_return)
             for offset in range(1, holding_sessions):
@@ -544,7 +567,15 @@ def evaluate_scenarios(
     panel: pd.DataFrame, spec: Specification
 ) -> dict[str, ScenarioResult]:
     """Evaluate fixed selections under standard, cost, and delay scenarios."""
-    required = {"symbol", "session_date", "open", "close", *FAMILIES}
+    required = {
+        "symbol",
+        "session_date",
+        "open",
+        "close",
+        "volume",
+        "trade_count",
+        *FAMILIES,
+    }
     missing = required.difference(panel.columns)
     if missing:
         raise ValueError(f"FULL_MARKET_DAILY_PORTFOLIO_SCHEMA_MISSING:{sorted(missing)}")
@@ -555,11 +586,14 @@ def evaluate_scenarios(
     ).dt.normalize()
     if frame[["symbol", "session_date"]].duplicated().any():
         raise ValueError("FULL_MARKET_DAILY_PORTFOLIO_KEY_DUPLICATE")
-    for column in ("open", "close"):
+    for column in ("open", "close", "volume", "trade_count"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     if (
-        not np.isfinite(frame[["open", "close"]]).all(axis=1).all()
+        not np.isfinite(frame[["open", "close", "volume", "trade_count"]])
+        .all(axis=1)
+        .all()
         or not frame[["open", "close"]].gt(0).all(axis=1).all()
+        or not frame[["volume", "trade_count"]].ge(0).all(axis=1).all()
     ):
         raise ValueError("FULL_MARKET_DAILY_PORTFOLIO_PRICE_INVALID")
     if spec.family not in FAMILIES:
