@@ -9,8 +9,10 @@ from us_intraday_lab.full_market_daily_multifactor import (
     HOLDING_SESSIONS,
     REBALANCE_SESSIONS,
     TOP_COUNTS,
+    Specification,
     attach_point_in_time_eligibility,
     build_daily_features,
+    evaluate_scenarios,
     score_families,
     specifications,
     validate_monthly_universe,
@@ -189,3 +191,53 @@ def test_score_families_enforces_preregistered_gates() -> None:
     assert np.isnan(bbb["trend_conditioned_reversal"])
     assert np.isnan(ccc["liquidity_confirmed_breakout"])
     assert scored["residual_momentum"].notna().all()
+
+
+def _portfolio_panel() -> pd.DataFrame:
+    dates = pd.bdate_range("2021-01-04", periods=13)
+    rows: list[dict[str, object]] = []
+    for ordinal, session in enumerate(dates):
+        for symbol, score, base in (("AAA", 2.0, 100.0), ("BBB", 1.0, 200.0)):
+            open_price = base + ordinal
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "open": open_price,
+                    "close": open_price + 1.0,
+                    **{family: score for family in FAMILIES},
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_scenarios_share_selection_and_apply_cost_and_delay() -> None:
+    spec = Specification("residual_momentum", 5, 5, 1)
+
+    scenarios = evaluate_scenarios(_portfolio_panel(), spec)
+
+    standard = scenarios["standard_9bp"]
+    stress = scenarios["cost_18bp"]
+    delayed = scenarios["delay_1session_9bp"]
+    assert standard.valid and stress.valid and delayed.valid
+    assert standard.selection_sha256 == stress.selection_sha256 == delayed.selection_sha256
+    assert standard.cohorts == 2
+    assert standard.daily_returns.iloc[1] == pytest.approx(1.0 / 101.0 - 0.0009)
+    assert stress.daily_returns.iloc[1] == pytest.approx(1.0 / 101.0 - 0.0018)
+    assert delayed.daily_returns.iloc[2] == pytest.approx(1.0 / 102.0 - 0.0009)
+
+
+def test_scenarios_fail_closed_when_selected_path_has_missing_bar() -> None:
+    panel = _portfolio_panel()
+    panel = panel.loc[
+        ~(
+            panel["symbol"].eq("AAA")
+            & panel["session_date"].eq(pd.Timestamp("2021-01-07"))
+        )
+    ]
+    spec = Specification("residual_momentum", 5, 5, 1)
+
+    scenarios = evaluate_scenarios(panel, spec)
+
+    assert all(not result.valid for result in scenarios.values())
+    assert all(result.invalid_reason == "SELECTED_PATH_MISSING" for result in scenarios.values())

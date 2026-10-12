@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -38,6 +39,16 @@ class Specification:
     rebalance_sessions: int
     holding_sessions: int
     top_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ScenarioResult:
+    name: str
+    daily_returns: pd.Series
+    valid: bool
+    invalid_reason: str | None
+    cohorts: int
+    selection_sha256: str
 
 
 def specifications() -> tuple[Specification, ...]:
@@ -329,3 +340,153 @@ def score_families(features: pd.DataFrame) -> pd.DataFrame:
         -result["return_5"], dates
     ).where(reversal_gate)
     return result
+
+
+def _selection_rows(
+    panel: pd.DataFrame, spec: Specification, calendar: pd.DatetimeIndex
+) -> pd.DataFrame:
+    latest_signal_ordinal = len(calendar) - spec.holding_sessions - 2
+    if latest_signal_ordinal < 0:
+        return pd.DataFrame(columns=["signal_date", "symbol", "selection_rank"])
+    signal_dates = set(calendar[: latest_signal_ordinal + 1 : spec.rebalance_sessions])
+    candidates = panel.loc[
+        panel["session_date"].isin(signal_dates) & panel[spec.family].notna(),
+        ["symbol", "session_date", spec.family],
+    ].sort_values(
+        ["session_date", spec.family, "symbol"],
+        ascending=[True, False, True],
+        kind="stable",
+    )
+    candidates["selection_rank"] = (
+        candidates.groupby("session_date", observed=True).cumcount() + 1
+    )
+    counts = candidates.groupby("session_date", observed=True)["symbol"].transform("size")
+    selected = candidates.loc[
+        counts.ge(spec.top_count) & candidates["selection_rank"].le(spec.top_count)
+    ].rename(columns={"session_date": "signal_date"})
+    return selected.loc[:, ["signal_date", "symbol", "selection_rank"]].reset_index(drop=True)
+
+
+def _selection_sha256(selected: pd.DataFrame) -> str:
+    digest = hashlib.sha256()
+    for row in selected.itertuples(index=False):
+        digest.update(
+            f"{row.signal_date.isoformat()}|{row.selection_rank}|{row.symbol}\n".encode()
+        )
+    return digest.hexdigest()
+
+
+def _scenario_result(
+    *,
+    name: str,
+    panel: pd.DataFrame,
+    selected: pd.DataFrame,
+    calendar: pd.DatetimeIndex,
+    holding_sessions: int,
+    cost: float,
+    delay_sessions: int,
+    selection_sha256: str,
+) -> ScenarioResult:
+    empty = pd.Series(0.0, index=calendar, dtype=float, name=name)
+    if selected.empty:
+        return ScenarioResult(name, empty, False, "NO_COMPLETE_COHORTS", 0, selection_sha256)
+    session_ordinals = {session: ordinal for ordinal, session in enumerate(calendar)}
+    price_lookup = panel.set_index(["symbol", "session_date"])[["open", "close"]]
+    daily_contributions: dict[pd.Timestamp, list[float]] = {}
+    cohorts = 0
+    for signal_date, cohort in selected.groupby("signal_date", sort=True, observed=True):
+        signal_ordinal = session_ordinals[pd.Timestamp(signal_date)]
+        entry_ordinal = signal_ordinal + 1 + delay_sessions
+        exit_ordinal = entry_ordinal + holding_sessions
+        if exit_ordinal >= len(calendar):
+            raise AssertionError("FULL_MARKET_DAILY_SELECTION_HORIZON_INVALID")
+        path_dates = calendar[entry_ordinal : exit_ordinal + 1]
+        cohort_daily: dict[pd.Timestamp, list[float]] = {
+            session: [] for session in path_dates
+        }
+        for symbol in cohort["symbol"]:
+            keys = [(symbol, session) for session in path_dates]
+            if any(key not in price_lookup.index for key in keys):
+                return ScenarioResult(
+                    name,
+                    empty,
+                    False,
+                    "SELECTED_PATH_MISSING",
+                    cohorts,
+                    selection_sha256,
+                )
+            prices = price_lookup.loc[keys]
+            if len(prices) != len(path_dates):
+                return ScenarioResult(
+                    name,
+                    empty,
+                    False,
+                    "SELECTED_PATH_MISSING",
+                    cohorts,
+                    selection_sha256,
+                )
+            entry_return = float(prices.iloc[0]["close"] / prices.iloc[0]["open"] - 1.0 - cost)
+            cohort_daily[path_dates[0]].append(entry_return)
+            for offset in range(1, holding_sessions):
+                holding_return = float(
+                    prices.iloc[offset]["close"] / prices.iloc[offset - 1]["close"] - 1.0
+                )
+                cohort_daily[path_dates[offset]].append(holding_return)
+            exit_return = float(
+                prices.iloc[-1]["open"] / prices.iloc[-2]["close"] - 1.0
+            )
+            cohort_daily[path_dates[-1]].append(exit_return)
+        for session, symbol_returns in cohort_daily.items():
+            daily_contributions.setdefault(session, []).append(float(np.mean(symbol_returns)))
+        cohorts += 1
+    daily = empty.copy()
+    for session, cohort_returns in daily_contributions.items():
+        daily.loc[session] = float(np.mean(cohort_returns))
+    return ScenarioResult(name, daily, True, None, cohorts, selection_sha256)
+
+
+def evaluate_scenarios(
+    panel: pd.DataFrame, spec: Specification
+) -> dict[str, ScenarioResult]:
+    """Evaluate fixed selections under standard, cost, and delay scenarios."""
+    required = {"symbol", "session_date", "open", "close", *FAMILIES}
+    missing = required.difference(panel.columns)
+    if missing:
+        raise ValueError(f"FULL_MARKET_DAILY_PORTFOLIO_SCHEMA_MISSING:{sorted(missing)}")
+    frame = panel.loc[:, sorted(required)].copy()
+    frame["symbol"] = frame["symbol"].astype(str).str.upper()
+    frame["session_date"] = pd.to_datetime(
+        frame["session_date"], errors="raise"
+    ).dt.normalize()
+    if frame[["symbol", "session_date"]].duplicated().any():
+        raise ValueError("FULL_MARKET_DAILY_PORTFOLIO_KEY_DUPLICATE")
+    for column in ("open", "close"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    if (
+        not np.isfinite(frame[["open", "close"]]).all(axis=1).all()
+        or not frame[["open", "close"]].gt(0).all(axis=1).all()
+    ):
+        raise ValueError("FULL_MARKET_DAILY_PORTFOLIO_PRICE_INVALID")
+    if spec.family not in FAMILIES:
+        raise ValueError(f"FULL_MARKET_DAILY_UNKNOWN_FAMILY:{spec.family}")
+    calendar = pd.DatetimeIndex(sorted(frame["session_date"].unique()))
+    selected = _selection_rows(frame, spec, calendar)
+    selection_sha256 = _selection_sha256(selected)
+    definitions = (
+        ("standard_9bp", 0.0009, 0),
+        ("cost_18bp", 0.0018, 0),
+        ("delay_1session_9bp", 0.0009, 1),
+    )
+    return {
+        name: _scenario_result(
+            name=name,
+            panel=frame,
+            selected=selected,
+            calendar=calendar,
+            holding_sessions=spec.holding_sessions,
+            cost=cost,
+            delay_sessions=delay,
+            selection_sha256=selection_sha256,
+        )
+        for name, cost, delay in definitions
+    }
