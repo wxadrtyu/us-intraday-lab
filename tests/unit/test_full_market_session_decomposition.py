@@ -270,3 +270,20 @@ def test_session_cells_resume_from_atomic_checkpoint(tmp_path: Path) -> None:
     assert [record["cell_index"] for record in first] == [0, 1]
     assert all(record["consumed_period"] is True for record in first)
     assert all(record["independent_oos"] is False for record in first)
+
+
+def test_session_runner_freezes_external_identities_and_counts() -> None:
+    from scripts.evaluate_full_market_session_decomposition import (
+        EXPECTED_DAILY_SHA256,
+        EXPECTED_ELIGIBLE_SYMBOL_MONTHS,
+        EXPECTED_ELIGIBLE_SYMBOLS,
+        EXPECTED_SOURCE_ROWS,
+        EXPECTED_SOURCE_SESSIONS,
+        EXPECTED_SOURCE_SYMBOLS,
+        EXPECTED_UNIVERSE_SHA256,
+    )
+
+    assert EXPECTED_DAILY_SHA256 == "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701"
+    assert EXPECTED_UNIVERSE_SHA256 == "3dc89bc9ab09e193372b2071a3d5b84d04962d8f6cf1e679540a723959e51a81"
+    assert (EXPECTED_SOURCE_ROWS, EXPECTED_SOURCE_SYMBOLS, EXPECTED_SOURCE_SESSIONS) == (6_533_779, 9_817, 881)
+    assert (EXPECTED_ELIGIBLE_SYMBOL_MONTHS, EXPECTED_ELIGIBLE_SYMBOLS) == (81_774, 3_270)
