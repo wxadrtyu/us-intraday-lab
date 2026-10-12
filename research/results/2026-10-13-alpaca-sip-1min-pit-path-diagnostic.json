@@ -1,0 +1,42 @@
+{
+  "status": "PARTIAL_SOURCE_DIAGNOSTIC_ONLY",
+  "source_namespace": "alpaca_sip_1min_v1",
+  "session": "2023-12-29",
+  "sample_shard_indices": [0, 25, 50, 75, 100, 125],
+  "sample_candidate_symbols": 600,
+  "point_in_time_universe_sha256": "3dc89bc9ab09e193372b2071a3d5b84d04962d8f6cf1e679540a723959e51a81",
+  "point_in_time_eligible_symbols": 80,
+  "eligible_symbols_with_rows": 80,
+  "expected_eligible_symbol_minutes": 31200,
+  "observed_eligible_symbol_minutes": 24757,
+  "eligible_minute_coverage_ratio": 0.7934935897435897,
+  "diagnostic_path": "12 consecutive 1-minute bars starting 09:55 America/New_York; illustrative signal-plus-execution path, not a preregistered strategy",
+  "diagnostic_path_expected_minutes": 960,
+  "diagnostic_path_observed_minutes": 754,
+  "diagnostic_complete_paths": 28,
+  "diagnostic_complete_path_ratio": 0.35,
+  "best_12_minute_window_complete_paths_across_all_session_start_minutes": 68,
+  "best_12_minute_window_ratio": 0.85,
+  "best_window_search_is_descriptive_only": true,
+  "full_source_grid_complete": false,
+  "full_market_coverage_established": false,
+  "strategy_metrics_permitted": false,
+  "strategy_outcomes_read": false,
+  "missingness_policy": "explicit_no_fill_no_zero_return_no_cash_substitution",
+  "parquet_sha256_by_shard": {
+    "0": "835ddaac507f34fc61579db45880848868a6dfc9167f80519ba16f1f4a9e3880",
+    "25": "026f2c2dd7b5bf775684b8da106af3a19ee120862617361763ee568ea7da4ff5",
+    "50": "b5ed413b2788fb65718dc03d927603f3271f1a09591f13213f6ab327021528c8",
+    "75": "ba7ace305c5569e2bb9305e66896e50b2a6f633bc381626ea93b2794c6f50990",
+    "100": "4ecb87ebd7bf061b1ba477f7dc337f12619583a363d7e563f58947e07204fcec",
+    "125": "d0ec0325abbd2b64d5d42d2255ec55d8af7fd04e692d894cd607a9fbaefe1fc5"
+  },
+  "manifest_sha256_by_shard": {
+    "0": "160f0f9a828ccc8b4f98d9abf4878c459ca0f926811507cae7e053bbb9ca2537",
+    "25": "bee214cb4f5284b45fb573e38b61988d0b1f4a0f3facc3dcbe98bc225e0c32e6",
+    "50": "c306a5c34462dad2929c8cd791a32e80f37cd2b50d94a871aabe6e72995ae6d4",
+    "75": "accea19e0debed7c823704e882009038301a474c50cafac13bc96e30ad1456c2",
+    "100": "abbde2a3fed58402e81c7bc028da2cd82809df3ce126541157d57a219393a18b",
+    "125": "a9aa2157b64a02fe3b6994152821de1981e953d414b534b4202d44262c4cb953"
+  }
+}
