@@ -10,6 +10,7 @@ import pytest
 from scripts.diagnose_daily_signal_intraday_multifactor import render_markdown
 from us_intraday_lab.daily_signal_intraday_multifactor import (
     FAMILIES,
+    evaluate_grid,
     intraday_returns,
     specifications,
     training_decision,
@@ -84,6 +85,25 @@ def test_intraday_returns_fail_closed_for_selected_missing_close() -> None:
         cost_rate=0.0009,
     )
     assert valid is False
+
+
+def test_cached_grid_matches_frozen_400_cell_contract() -> None:
+    scores, trades = _frames()
+    feature_scores = scores.rename(
+        columns={"session_date": "feature_date"}
+    ).drop(columns="score")
+    for index, family in enumerate(FAMILIES):
+        feature_scores[family] = [float(index + 1), float(index)] * 3
+
+    cells = evaluate_grid(
+        feature_scores,
+        trades,
+        evaluation_start=pd.Timestamp("2021-01-05").date(),
+        evaluation_end=pd.Timestamp("2021-01-06").date(),
+    )
+
+    assert len(cells) == 400
+    assert cells["valid"].all()
 
 
 def test_training_decision_requires_zero_invalid_and_two_retained_families() -> None:

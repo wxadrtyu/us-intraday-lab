@@ -174,6 +174,69 @@ def intraday_returns(
     )
 
 
+def _top_count_return_grid(
+    score_by_date: dict[pd.Timestamp, pd.DataFrame],
+    calendar: pd.DatetimeIndex,
+    trade_by_date: dict[pd.Timestamp, pd.DataFrame],
+    *,
+    signal_lag: int,
+    gap_mode: str,
+    evaluation_start: date,
+    evaluation_end: date,
+) -> dict[int, tuple[pd.Series, pd.Series, bool]]:
+    value_lists = {top_count: [] for top_count in TOP_COUNTS}
+    active_lists = {top_count: [] for top_count in TOP_COUNTS}
+    valid = {top_count: True for top_count in TOP_COUNTS}
+    dates: list[pd.Timestamp] = []
+    for index, current_date in enumerate(calendar):
+        if index < signal_lag:
+            continue
+        if current_date.date() < evaluation_start or current_date.date() > evaluation_end:
+            continue
+        dates.append(current_date)
+        candidates = score_by_date.get(calendar[index - signal_lag], pd.DataFrame())
+        current = trade_by_date[current_date]
+        if candidates.empty:
+            ranked = pd.DataFrame()
+        else:
+            merged = candidates.merge(
+                current, on="symbol", how="inner", validate="one_to_one"
+            )
+            merged = merged.loc[
+                np.isfinite(merged["prior_close"]) & merged["prior_close"].gt(0)
+            ].copy()
+            merged["gap"] = merged["open"] / merged["prior_close"] - 1.0
+            ranked = merged.loc[_gap_filter(merged, gap_mode)].sort_values(
+                ["score", "symbol"], ascending=[False, True], kind="stable"
+            ).head(max(TOP_COUNTS))
+        for top_count in TOP_COUNTS:
+            selected = ranked.head(top_count)
+            if selected.empty:
+                value_lists[top_count].append(0.0)
+                active_lists[top_count].append(False)
+                continue
+            close_valid = np.isfinite(selected["close"]).all() and selected[
+                "close"
+            ].gt(0).all()
+            valid[top_count] = valid[top_count] and bool(close_valid)
+            gross = (
+                float((selected["close"] / selected["open"] - 1.0).mean())
+                if close_valid
+                else 0.0
+            )
+            value_lists[top_count].append(gross)
+            active_lists[top_count].append(True)
+    index = pd.DatetimeIndex(dates)
+    return {
+        top_count: (
+            pd.Series(value_lists[top_count], index=index, dtype=float),
+            pd.Series(active_lists[top_count], index=index, dtype=bool),
+            valid[top_count],
+        )
+        for top_count in TOP_COUNTS
+    }
+
+
 def evaluate_grid(
     feature_scores: pd.DataFrame,
     trades: pd.DataFrame,
@@ -193,38 +256,35 @@ def evaluate_grid(
         )
         for family in FAMILIES
     }
-    cache: dict[tuple[str, int, int, str, float], tuple[pd.Series, int, bool]] = {}
-
-    def calculate(
-        family: str, lag: int, top_count: int, gap_mode: str, cost: float
-    ) -> tuple[pd.Series, int, bool]:
-        key = (family, lag, top_count, gap_mode, cost)
-        if key not in cache:
-            cache[key] = _intraday_returns_prepared(
-                prepared[family],
-                calendar,
-                trade_by_date,
-                top_count=top_count,
-                signal_lag=lag,
-                gap_mode=gap_mode,
-                cost_rate=cost,
-                evaluation_start=evaluation_start,
-                evaluation_end=evaluation_end,
-            )
-        return cache[key]
+    lags = sorted(set(SIGNAL_LAGS) | {lag + 1 for lag in SIGNAL_LAGS})
+    cache = {
+        (family, lag, gap_mode): _top_count_return_grid(
+            prepared[family],
+            calendar,
+            trade_by_date,
+            signal_lag=lag,
+            gap_mode=gap_mode,
+            evaluation_start=evaluation_start,
+            evaluation_end=evaluation_end,
+        )
+        for family in FAMILIES
+        for lag in lags
+        for gap_mode in GAP_MODES
+    }
 
     records: list[dict[str, object]] = []
     for spec in specifications():
-        standard, sessions, standard_valid = calculate(
-            spec.family, spec.signal_lag, spec.top_count, spec.gap_mode, 0.0009
-        )
-        stress, _, stress_valid = calculate(
-            spec.family, spec.signal_lag, spec.top_count, spec.gap_mode, 0.0018
-        )
-        delayed, _, delay_valid = calculate(
-            spec.family, spec.signal_lag + 1, spec.top_count, spec.gap_mode, 0.0009
-        )
-        valid = standard_valid and stress_valid and delay_valid
+        gross, active, standard_valid = cache[
+            (spec.family, spec.signal_lag, spec.gap_mode)
+        ][spec.top_count]
+        delayed_gross, delayed_active, delay_valid = cache[
+            (spec.family, spec.signal_lag + 1, spec.gap_mode)
+        ][spec.top_count]
+        standard = gross - 0.0009 * active.astype(float)
+        stress = gross - 0.0018 * active.astype(float)
+        delayed = delayed_gross - 0.0009 * delayed_active.astype(float)
+        sessions = int(active.sum())
+        valid = standard_valid and delay_valid
         standard_metrics = _metrics(standard)
         stress_metrics = _metrics(stress)
         delay_metrics = _metrics(delayed)
