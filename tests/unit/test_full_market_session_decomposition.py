@@ -20,6 +20,7 @@ from us_intraday_lab.full_market_session_decomposition import (
     evaluate_session_scenarios,
     passes_basic_pre_null_gates,
     performance_metrics,
+    score_column,
     score_session_families,
     specifications,
 )
@@ -123,7 +124,8 @@ def _portfolio_panel() -> pd.DataFrame:
     ]
     panel = pd.concat([aaa, *flat], ignore_index=True)
     for family in FAMILIES:
-        panel[family] = np.nan
+        for lookback in LOOKBACKS:
+            panel[score_column(family, lookback)] = np.nan
     first_date = panel["session_date"].min()
     panel.loc[
         panel["symbol"].eq("AAA") & panel["session_date"].eq(first_date),
@@ -133,8 +135,16 @@ def _portfolio_panel() -> pd.DataFrame:
         lambda symbol: 1.0 if symbol == "AAA" else 0.0
     )
     for family in FAMILIES:
-        panel.loc[panel["session_date"].eq(first_date), family] = first_scores.to_numpy()
+        panel.loc[
+            panel["session_date"].eq(first_date), score_column(family, 20)
+        ] = first_scores.to_numpy()
     return panel
+
+
+def test_score_column_binds_family_and_lookback() -> None:
+    assert score_column("persistent_overnight_drift", 20) == "persistent_overnight_drift__lb20"
+    with pytest.raises(ValueError, match="SESSION_LOOKBACK_INVALID"):
+        score_column("persistent_overnight_drift", 19)
 
 
 def test_overnight_family_uses_close_to_next_open_and_shared_selections() -> None:

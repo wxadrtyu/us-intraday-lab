@@ -156,6 +156,15 @@ def specifications() -> tuple[Specification, ...]:
     return result
 
 
+def score_column(family: str, lookback: int) -> str:
+    """Return the immutable panel column for one family/lookback pair."""
+    if family not in FAMILIES:
+        raise ValueError("SESSION_FAMILY_INVALID")
+    if lookback not in LOOKBACKS:
+        raise ValueError("SESSION_LOOKBACK_INVALID")
+    return f"{family}__lb{lookback}"
+
+
 def _validate_daily_bars(daily_bars: pd.DataFrame) -> pd.DataFrame:
     missing = _DAILY_COLUMNS.difference(daily_bars.columns)
     if missing:
@@ -324,11 +333,12 @@ def _selection_rows(
     if latest_signal_ordinal < 0:
         return pd.DataFrame(columns=["signal_date", "symbol", "selection_rank"])
     signal_dates = set(calendar[: latest_signal_ordinal + 1 : spec.refresh_sessions])
+    signal_column = score_column(spec.family, spec.lookback)
     candidates = panel.loc[
-        panel["session_date"].isin(signal_dates) & panel[spec.family].notna(),
-        ["symbol", "session_date", spec.family],
+        panel["session_date"].isin(signal_dates) & panel[signal_column].notna(),
+        ["symbol", "session_date", signal_column],
     ].sort_values(
-        ["session_date", spec.family, "symbol"],
+        ["session_date", signal_column, "symbol"],
         ascending=[True, False, True],
         kind="stable",
     )
@@ -458,7 +468,7 @@ def evaluate_session_scenarios(
         "close",
         "volume",
         "trade_count",
-        *FAMILIES,
+        score_column(spec.family, spec.lookback),
     }
     missing = required.difference(panel.columns)
     if missing:
