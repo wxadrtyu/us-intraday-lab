@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,6 +10,8 @@ from us_intraday_lab.full_market_daily_multifactor import (
     REBALANCE_SESSIONS,
     TOP_COUNTS,
     attach_point_in_time_eligibility,
+    build_daily_features,
+    score_families,
     specifications,
     validate_monthly_universe,
 )
@@ -120,3 +123,69 @@ def test_attach_point_in_time_eligibility_rejects_forbidden_columns() -> None:
 
     with pytest.raises(ValueError, match="FORBIDDEN_INPUT_COLUMN"):
         attach_point_in_time_eligibility(bars, _universe())
+
+
+def _feature_bars(count: int = 300) -> pd.DataFrame:
+    dates = pd.bdate_range("2020-01-02", periods=count)
+    rows: list[dict[str, object]] = []
+    for symbol, phase in (("AAA", 0.0), ("BBB", 0.7), ("CCC", 1.4)):
+        for ordinal, session in enumerate(dates):
+            log_close = 3.0 + 0.001 * ordinal + 0.015 * np.sin(ordinal / 9 + phase)
+            close = float(np.exp(log_close))
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "session_date": session,
+                    "open": close * 0.999,
+                    "high": close * 1.01,
+                    "low": close * 0.99,
+                    "close": close,
+                    "volume": float(1_000_000 + ordinal * 1000 + phase * 10_000),
+                    "vwap": close * (0.998 if symbol != "CCC" else 1.002),
+                    "trade_count": float(10_000 + ordinal),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_build_daily_features_is_causal_and_uses_prior_breakout_high() -> None:
+    bars = _feature_bars()
+    baseline = build_daily_features(bars)
+    cutoff = pd.Timestamp("2021-01-29")
+    before = baseline.loc[baseline["session_date"].le(cutoff)].reset_index(drop=True)
+    mutated = bars.copy()
+    mutated.loc[mutated["session_date"].gt(cutoff), "close"] *= 20.0
+
+    after = build_daily_features(mutated)
+    after = after.loc[after["session_date"].le(cutoff)].reset_index(drop=True)
+
+    pd.testing.assert_frame_equal(before, after)
+    aaa = baseline.loc[baseline["symbol"].eq("AAA")].reset_index(drop=True)
+    prior_high = bars.loc[bars["symbol"].eq("AAA"), "close"].iloc[-127:-1].max()
+    assert aaa.iloc[-1]["breakout_126"] == pytest.approx(
+        bars.loc[bars["symbol"].eq("AAA"), "close"].iloc[-1] / prior_high - 1.0
+    )
+    assert aaa.iloc[-1]["return_5"] == pytest.approx(
+        np.log(
+            bars.loc[bars["symbol"].eq("AAA"), "close"].iloc[-1]
+            / bars.loc[bars["symbol"].eq("AAA"), "close"].iloc[-6]
+        )
+    )
+    assert np.isfinite(aaa.iloc[-1]["residual_momentum_252_21"])
+
+
+def test_score_families_enforces_preregistered_gates() -> None:
+    features = build_daily_features(_feature_bars())
+    last_date = features["session_date"].max()
+    cross_section = features.loc[features["session_date"].eq(last_date)].copy()
+    cross_section.loc[cross_section["symbol"].eq("BBB"), "return_126"] = -0.01
+    cross_section.loc[cross_section["symbol"].eq("CCC"), "vwap_displacement_20"] = -0.01
+
+    scored = score_families(cross_section)
+
+    bbb = scored.loc[scored["symbol"].eq("BBB")].iloc[0]
+    ccc = scored.loc[scored["symbol"].eq("CCC")].iloc[0]
+    assert np.isnan(bbb["low_vol_trend"])
+    assert np.isnan(bbb["trend_conditioned_reversal"])
+    assert np.isnan(ccc["liquidity_confirmed_breakout"])
+    assert scored["residual_momentum"].notna().all()
