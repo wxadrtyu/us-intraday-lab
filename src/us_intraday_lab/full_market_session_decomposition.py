@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import json
+import os
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -49,6 +53,93 @@ class ScenarioResult:
     invalid_reason: str | None
     cohorts: int
     selection_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class RunIdentity:
+    daily_source_sha256: str
+    universe_sha256: str
+    design_sha256: str
+    code_sha256: str
+    gate_sha256: str
+
+    def validate(self) -> None:
+        for name, value in asdict(self).items():
+            if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                raise ValueError(f"FULL_MARKET_SESSION_IDENTITY_HASH_INVALID:{name}")
+
+    @property
+    def sha256(self) -> str:
+        self.validate()
+        payload = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+
+@dataclass(slots=True)
+class AtomicCheckpoint:
+    path: Path
+    identity: RunIdentity
+    total_cells: int
+    cells_completed: int
+    chain_sha256: str
+
+    @classmethod
+    def open(
+        cls, path: Path, identity: RunIdentity, *, total_cells: int
+    ) -> AtomicCheckpoint:
+        identity.validate()
+        if total_cells <= 0:
+            raise ValueError("FULL_MARKET_SESSION_CHECKPOINT_TOTAL_INVALID")
+        if path.exists():
+            state = json.loads(path.read_text("utf-8"))
+            if (
+                state.get("identity") != asdict(identity)
+                or state.get("identity_sha256") != identity.sha256
+                or state.get("total_cells") != total_cells
+            ):
+                raise RuntimeError("FULL_MARKET_SESSION_CHECKPOINT_IDENTITY_MISMATCH")
+            cells_completed = state.get("cells_completed")
+            chain_sha256 = state.get("chain_sha256")
+            if (
+                not isinstance(cells_completed, int)
+                or not 0 <= cells_completed <= total_cells
+                or not isinstance(chain_sha256, str)
+                or re.fullmatch(r"[0-9a-f]{64}", chain_sha256) is None
+            ):
+                raise RuntimeError("FULL_MARKET_SESSION_CHECKPOINT_STATE_INVALID")
+            return cls(path, identity, total_cells, cells_completed, chain_sha256)
+        checkpoint = cls(
+            path, identity, total_cells, 0, hashlib.sha256(b"").hexdigest()
+        )
+        checkpoint._write()
+        return checkpoint
+
+    def _write(self) -> None:
+        state = {
+            "schema_version": "1.0.0",
+            "identity": asdict(self.identity),
+            "identity_sha256": self.identity.sha256,
+            "total_cells": self.total_cells,
+            "cells_completed": self.cells_completed,
+            "chain_sha256": self.chain_sha256,
+        }
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self.path.with_name(f".{self.path.name}.tmp")
+        temporary.write_text(
+            json.dumps(state, indent=2, sort_keys=True) + "\n", "utf-8"
+        )
+        os.replace(temporary, self.path)
+
+    def record_cell(self, cell_index: int, result_sha256: str) -> None:
+        if cell_index != self.cells_completed or cell_index >= self.total_cells:
+            raise RuntimeError("FULL_MARKET_SESSION_CHECKPOINT_CELL_ORDER_INVALID")
+        if re.fullmatch(r"[0-9a-f]{64}", result_sha256) is None:
+            raise ValueError("FULL_MARKET_SESSION_CHECKPOINT_RESULT_HASH_INVALID")
+        self.chain_sha256 = _advance_chain(
+            self.chain_sha256, cell_index, result_sha256
+        )
+        self.cells_completed += 1
+        self._write()
 
 
 def specifications() -> tuple[Specification, ...]:
@@ -408,3 +499,140 @@ def evaluate_session_scenarios(
         )
         for name, cost, delay in definitions
     }
+
+
+def performance_metrics(daily_returns: pd.Series) -> dict[str, float | int]:
+    """Calculate frozen discovery metrics without dropping any session."""
+    returns = pd.to_numeric(daily_returns, errors="coerce")
+    if returns.empty or not np.isfinite(returns).all() or returns.le(-1.0).any():
+        raise ValueError("FULL_MARKET_SESSION_RETURNS_INVALID")
+    count = len(returns)
+    log_total = float(np.log1p(returns).sum())
+    annualized_return = float(np.exp(log_total * 252.0 / count) - 1.0)
+    wealth = np.exp(np.log1p(returns).cumsum())
+    max_drawdown = float(-(wealth / wealth.cummax() - 1.0).min())
+    standard_deviation = float(returns.std(ddof=1))
+    if standard_deviation <= 0:
+        information_ratio = 0.0
+        z_score = 0.0
+    else:
+        information_ratio = float(
+            returns.mean() / standard_deviation * np.sqrt(252.0)
+        )
+        z_score = float(returns.mean() / standard_deviation * np.sqrt(count))
+    folds = np.array_split(returns.to_numpy(dtype=float), 5)
+    positive_folds = sum(float(np.prod(1.0 + fold) - 1.0) > 0 for fold in folds)
+    return {
+        "annualized_return": annualized_return,
+        "max_drawdown": max_drawdown,
+        "information_ratio": information_ratio,
+        "z_score": z_score,
+        "positive_folds": positive_folds,
+        "observations": count,
+    }
+
+
+def passes_basic_pre_null_gates(
+    metrics_by_scenario: dict[str, dict[str, float | int]],
+) -> bool:
+    """Apply unchanged economic, cost, delay, fold, and z gates."""
+    required = {"standard_9bp", "cost_18bp", "delay_1session_9bp"}
+    if set(metrics_by_scenario) != required:
+        raise ValueError("FULL_MARKET_SESSION_SCENARIO_SET_INVALID")
+    return all(
+        float(metrics["annualized_return"]) > 0.40
+        and float(metrics["max_drawdown"]) < 0.20
+        and float(metrics["information_ratio"]) >= 1.0
+        and float(metrics["z_score"]) >= 3.0
+        and int(metrics["positive_folds"]) >= 4
+        for metrics in metrics_by_scenario.values()
+    )
+
+
+def _canonical_json_sha256(value: object) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _advance_chain(chain_sha256: str, cell_index: int, result_sha256: str) -> str:
+    digest = hashlib.sha256()
+    digest.update(bytes.fromhex(chain_sha256))
+    digest.update(cell_index.to_bytes(8, byteorder="big", signed=False))
+    digest.update(bytes.fromhex(result_sha256))
+    return digest.hexdigest()
+
+
+def evaluate_cell_record(
+    panel: pd.DataFrame, spec: Specification, *, cell_index: int
+) -> dict[str, object]:
+    """Evaluate one consumed-period cell without promotion side effects."""
+    scenarios = evaluate_session_scenarios(panel, spec)
+    valid = all(result.valid for result in scenarios.values())
+    metrics_by_scenario: dict[str, dict[str, float | int]] = {}
+    if valid:
+        metrics_by_scenario = {
+            name: performance_metrics(result.daily_returns)
+            for name, result in scenarios.items()
+        }
+    return {
+        "cell_index": cell_index,
+        "specification": asdict(spec),
+        "valid": valid,
+        "invalid_reasons": {
+            name: result.invalid_reason
+            for name, result in scenarios.items()
+            if result.invalid_reason is not None
+        },
+        "selection_sha256": {
+            name: result.selection_sha256 for name, result in scenarios.items()
+        },
+        "cohorts": {name: result.cohorts for name, result in scenarios.items()},
+        "metrics": metrics_by_scenario,
+        "basic_pre_null_passed": (
+            passes_basic_pre_null_gates(metrics_by_scenario) if valid else False
+        ),
+        "consumed_period": True,
+        "independent_oos": False,
+        "paper_activation": False,
+        "order_route": "FORBIDDEN",
+    }
+
+
+def evaluate_cells_sequential(
+    panel: pd.DataFrame,
+    specs: tuple[Specification, ...],
+    checkpoint: AtomicCheckpoint,
+    cell_directory: Path,
+) -> list[dict[str, object]]:
+    """Evaluate cells in order and persist each before checkpoint advance."""
+    if len(specs) != checkpoint.total_cells:
+        raise RuntimeError("FULL_MARKET_SESSION_CHECKPOINT_GRID_SIZE_MISMATCH")
+    cell_directory.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, object]] = []
+    reconstructed_chain = hashlib.sha256(b"").hexdigest()
+    for cell_index in range(checkpoint.cells_completed):
+        path = cell_directory / f"cell-{cell_index:04d}.json"
+        if not path.exists():
+            raise RuntimeError("FULL_MARKET_SESSION_COMPLETED_CELL_MISSING")
+        record = json.loads(path.read_text("utf-8"))
+        if record.get("cell_index") != cell_index:
+            raise RuntimeError("FULL_MARKET_SESSION_COMPLETED_CELL_INDEX_INVALID")
+        result_sha256 = _canonical_json_sha256(record)
+        reconstructed_chain = _advance_chain(
+            reconstructed_chain, cell_index, result_sha256
+        )
+        records.append(record)
+    if reconstructed_chain != checkpoint.chain_sha256:
+        raise RuntimeError("FULL_MARKET_SESSION_CHECKPOINT_CHAIN_MISMATCH")
+    for cell_index in range(checkpoint.cells_completed, len(specs)):
+        record = evaluate_cell_record(panel, specs[cell_index], cell_index=cell_index)
+        result_sha256 = _canonical_json_sha256(record)
+        path = cell_directory / f"cell-{cell_index:04d}.json"
+        temporary = path.with_name(f".{path.name}.tmp")
+        temporary.write_text(
+            json.dumps(record, indent=2, sort_keys=True) + "\n", "utf-8"
+        )
+        os.replace(temporary, path)
+        checkpoint.record_cell(cell_index, result_sha256)
+        records.append(record)
+    return records

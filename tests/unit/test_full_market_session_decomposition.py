@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,9 +12,14 @@ from us_intraday_lab.full_market_session_decomposition import (
     LOOKBACKS,
     REFRESH_LIFE_PAIRS,
     TOP_COUNTS,
+    AtomicCheckpoint,
+    RunIdentity,
     Specification,
     build_session_features,
+    evaluate_cells_sequential,
     evaluate_session_scenarios,
+    passes_basic_pre_null_gates,
+    performance_metrics,
     score_session_families,
     specifications,
 )
@@ -175,3 +183,80 @@ def test_selected_exposure_failure_is_cell_wide(mutation: str, reason: str) -> N
 
     assert scenarios["standard_9bp"].valid is False
     assert scenarios["standard_9bp"].invalid_reason == reason
+
+
+def _run_identity(code_sha256: str = "c" * 64) -> RunIdentity:
+    return RunIdentity(
+        daily_source_sha256="a" * 64,
+        universe_sha256="b" * 64,
+        design_sha256="d" * 64,
+        code_sha256=code_sha256,
+        gate_sha256="e" * 64,
+    )
+
+
+def test_atomic_checkpoint_resumes_only_exact_session_identity(tmp_path: Path) -> None:
+    path = tmp_path / "checkpoint.json"
+    checkpoint = AtomicCheckpoint.open(path, _run_identity(), total_cells=400)
+    checkpoint.record_cell(0, "f" * 64)
+
+    resumed = AtomicCheckpoint.open(path, _run_identity(), total_cells=400)
+
+    assert resumed.cells_completed == 1
+    assert len(json.loads(path.read_text("utf-8"))["chain_sha256"]) == 64
+    with pytest.raises(RuntimeError, match="CHECKPOINT_IDENTITY_MISMATCH"):
+        AtomicCheckpoint.open(path, _run_identity("0" * 64), total_cells=400)
+
+
+def test_session_performance_metrics_and_basic_gate_are_fail_closed() -> None:
+    index = pd.bdate_range("2021-01-04", periods=504)
+    strong = pd.Series(np.where(np.arange(504) % 2 == 0, 0.003, 0.001), index=index)
+    weak = pd.Series(np.where(np.arange(504) % 2 == 0, 0.0002, 0.0), index=index)
+
+    strong_metrics = performance_metrics(strong)
+    weak_metrics = performance_metrics(weak)
+
+    assert strong_metrics["annualized_return"] > 0.40
+    assert strong_metrics["max_drawdown"] == pytest.approx(0.0)
+    assert strong_metrics["z_score"] > 3.0
+    assert strong_metrics["positive_folds"] == 5
+    assert passes_basic_pre_null_gates(
+        {
+            "standard_9bp": strong_metrics,
+            "cost_18bp": strong_metrics,
+            "delay_1session_9bp": strong_metrics,
+        }
+    )
+    assert not passes_basic_pre_null_gates(
+        {
+            "standard_9bp": strong_metrics,
+            "cost_18bp": weak_metrics,
+            "delay_1session_9bp": strong_metrics,
+        }
+    )
+
+
+def test_session_cells_resume_from_atomic_checkpoint(tmp_path: Path) -> None:
+    specs = (
+        Specification("persistent_overnight_drift", 20, 1, 1, 10),
+        Specification("persistent_intraday_drift", 20, 1, 1, 10),
+    )
+    checkpoint = AtomicCheckpoint.open(
+        tmp_path / "checkpoint.json", _run_identity(), total_cells=len(specs)
+    )
+
+    first = evaluate_cells_sequential(
+        _portfolio_panel(), specs, checkpoint, tmp_path / "cells"
+    )
+    resumed = AtomicCheckpoint.open(
+        tmp_path / "checkpoint.json", _run_identity(), total_cells=len(specs)
+    )
+    second = evaluate_cells_sequential(
+        _portfolio_panel(), specs, resumed, tmp_path / "cells"
+    )
+
+    assert resumed.cells_completed == 2
+    assert first == second
+    assert [record["cell_index"] for record in first] == [0, 1]
+    assert all(record["consumed_period"] is True for record in first)
+    assert all(record["independent_oos"] is False for record in first)
