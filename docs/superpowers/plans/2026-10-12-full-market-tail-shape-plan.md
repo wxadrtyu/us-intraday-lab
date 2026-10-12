@@ -1,5 +1,7 @@
 # Full-market daily tail-shape multifactor implementation plan
 
+> **Frozen 2026-10-12:** Do not execute. The user replaced daily research with intraday strategies whose single-trade holding period is at most 5-10 minutes. No implementation or outcome read occurred.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and run the frozen 400-cell full-market daily tail-shape campaign without relaxing any evidence, missingness, or execution gate.

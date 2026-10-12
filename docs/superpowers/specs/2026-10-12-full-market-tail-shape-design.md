@@ -1,5 +1,7 @@
 # Full-market daily tail-shape multifactor design
 
+> **Frozen 2026-10-12:** Abandoned before implementation and before any outcome read after the user prohibited further daily-frequency research and required a maximum 5-10 minute holding period. Do not resume, rescue, or tune this design.
+
 ## Decision and alternatives
 
 The close-based trend family and the overnight/intraday session-decomposition
