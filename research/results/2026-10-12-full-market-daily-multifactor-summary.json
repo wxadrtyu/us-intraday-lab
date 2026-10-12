@@ -1,0 +1,47 @@
+{
+  "basic_pre_null_passed": 0,
+  "campaign": "full-market-daily-multifactor-v1",
+  "cells_completed": 400,
+  "consumed_period": true,
+  "gate_policy": {
+    "annualized_return_strictly_above": 0.4,
+    "bonferroni_at_most": 0.05,
+    "costs": [
+      0.0009,
+      0.0018
+    ],
+    "delay_sessions": 1,
+    "folds": 5,
+    "information_ratio_at_least": 1.0,
+    "max_drawdown_below": 0.2,
+    "native_max_t_repetitions": 500,
+    "neighborhood_share_at_least": 0.7,
+    "positive_folds_at_least": 4,
+    "z_score_at_least": 3.0
+  },
+  "identity": {
+    "code_sha256": "66fe6032f2b9420c5fbd4e703019c99734c666446a897c6b13a94c8fd5279c52",
+    "daily_source_sha256": "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701",
+    "design_sha256": "c128c9bbc9094f6acae90638e82aeb57225c82d43230a3cec01b723ff5dd80cf",
+    "gate_sha256": "a9601cbd3ae1bd40d189d8b99e9a9055042a32f392fa39a8c290f3a41763eebf",
+    "universe_sha256": "3dc89bc9ab09e193372b2071a3d5b84d04962d8f6cf1e679540a723959e51a81"
+  },
+  "independent_oos": false,
+  "invalid_cells": 396,
+  "order_route": "FORBIDDEN",
+  "paper_activation": false,
+  "schema_version": "1.0.0",
+  "source_audit": {
+    "consumed_period": true,
+    "daily_source_sha256": "0d962e4c75d200df8837911db5f435c2049ffc6113248717b341e92154a98701",
+    "independent_oos": false,
+    "panel_rows": 5649989,
+    "panel_sessions": 753,
+    "panel_symbols": 9509,
+    "source_rows": 6533779,
+    "source_sessions": 881,
+    "source_symbols": 9817,
+    "universe_sha256": "3dc89bc9ab09e193372b2071a3d5b84d04962d8f6cf1e679540a723959e51a81"
+  },
+  "status": "COMPLETE"
+}
