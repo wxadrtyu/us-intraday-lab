@@ -633,3 +633,90 @@ def passes_basic_pre_null_gates(
         ):
             return False
     return True
+
+
+def _canonical_json_sha256(value: object) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _advance_chain(chain_sha256: str, cell_index: int, result_sha256: str) -> str:
+    digest = hashlib.sha256()
+    digest.update(bytes.fromhex(chain_sha256))
+    digest.update(cell_index.to_bytes(8, byteorder="big", signed=False))
+    digest.update(bytes.fromhex(result_sha256))
+    return digest.hexdigest()
+
+
+def evaluate_cell_record(
+    panel: pd.DataFrame, spec: Specification, *, cell_index: int
+) -> dict[str, object]:
+    """Evaluate one consumed-period discovery cell without promotion side effects."""
+    scenarios = evaluate_scenarios(panel, spec)
+    valid = all(result.valid for result in scenarios.values())
+    metrics_by_scenario: dict[str, dict[str, float | int]] = {}
+    if valid:
+        metrics_by_scenario = {
+            name: performance_metrics(result.daily_returns)
+            for name, result in scenarios.items()
+        }
+    return {
+        "cell_index": cell_index,
+        "specification": asdict(spec),
+        "valid": valid,
+        "invalid_reasons": {
+            name: result.invalid_reason
+            for name, result in scenarios.items()
+            if result.invalid_reason is not None
+        },
+        "selection_sha256": {
+            name: result.selection_sha256 for name, result in scenarios.items()
+        },
+        "cohorts": {name: result.cohorts for name, result in scenarios.items()},
+        "metrics": metrics_by_scenario,
+        "basic_pre_null_passed": (
+            passes_basic_pre_null_gates(metrics_by_scenario) if valid else False
+        ),
+        "consumed_period": True,
+        "independent_oos": False,
+        "paper_activation": False,
+        "order_route": "FORBIDDEN",
+    }
+
+
+def evaluate_cells_sequential(
+    panel: pd.DataFrame,
+    specs: tuple[Specification, ...],
+    checkpoint: AtomicCheckpoint,
+    cell_directory: Path,
+) -> list[dict[str, object]]:
+    """Evaluate cells in order and persist each record before checkpoint advance."""
+    if len(specs) != checkpoint.total_cells:
+        raise RuntimeError("FULL_MARKET_DAILY_CHECKPOINT_GRID_SIZE_MISMATCH")
+    cell_directory.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, object]] = []
+    reconstructed_chain = hashlib.sha256(b"").hexdigest()
+    for cell_index in range(checkpoint.cells_completed):
+        path = cell_directory / f"cell-{cell_index:04d}.json"
+        if not path.exists():
+            raise RuntimeError("FULL_MARKET_DAILY_COMPLETED_CELL_MISSING")
+        record = json.loads(path.read_text("utf-8"))
+        if record.get("cell_index") != cell_index:
+            raise RuntimeError("FULL_MARKET_DAILY_COMPLETED_CELL_INDEX_INVALID")
+        result_sha256 = _canonical_json_sha256(record)
+        reconstructed_chain = _advance_chain(
+            reconstructed_chain, cell_index, result_sha256
+        )
+        records.append(record)
+    if reconstructed_chain != checkpoint.chain_sha256:
+        raise RuntimeError("FULL_MARKET_DAILY_CHECKPOINT_CHAIN_MISMATCH")
+    for cell_index in range(checkpoint.cells_completed, len(specs)):
+        record = evaluate_cell_record(panel, specs[cell_index], cell_index=cell_index)
+        result_sha256 = _canonical_json_sha256(record)
+        path = cell_directory / f"cell-{cell_index:04d}.json"
+        temporary = path.with_name(f".{path.name}.tmp")
+        temporary.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", "utf-8")
+        os.replace(temporary, path)
+        checkpoint.record_cell(cell_index, result_sha256)
+        records.append(record)
+    return records

@@ -17,6 +17,7 @@ from us_intraday_lab.full_market_daily_multifactor import (
     Specification,
     attach_point_in_time_eligibility,
     build_daily_features,
+    evaluate_cells_sequential,
     evaluate_scenarios,
     passes_basic_pre_null_gates,
     performance_metrics,
@@ -309,3 +310,29 @@ def test_performance_metrics_and_basic_gate_are_fail_closed() -> None:
             "delay_1session_9bp": strong_metrics,
         }
     )
+
+
+def test_sequential_cells_resume_from_atomic_checkpoint(tmp_path: Path) -> None:
+    specs = (
+        Specification("residual_momentum", 5, 5, 1),
+        Specification("trend_quality", 5, 5, 1),
+    )
+    checkpoint = AtomicCheckpoint.open(
+        tmp_path / "checkpoint.json", _run_identity(), total_cells=len(specs)
+    )
+
+    first = evaluate_cells_sequential(
+        _portfolio_panel(), specs, checkpoint, tmp_path / "cells"
+    )
+    resumed = AtomicCheckpoint.open(
+        tmp_path / "checkpoint.json", _run_identity(), total_cells=len(specs)
+    )
+    second = evaluate_cells_sequential(
+        _portfolio_panel(), specs, resumed, tmp_path / "cells"
+    )
+
+    assert resumed.cells_completed == 2
+    assert first == second
+    assert [record["cell_index"] for record in first] == [0, 1]
+    assert all(record["consumed_period"] is True for record in first)
+    assert all(record["independent_oos"] is False for record in first)
