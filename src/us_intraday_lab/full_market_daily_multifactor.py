@@ -585,3 +585,51 @@ def evaluate_scenarios(
         )
         for name, cost, delay in definitions
     }
+
+
+def performance_metrics(daily_returns: pd.Series) -> dict[str, float | int]:
+    """Calculate frozen discovery metrics without dropping any session."""
+    returns = pd.to_numeric(daily_returns, errors="coerce")
+    if returns.empty or not np.isfinite(returns).all() or returns.le(-1.0).any():
+        raise ValueError("FULL_MARKET_DAILY_RETURNS_INVALID")
+    count = len(returns)
+    log_total = float(np.log1p(returns).sum())
+    annualized_return = float(np.exp(log_total * 252.0 / count) - 1.0)
+    wealth = np.exp(np.log1p(returns).cumsum())
+    max_drawdown = float(-(wealth / wealth.cummax() - 1.0).min())
+    standard_deviation = float(returns.std(ddof=1))
+    if standard_deviation <= 0:
+        information_ratio = 0.0
+        z_score = 0.0
+    else:
+        information_ratio = float(returns.mean() / standard_deviation * np.sqrt(252.0))
+        z_score = float(returns.mean() / standard_deviation * np.sqrt(count))
+    folds = np.array_split(returns.to_numpy(dtype=float), 5)
+    positive_folds = sum(float(np.prod(1.0 + fold) - 1.0) > 0 for fold in folds)
+    return {
+        "annualized_return": annualized_return,
+        "max_drawdown": max_drawdown,
+        "information_ratio": information_ratio,
+        "z_score": z_score,
+        "positive_folds": positive_folds,
+        "observations": count,
+    }
+
+
+def passes_basic_pre_null_gates(
+    metrics_by_scenario: dict[str, dict[str, float | int]],
+) -> bool:
+    """Apply the unchanged economic, cost, delay, fold, and z gates."""
+    required = {"standard_9bp", "cost_18bp", "delay_1session_9bp"}
+    if set(metrics_by_scenario) != required:
+        raise ValueError("FULL_MARKET_DAILY_SCENARIO_SET_INVALID")
+    for metrics in metrics_by_scenario.values():
+        if not (
+            float(metrics["annualized_return"]) > 0.40
+            and float(metrics["max_drawdown"]) < 0.20
+            and float(metrics["information_ratio"]) >= 1.0
+            and float(metrics["z_score"]) >= 3.0
+            and int(metrics["positive_folds"]) >= 4
+        ):
+            return False
+    return True

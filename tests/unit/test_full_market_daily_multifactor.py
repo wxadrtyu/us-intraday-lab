@@ -18,6 +18,8 @@ from us_intraday_lab.full_market_daily_multifactor import (
     attach_point_in_time_eligibility,
     build_daily_features,
     evaluate_scenarios,
+    passes_basic_pre_null_gates,
+    performance_metrics,
     score_families,
     specifications,
     validate_monthly_universe,
@@ -279,3 +281,31 @@ def test_atomic_checkpoint_rejects_out_of_order_progress(tmp_path: Path) -> None
 
     with pytest.raises(RuntimeError, match="CHECKPOINT_CELL_ORDER_INVALID"):
         checkpoint.record_cell(1, "f" * 64)
+
+
+def test_performance_metrics_and_basic_gate_are_fail_closed() -> None:
+    index = pd.bdate_range("2021-01-04", periods=504)
+    strong = pd.Series(np.where(np.arange(504) % 2 == 0, 0.003, 0.001), index=index)
+    weak = pd.Series(np.where(np.arange(504) % 2 == 0, 0.0002, 0.0), index=index)
+
+    strong_metrics = performance_metrics(strong)
+    weak_metrics = performance_metrics(weak)
+
+    assert strong_metrics["annualized_return"] > 0.40
+    assert strong_metrics["max_drawdown"] == pytest.approx(0.0)
+    assert strong_metrics["z_score"] > 3.0
+    assert strong_metrics["positive_folds"] == 5
+    assert passes_basic_pre_null_gates(
+        {
+            "standard_9bp": strong_metrics,
+            "cost_18bp": strong_metrics,
+            "delay_1session_9bp": strong_metrics,
+        }
+    )
+    assert not passes_basic_pre_null_gates(
+        {
+            "standard_9bp": strong_metrics,
+            "cost_18bp": weak_metrics,
+            "delay_1session_9bp": strong_metrics,
+        }
+    )
