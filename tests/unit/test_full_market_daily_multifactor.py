@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +12,8 @@ from us_intraday_lab.full_market_daily_multifactor import (
     HOLDING_SESSIONS,
     REBALANCE_SESSIONS,
     TOP_COUNTS,
+    AtomicCheckpoint,
+    RunIdentity,
     Specification,
     attach_point_in_time_eligibility,
     build_daily_features,
@@ -241,3 +246,36 @@ def test_scenarios_fail_closed_when_selected_path_has_missing_bar() -> None:
 
     assert all(not result.valid for result in scenarios.values())
     assert all(result.invalid_reason == "SELECTED_PATH_MISSING" for result in scenarios.values())
+
+
+def _run_identity(code_sha256: str = "c" * 64) -> RunIdentity:
+    return RunIdentity(
+        daily_source_sha256="a" * 64,
+        universe_sha256="b" * 64,
+        design_sha256="d" * 64,
+        code_sha256=code_sha256,
+        gate_sha256="e" * 64,
+    )
+
+
+def test_atomic_checkpoint_resumes_only_exact_identity(tmp_path: Path) -> None:
+    path = tmp_path / "checkpoint.json"
+    checkpoint = AtomicCheckpoint.open(path, _run_identity(), total_cells=400)
+    checkpoint.record_cell(0, "f" * 64)
+
+    resumed = AtomicCheckpoint.open(path, _run_identity(), total_cells=400)
+
+    assert resumed.cells_completed == 1
+    state = json.loads(path.read_text("utf-8"))
+    assert state["cells_completed"] == 1
+    assert len(state["chain_sha256"]) == 64
+    with pytest.raises(RuntimeError, match="CHECKPOINT_IDENTITY_MISMATCH"):
+        AtomicCheckpoint.open(path, _run_identity("0" * 64), total_cells=400)
+
+
+def test_atomic_checkpoint_rejects_out_of_order_progress(tmp_path: Path) -> None:
+    path = tmp_path / "checkpoint.json"
+    checkpoint = AtomicCheckpoint.open(path, _run_identity(), total_cells=400)
+
+    with pytest.raises(RuntimeError, match="CHECKPOINT_CELL_ORDER_INVALID"):
+        checkpoint.record_cell(1, "f" * 64)

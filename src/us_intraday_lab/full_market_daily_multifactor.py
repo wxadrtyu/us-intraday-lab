@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import json
+import os
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -49,6 +53,97 @@ class ScenarioResult:
     invalid_reason: str | None
     cohorts: int
     selection_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class RunIdentity:
+    daily_source_sha256: str
+    universe_sha256: str
+    design_sha256: str
+    code_sha256: str
+    gate_sha256: str
+
+    def validate(self) -> None:
+        for name, value in asdict(self).items():
+            if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                raise ValueError(f"FULL_MARKET_DAILY_IDENTITY_HASH_INVALID:{name}")
+
+    @property
+    def sha256(self) -> str:
+        self.validate()
+        payload = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+
+@dataclass(slots=True)
+class AtomicCheckpoint:
+    path: Path
+    identity: RunIdentity
+    total_cells: int
+    cells_completed: int
+    chain_sha256: str
+
+    @classmethod
+    def open(
+        cls, path: Path, identity: RunIdentity, *, total_cells: int
+    ) -> AtomicCheckpoint:
+        identity.validate()
+        if total_cells <= 0:
+            raise ValueError("FULL_MARKET_DAILY_CHECKPOINT_TOTAL_INVALID")
+        if path.exists():
+            state = json.loads(path.read_text("utf-8"))
+            if (
+                state.get("identity") != asdict(identity)
+                or state.get("identity_sha256") != identity.sha256
+                or state.get("total_cells") != total_cells
+            ):
+                raise RuntimeError("FULL_MARKET_DAILY_CHECKPOINT_IDENTITY_MISMATCH")
+            cells_completed = state.get("cells_completed")
+            chain_sha256 = state.get("chain_sha256")
+            if (
+                not isinstance(cells_completed, int)
+                or not 0 <= cells_completed <= total_cells
+                or not isinstance(chain_sha256, str)
+                or re.fullmatch(r"[0-9a-f]{64}", chain_sha256) is None
+            ):
+                raise RuntimeError("FULL_MARKET_DAILY_CHECKPOINT_STATE_INVALID")
+            return cls(path, identity, total_cells, cells_completed, chain_sha256)
+        checkpoint = cls(
+            path,
+            identity,
+            total_cells,
+            0,
+            hashlib.sha256(b"").hexdigest(),
+        )
+        checkpoint._write()
+        return checkpoint
+
+    def _write(self) -> None:
+        state = {
+            "schema_version": "1.0.0",
+            "identity": asdict(self.identity),
+            "identity_sha256": self.identity.sha256,
+            "total_cells": self.total_cells,
+            "cells_completed": self.cells_completed,
+            "chain_sha256": self.chain_sha256,
+        }
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self.path.with_name(f".{self.path.name}.tmp")
+        temporary.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", "utf-8")
+        os.replace(temporary, self.path)
+
+    def record_cell(self, cell_index: int, result_sha256: str) -> None:
+        if cell_index != self.cells_completed or cell_index >= self.total_cells:
+            raise RuntimeError("FULL_MARKET_DAILY_CHECKPOINT_CELL_ORDER_INVALID")
+        if re.fullmatch(r"[0-9a-f]{64}", result_sha256) is None:
+            raise ValueError("FULL_MARKET_DAILY_CHECKPOINT_RESULT_HASH_INVALID")
+        digest = hashlib.sha256()
+        digest.update(bytes.fromhex(self.chain_sha256))
+        digest.update(cell_index.to_bytes(8, byteorder="big", signed=False))
+        digest.update(bytes.fromhex(result_sha256))
+        self.chain_sha256 = digest.hexdigest()
+        self.cells_completed += 1
+        self._write()
 
 
 def specifications() -> tuple[Specification, ...]:
