@@ -55,3 +55,33 @@ def test_audit_rejects_duplicate_and_wrong_month() -> None:
     )
     assert "DUPLICATE_SYMBOL_MINUTE" in result["rejection_reasons"]
     assert "NO_POINT_IN_TIME_ELIGIBLE_SYMBOLS" in result["rejection_reasons"]
+
+
+def test_complete_source_still_rejects_sparse_execution_paths() -> None:
+    opening = pd.Timestamp("2023-12-29T14:30:00Z")
+    bars = pd.DataFrame(
+        [
+            (symbol, opening + pd.Timedelta(minutes=minute))
+            for symbol, minutes in {"AAA": range(12), "BBB": range(11)}.items()
+            for minute in minutes
+        ],
+        columns=["symbol", "timestamp"],
+    )
+    decisions = pd.DataFrame(
+        {
+            "symbol": ["AAA", "BBB"],
+            "month": [date(2023, 12, 1)] * 2,
+            "eligible": [True, True],
+        }
+    )
+    result = audit_one_minute_paths(
+        bars=bars,
+        decisions=decisions,
+        session=date(2023, 12, 29),
+        start_minute=0,
+        path_minutes=12,
+        source_complete=True,
+    )
+    assert result["complete_path_ratio"] == 0.5
+    assert result["strategy_metrics_permitted"] is False
+    assert result["rejection_reasons"] == ["COMPLETE_PATH_COVERAGE_BELOW_FLOOR"]
